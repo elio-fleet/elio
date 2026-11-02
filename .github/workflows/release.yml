@@ -24,7 +24,7 @@ jobs:
           test "v$version" = "$GITHUB_REF_NAME" || { echo "Tag $GITHUB_REF_NAME, but lib/elio/version.rb says $version"; exit 1; }
 
       - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
+      - uses: docker/setup-buildx-action@v4
 
       - name: The image starts (amd64)
         uses: docker/build-push-action@v6
