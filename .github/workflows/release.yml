@@ -27,7 +27,7 @@ jobs:
       - uses: docker/setup-buildx-action@v3
 
       - name: The image starts (amd64)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
@@ -59,7 +59,7 @@ jobs:
             org.opencontainers.image.licenses=AGPL-3.0-only
 
       - name: Build and push
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: linux/amd64,linux/arm64
