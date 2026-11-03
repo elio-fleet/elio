@@ -23,7 +23,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Install packages (gems, cwebp for lighter screenshots)
         run: sudo apt-get update && sudo apt-get install --no-install-recommends -y libpq-dev libyaml-dev webp
