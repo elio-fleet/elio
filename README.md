@@ -141,17 +141,25 @@ Elio can read what your other tools know and show it next to each server. Enable
 
 - **Setup**: the API endpoint (EU, CA, US), an Application Key, an Application Secret and a Consumer Key **limited to GET requests**. *Droits à donner à la clé API* lists the exact rights for the products you check and opens OVH's token page already filled in. *Tester la connexion* reports missing rights, and **warns if the key could write** — make a new one then.
 - Each product is a checkbox: IPs and reverse DNS, network firewall, anti-DDoS, DNS zones (all or some), dedicated servers, VPS, Public Cloud instances (all projects or some).
-- An **OVH** tab on each server: the OVH service (offer, datacenter, expiration), its IPs and reverse, the network firewall rules and **whether they let each public port through**, anti-DDoS, the DNS records pointing to it. An **OVHcloud** page: services, IPs, DNS records, resources attached to no server.
-- Optional alerts: service about to expire (automatic renewal taken into account), network firewall disabled, reverse DNS that does not match, server without a DNS record, DNS record pointing outside the fleet, OVH service not followed by Elio.
+- An **OVH** tab on each server: the OVH service (offer, datacenter, expiration), its IPs and reverse, the network firewall rules and **whether they let each public port through**, anti-DDoS. An **OVHcloud** page: services, IPs, resources attached to no server. Its DNS records go to the [DNS of the fleet](#dns-of-the-fleet).
+- Optional alerts: service about to expire (automatic renewal taken into account), network firewall disabled, reverse DNS that does not match, OVH service not followed by Elio.
 
 The OVH client of Elio only knows the GET method: it cannot write, whatever the key allows.
+
+### DNS of the fleet
+
+The extensions that read DNS (OVHcloud with its DNS product, Technitium DNS) feed **one DNS of the fleet**:
+- every A, AAAA and CNAME record is attached to its server the same way, whatever its source: a manual attachment **by name** (valid for every source), the IP of an A / AAAA record, or a CNAME to a name of any source;
+- one **DNS** tab on each server and one **DNS** page (filters by source, zone, *outside the fleet*, *not attached*, *differs by source*), with the source of each record;
+- a name whose records differ between sources (a public IP at OVH, a private one in Technitium) is flagged *differs by source*;
+- the **alerts** are set once, in *Settings → Extensions → DNS*: record pointing to an IP outside the fleet, server without a DNS name (only if no source has one; groups can be ignored), and optionally a name that differs between sources. Nothing is reported for the first records of a newly enabled source;
+- the fleet search, ⌘K, the Uptime Kuma monitors and the prompts use these names.
 
 ### Technitium DNS
 
 - **Setup**: the address of the web console (port 5380 or 53443) and the API token of a user that can only **view** the zones. Technitium also has **permissions per zone**: give that user's group *View* on each zone to read, or the token sees none. *Tester la connexion* gives the version and the zones readable, and warns if the token could change them.
 - Every hour, Elio reads the **A, AAAA and CNAME** records of the zones (all, or those you list) and attaches each one to its server: by the IP of an A / AAAA record, and for a CNAME by the record or the host it points to. A name can be attached by hand, and the attachment is kept.
-- A **DNS** tab on each server (the names pointing to it) and a **DNS** page: every record, filters *outside the fleet* and *not attached*. Uptime Kuma monitors are also attached through these names, and the prompt that proposes monitors lists them.
-- Optional alerts: record pointing to an IP outside the fleet, server without a DNS name.
+- Its records go to the [DNS of the fleet](#dns-of-the-fleet).
 - The token travels in an `Authorization: Bearer` header (never in the URL). Tested with Technitium DNS Server 15.6.
 
 ## Security
