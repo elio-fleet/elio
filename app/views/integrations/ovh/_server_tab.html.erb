@@ -70,7 +70,7 @@
             <% end %>
           <% end %>
           <% Array(block.data["mitigation"]).each do |ip, mitigation| %>
-            <p class="ovh-mitigation mt-1 text-xs text-ink-2"><%= t(".anti_ddos") %> <span class="font-mono"><%= ip %></span> : <%= mitigation["permanent"] ? "permanent" : "automatique" %><%= " (#{mitigation["state"]})" if mitigation["state"] %></p>
+            <p class="ovh-mitigation mt-1 text-xs text-ink-2"><%= t(".anti_ddos") %> <span class="font-mono"><%= ip %></span> : <%= mitigation["permanent"] ? t("integrations.ovh.server_tab.mitigation_permanent") : t("integrations.ovh.server_tab.mitigation_automatic") %><%= " (#{mitigation["state"]})" if mitigation["state"] %></p>
           <% end %>
         </div>
       <% end %>

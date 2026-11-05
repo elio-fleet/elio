@@ -148,6 +148,8 @@ fr:
         dns_names:
           one: "%{count} nom DNS → onglet DNS"
           other: "%{count} noms DNS → onglet DNS"
+        mitigation_permanent: permanente
+        mitigation_automatic: automatique
       client:
         unknown_endpoint: 'Point d''accès OVH inconnu : %{endpoint}'
         unreadable: Réponse d'OVHcloud illisible pour %{path}
@@ -226,6 +228,9 @@ fr:
         step3_html: 'Technitium a aussi des <strong>droits par zone</strong> : sur chaque zone à lire (<strong>Zones</strong>, la zone, <strong>Permissions</strong>), donnez <strong>View</strong> au groupe. Sans cela, le jeton ne voit aucune zone.'
         step4_html: Connectez-vous avec cet utilisateur, puis <strong>Create API Token</strong> (menu de l'utilisateur, en haut à droite), et collez-le ici.
         reads_html: 'Elio ne fait que lire : <code>/api/user/session/get</code>, <code>/api/zones/list</code> et <code>/api/zones/records/get</code>, avec le jeton dans un en-tête <code>Authorization: Bearer</code> (testé avec Technitium DNS Server 15.6).'
+    sections:
+      alerts: Alertes
+      resources: Ressources
   integration:
     sync_label: Synchronisation %{label}
     required: "%{label} : obligatoire pour activer l'extension"

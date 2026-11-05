@@ -22,7 +22,7 @@
         <% @rows.each do |server, port| %>
           <tr class="public-port">
             <td class="pl-4 font-mono font-medium"><%= port.port %><span class="text-ink-3">/<%= port.proto %></span>
-              <% if port.unexpected %><%= status_badge :warn, "inattendu", class: "port-unexpected ml-1" %><% end %></td>
+              <% if port.unexpected %><%= status_badge :warn, t("words.unexpected"), class: "port-unexpected ml-1" %><% end %></td>
             <td><%= link_to server.name, server_path(server, tab: "ports"), class: "font-medium hover:text-accent hover:underline" %></td>
             <td class="font-mono text-xs"><%= port.process || tag.span(t("words.unknown"), class: "text-ink-3") %></td>
             <td class="text-xs text-ink-2"><%= port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || "—" %></td>

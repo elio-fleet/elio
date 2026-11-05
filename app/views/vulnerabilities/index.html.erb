@@ -68,7 +68,7 @@
               <span class="font-medium"><%= row.servers.size %></span> ·
               <%= safe_join(row.servers.first(3).map { |server| link_to(server.name, server_path(server, tab: "vulnerabilities"), class: "hover:text-accent hover:underline") }, ", ") %><%= " …" if row.servers.size > 3 %>
             </td>
-            <td class="pr-4 text-xs"><%= row.fixable ? status_badge(:good, "corrigeable") : tag.span(t(".fix"), class: "text-ink-3") %></td>
+            <td class="pr-4 text-xs"><%= row.fixable ? status_badge(:good, t("words.fixable")) : tag.span(t(".fix"), class: "text-ink-3") %></td>
           </tr>
         <% end %>
       </tbody>

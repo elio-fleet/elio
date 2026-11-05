@@ -34,7 +34,7 @@
             <% analysis.ports.each do |port| %>
               <tr class="port" data-scope="<%= port.scope %>">
                 <td class="pl-4 font-mono font-medium"><%= port.port %><span class="text-ink-3">/<%= port.proto %></span>
-                  <% if port.unexpected %><%= status_badge :warn, "inattendu", class: "port-unexpected ml-1" %><% end %></td>
+                  <% if port.unexpected %><%= status_badge :warn, t("words.unexpected"), class: "port-unexpected ml-1" %><% end %></td>
                 <td class="font-mono text-xs text-ink-2"><%= port.addresses.join(", ") %></td>
                 <td><span class="badge <%= { "public" => "bg-crit-soft text-crit-ink", "private" => "bg-subtle text-ink-2", "local" => "bg-subtle text-ink-3" }.fetch(port.scope, "bg-subtle") %>"><%= { "public" => "public", "private" => t(".private"), "local" => "local" }.fetch(port.scope, port.scope) %></span></td>
                 <td class="font-mono text-xs"><%= port.process || tag.span(t("words.unknown"), class: "text-ink-3") %></td>
