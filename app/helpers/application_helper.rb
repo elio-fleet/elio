@@ -88,9 +88,10 @@ module ApplicationHelper
     pages = pages.map { |page| page.merge(group: t("command_palette.pages")) }
 
     groups = ServerGroup.order(:name).map { |group| { group: t("command_palette.groups"), label: group.name, hint: hint.(:group), url: servers_path(group: group.id) } }
-    servers = Server.order(:name).includes(:server_groups, :inventory_snapshots, :dns_records).map do |server|
+    dns_names = DnsRecord.attached.distinct.pluck(:server_id, :name).group_by(&:first).transform_values { |pairs| pairs.map(&:last) }
+    servers = Server.order(:name).includes(:server_groups, :inventory_snapshots).map do |server|
       { group: t("command_palette.servers"), label: server.name, hint: [ "#{server.username}@#{server.host}", server.distinct_hostname, *server.server_groups.map(&:name) ].compact.join(" · "),
-        url: server_path(server), keywords: ([ server.hostname ] + server.addresses + server.dns_names).compact.uniq.join(" ").presence, server: true }.compact
+        url: server_path(server), keywords: ([ server.hostname ] + server.addresses + dns_names.fetch(server.id, [])).compact.uniq.join(" ").presence, server: true }.compact
     end
     public_keys = PublicKey.order(:name).map { |public_key| { group: t("command_palette.keyring"), label: public_key.name, hint: public_key.kind_label, url: public_key_path(public_key) } }
     pages + groups + servers + public_keys

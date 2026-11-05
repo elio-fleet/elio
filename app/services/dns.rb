@@ -2,9 +2,10 @@
 # sources (DnsRecord.source), attached to the servers by Dns::Matcher and
 # shown on one DNS page and one DNS tab of the server page.
 module Dns
-  # The enabled extensions that feed the DNS: [Integration].
+  # The enabled extensions that feed the DNS: [Integration]. Asked several
+  # times per page (sidebar, tabs, ⌘K): read once per request (Current).
   def self.source_integrations
-    Integration.enabled_kinds.select { |integration| integration.definition.dns_source?(integration) }
+    Current.dns_sources ||= Integration.enabled_kinds.select { |integration| integration.definition.dns_source?(integration) }
   end
 
   def self.enabled? = source_integrations.any?
