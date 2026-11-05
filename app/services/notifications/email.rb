@@ -1,3 +1,5 @@
+require "net/smtp"
+
 # Sends notifications to the channel's email recipients (needs SMTP, see
 # config/initializers/mail.rb). Sent right away from DeliverNotificationJob.
 class Notifications::Email
