@@ -7,6 +7,8 @@ class NotificationChannel < ApplicationRecord
   localized # nil: the instance's language
 
   KINDS = %w[slack discord webhook email].freeze
+  # Minutes the non-critical activities of a kind wait to leave as one message (0: right away).
+  GROUP_MINUTES = [ 0, 5, 10, 15, 30, 60 ].freeze
   NOTIFIERS = { "slack" => "Notifications::Slack", "discord" => "Notifications::Discord", "webhook" => "Notifications::Webhook", "email" => "Notifications::Email" }.freeze
 
   SLACK_WEBHOOK = %r{\Ahttps://hooks\.slack\.com/services/[A-Za-z0-9/_-]+\z}
@@ -24,8 +26,11 @@ class NotificationChannel < ApplicationRecord
 
   before_validation :generate_signing_secret, if: -> { kind == "webhook" && signing_secret.blank? }
 
+  has_many :notification_batches, dependent: :delete_all
+
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :kind, inclusion: { in: KINDS }
+  validates :group_minutes, inclusion: { in: GROUP_MINUTES }
   validate :destination_must_match_kind
   validate :activity_kinds_must_be_known
 
@@ -52,6 +57,8 @@ class NotificationChannel < ApplicationRecord
   def mentions? = %w[slack discord].include?(kind)
 
   def subscribed_to?(kind) = activity_kinds.include?(kind.to_s)
+
+  def groups? = group_minutes.positive?
 
   def recipient_list = recipients.to_s.split(", ")
 

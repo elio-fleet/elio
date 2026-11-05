@@ -7,6 +7,8 @@ class Notifications::Email
 
   def self.deliver_test(channel) = send_mail { NotificationMailer.test(channel) }
 
+  def self.deliver_batch(channel, group) = send_mail { NotificationMailer.batch(channel, group) }
+
   def self.deliver_digest(channel, digest) = send_mail { NotificationMailer.digest(channel, digest) }
 
   def self.send_mail

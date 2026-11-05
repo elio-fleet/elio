@@ -41,7 +41,7 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | **Vulnerabilities** | CVEs of every package, from the Debian Security Tracker and Ubuntu's OSV data, matched with the inventory — no extra command on the servers. Grouped **by package with the update to make** (`apt-get install --only-upgrade linux-image-amd64`, then reboot). Scores from NVD, Red Hat and CVE.org (or your own providers), exploitation from EPSS and CISA KEV. |
 | **Docker** | Unhealthy and restarting containers, images per server, **new versions published on the registries** (Docker Hub, GHCR, Quay, private ones), vulnerabilities of the images (Trivy or Grype if installed, else Elio's own matching). |
 | **SSH keys** | A shared keyring (people and machines), keys added to or removed from a server in one click, **temporary access** that expires on its own, unknown keys flagged, rotation of Elio's own key without downtime. |
-| **Alerts** | What needs attention, by severity, on the overview; activity log; notifications to Slack, Discord, email or a signed webhook; daily digest. |
+| **Alerts** | What needs attention, by severity, on the overview; activity log; notifications to Slack, Discord, email or a signed webhook, grouped by type (critical ones right away); daily digest. |
 | **Automation** | Every collection runs on schedule, on the whole fleet or per group, followed live in the *Tasks* page. |
 | **Extensions** | **Uptime Kuma** (monitors attached to each server) and **OVHcloud** (IPs, network firewall, DNS records, services), read-only. |
 | **Team** | Roles (admin, operator, read-only), invitations, mandatory two-factor authentication, ⌘K search everywhere, light and dark themes. |
@@ -90,7 +90,7 @@ Elio is a Rails application with PostgreSQL. Put it behind a reverse proxy with 
 |---|---|
 | `SECRET_KEY_BASE`, `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`, `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Secrets of the installation, printed by `bin/elio-keys`. **Required.** (An installation that keeps them in Rails credentials sets `RAILS_MASTER_KEY` instead.) |
 | `ELIO_DATABASE_PASSWORD`, `PGHOST` | PostgreSQL password of the `elio` user, and host. Elio uses four databases: `elio_production`, `_cache`, `_queue`, `_cable`. |
-| `ELIO_HOST` | Elio's domain: links in emails, and the only host name it answers to. |
+| `ELIO_HOST` | Elio's domain: links in emails and notifications, and the only host name it answers to. |
 | `ELIO_SETUP_TOKEN` | If set, asked when creating the first account (useful when Elio is reachable before you set it up). |
 | `ELIO_FORCE_SSL` | `false` only to try Elio over plain HTTP. HTTPS is forced otherwise. |
 | `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails: invitations, password reset, notifications. Without `SMTP_ADDRESS`, invitation links are to be copied. |

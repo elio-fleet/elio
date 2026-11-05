@@ -56,6 +56,7 @@ fr:
       activity_yet: Aucune activité pour le moment.
       history: Historique de ce qui s'est passé
       history_on: Historique de ce qui s'est passé sur « %{server_name} »
+      remove_kind_filter: Retirer le filtre
   tasks:
     progress:
       progress: Progression

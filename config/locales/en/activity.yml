@@ -368,6 +368,12 @@ en:
     webhook:
       test: The channel “%{channel_name}” receives the notifications.
       service: The webhook
+    batch:
+      title: "%{count} × %{label}"
+      more:
+        one: "…and %{count} more"
+        other: "…and %{count} more"
+      see_all: See them in Elio
   notification_mailer:
     test_subject: "[Elio] Test of the channel “%{channel_name}”"
     activity:
@@ -376,6 +382,9 @@ en:
     test:
       text_html: 'Elio test: the channel “%{channel_name}” receives the notifications.'
     activity_subject: "[Elio] %{label}: %{summary}"
+    batch_subject: "[Elio] %{title}"
+    batch:
+      see_all: 'See them in Elio:'
   settings:
     notifications:
       show:
@@ -418,6 +427,12 @@ en:
         language: Language
         instance_language: Language of this Elio (%{language})
         language_hint: The language of the messages, the tests and the daily digest of this channel.
+        group_minutes: Group the notifications
+        group_none: No, send each one right away
+        group_for:
+          one: Over %{count} minute
+          other: Over %{count} minutes
+        group_hint: The activities of one type that occur within this time leave as a single message. Critical ones are always sent right away.
       edit:
         edit_html: Edit “%{name_was}”
       new:
@@ -434,3 +449,6 @@ en:
       discord: Discord
       webhook: Webhook (signed JSON)
       email: Email
+    group:
+      one: grouped over %{count} min
+      other: grouped over %{count} min

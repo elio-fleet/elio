@@ -15,6 +15,13 @@ class Notifications::Discord
     post(channel, embeds: [ { title: I18n.t("notifications.discord.test_title"), description: I18n.t("notifications.discord.test_text", escape: (escape(channel.name))), color: COLORS[:info] } ])
   end
 
+  # Several activities of one kind (NotificationBatch::Group), as one embed.
+  def self.deliver_batch(channel, group)
+    embed = { title: escape(group.title).first(256), description: group.lines.map { |line| "• #{escape(line)}" }.join("\n").first(4000),
+              color: COLORS.fetch(group.severity), timestamp: group.activities.last.created_at.iso8601, url: group.url }.compact
+    post(channel, embeds: [ embed ])
+  end
+
   def self.deliver_digest(channel, digest)
     post(channel, embeds: [ { title: escape(digest.title), description: digest.lines.map { |line| escape(line) }.join("\n").first(4000), color: COLORS[:info] } ])
   end

@@ -7,6 +7,12 @@
       <%= (@server ? t(".history_on", server_name: @server.name) : t(".history")) %>.
       <% if @server %><%= link_to t(".see_all"), activities_path(category: @category), class: "font-medium text-accent hover:text-accent" %><% end %>
     </p>
+    <% if @kind %>
+      <p class="activity-kind-filter mt-2 inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs text-accent">
+        <%= Activity::KINDS.fetch(@kind.to_sym).label %>
+        <%= link_to activities_path(category: @category, server_id: @server&.id), aria: { label: t(".remove_kind_filter") }, class: "hover:text-ink" do %><%= icon :x_mark, class: "h-3.5 w-3.5" %><% end %>
+      </p>
+    <% end %>
   </div>
 </div>
 
