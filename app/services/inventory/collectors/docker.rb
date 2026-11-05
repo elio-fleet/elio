@@ -153,7 +153,7 @@ class Inventory::Collectors::Docker < Inventory::Collector
       next unless fields["Package"].present? && fields["Version"].present? && fields["Status"].to_s.end_with?(" installed")
 
       source, source_version = fields["Source"].to_s.match(/\A(\S+)(?:\s+\((.+)\))?\z/)&.captures
-      Vulnerabilities::Matcher.package(fields["Package"], fields["Version"], source: source, source_version: source_version)
+      Vulnerabilities::Matcher.package(fields["Package"], fields["Version"], source: source, source_version: source_version, built_using: fields["Built-Using"])
     end
   end
 

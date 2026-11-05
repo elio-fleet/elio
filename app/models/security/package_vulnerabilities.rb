@@ -87,13 +87,15 @@ class PackageVulnerabilities
   end
 
   # { source package => { version: highest available, packages: binaries with an update } }
-  # from the server's inventory (signed kernel images belong to linux).
+  # from the server's inventory (signed packages belong to what they sign).
   def repository_offers
     @server.packages.where(manager: "dpkg").where.not(available_version: nil).pluck(:name, :version, :source_name, :source_version, :available_version)
            .each_with_object({}) do |(name, version, source, source_version, available), offers|
       source = Vulnerabilities::Matcher.package(name, version, source: source, source_version: source_version).source
       offer = offers[source] ||= { version: nil, packages: [] }
       offer[:packages] << name
+      # A signed package's version is not the one of the code it signs (grub-efi-amd64-signed 1+2.12+9+deb13u3 = grub2 2.12-9+deb13u3).
+      available = Vulnerabilities::Matcher.unsigned_version(name, available)
       offer[:version] = available if offer[:version].nil? || Inventory::DebianVersion.older?(offer[:version], available)
     end
   end

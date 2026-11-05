@@ -89,7 +89,7 @@ inventory:
     description: "Packages: dpkg packages (with their source package, for the CVE feeds) and the available updates (security ones flagged), snaps, Docker presence."
     shell: true
     debian: |
-      echo "@@elio dpkg"; dpkg-query -W -f='${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\t${source:Package}\t${source:Version}\n' 2>/dev/null
+      echo "@@elio dpkg"; dpkg-query -W -f='${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\t${source:Package}\t${source:Version}\t${Built-Using}\n' 2>/dev/null
       echo "@@elio upgradable"; apt list --upgradable 2>/dev/null
       echo "@@elio snap"; if command -v snap >/dev/null 2>&1; then snap list 2>/dev/null; else echo unsupported; fi
       echo "@@elio docker"; if command -v docker >/dev/null 2>&1; then echo present; fi
