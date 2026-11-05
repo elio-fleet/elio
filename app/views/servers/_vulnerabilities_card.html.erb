@@ -38,7 +38,7 @@
           <% end %>
         <% end %>
       </div>
-      <%= form_with url: server_path(server), method: :get, data: { controller: "auto-submit", turbo_action: "advance" }, class: "vulnerability-filters flex flex-wrap items-center gap-3" do |f| %>
+      <%= form_with url: server_path(server), method: :get, data: search_form_data("vulnerability-results"), class: "vulnerability-filters flex flex-wrap items-center gap-3" do |f| %>
         <%= hidden_field_tag :tab, "vulnerabilities" %>
         <%= hidden_field_tag :view, @vulnerability_view %>
         <% if @sort %><%= hidden_field_tag :sort, @sort %><% end %>
@@ -56,6 +56,7 @@
       <% end %>
     </div>
 
+    <%= search_results_frame "vulnerability-results" do %>
     <% if @vulnerability_view == "packages" %>
       <%= render "servers/vulnerability_packages", server: server, groups: @package_groups, pager: @pager %>
     <% elsif @vulnerabilities.any? %>
@@ -88,6 +89,7 @@
       <% if @pager.multiple_pages? %><div class="px-4 pb-3"><%= render "shared/pagination", pager: @pager, noun: t(".vulnerabilities") %></div><% end %>
     <% else %>
       <p class="vulnerabilities-none px-4 py-4 text-sm text-ink-3"><%= counts[:total].zero? ? t(".known_vulnerability_server") : (@vulnerability_query ? t(".cve_package_matches", vulnerability_query: @vulnerability_query) : t(".vulnerability_matches_filters")) %></p>
+    <% end %>
     <% end %>
   <% end %>
 </section>

@@ -16,7 +16,7 @@
       <% if @snapshot.status == "partial" %><%= inventory_status_badge(@snapshot) %><% end %>
     </div>
 
-    <%= form_with url: server_packages_path(@server), method: :get, data: { controller: "auto-submit", turbo_frame: dom_id(@server, :packages) },
+    <%= form_with url: server_packages_path(@server), method: :get, data: { controller: "auto-submit", turbo_frame: dom_id(@server, :package_results) },
           class: "packages-filters flex flex-wrap items-center gap-2 px-4 py-2.5" do |f| %>
       <%= f.search_field :q, value: @q, placeholder: t(".search_package"), autocomplete: "off", aria: { label: t(".search_package_2") },
             data: { action: "input->auto-submit#submitLater" }, class: "input w-64 py-1 text-xs" %>
@@ -28,6 +28,7 @@
       <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
     <% end %>
 
+    <%= turbo_frame_tag dom_id(@server, :package_results), class: "block" do %>
     <% if @packages.any? %>
       <table class="packages table-dense">
         <thead><tr><th class="pl-4"><%= t(".package") %></th><th><%= t("words.version") %></th><th><%= t(".update_2") %></th><th class="pr-4">Type</th></tr></thead>
@@ -52,6 +53,7 @@
       <% if @pager.multiple_pages? %><div class="border-t border-line px-4 pb-3"><%= render "shared/pagination", pager: @pager, noun: t("nouns.packages") %></div><% end %>
     <% else %>
       <p class="px-4 py-4 text-sm text-ink-3"><%= t(".package_matches") %></p>
+    <% end %>
     <% end %>
   <% end %>
 </turbo-frame>

@@ -62,6 +62,17 @@ module UiHelper
   end
 
   # Headline figure with a label and a caption, optionally toned.
+  # Instant search: the filter form (outside the frame) reloads only this
+  # frame, so the search field keeps its focus, its caret and what was typed
+  # while the request ran. Links inside the frame still navigate the page.
+  def search_results_frame(id = "search-results", &block)
+    turbo_frame_tag id, target: "_top", class: "block", &block
+  end
+
+  def search_form_data(frame = "search-results")
+    { controller: "auto-submit", turbo_frame: frame, turbo_action: "replace" }
+  end
+
   def stat_tile(label, value, caption = nil, tone: nil, icon: nil, id: nil)
     value_class = { good: "text-good-ink", warn: "text-warn-ink", crit: "text-crit-ink", off: "text-crit-ink" }.fetch(tone, "text-ink")
     tag.div(class: "stat-tile card px-4 py-3", id: id) do
