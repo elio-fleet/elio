@@ -4,6 +4,14 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.1.0-beta.3] — 2026-11-06
+
+### Upgrading from 0.1.0-beta.2
+
+- The database migrations run at start, as usual. They move the DNS records of the OVHcloud extension into the new DNS of the fleet, and turn its DNS alerts into the common ones of *Settings → Extensions → DNS*: an alert on in the extension stays on, and the records already reported are not reported again.
+- Each notification channel now groups its non-critical notifications over 10 minutes. Set *Group the notifications* to *No* on a channel to keep the previous behaviour.
+- To see the SSH keys of every account of a server, Elio needs root (log in as root, or password-less `sudo`); without it, nothing changes.
+
 ### Added
 
 - The interface in **English and French**, and any other language by adding a folder of translations (`config/locales/<language>/`). Each user picks a language in My account; otherwise Elio follows the browser, then the default language of the installation (Settings → General: English on a new installation, French on an existing one). Notification channels have their own language, and an invitation is sent in the language chosen for it.
@@ -106,6 +114,7 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.2...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3...HEAD
+[0.1.0-beta.3]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/elio-fleet/elio/releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/elio-fleet/elio/releases/tag/v0.1.0-beta.1
