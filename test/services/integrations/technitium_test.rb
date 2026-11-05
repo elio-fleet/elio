@@ -28,7 +28,7 @@ class Integrations::TechnitiumTest < ActiveSupport::TestCase
     summary = sync
 
     assert_equal "2 zones, 7 enregistrements, 3 rattachés à aucun serveur", summary
-    rows = TechnitiumRecord.order(:name, :record_type).map { |record| [ record.name, record.record_type, record.value, record.server&.name, record.matched_by ] }
+    rows = DnsRecord.order(:name, :record_type).map { |record| [ record.name, record.record_type, record.value, record.server&.name, record.matched_by ] }
     assert_equal [
       [ "old.example.test", "A", "198.51.100.99", nil, nil ],
       [ "shop.example.test", "CNAME", "cdn.provider.example", nil, nil ],
@@ -38,27 +38,27 @@ class Integrations::TechnitiumTest < ActiveSupport::TestCase
       [ "db.internal.test", "A", "10.0.0.12", "Database", "address" ],
       [ "vpn.internal.test", "A", "10.8.0.100", nil, nil ]
     ].sort_by { |name, type, *| [ name, type ] }, rows
-    assert_equal [ "old.example.test", "vpn.internal.test" ], TechnitiumRecord.outside_fleet.order(:name).pluck(:name)
-    assert_not TechnitiumRecord.exists?(record_type: %w[SOA NS])
+    assert_equal [ "old.example.test", "vpn.internal.test" ], DnsRecord.outside_fleet.order(:name).pluck(:name)
+    assert_not DnsRecord.exists?(record_type: %w[SOA NS])
   end
 
   test "only the zones chosen, and a sync replaces the records" do
     @integration.update!(settings: @integration.settings.merge("zones" => [ "internal.test" ]))
     sync
-    assert_equal [ "internal.test" ], TechnitiumRecord.distinct.pluck(:zone)
+    assert_equal [ "internal.test" ], DnsRecord.distinct.pluck(:zone)
 
     @integration.update!(settings: @integration.settings.merge("zones" => []))
     fake_technitium("/api/zones/list" => { "response" => { "zones" => [ { "name" => "example.test" } ] }, "status" => "ok" }.to_json)
     sync
-    assert_equal [ "example.test" ], TechnitiumRecord.distinct.pluck(:zone)
+    assert_equal [ "example.test" ], DnsRecord.distinct.pluck(:zone)
   end
 
   test "a manual link wins, by name, and stays across syncs" do
-    @integration.links.create!(external_id: "vpn.internal.test", server: servers(:backup))
-    @integration.links.create!(external_id: "web.example.test", server: nil)
+    DnsLink.create!(name: "vpn.internal.test", server: servers(:backup))
+    DnsLink.create!(name: "web.example.test", server: nil)
     sync
-    assert_equal "Backup", TechnitiumRecord.find_by!(name: "vpn.internal.test").server.name
-    assert_equal [ nil, nil ], TechnitiumRecord.where(name: "web.example.test").pluck(:server_id)
+    assert_equal "Backup", DnsRecord.find_by!(name: "vpn.internal.test").server.name
+    assert_equal [ nil, nil ], DnsRecord.where(name: "web.example.test").pluck(:server_id)
   end
 
   test "outside-the-fleet records are logged once, not on the first sync, when the alert is on" do
@@ -108,13 +108,9 @@ class Integrations::TechnitiumTest < ActiveSupport::TestCase
     sync
     monitor = Integrations::UptimeKuma::Metrics.parse(%(monitor_status{monitor_id="9",monitor_name="Shop",monitor_type="http",monitor_url="https://www.example.test/",monitor_hostname="null",monitor_port="null"} 1\n)).monitors.sole
     match = Integrations::UptimeKuma::Matcher.new(Server.all, by_name: false).call(monitor)
-    assert_equal [ servers(:web), "technitium" ], [ match.server, match.matched_by ]
+    assert_equal [ servers(:web), "dns_record" ], [ match.server, match.matched_by ]
 
-    @integration.update!(enabled: false)
-    assert_nil Integrations::UptimeKuma::Matcher.new(Server.all, by_name: false).call(monitor), "not when the extension is off"
-
-    @integration.update!(enabled: true)
     text = ServerPrompt.new(servers(:web)).monitors
-    assert_includes text, "## Noms DNS qui pointent vers lui (Technitium)\n- web.example.test (A 203.0.113.10)\n- web.example.test (AAAA 2001:db8::10)\n- www.example.test (CNAME web.example.test)"
+    assert_includes text, "## Noms DNS qui pointent vers lui\n- web.example.test (A 203.0.113.10, Technitium)\n- web.example.test (AAAA 2001:db8::10, Technitium)\n- www.example.test (CNAME web.example.test, Technitium)"
   end
 end

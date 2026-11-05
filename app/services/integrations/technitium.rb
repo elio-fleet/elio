@@ -42,15 +42,14 @@ class Integrations::Technitium < Integrations::Base
 
     def sync(integration) = Integrations::Technitium::Sync.new(integration, client(integration)).call
 
-    def server_tabs = [ { key: "dns", label: I18n.t("integrations.technitium.tab"), count: ->(server) { server.technitium_records.size.nonzero? } } ]
-
-    def sidebar_links = [ { label: I18n.t("integrations.technitium.tab"), path: :technitium_records_path, icon: :globe, controller: "technitium_records" } ]
+    # Its records are in the DNS of the fleet (DNS page and tab, see Dns).
+    def dns_source?(_integration) = true
 
     def help_partial = "integrations/technitium/help"
 
     def health_reasons(integration, server)
       return [] unless integration.last_synced_at && integration.value(:alert_server_without_dns)
-      return [] if server.technitium_records.exists?
+      return [] if server.dns_records.of_source(Integrations::Technitium::Sync::SOURCE).exists?
 
       [ Inventory::HealthStatus.reason("warn", "integrations.technitium.health.no_dns") ]
     end

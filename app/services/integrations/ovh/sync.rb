@@ -1,6 +1,7 @@
 # Stores the OVHcloud resources (replacing the previous ones), attaches them
 # to the servers, logs the alerts enabled in the extension (once each) and
-# refreshes the health of the servers. Returns a summary.
+# refreshes the health of the servers. The DNS records go to the fleet's DNS
+# (Dns::Store, source "ovh"). Returns a summary.
 class Integrations::Ovh::Sync
   def initialize(integration, resources)
     @integration = integration
@@ -8,6 +9,9 @@ class Integrations::Ovh::Sync
   end
 
   def call
+    dns, @resources = @resources.partition { |resource| resource.kind == "dns_record" }
+    Dns::Store.replace("ovh", dns.map { |record| dns_row(record) })
+
     servers = Server.includes(:inventory_snapshots, :server_groups).order(:name).to_a
     links = @integration.links.to_h { |link| [ link.external_id, link.server_id ] }
     matches = Integrations::Ovh::Matcher.new(servers, manual_links: links).call(@resources)
@@ -27,12 +31,16 @@ class Integrations::Ovh::Sync
     log_alerts
     servers.each(&:refresh_health!)
 
-    counts = OvhResource.group(:kind).count
+    counts = OvhResource.group(:kind).count.merge("dns_record" => DnsRecord.of_source("ovh").count.nonzero?).compact
     parts = %w[instance dedicated vps ip dns_record].filter_map { |kind| I18n.t("integrations.ovh.sync.counts.#{kind}", count: counts[kind]) if counts[kind] }
     I18n.t("integrations.ovh.sync.summary", parts: parts.join(", ").presence || I18n.t("integrations.ovh.sync.no_resource"), unattached: I18n.t("integrations.ovh.sync.unattached", count: OvhResource.services.unattached.count))
   end
 
   private
+
+  def dns_row(record)
+    { source_id: record.external_id, zone: record.data["zone"], name: record.name, record_type: record.data["type"], value: record.data["target"], ttl: record.data["ttl"] }
+  end
 
   # Each alert once per resource, until the situation goes away.
   def log_alerts
@@ -45,9 +53,9 @@ class Integrations::Ovh::Sync
     end
 
     outside = Integrations::Ovh.records_outside_fleet.to_a
-    once(state, "dns_outside", outside.map(&:link_key)) do |key|
-      record = outside.find { |candidate| candidate.link_key == key }
-      Activity.record!(:dns_record_outside_fleet, user: nil, record: record.name, target: record.data["target"]) if @integration.value(:alert_dns_outside)
+    once(state, "dns_outside", outside.map(&:source_id)) do |key|
+      record = outside.find { |candidate| candidate.source_id == key }
+      Activity.record!(:dns_record_outside_fleet, user: nil, record: record.name, target: record.value) if @integration.value(:alert_dns_outside)
     end
 
     unmanaged = OvhResource.services.unattached.to_a

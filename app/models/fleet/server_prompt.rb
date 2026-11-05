@@ -20,7 +20,7 @@ class ServerPrompt
 
   def ovh_firewall
     document(:ovh_firewall, [
-      server_section, addresses_section, ports_section(public_only: true), local_firewall_section, ovh_firewall_section
+      server_section, addresses_section, dns_names_section, ports_section(public_only: true), local_firewall_section, ovh_firewall_section
     ])
   end
 
@@ -61,11 +61,12 @@ class ServerPrompt
     section(:addresses, lines)
   end
 
-  # With the Technitium DNS extension: the names that point to the server.
+  # The DNS names that point to the server (OVHcloud, Technitium…), with their source.
   def dns_names_section
-    return unless Integration.enabled?("technitium")
+    records = @server.dns_records.order(:name, :record_type, :source).to_a
+    return if records.empty? && !DnsRecord.exists?
 
-    section(:dns_names, @server.technitium_records.order(:name, :record_type).map { |record| "#{record.name} (#{record.record_type} #{record.value})" })
+    section(:dns_names, records.map { |record| "#{record.name} (#{record.record_type} #{record.value}, #{record.source_label})" })
   end
 
   def services = @server.inventory("services")&.data || {}

@@ -94,7 +94,7 @@
     </section>
   <% when *@integration_tabs.map { |tab| tab[:key] } %>
     <% tab = @integration_tabs.find { |candidate| candidate[:key] == @tab } %>
-    <%= render "integrations/#{tab[:integration].kind}/server_tab", server: @server, integration: tab[:integration] %>
+    <%= render tab[:partial] || "integrations/#{tab[:integration].kind}/server_tab", server: @server, integration: tab[:integration] %>
   <% when "notes" %>
     <%= render "server_notes/tab", server: @server, notes: @notes, pager: @pager %>
   <% when "history" %>

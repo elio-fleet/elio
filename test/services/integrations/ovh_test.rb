@@ -49,9 +49,11 @@ class Integrations::OvhTest < ActiveSupport::TestCase
     find = ->(kind, name) { OvhResource.find_by!(kind: kind, name: name) }
     assert_equal [ servers(:web), "address", "203.0.113.10" ], find.("dedicated", "web.example.com").then { [ _1.server, _1.matched_by, _1.matched_address ] }
     assert_equal [ servers(:web), "address" ], find.("ip", "203.0.113.10/32").then { [ _1.server, _1.matched_by ] }
-    assert_equal [ servers(:web), "address" ], find.("dns_record", "www.example.com").then { [ _1.server, _1.matched_by ] }
-    assert_equal [ servers(:web), "cname" ], find.("dns_record", "app.example.com").then { [ _1.server, _1.matched_by ] }
-    assert_nil find.("dns_record", "old.example.com").server
+    dns = ->(name) { DnsRecord.of_source("ovh").find_by!(name: name) }
+    assert_equal [ servers(:web), "address" ], dns.("www.example.com").then { [ _1.server, _1.matched_by ] }
+    assert_equal [ servers(:web), "cname" ], dns.("app.example.com").then { [ _1.server, _1.matched_by ] }
+    assert_nil dns.("old.example.com").server
+    assert_not OvhResource.exists?(kind: "dns_record"), "the DNS records are in the DNS of the fleet"
     assert_equal [ servers(:db), "name" ], find.("instance", "Database").then { [ _1.server, _1.matched_by ] }
     assert_nil find.("vps", "Staging").server
     assert_nil find.("ip", "198.51.100.7/32").server
