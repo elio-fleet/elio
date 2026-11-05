@@ -52,4 +52,12 @@ class Dns::StoreTest < ActiveSupport::TestCase
     assert_equal [ "www.example.test" ], DnsRecord.conflicting_names
     assert_equal 2, DnsRecord.conflicting.count
   end
+
+  test "a server is found by one of its DNS names (fleet search, ⌘K)" do
+    Dns::Store.replace("technitium", [ row("intranet.lan.test", "A", "203.0.113.10", zone: "lan.test") ])
+    server = Server.includes(:dns_records).find(servers(:web).id)
+    assert_equal [ "intranet.lan.test" ], server.dns_names
+    assert server.matches_search?("intranet")
+    assert_not servers(:db).matches_search?("intranet")
+  end
 end

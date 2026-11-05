@@ -86,9 +86,12 @@ class Server < ApplicationRecord
   # Search of the fleet page: name, SSH host, host name or any address (part of it).
   def matches_search?(query)
     words = query.to_s.downcase.split
-    haystack = [ name, host, hostname, *addresses ].compact.join(" ").downcase
+    haystack = [ name, host, hostname, *addresses, *dns_names ].compact.join(" ").downcase
     words.all? { |word| haystack.include?(word) }
   end
+
+  # The DNS names that point to the server (every DNS source).
+  def dns_names = dns_records.map(&:name).uniq
 
   # Text field of the form: "203.0.113.4, 2001:db8::1".
   def extra_addresses_text = extra_addresses.join(", ")
