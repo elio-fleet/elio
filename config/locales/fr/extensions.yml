@@ -325,3 +325,70 @@ fr:
       pending: En attente
       maintenance: Maintenance
       unknown: Inconnu
+  server_prompt:
+    task: Ce que je demande
+    none: "(rien)"
+    no_ports_inventory: "(pas encore d'inventaire des ports)"
+    sections:
+      server: Serveur
+      addresses: Adresses IP
+      services: Services systemd actifs
+      containers: Conteneurs Docker
+      ports: Ports en écoute
+      public_ports: Ports publics (joignables depuis Internet si aucun firewall ne les bloque)
+      existing_monitors: Sondes Uptime Kuma déjà rattachées à ce serveur
+      local_firewall: Firewall de la machine
+      ovh_firewall: Firewall réseau OVHcloud (par IP)
+    fields:
+      name: 'Nom dans Elio : %{value}'
+      hostname: 'Nom d''hôte : %{value}'
+      system: 'Système : %{value}'
+      virtualization: 'Virtualisation : %{value}'
+      ssh: 'Adresse SSH utilisée par Elio : %{value}'
+      groups: 'Groupes : %{value}'
+    expected_ports: "(ports publics attendus : %{ports})"
+    scopes:
+      public: publique
+      private: privée / VPN
+      local: locale uniquement
+    manual_address: ajoutée à la main dans Elio
+    container: image %{image}, %{state}
+    published: ports %{ports}
+    compose: projet Compose %{project}
+    'on': sur %{addresses}
+    in_container: conteneur %{container}
+    unexpected: non attendu par ses groupes
+    local_firewall:
+      allowed: autorisé par le firewall de la machine
+      blocked: bloqué par le firewall de la machine
+      open: aucun filtrage sur la machine
+      docker: publié par Docker, qui contourne ufw
+      unknown: firewall de la machine illisible
+    allowed_rule: autorise %{rule} depuis %{from}
+    anywhere: partout
+    ovh:
+      not_read: "%{block} : firewall non lu (produit non choisi dans l'extension)"
+      none: "%{block} : aucun firewall réseau créé"
+      enabled:
+        one: "%{ip} : activé, %{count} règle"
+        other: "%{ip} : activé, %{count} règles"
+      disabled:
+        one: "%{ip} : désactivé, %{count} règle"
+        other: "%{ip} : désactivé, %{count} règles"
+      rule: n°%{sequence} %{action} %{protocol} port %{port} source %{source} %{option}
+    monitors:
+      intro: Je surveille mes serveurs Linux avec Uptime Kuma. Voici ce qu'Elio (un outil d'inventaire) sait de l'un d'eux. Propose les sondes Uptime Kuma à créer pour lui.
+      task: 'Propose la liste des sondes à créer, sous forme de tableau : type (HTTP(s), HTTP(s) mot-clé, port TCP, ping, DNS, conteneur Docker…), cible (URL, hôte:port), intervalle de vérification, et pourquoi. Ne reprends pas les sondes qui existent déjà. Privilégie ce que les utilisateurs atteignent vraiment (adresses publiques, noms de domaine) ; une sonde sur une adresse privée ou VPN demande une instance Uptime Kuma sur ce réseau : précise-le. Ajoute une vérification de l''expiration du certificat pour les services HTTPS. Demande-moi ce qui manque (noms de domaine, URL à vérifier).'
+    ovh_firewall:
+      intro: Mon serveur Linux est hébergé chez OVHcloud. Voici ce qu'Elio (un outil d'inventaire) en sait. Propose les règles du firewall réseau OVHcloud (Edge Network Firewall) de ses adresses IP publiques.
+      task: 'Propose les règles du firewall réseau OVHcloud pour chaque IP publique, sous forme de tableau : séquence (0 à 19, la première règle qui correspond s''applique), action (permit / deny), protocole, port de destination, source, option TCP. Garde l''accès SSH d''Elio ouvert sur le port %{ssh_port} (ne restreins sa source que si je te donne l''adresse d''Elio). N''autorise que les ports publics qui doivent être joignables, et explique ceux que tu fermerais ou restreindrais. Ce firewall est sans état : prévois ce qui laisse revenir les réponses aux connexions sortantes du serveur (par exemple l''option TCP established), et termine par une règle qui refuse le reste. Signale les ports exposés par Docker et les différences avec le firewall de la machine.'
+  server_prompts:
+    dialog:
+      copy_hint: Généré depuis le dernier inventaire. Aucune clé, aucun jeton ni mot de passe n'y figure.
+      close: Fermer
+    monitors:
+      button: Prompt pour proposer des sondes
+      title: 'Prompt pour une IA : sondes à créer'
+    ovh_firewall:
+      button: Prompt pour proposer des règles de firewall
+      title: 'Prompt pour une IA : firewall réseau OVHcloud'

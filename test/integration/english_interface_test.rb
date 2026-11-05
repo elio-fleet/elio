@@ -144,6 +144,11 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   test "the extensions pages" do
     data = [ ".sidebar-groups", ".account-link", "pre", "code", ".font-mono" ]
     assert_english settings_integrations_path, except: data
+    Integration.find_or_initialize_by(kind: "uptime_kuma").update!(enabled: true, settings: { "url" => "https://u.test" }, secrets: { "api_key" => "k" })
+    Integration.find_or_initialize_by(kind: "ovh").update!(enabled: true, settings: { "application_key" => "a" }, secrets: { "application_secret" => "s", "consumer_key" => "c" })
+    # The prompts for an AI are written in the reader's language too.
+    assert_english server_path(servers(:web), tab: "monitors"), except: data
+    assert_english server_path(servers(:web), tab: "ovh"), except: data
   end
 
   test "the check finds French" do

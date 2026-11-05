@@ -1,0 +1,22 @@
+<%# A prompt for an AI assistant (ServerPrompt), in a modal with a copy button. `kind`: monitors or ovh_firewall. %>
+<% text = ServerPrompt.new(server).public_send(kind) %>
+<div data-controller="modal" class="server-prompt shrink-0" data-kind="<%= kind %>">
+  <button type="button" data-action="modal#open" class="server-prompt-button btn btn-secondary px-2.5 py-1 text-xs">
+    <%= icon :clipboard, class: "h-4 w-4" %> <%= t("server_prompts.#{kind}.button") %>
+  </button>
+  <dialog data-modal-target="dialog" data-action="click->modal#backdropClose" aria-labelledby="prompt-<%= kind %>-title"
+          class="m-auto w-full max-w-3xl rounded-xl border border-line bg-surface p-0 text-left text-ink shadow-xl backdrop:bg-black/40">
+    <div class="flex items-start justify-between gap-4 border-b border-line px-6 py-4">
+      <div>
+        <h2 id="prompt-<%= kind %>-title" class="text-base font-semibold"><%= t("server_prompts.#{kind}.title") %></h2>
+        <p class="mt-0.5 text-xs text-ink-3"><%= t("server_prompts.dialog.copy_hint") %></p>
+      </div>
+      <button type="button" data-action="modal#close" aria-label="<%= t("server_prompts.dialog.close") %>" class="btn btn-ghost btn-icon"><%= icon :x_mark %></button>
+    </div>
+    <div class="space-y-3 px-6 py-5" data-controller="clipboard">
+      <textarea readonly rows="18" data-clipboard-target="source" aria-label="<%= t("server_prompts.#{kind}.title") %>"
+                class="server-prompt-text input w-full font-mono text-xs leading-relaxed"><%= text %></textarea>
+      <div class="flex justify-end"><%= render "settings/copy_button" %></div>
+    </div>
+  </dialog>
+</div>
