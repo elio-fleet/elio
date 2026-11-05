@@ -1,0 +1,9 @@
+<%= turbo_frame_tag request.headers["Turbo-Frame"].to_s[/\Anote-preview-(?:new|\d+)\z/] || "note-preview-new" do %>
+  <div class="note-preview mt-2 rounded-lg border border-dashed border-line bg-subtle/40 px-3 py-2">
+    <% if @html.present? %>
+      <div class="note-body prose-note text-sm text-ink"><%= @html %></div>
+    <% else %>
+      <p class="text-xs text-ink-3"><%= t("server_notes.form.preview_empty") %></p>
+    <% end %>
+  </div>
+<% end %>

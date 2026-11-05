@@ -137,6 +137,26 @@
   .kbd {
     @apply rounded border border-line px-1 font-sans text-[10px] text-ink-3;
   }
+  /* Markdown written by users (server notes, Markdown module). */
+  .prose-note {
+    @apply space-y-2 leading-relaxed break-words;
+  }
+  .prose-note h1, .prose-note h2, .prose-note h3, .prose-note h4, .prose-note h5, .prose-note h6 {
+    @apply font-semibold text-ink;
+  }
+  .prose-note h1 { @apply text-base; }
+  .prose-note h2 { @apply text-sm; }
+  .prose-note ul { @apply list-disc pl-5; }
+  .prose-note ol { @apply list-decimal pl-5; }
+  .prose-note a { @apply text-accent underline; }
+  .prose-note code { @apply rounded bg-subtle px-1 font-mono text-[0.85em]; }
+  .prose-note pre { @apply overflow-x-auto rounded-md bg-neutral-950 px-3 py-2 text-xs text-neutral-100; }
+  .prose-note pre code { @apply bg-transparent p-0; }
+  .prose-note blockquote { @apply border-l-2 border-line pl-3 text-ink-2; }
+  .prose-note hr { @apply border-line; }
+  .prose-note table { @apply block overflow-x-auto text-xs; }
+  .prose-note th, .prose-note td { @apply border border-line px-2 py-1 text-left; }
+  .prose-note th { @apply bg-subtle font-medium; }
 }
 
 /* Ping requests show their own loading state (see server_ping_controller.js). */

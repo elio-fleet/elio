@@ -190,6 +190,9 @@ en:
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
+      server_note_added:
+        label: Note added
+        description: Someone left a note on a server (Notes tab).
     categories:
       keys: SSH keys
       servers: Servers
@@ -299,6 +302,7 @@ en:
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
       automation_run: "%{automation}: %{result}"
+      server_note_added: 'Note on “%{server}” by %{author}: %{excerpt}'
     target_account: "“%{server_name}” (%{account} account)"
   automation:
     whole_fleet: The whole fleet

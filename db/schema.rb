@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_183556) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -335,6 +335,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.index "lower((name)::text)", name: "index_server_groups_on_lower_name", unique: true
   end
 
+  create_table "server_notes", force: :cascade do |t|
+    t.bigint "server_id", null: false
+    t.bigint "user_id"
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["server_id", "created_at"], name: "index_server_notes_on_server_id_and_created_at"
+    t.index ["user_id"], name: "index_server_notes_on_user_id"
+  end
+
   create_table "server_vulnerabilities", force: :cascade do |t|
     t.bigint "server_id", null: false
     t.string "origin", default: "host", null: false
@@ -502,6 +512,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
   add_foreign_key "ovh_resources", "servers", on_delete: :nullify
   add_foreign_key "server_group_memberships", "server_groups", on_delete: :cascade
   add_foreign_key "server_group_memberships", "servers", on_delete: :cascade
+  add_foreign_key "server_notes", "servers", on_delete: :cascade
+  add_foreign_key "server_notes", "users", on_delete: :nullify
   add_foreign_key "server_vulnerabilities", "servers", on_delete: :cascade
   add_foreign_key "temporary_accesses", "public_keys", on_delete: :nullify
   add_foreign_key "temporary_accesses", "servers", on_delete: :cascade

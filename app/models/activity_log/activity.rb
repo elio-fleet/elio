@@ -43,6 +43,7 @@ class Activity < ApplicationRecord
     Kind.new(:port_closed, :security, :info),
     Kind.new(:ip_address_added, :servers, :info),
     Kind.new(:ip_address_removed, :servers, :info),
+    Kind.new(:server_note_added, :servers, :info),
     Kind.new(:security_updates_available, :security, :warning),
     Kind.new(:server_created, :servers, :info),
     Kind.new(:server_updated, :servers, :info),

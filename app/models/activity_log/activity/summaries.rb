@@ -51,6 +51,7 @@ module Activity::Summaries
     ip_address_removed: proc { Activity::Summaries.t(:ip_address_removed, address: data["address"], server: server_name) },
     security_updates_available: proc { Activity::Summaries.t(:security_updates_available, count: data["count"].to_i, server: server_name) },
     server_created: proc { Activity::Summaries.t(:server_created, server: server_name) },
+    server_note_added: proc { Activity::Summaries.t(:server_note_added, server: server_name, author: author_name, excerpt: data["excerpt"]) },
     server_updated: proc { Activity::Summaries.t(:server_updated, server: server_name) },
     servers_imported: proc do
       names = data["names"].to_a

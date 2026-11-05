@@ -190,6 +190,9 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      server_note_added:
+        label: Note ajoutée
+        description: Quelqu'un a laissé une note sur un serveur (onglet Notes).
     categories:
       keys: Clés SSH
       servers: Serveurs
@@ -299,6 +302,7 @@ fr:
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
       automation_run: "%{automation} : %{result}"
+      server_note_added: 'Note sur « %{server} » par %{author} : %{excerpt}'
     target_account: "« %{server_name} » (compte %{account})"
   automation:
     whole_fleet: Tout le parc
