@@ -21,14 +21,22 @@ class NotificationDigest
   def lines
     lines = [ I18n.t("notification_digest.fleet", online: summary.online, total: summary.total, to_watch: summary.to_watch, critical: summary.critical, updates: I18n.t("notification_digest.security_updates", count: summary.security_updates)),
               I18n.t("notification_digest.activity", events: I18n.t("notification_digest.events", count: activities.size), critical: counts[:critical], warning: counts[:warning]) ]
-    if (cves = ServerVulnerability.distinct.count(:cve)).positive?
-      fixable = ServerVulnerability.fixable.distinct.count(:cve)
-      serious = ServerVulnerability.fixable.at_least("high").distinct.count(:cve)
-      lines << I18n.t("notification_digest.vulnerabilities", cves: cves, fixable: fixable, serious: serious, servers: I18n.t("count.servers", count: ServerVulnerability.distinct.count(:server_id)))
+    # The servers' own packages, then their Docker images (fixed by updating the image).
+    if (cves = ServerVulnerability.host.distinct.count(:cve)).positive?
+      lines << I18n.t("notification_digest.vulnerabilities", **vulnerability_counts(ServerVulnerability.host), cves: cves,
+                                                             servers: I18n.t("count.servers", count: ServerVulnerability.host.distinct.count(:server_id)))
+    end
+    if (cves = ServerVulnerability.images.distinct.count(:cve)).positive?
+      lines << I18n.t("notification_digest.image_vulnerabilities", **vulnerability_counts(ServerVulnerability.images), cves: cves,
+                                                                   images: I18n.t("count.docker_images", count: ServerVulnerability.images.distinct.count(:image)))
     end
     highlights = activities.reject { |activity| activity.severity == :info }.first(HIGHLIGHTS)
     lines += highlights.map { |activity| "- #{activity.label} : #{activity.summary}" }
     lines << I18n.t("notification_digest.nothing") if activities.empty?
     lines
+  end
+
+  def vulnerability_counts(scope)
+    { fixable: scope.fixable.distinct.count(:cve), serious: scope.fixable.at_least("high").distinct.count(:cve) }
   end
 end

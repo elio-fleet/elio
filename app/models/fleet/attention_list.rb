@@ -45,7 +45,7 @@ class AttentionList
   end
 
   def fleet_items
-    [ security_updates_item, vulnerabilities_item ].compact
+    [ security_updates_item, vulnerabilities_item, image_vulnerabilities_item ].compact
   end
 
   def security_updates_item
@@ -56,17 +56,26 @@ class AttentionList
              I18n.t("attention_list.see_packages"), @routes.packages_path)
   end
 
-  # Fixable CVEs at the alert severity of the settings, on the whole fleet.
+  # Fixable CVEs at the alert severity of the settings, on the whole fleet:
+  # the servers' own packages, then (a warning) their Docker images.
   def vulnerabilities_item
+    serious_vulnerabilities_item("crit", :host, :vulnerabilities, origin: "host")
+  end
+
+  def image_vulnerabilities_item
+    serious_vulnerabilities_item("warn", :images, :image_vulnerabilities, origin: "image")
+  end
+
+  def serious_vulnerabilities_item(tone, origin_scope, key, origin:)
     minimum = AppSetting.current.vulnerability_alert_severity
     return if minimum == "none"
 
-    scope = ServerVulnerability.fixable.at_least(minimum)
+    scope = ServerVulnerability.public_send(origin_scope).fixable.at_least(minimum)
     cves = scope.distinct.count(:cve)
     return if cves.zero?
 
     servers = scope.distinct.count(:server_id)
-    Item.new("crit", :shield_exclamation, I18n.t("count.servers", count: servers), I18n.t("attention_list.vulnerabilities", count: cves),
-             I18n.t("attention_list.see_vulnerabilities"), @routes.vulnerabilities_path(fixable: 1, severity: minimum))
+    Item.new(tone, :shield_exclamation, I18n.t("count.servers", count: servers), I18n.t("attention_list.#{key}", count: cves),
+             I18n.t("attention_list.see_vulnerabilities"), @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: origin))
   end
 end

@@ -86,13 +86,19 @@ module Vulnerabilities::Matcher
 
   # Logs vulnerability_found for these CVEs of a server (the fixable ones at
   # the alert severity that were not there before).
-  def self.log_serious(server, cves, image: nil)
+  def self.log_serious(server, cves, origin: nil, image: nil)
     return if cves.empty?
 
     rows = server.server_vulnerabilities.where(cve: cves.to_a)
-    ordered = rows.sort_by { |row| -Vulnerability.severity_rank(row.severity) }
-    Activity.record!(:vulnerability_found, server: server, user: nil, count: cves.size, cves: ordered.map(&:cve).uniq.first(5),
-                                           packages: ordered.map(&:source_package).uniq.first(5), image: image || ordered.first&.image)
+    rows = rows.where(origin: origin) if origin
+    rows = rows.where(image: image) if image
+    # One activity for the server's own packages, one per image: they are not
+    # fixed the same way.
+    rows.group_by(&:image).sort_by { |key, _| key.to_s }.each do |row_image, list|
+      ordered = list.sort_by { |row| -Vulnerability.severity_rank(row.severity) }
+      Activity.record!(:vulnerability_found, server: server, user: nil, count: ordered.map(&:cve).uniq.size, cves: ordered.map(&:cve).uniq.first(5),
+                                             packages: ordered.map(&:source_package).uniq.first(5), image: row_image)
+    end
   end
 
   def self.log_new(server, rows, known)
@@ -102,7 +108,7 @@ module Vulnerabilities::Matcher
     serious = rows.select { |row| row[:fixed_version] && row[:severity].in?(Vulnerability.severities_from(minimum)) && !known.include?(row[:cve]) }
     return if serious.empty?
 
-    log_serious(server, serious.map { |row| row[:cve] }.to_set, image: serious.first[:image])
+    log_serious(server, serious.map { |row| row[:cve] }.to_set, origin: serious.first[:origin], image: serious.first[:image])
   end
   private_class_method :log_new
 end

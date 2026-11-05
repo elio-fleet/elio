@@ -2,8 +2,19 @@
 # (looping, unhealthy, stopped for long), then the images by repository with
 # the tags in use on each server, the new versions published by the
 # registries and the vulnerabilities. Filters: ?q= (image), ?group=, ?updates=1.
+# ?tab=cves: the vulnerabilities of the images, by image then by package.
 class DockerController < ApplicationController
   PER_PAGE = 100
+  IMAGES_PER_PAGE = 20
+  TABS = %w[images cves].freeze
+  # The CVEs of an image, with the servers and containers that run it.
+  ImageVulnerabilities = Data.define(:image, :rows, :groups, :uses) do
+    def cves = rows.map(&:cve).uniq
+    def fixable = rows.select(&:fixable?).map(&:cve).uniq
+    def severity = Vulnerability::SEVERITIES.keys.find { |key| rows.any? { |row| row.severity == key } } || "unknown"
+    def max_score = groups.filter_map(&:max_score).max
+    def servers = uses.map(&:first).uniq
+  end
   Version = Data.define(:tag, :image, :servers, :state, :cves, :fixable)
   Repository = Data.define(:name, :versions) do
     def servers = versions.flat_map(&:servers).uniq
@@ -25,6 +36,10 @@ class DockerController < ApplicationController
     @repositories = repositories(dockers)
     @repositories.select! { |repository| repository.name.downcase.include?(@q.downcase) } if @q.present?
     @repositories.select!(&:updates?) if @updates_only
+    @tab = params[:tab].presence_in(TABS) || "images"
+    @image_vulnerability_count = ServerVulnerability.images.where(server: servers).distinct.count(:cve)
+    return index_cves(servers, dockers) if @tab == "cves"
+
     @summary = { servers: dockers.size, containers: dockers.sum { |_, data| Array(data["containers"]).size },
                  running: dockers.sum { |_, data| Array(data["containers"]).count { |container| container["state"] == "running" } },
                  updates: @repositories.count(&:updates?), troubled: @troubled.count { |_, container| container["looping"] || container["health"] == "unhealthy" } }
@@ -33,6 +48,22 @@ class DockerController < ApplicationController
   end
 
   private
+
+  def index_cves(servers, dockers)
+    rows = ServerVulnerability.images.where(server: servers).includes(:server)
+    rows = rows.where("server_vulnerabilities.image ILIKE ?", "%#{ServerVulnerability.sanitize_sql_like(@q)}%") if @q.present?
+    containers = dockers.flat_map { |server, data| Array(data["containers"]).map { |container| [ server, container ] } }
+    images = rows.to_a.group_by(&:image).map do |image, list|
+      ImageVulnerabilities.new(image: image, rows: list, groups: PackageVulnerabilities.new(list).groups,
+                               uses: containers.select { |server, container| container["image"] == image && list.any? { |row| row.server_id == server.id } })
+    end
+    @pager = paginate(images.sort_by { |image| [ image.fixable.empty? ? 1 : 0, Vulnerability::SEVERITIES.keys.index(image.severity), -image.cves.size, image.image ] },
+                      per_page: IMAGES_PER_PAGE)
+    @images = @pager.records
+    @summary = { images: images.size, cves: images.flat_map(&:cves).uniq.size, fixable: images.flat_map(&:fixable).uniq.size,
+                 servers: images.flat_map { |image| image.rows.map(&:server_id) }.uniq.size }
+    render :cves
+  end
 
   # Images by repository ("nginx"), then by tag, with the servers that run them.
   def repositories(dockers)

@@ -120,9 +120,23 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english server_path(servers(:web), tab: "vulnerabilities"), except: data
     assert_english server_path(servers(:web), tab: "docker"), except: data
     assert_english docker_path, except: data
+    assert_english docker_path(tab: "cves"), except: data
     assert_english settings_vulnerabilities_path, except: data
     assert_english settings_docker_path, except: data
     assert_english new_settings_score_provider_path, except: data
+  end
+
+  test "vulnerabilities of a server and of its images, with the commands to fix them" do
+    data = [ ".sidebar-groups", ".account-link", "pre", "code", ".font-mono", ".package-name", "[data-cve]" ]
+    { nil => "3.0.15-1~deb12u1", "nginx:1.27" => "3.0.15-1~deb12u1", "redis:7" => nil }.each do |image, fixed|
+      servers(:web).server_vulnerabilities.create!(origin: image ? "image" : "host", source: "debian", image: image, cve: "CVE-2024-9143", source_package: "openssl",
+                                                   packages: [ "libssl3" ], installed_version: "3.0.14-1~deb12u1", fixed_version: fixed, severity: "high")
+    end
+    assert_english server_path(servers(:web), tab: "vulnerabilities"), except: data
+    assert_english server_path(servers(:web), tab: "vulnerabilities", containers: "1", view: "cves"), except: data
+    assert_english vulnerability_path("CVE-2024-9143", server_id: servers(:web).id), except: data
+    assert_english vulnerability_path("CVE-2024-9143"), except: data
+    assert_english docker_path(tab: "cves"), except: data
   end
 
   test "the extensions pages" do

@@ -57,6 +57,8 @@ en:
       fixes_release: Fixes by release
       derived: 'not rated by %{distribution}: derived from the score'
       exploited_since: ", since %{date}"
+      how_to_fix: How to fix it
+      fix_never_run: 'Commands to run yourself: Elio only reads the servers.'
     debian_tracker:
       not_tracker: This file is not the Debian Security Tracker one
       unreadable: 'Unreadable Debian Security Tracker file: %{truncate}'
@@ -94,6 +96,19 @@ en:
       no_server: "%{label}: no server concerned"
       done: "%{label}: %{count} vulnerabilities (%{releases_join})"
       nothing_for_fleet: No vulnerability of the fleet's releases (%{releases_join}) in this file
+    fix_plans:
+      system: System packages
+      image_html: Image %{image}
+      available: fix available
+      pending: not seen by the server yet
+      update_image: update the image
+      hint_available: The repositories of the server offer the fixed version.
+      hint_pending: 'A fixed version exists, but the server did not offer it at its last inventory: refresh the package lists first. If apt still offers nothing, the fix has not reached the repositories yet.'
+      hint_image: Pull the image again (or rebuild it if it is built here), then recreate its containers.
+      reboot: The kernel is only replaced at the next reboot.
+      containers: 'Containers: %{containers}. A container started without Compose must be recreated with its options.'
+      none_host: 'No fix for now: the distribution has not published a fixed version.'
+      none_image: 'No fix in the distribution of the image for now: a more recent tag of the image may be based on a fixed release.'
   servers:
     vulnerabilities_card:
       whole_fleet: The whole fleet
@@ -128,6 +143,16 @@ en:
       fixable:
         one: "%{count} fixable"
         other: "%{count} fixable"
+      on_server:
+        one: "%{count} on the server"
+        other: "%{count} on the server"
+      in_images:
+        one: "%{count} in %{images}"
+        other: "%{count} in %{images}"
+      images:
+        one: "%{count} Docker image"
+        other: "%{count} Docker images"
+      include_images: Include the Docker containers
     vulnerability_packages:
       highest_score: Highest score
       repositories_server_already_offer: The repositories of the server already offer this version
@@ -205,6 +230,30 @@ en:
       vulnerabilities: Vulnerabilities
       versions_fleet_html: "%{count} versions on the fleet"
       container: no container
+    tabs:
+      images: Containers and images
+      cves: CVE
+    cves:
+      intro: 'The vulnerabilities of the Docker images of the fleet: they are fixed by updating the image, not the server.'
+      images: Vulnerable images
+      cves: CVE in the images
+      fixable: Fixable
+      by_updating: by updating the image
+      servers: Servers concerned
+      highest_score: Highest score
+      counts_html: "%{cves} CVE, %{fixable}"
+      fixable_count:
+        one: "%{count} fixable"
+        other: "%{count} fixable"
+      used_by: 'Used by:'
+      on_servers: 'On:'
+      advice_update: 'Update the image: pull a more recent tag (or rebuild it on an updated base image), then recreate the containers. The command for each server is in the window of a CVE.'
+      advice_none: 'No fix in the distribution of the image for now: a more recent tag may be based on a fixed release.'
+      by_package:
+        one: "%{count} package"
+        other: "%{count} packages"
+      none: No known vulnerability in the Docker images of the fleet.
+      none_matches: No vulnerable image matches this search.
   settings:
     docker:
       show:
