@@ -41,6 +41,7 @@ Rails.application.routes.draw do
 
   resource :settings, only: :show
   namespace :settings do
+    resource :dns_alerts, only: :update, path: "extensions/dns"
     resources :users, only: %i[index update] do
       member do
         post :deactivate

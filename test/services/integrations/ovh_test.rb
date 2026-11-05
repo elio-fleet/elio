@@ -85,7 +85,8 @@ class Integrations::OvhTest < ActiveSupport::TestCase
   end
 
   test "alerts: each once, never on the first sync, only when enabled" do
-    @integration.update!(settings: @integration.settings.merge("alert_dns_outside" => true, "alert_unmanaged_service" => true))
+    @integration.update!(settings: @integration.settings.merge("alert_unmanaged_service" => true))
+    AppSetting.current.update!(dns_alert_outside: true)
     fake_ovh
     @integration.sync!
     assert_equal 0, Activity.where(kind: %w[ovh_service_expiring dns_record_outside_fleet ovh_service_unmanaged]).count
@@ -114,15 +115,14 @@ class Integrations::OvhTest < ActiveSupport::TestCase
     assert_equal [ [ "warn", "Service OVH « web.example.com » : expire dans 10 j" ] ], reasons.call
 
     @integration.update!(settings: @integration.settings.merge("expiring_ignore_auto_renew" => true, "alert_firewall_disabled" => true,
-                                                                 "alert_reverse_mismatch" => true, "alert_server_without_dns" => true))
+                                                                 "alert_reverse_mismatch" => true))
     assert_equal 1, reasons.call.size, "firewall on, reverse = host name, DNS records exist"
 
     fake_ovh(ovh_account(renew_automatic: true).merge("/ip/203.0.113.10%2F32/firewall/203.0.113.10" => { "enabled" => false },
                                                       "/ip/203.0.113.10%2F32/reverse/203.0.113.10" => { "reverse" => "ns1234.ip-203-0-113.eu." },
                                                       "/domain/zone/example.com/record?fieldType=A" => [ 2 ], "/domain/zone/example.com/record?fieldType=CNAME" => []))
     @integration.sync!
-    assert_equal [ [ "warn", "Firewall réseau OVH désactivé sur 203.0.113.10" ], [ "warn", "Reverse DNS de 203.0.113.10 (ns1234.ip-203-0-113.eu) ≠ hostname" ],
-                   [ "warn", "Aucun enregistrement DNS OVH ne pointe vers ce serveur" ] ], reasons.call
+    assert_equal [ [ "warn", "Firewall réseau OVH désactivé sur 203.0.113.10" ], [ "warn", "Reverse DNS de 203.0.113.10 (ns1234.ip-203-0-113.eu) ≠ hostname" ] ], reasons.call
   end
 
   test "test_connection checks the rights: missing ones, and a key that could write" do

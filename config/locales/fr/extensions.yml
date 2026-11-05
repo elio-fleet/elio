@@ -89,7 +89,6 @@ fr:
         firewall_disabled: Firewall réseau OVH désactivé sur %{ip}
         no_reverse: Pas de reverse DNS pour %{ip}
         reverse_mismatch: Reverse DNS de %{ip} (%{reverse}) ≠ hostname
-        no_dns: Aucun enregistrement DNS OVH ne pointe vers ce serveur
       endpoint: Point d'accès
       ovh_eu: OVHcloud Europe (ovh-eu)
       ovh_ca: OVHcloud Canada (ovh-ca)
@@ -106,8 +105,6 @@ fr:
       expiring_ignore_auto_renew: Ignorer les services en renouvellement automatique
       alert_firewall_disabled: Firewall réseau OVH désactivé sur une IP d'un serveur
       alert_reverse_mismatch: Reverse DNS absent ou différent du hostname
-      alert_server_without_dns: Serveur avec une IP OVH mais aucun enregistrement DNS
-      alert_dns_outside: Enregistrement DNS vers une IP hors du parc
       alert_unmanaged_service: Service OVH rattaché à aucun serveur du parc
       alert_unmanaged_service_hint: une machine payée mais pas suivie par Elio.
       writable: ". ⚠ Cette clé permet aussi d'écrire (%{writes_first}) : refaites-en une en lecture seule"
@@ -203,10 +200,6 @@ fr:
       self_signed: Accepter un certificat auto-signé
       zones: Zones à lire
       zones_hint: 'Séparées par des virgules. Vide : toutes les zones que le jeton peut voir.'
-      section_alerts: Alertes
-      alert_outside: Un enregistrement pointe vers une IP hors du parc
-      alert_server_without_dns: Serveur sans nom DNS
-      alert_server_without_dns_hint: Un avertissement sur les serveurs vers lesquels aucun enregistrement ne pointe.
       connected:
         one: 'Connecté à Technitium DNS Server %{version} : %{count} zone lisible'
         other: 'Connecté à Technitium DNS Server %{version} : %{count} zones lisibles'
@@ -226,8 +219,6 @@ fr:
         unattached:
           one: "%{count} rattaché à aucun serveur"
           other: "%{count} rattachés à aucun serveur"
-      health:
-        no_dns: Aucun nom DNS dans Technitium
       help:
         title: Créer un jeton d'API en lecture seule dans Technitium
         step1_html: "<strong>Administration → Groups</strong> : ajoutez un groupe (par exemple <code>Elio read-only</code>), puis dans <strong>Administration → Permissions</strong> donnez-lui seulement <strong>View</strong> sur <strong>Zones</strong>."
@@ -493,3 +484,6 @@ fr:
     attached: "%{name} est rattaché à « %{server_name} »."
     detached: "%{name} n'est rattaché à aucun serveur."
     automatic: "%{name} revient au rattachement automatique."
+  dns:
+    health:
+      no_name: Aucun nom DNS

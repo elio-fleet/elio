@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_05_194024) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_225805) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_194024) do
     t.text "docker_registry_credentials"
     t.jsonb "score_bands", default: [{"from" => 0, "color" => "green"}, {"from" => 4, "color" => "orange"}, {"from" => 7, "color" => "red"}], null: false
     t.string "default_locale", default: "en", null: false
+    t.boolean "dns_alert_outside", default: false, null: false
+    t.boolean "dns_alert_without_name", default: false, null: false
+    t.jsonb "dns_without_name_ignored_group_ids", default: [], null: false
+    t.boolean "dns_alert_conflict", default: false, null: false
+    t.jsonb "dns_alert_state", default: {}, null: false
   end
 
   create_table "automations", force: :cascade do |t|

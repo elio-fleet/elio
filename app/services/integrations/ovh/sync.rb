@@ -52,12 +52,6 @@ class Integrations::Ovh::Sync
       Activity.record!(:ovh_service_expiring, server: resource.server, user: nil, service: resource.name, days: resource.days_left) if @integration.value(:alert_expiring)
     end
 
-    outside = Integrations::Ovh.records_outside_fleet.to_a
-    once(state, "dns_outside", outside.map(&:source_id)) do |key|
-      record = outside.find { |candidate| candidate.source_id == key }
-      Activity.record!(:dns_record_outside_fleet, user: nil, record: record.name, target: record.value) if @integration.value(:alert_dns_outside)
-    end
-
     unmanaged = OvhResource.services.unattached.to_a
     once(state, "unmanaged", unmanaged.map(&:link_key)) do |key|
       service = unmanaged.find { |candidate| candidate.link_key == key }

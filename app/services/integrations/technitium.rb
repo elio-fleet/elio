@@ -1,6 +1,6 @@
 # Technitium DNS Server (read-only API token): the A, AAAA and CNAME records of
-# its zones, attached to the servers they point to, with alerts for records
-# pointing outside the fleet and servers without a DNS name.
+# its zones, in the DNS of the fleet (Dns: attached to the servers, common
+# DNS alerts).
 class Integrations::Technitium < Integrations::Base
   self.key = "technitium"
   self.label = "Technitium DNS"
@@ -9,17 +9,13 @@ class Integrations::Technitium < Integrations::Base
 
   class << self
     def fields
-      alerts = I18n.t("integrations.technitium.section_alerts")
       [
         Integrations::Field.new(key: :url, label: I18n.t("integrations.technitium.url"), type: :url, required: true, placeholder: "https://dns.example.com:53443",
                                 hint: I18n.t("integrations.technitium.url_hint")),
         Integrations::Field.new(key: :api_token, label: I18n.t("integrations.technitium.api_token"), secret: true, required: true, hint: I18n.t("integrations.technitium.api_token_hint")),
         Integrations::Field.new(key: :allow_self_signed, label: I18n.t("integrations.technitium.self_signed"), type: :boolean, default: false),
         Integrations::Field.new(key: :zones, label: I18n.t("integrations.technitium.zones"), type: :list, default: [], placeholder: "example.com, lan.example.com",
-                                hint: I18n.t("integrations.technitium.zones_hint")),
-        Integrations::Field.new(key: :alert_outside, label: I18n.t("integrations.technitium.alert_outside"), type: :boolean, default: false, section: alerts),
-        Integrations::Field.new(key: :alert_server_without_dns, label: I18n.t("integrations.technitium.alert_server_without_dns"), type: :boolean, default: false, section: alerts,
-                                hint: I18n.t("integrations.technitium.alert_server_without_dns_hint"))
+                                hint: I18n.t("integrations.technitium.zones_hint"))
       ]
     end
 
@@ -46,12 +42,5 @@ class Integrations::Technitium < Integrations::Base
     def dns_source?(_integration) = true
 
     def help_partial = "integrations/technitium/help"
-
-    def health_reasons(integration, server)
-      return [] unless integration.last_synced_at && integration.value(:alert_server_without_dns)
-      return [] if server.dns_records.of_source(Integrations::Technitium::Sync::SOURCE).exists?
-
-      [ Inventory::HealthStatus.reason("warn", "integrations.technitium.health.no_dns") ]
-    end
   end
 end

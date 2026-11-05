@@ -89,7 +89,6 @@ en:
         firewall_disabled: OVH network firewall disabled on %{ip}
         no_reverse: No reverse DNS for %{ip}
         reverse_mismatch: Reverse DNS of %{ip} (%{reverse}) ≠ host name
-        no_dns: No OVH DNS record points to this server
       endpoint: Endpoint
       ovh_eu: OVHcloud Europe (ovh-eu)
       ovh_ca: OVHcloud Canada (ovh-ca)
@@ -106,8 +105,6 @@ en:
       expiring_ignore_auto_renew: Ignore the services renewed automatically
       alert_firewall_disabled: OVH network firewall disabled on an IP of a server
       alert_reverse_mismatch: Reverse DNS missing or different from the host name
-      alert_server_without_dns: Server with an OVH IP but no DNS record
-      alert_dns_outside: DNS record to an IP outside the fleet
       alert_unmanaged_service: OVH service attached to no server of the fleet
       alert_unmanaged_service_hint: a machine paid for but not followed by Elio.
       writable: ". ⚠ This key can also write (%{writes_first}): create a read-only one again"
@@ -203,10 +200,6 @@ en:
       self_signed: Accept a self-signed certificate
       zones: Zones to read
       zones_hint: 'Separated by commas. Empty: every zone the token can see.'
-      section_alerts: Alerts
-      alert_outside: A record points to an IP outside the fleet
-      alert_server_without_dns: Server without a DNS name
-      alert_server_without_dns_hint: A warning on the servers to which no record points.
       connected:
         one: 'Connected to Technitium DNS Server %{version}: %{count} zone readable'
         other: 'Connected to Technitium DNS Server %{version}: %{count} zones readable'
@@ -226,8 +219,6 @@ en:
         unattached:
           one: "%{count} attached to no server"
           other: "%{count} attached to no server"
-      health:
-        no_dns: No DNS name in Technitium
       help:
         title: Create a read-only API token in Technitium
         step1_html: "<strong>Administration → Groups</strong>: add a group (e.g. <code>Elio read-only</code>), and in <strong>Administration → Permissions</strong> give it <strong>View</strong> only on <strong>Zones</strong>."
@@ -493,3 +484,6 @@ en:
     attached: "%{name} is attached to “%{server_name}”."
     detached: "%{name} is attached to no server."
     automatic: "%{name} goes back to the automatic attachment."
+  dns:
+    health:
+      no_name: No DNS name

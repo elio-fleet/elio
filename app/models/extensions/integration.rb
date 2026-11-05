@@ -40,7 +40,7 @@ class Integration < ApplicationRecord
     end
 
     # Health reasons the enabled extensions raise for a server.
-    def health_reasons(server) = enabled_kinds.flat_map { |integration| integration.definition.health_reasons(integration, server) }
+    def health_reasons(server) = enabled_kinds.flat_map { |integration| integration.definition.health_reasons(integration, server) } + Dns.health_reasons(server)
   end
 
   def self.http_url?(value)

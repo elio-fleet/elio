@@ -73,6 +73,7 @@ class Activity < ApplicationRecord
     Kind.new(:server_without_monitor, :servers, :warning),
     Kind.new(:ovh_service_expiring, :servers, :warning),
     Kind.new(:dns_record_outside_fleet, :security, :warning),
+    Kind.new(:dns_record_conflict, :configuration, :info),
     Kind.new(:ovh_service_unmanaged, :servers, :info),
     Kind.new(:integration_enabled, :configuration, :info),
     Kind.new(:integration_disabled, :configuration, :info),

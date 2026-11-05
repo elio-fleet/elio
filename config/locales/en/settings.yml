@@ -58,3 +58,15 @@ en:
       copy: Copy
       copied: Copied
     automation_active: on, %{interval}
+    dns_alerts:
+      title: DNS
+      intro: Alerts on the DNS of the fleet, whatever the source (%{sources}).
+      outside: A record points to an IP outside the fleet
+      outside_hint: An activity for each new A / AAAA record whose IP is of no server (often an old server or a forgotten name).
+      without_name: Server without a DNS name
+      without_name_hint: A warning on the servers to which no record of any source points.
+      conflict: A name differs between sources
+      conflict_hint: 'An activity when a name gets other records in another source. Off by default: a public IP in one and a private one in the other is often on purpose.'
+      ignored_groups: 'Groups not concerned by “without a DNS name”:'
+      save: Save the DNS alerts
+      saved: DNS alerts saved.
