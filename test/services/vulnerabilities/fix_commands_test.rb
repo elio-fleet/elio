@@ -41,7 +41,7 @@ class Vulnerabilities::FixCommandsTest < ActiveSupport::TestCase
 
     plan = plans(server, [ vulnerability ]).sole
     assert plan.reboot
-    assert_equal [ "apt-get install --only-upgrade linux-image-6.1.0-25-amd64", "reboot" ], plan.commands
+    assert_equal [ "apt-get install --only-upgrade linux-image-6.1.0-25-amd64" ], plan.commands, "the reboot is a note, never in the block to paste"
   end
 
   test "no fixed version: nothing to run" do
