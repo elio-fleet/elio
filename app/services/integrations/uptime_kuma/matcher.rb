@@ -3,7 +3,8 @@ require "resolv"
 # Finds the server a probe watches, by the rules enabled in the extension:
 # its host name when it is one of the server's IPs (WireGuard included), the
 # host of its URL (also resolved in DNS, optionally), or the server's name in
-# the probe's name ("[SRV] FR-UTILS-1"). A manual link always wins.
+# the probe's name ("[SRV] FR-UTILS-1"). A manual link always wins. With the
+# Technitium DNS extension, a host name is also looked up in its records.
 class Integrations::UptimeKuma::Matcher
   Match = Data.define(:server, :matched_by, :address)
 
@@ -15,6 +16,8 @@ class Integrations::UptimeKuma::Matcher
     @manual_links = manual_links
     @rules = { by_ip:, by_host:, resolve_dns:, by_name: }
     @dns = {}
+    # { "web.example.com" => server } from the Technitium records attached to a server.
+    @dns_names = Integration.enabled?("technitium") ? TechnitiumRecord.attached.pluck(:name, :server_id).to_h { |name, id| [ name, @servers_by_id[id] ] }.compact : {}
   end
 
   # Match or nil (no server).
@@ -40,6 +43,9 @@ class Integrations::UptimeKuma::Matcher
 
     server = @directory.by_host(host)
     return Match.new(server, "url", nil) if server
+
+    server = @dns_names[host.downcase.chomp(".")]
+    return Match.new(server, "technitium", nil) if server
     return unless @rules[:resolve_dns]
 
     resolve(host).each do |address|

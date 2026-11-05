@@ -43,7 +43,7 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 | **Clés SSH** | Un trousseau commun (personnes et machines), des clés ajoutées ou retirées d'un serveur en un clic, des **accès temporaires** qui expirent tout seuls, les clés inconnues signalées, la rotation de la clé d'Elio sans coupure. |
 | **Alertes** | Ce qui demande votre attention, par gravité, sur la vue d'ensemble ; journal d'activité ; notifications Slack, Discord, email ou webhook signé, regroupées par type (les critiques tout de suite) ; résumé quotidien. |
 | **Automatisations** | Chaque collecte tourne à la fréquence voulue, sur tout le parc ou par groupe, suivie en direct dans la page *Tâches*. |
-| **Extensions** | **Uptime Kuma** (sondes rattachées à chaque serveur) et **OVHcloud** (IP, firewall réseau, enregistrements DNS, services), en lecture seule. |
+| **Extensions** | **Uptime Kuma** (sondes rattachées à chaque serveur), **OVHcloud** (IP, firewall réseau, enregistrements DNS, services) et **Technitium DNS** (zones et enregistrements), en lecture seule. |
 | **Équipe** | Rôles (admin, opérateur, lecture), invitations, double authentification obligatoire, recherche ⌘K partout, thèmes clair et sombre. |
 
 | | |
@@ -146,18 +146,26 @@ Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque
 
 Le client OVH d'Elio ne connaît que la méthode GET : il ne peut pas écrire, quels que soient les droits de la clé.
 
+### Technitium DNS
+
+- **Réglage** : l'adresse de la console web (port 5380 ou 53443) et le jeton d'API d'un utilisateur qui peut seulement **voir** les zones. Technitium a aussi des **droits par zone** : donnez *View* au groupe de cet utilisateur sur chaque zone à lire, sinon le jeton n'en voit aucune. *Tester la connexion* donne la version et les zones lisibles, et prévient si le jeton permet de les modifier.
+- Toutes les heures, Elio lit les enregistrements **A, AAAA et CNAME** des zones (toutes, ou celles que vous listez) et rattache chacun à son serveur : par l'IP d'un enregistrement A / AAAA, et pour un CNAME par l'enregistrement ou l'hôte vers lequel il pointe. Un nom peut être rattaché à la main, et le rattachement est gardé.
+- Un onglet **DNS** sur chaque serveur (les noms qui pointent vers lui) et une page **DNS** : tous les enregistrements, filtres *hors du parc* et *non rattachés*. Les sondes Uptime Kuma se rattachent aussi par ces noms, et le prompt qui propose des sondes les liste.
+- Alertes au choix : enregistrement vers une IP hors du parc, serveur sans nom DNS.
+- Le jeton passe dans un en-tête `Authorization: Bearer` (jamais dans l'URL). Testé avec Technitium DNS Server 15.6.
+
 ## Sécurité
 
 - La clé SSH d'Elio, les clés d'API, les webhooks et les secrets 2FA sont **chiffrés en base** et jamais renvoyés au navigateur.
 - Double authentification (TOTP et codes de secours), obligatoire par défaut pour les administrateurs et les opérateurs ; rôles ; invitations seulement (pas d'inscription publique) ; connexion limitée en débit et verrouillage ; Content Security Policy stricte.
 - L'empreinte de chaque serveur est mémorisée à la première connexion ; un changement bloque la connexion jusqu'à ce qu'un administrateur l'accepte.
-- **Connexions sortantes** d'Elio : les bases de vulnérabilités et fournisseurs de notes (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — seulement les versions et CVE de votre parc), les registres Docker (requêtes `HEAD` sur les manifestes), et les extensions que vous activez (votre instance Uptime Kuma, l'API OVH — en lecture seule, voir [Extensions](#extensions)). Rien d'autre, aucune télémétrie. En réseau fermé, les bases peuvent être importées à la main.
+- **Connexions sortantes** d'Elio : les bases de vulnérabilités et fournisseurs de notes (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — seulement les versions et CVE de votre parc), les registres Docker (requêtes `HEAD` sur les manifestes), et les extensions que vous activez (votre instance Uptime Kuma, l'API OVH, votre serveur Technitium DNS — en lecture seule, voir [Extensions](#extensions)). Rien d'autre, aucune télémétrie. En réseau fermé, les bases peuvent être importées à la main.
 - Vous avez trouvé une faille ? Signalez-la en privé : voir [SECURITY.md](SECURITY.md).
 
 ## Limites connues
 
 - Inventaire complet pour **Debian et Ubuntu** seulement. Ubuntu n'a pas encore été essayé sur un vrai serveur.
-- Les extensions Uptime Kuma et OVHcloud ont été construites sur des réponses d'API enregistrées, pas encore essayées sur un vrai compte.
+- Les extensions Uptime Kuma et OVHcloud ont été construites sur des réponses d'API enregistrées, pas encore essayées sur un vrai compte (Technitium DNS a été essayé sur une vraie instance).
 - CVE des images Docker sans Trivy ni Grype : images Debian et Ubuntu seulement (pas Alpine).
 - Debian note peu de ses CVE : les notes viennent des fournisseurs que vous activez (NVD, Red Hat, CVE.org par défaut).
 

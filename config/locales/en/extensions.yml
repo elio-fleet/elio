@@ -191,6 +191,61 @@ en:
     sync_job:
       turned_off: 'Extension turned off: nothing to do'
       internal_error: Internal error (%{class})
+    technitium:
+      description: The A, AAAA and CNAME records of your Technitium DNS Server zones, attached to the servers they point to; alerts for records pointing outside the fleet and servers without a DNS name.
+      tab: DNS
+      url: Address of the web console
+      url_hint: The address of its web console and API (port 5380 in HTTP, 53443 in HTTPS by default).
+      api_token: API token
+      api_token_hint: A token of a user that can only view the zones (see below).
+      self_signed: Accept a self-signed certificate
+      zones: Zones to read
+      zones_hint: 'Separated by commas. Empty: every zone the token can see.'
+      section_alerts: Alerts
+      alert_outside: A record points to an IP outside the fleet
+      alert_server_without_dns: Server without a DNS name
+      alert_server_without_dns_hint: A warning on the servers to which no record points.
+      connected:
+        one: 'Connected to Technitium DNS Server %{version}: %{count} zone readable'
+        other: 'Connected to Technitium DNS Server %{version}: %{count} zones readable'
+      writable: ". Warning: this token can also change or delete zones; Elio only needs to view them."
+      http_warning: ". The address is in HTTP: the token travels unencrypted."
+      invalid_token: 'Invalid or expired token: create a new one in Technitium.'
+      api_error: 'Technitium refused the request: %{message}'
+      not_json: 'Unexpected answer: is it the address of a Technitium DNS Server?'
+      sync:
+        summary: "%{zones}, %{records}, %{unattached}"
+        zones:
+          one: "%{count} zone"
+          other: "%{count} zones"
+        records:
+          one: "%{count} record"
+          other: "%{count} records"
+        unattached:
+          one: "%{count} attached to no server"
+          other: "%{count} attached to no server"
+      health:
+        no_dns: No DNS name in Technitium
+      link:
+        server: "— no server —"
+        server_of: Server of %{name}
+        attach: Attach
+        automatic: Back to the automatic attachment
+      server_tab:
+        title: DNS names (Technitium)
+        all_records: All the records
+        matched: Attached
+        none: No Technitium record points to this server.
+        not_synchronized: " (Technitium has not been synchronized yet)"
+        see_unattached: See the records attached to no server
+        synchronized_html: synchronized %{time}
+      help:
+        title: Create a read-only API token in Technitium
+        step1_html: "<strong>Administration → Groups</strong>: add a group (e.g. <code>Elio read-only</code>), and in <strong>Administration → Permissions</strong> give it <strong>View</strong> only on <strong>Zones</strong>."
+        step2_html: "<strong>Administration → Users</strong>: add a user (e.g. <code>elio</code>) member of that group only."
+        step3_html: 'Technitium also has <strong>permissions per zone</strong>: on each zone to read (<strong>Zones</strong>, the zone, <strong>Permissions</strong>), give the group <strong>View</strong>. Without it, the token sees no zone.'
+        step4_html: Log in as that user, then <strong>Create API Token</strong> (user menu, top right), and paste it here.
+        reads_html: 'Elio only reads: <code>/api/user/session/get</code>, <code>/api/zones/list</code> and <code>/api/zones/records/get</code>, with the token in an <code>Authorization: Bearer</code> header (tested with Technitium DNS Server 15.6).'
   integration:
     sync_label: "%{label} sync"
     required: "%{label}: required to turn the extension on"
@@ -201,6 +256,7 @@ en:
       dns: by DNS resolution
       name: by its name
       manual: by hand
+      technitium: by a Technitium DNS name
   ovh_resource:
     matches:
       address: by its IP address
@@ -339,6 +395,7 @@ en:
       existing_monitors: Uptime Kuma monitors already attached to this server
       local_firewall: Firewall of the machine
       ovh_firewall: OVHcloud network firewall (per IP)
+      dns_names: DNS names pointing to it (Technitium)
     fields:
       name: 'Name in Elio: %{value}'
       hostname: 'Hostname: %{value}'
@@ -392,3 +449,37 @@ en:
     ovh_firewall:
       button: Prompt to propose firewall rules
       title: 'Prompt for an AI: OVHcloud network firewall'
+  technitium_record:
+    matches:
+      manual: attached by hand
+      address: by its IP %{address}
+      cname: CNAME to one of its names
+  technitium_links_controller:
+    attached: "%{name} is attached to “%{server_name}”."
+    detached: "%{name} is attached to no server."
+    automatic: "%{name} goes back to the automatic attachment (synchronization started)."
+  technitium_records:
+    index:
+      title: DNS records
+      intro: The A, AAAA and CNAME records of Technitium DNS Server, attached to the servers they point to
+      synchronized_html: "· synchronized %{time}"
+      last_sync_failed: " Last sync failed: %{error}"
+      extension: Extension
+      records: Records
+      outside: Outside the fleet
+      outside_caption: A / AAAA to an unknown IP
+      unattached: Not attached
+      servers_without: Servers without a name
+      filters: Filters
+      all: All
+      all_zones: All the zones
+      zone: Zone
+      search: Name or value
+      name: Name
+      value: Value
+      server: Server
+      attach: Attach
+      disabled: disabled
+      outside_fleet: outside the fleet
+      none: No record matches.
+      not_synchronized: Technitium has not been synchronized yet.

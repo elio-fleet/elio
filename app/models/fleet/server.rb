@@ -11,6 +11,7 @@ class Server < ApplicationRecord
   has_many :packages, class_name: "Inventory::Package", dependent: :delete_all
   has_many :server_vulnerabilities, dependent: :delete_all
   has_many :notes, class_name: "ServerNote", dependent: :delete_all
+  has_many :technitium_records, dependent: :nullify
   # Tasks keep the server's name; a server deleted while waiting fails its items.
   has_many :background_task_items, dependent: :nullify
   has_many :uptime_kuma_monitors, -> { by_name }, dependent: :nullify

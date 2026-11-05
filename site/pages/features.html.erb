@@ -116,6 +116,17 @@
     <figure class="lg:col-span-3"><%= screenshot("ovh", t(en: "The OVH tab of a server: service, IPs, network firewall per port, DNS records", fr: "L'onglet OVH d'un serveur : service, IP, firewall réseau port par port, enregistrements DNS")) %>
       <figcaption class="mt-2 text-center text-sm text-ink-3"><%= t en: "What OVH knows about a server, and what its network firewall lets through", fr: "Ce qu'OVH sait d'un serveur, et ce que son firewall réseau laisse passer" %></figcaption></figure>
   </div>
+  <div class="mt-16 max-w-3xl">
+    <h3 class="text-xl font-semibold">Technitium DNS</h3>
+    <ul class="mt-4 space-y-3 text-ink-2">
+      <% [ t(en: "The API token of a user that can only view the zones; the connection test gives the version and warns if the token could change them.", fr: "Le jeton d'API d'un utilisateur qui peut seulement voir les zones ; le test de connexion donne la version et prévient si le jeton permet de les modifier."),
+           t(en: "The A, AAAA and CNAME records of the zones, attached to the servers they point to (by IP, or by the name a CNAME points to), or by hand.", fr: "Les enregistrements A, AAAA et CNAME des zones, rattachés aux serveurs vers lesquels ils pointent (par IP, ou par le nom visé par un CNAME), ou à la main."),
+           t(en: "A DNS tab on each server, a DNS page with the records outside the fleet; Uptime Kuma monitors are attached through these names too.", fr: "Un onglet DNS sur chaque serveur, une page DNS avec les enregistrements hors du parc ; les sondes Uptime Kuma se rattachent aussi par ces noms."),
+           t(en: "Alerts to choose: record pointing outside the fleet, server without a DNS name.", fr: "Alertes au choix : enregistrement hors du parc, serveur sans nom DNS.") ].each do |point| -%>
+        <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
+      <% end -%>
+    </ul>
+  </div>
   <p class="mt-8 text-sm text-ink-3"><%= t en: "Not yet tried on real accounts: built and tested on recorded API answers. Feedback welcome.", fr: "Pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées. Vos retours sont bienvenus." %></p>
 </section>
 

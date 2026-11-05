@@ -177,7 +177,7 @@ fr:
         description: Un service OVHcloud (dédié, VPS) arrive à expiration.
       dns_record_outside_fleet:
         label: DNS vers une IP hors du parc
-        description: Un enregistrement DNS OVH pointe vers une IP qui n'est à aucun serveur du parc.
+        description: Un enregistrement DNS (OVHcloud ou Technitium) pointe vers une IP qui n'appartient à aucun serveur du parc.
       ovh_service_unmanaged:
         label: Service OVH non suivi
         description: Un service OVHcloud n'est rattaché à aucun serveur du parc.
