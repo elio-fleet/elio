@@ -469,6 +469,7 @@ en:
       no_record_yet: 'No DNS record yet: the sources have not been synchronized.'
       synchronized_html: synchronized %{time}
       last_sync_failed: "· last sync failed: %{error}"
+      conflicts: Differs by source
     link:
       server: "— no server —"
       server_of: Server of %{name}
@@ -481,6 +482,8 @@ en:
       title: DNS names
       none: No DNS record points to this server.
     tab: DNS
+    differs: differs by source
+    differs_hint: 'This name has other records in another source (often on purpose: a public IP in one, a private or VPN one in the other).'
   dns_record:
     matches:
       manual: attached by hand

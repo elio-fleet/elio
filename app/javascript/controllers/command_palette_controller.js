@@ -59,13 +59,17 @@ export default class extends Controller {
     return this.tabItems
   }
 
-  // "Find the package “…”" and, for a port number, "Who exposes port …?".
+  // "Find the package “…”", for a port number "Who exposes port …?", and for
+  // a host name "Who has the DNS name …?" (when a DNS source is on).
   searches(query) {
     if (query.length < 2) return []
-    const { packagesUrl, portsUrl } = this.dialogTarget.dataset
+    const { packagesUrl, portsUrl, dnsUrl } = this.dialogTarget.dataset
     const searches = []
     if (/^\d{1,5}$/.test(query) && Number(query) <= 65535) {
       searches.push({ group: t("command_palette.search"), search: true, label: t("command_palette.port", { port: query }), url: `${portsUrl}?q=${query}` })
+    }
+    if (dnsUrl && /^[a-z0-9-]+(\.[a-z0-9-]+)+\.?$/i.test(query)) {
+      searches.push({ group: t("command_palette.search"), search: true, label: t("command_palette.dns_name", { name: query }), url: `${dnsUrl}?q=${encodeURIComponent(query)}` })
     }
     searches.push({ group: t("command_palette.search"), search: true, label: t("command_palette.package", { package: query }), url: `${packagesUrl}?q=${encodeURIComponent(query)}` })
     return searches

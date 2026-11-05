@@ -45,4 +45,11 @@ class Dns::StoreTest < ActiveSupport::TestCase
     Dns::Matcher.call
     assert_equal [ nil, nil ], DnsRecord.where(name: "www.example.test").pluck(:server_id), "attached to no server by hand"
   end
+
+  test "a name differs between sources when their records do, not when they are the same" do
+    Dns::Store.replace("ovh", [ row("www.example.test", "A", "203.0.113.10"), row("same.example.test", "A", "203.0.113.20"), row("only-ovh.example.test", "A", "203.0.113.30") ])
+    Dns::Store.replace("technitium", [ row("www.example.test", "A", "10.8.0.100"), row("same.example.test", "A", "203.0.113.20") ])
+    assert_equal [ "www.example.test" ], DnsRecord.conflicting_names
+    assert_equal 2, DnsRecord.conflicting.count
+  end
 end

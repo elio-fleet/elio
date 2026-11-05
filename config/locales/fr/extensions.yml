@@ -469,6 +469,7 @@ fr:
       no_record_yet: 'Aucun enregistrement DNS pour l''instant : les sources n''ont pas encore été synchronisées.'
       synchronized_html: synchronisé %{time}
       last_sync_failed: "· dernière synchronisation en échec : %{error}"
+      conflicts: Diffère selon la source
     link:
       server: "— aucun serveur —"
       server_of: Serveur de %{name}
@@ -481,6 +482,8 @@ fr:
       title: Noms DNS
       none: Aucun enregistrement DNS ne pointe vers ce serveur.
     tab: DNS
+    differs: diffère selon la source
+    differs_hint: 'Ce nom a d''autres enregistrements dans une autre source (souvent voulu : une IP publique dans l''une, privée ou VPN dans l''autre).'
   dns_record:
     matches:
       manual: rattaché à la main

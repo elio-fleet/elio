@@ -16,6 +16,15 @@ class DnsRecord < ApplicationRecord
   # A / AAAA records whose IP belongs to no server of the fleet.
   scope :outside_fleet, -> { addresses.unattached.where(disabled: false) }
 
+  # Names whose records differ between two sources (split horizon: a public
+  # IP at OVH, a private one in Technitium) — the same records do not count.
+  def self.conflicting_names
+    per_source = select(:name, :source, Arel.sql("string_agg(record_type || ' ' || value, ',' ORDER BY record_type, value) AS records")).group(:name, :source)
+    unscoped.from(per_source, :per_source).group(:name).having("COUNT(*) > 1 AND COUNT(DISTINCT records) > 1").pluck(:name)
+  end
+
+  scope :conflicting, -> { where(name: conflicting_names) }
+
   def self.source_label(source) = SOURCES.fetch(source.to_s, source.to_s)
 
   def source_label = self.class.source_label(source)

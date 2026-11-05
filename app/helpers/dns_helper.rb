@@ -5,4 +5,9 @@ module DnsHelper
   def dns_source_badge(source)
     tag.span(DnsRecord.source_label(source), class: "dns-source badge #{SOURCE_CLASSES.fetch(source.to_s, "bg-subtle text-ink-2")}", data: { source: source })
   end
+
+  # A name whose records differ between sources (often wanted: split horizon).
+  def dns_conflict_badge
+    status_badge :neutral, t("dns_records.differs"), class: "dns-conflict", title: t("dns_records.differs_hint")
+  end
 end

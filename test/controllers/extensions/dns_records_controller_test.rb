@@ -70,4 +70,19 @@ class DnsRecordsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=password][name='integration[values][api_token]']"
     assert_select ".integration-help", /droits par zone/
   end
+
+  test "with two sources: the records of a name that differ are flagged and filtered, and ⌘K offers the DNS search" do
+    Dns::Store.replace("ovh", [ { zone: "example.test", name: "web.example.test", record_type: "A", value: "198.51.100.1" } ])
+    sign_in users(:viewer)
+
+    get dns_records_path(filter: "conflicts")
+    assert_select "nav.dns-filters a[data-filter=conflicts]", text: /Diffère selon la source\s*1/
+    assert_select "tr.dns-record", 3
+    assert_select "tr.dns-record[data-source=ovh] .dns-conflict", "diffère selon la source"
+    assert_select "tr.dns-record[data-name='www.example.test']", 0
+
+    get server_path(servers(:web), tab: "dns")
+    assert_select "#server-dns tr.dns-record .dns-conflict", 1
+    assert_select "dialog[data-dns-url=?]", dns_records_path
+  end
 end
