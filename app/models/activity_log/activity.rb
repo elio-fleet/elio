@@ -111,7 +111,13 @@ class Activity < ApplicationRecord
 
   def key_name = data["key_name"] || I18n.t("activity.unnamed")
 
-  def target = server_name && I18n.t("activity.target", server_name: server_name)
+  # « web », or « web » (account root) for an account other than the login one.
+  def target
+    return unless server_name
+    return I18n.t("activity.target", server_name: server_name) if unix_user.blank? || unix_user == (server&.username || unix_user)
+
+    I18n.t("activity.target_account", server_name: server_name, account: unix_user)
+  end
 
   # One-line description of what happened, in the reader's language (Activity::Summaries).
   def summary = instance_exec(&Summaries::BY_KIND.fetch(kind.to_sym))

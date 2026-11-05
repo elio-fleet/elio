@@ -299,6 +299,7 @@ fr:
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
       automation_run: "%{automation} : %{result}"
+    target_account: "« %{server_name} » (compte %{account})"
   automation:
     whole_fleet: Tout le parc
     extension_off: 'Extension désactivée : rien à faire'

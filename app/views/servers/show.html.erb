@@ -5,7 +5,7 @@
 <% schedules = @server.inventory("scheduled_tasks")&.data || {} %>
 <% docker = @server.inventory("docker")&.data || {} %>
 <% ports = @server.inventory("ports") %>
-<% snapshot = @server.account_snapshots.find { |candidate| candidate.unix_user == @server.username } %>
+<% snapshots = @server.account_snapshots.to_a %>
 
 <div class="mx-auto max-w-6xl">
   <p class="text-xs text-ink-3">
@@ -50,7 +50,7 @@
               *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),
               [ "ports", t("servers.tabs.ports"), (Inventory::PortAnalysis.new(@server).public_ports.size if ports&.collected?) ],
               [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
-              [ "keys", t("servers.tabs.keys"), snapshot&.keys&.size ],
+              [ "keys", t("servers.tabs.keys"), (snapshots.sum { |snapshot| snapshot.keys.size } if snapshots.any?) ],
               *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] },
               [ "history", t("servers.tabs.history"), nil ] ] %>
   <%= render "servers/tabs", server: @server, tabs: tabs, current: @tab %>

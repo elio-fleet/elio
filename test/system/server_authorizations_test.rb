@@ -18,7 +18,7 @@ class ServerAuthorizationsTest < ApplicationSystemTestCase
       Keys::PublicKeyAuthorization::Result.new(status: :added, error_title: nil, error_details: nil)
     end
 
-    stub_method(Keys::AuthorizedKeysReader, :call, reader) do
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(reader)) do
       stub_method(Keys::PublicKeyAuthorization, :call, authorizer) do
         visit server_path(servers(:web), tab: "keys")
 
@@ -46,7 +46,7 @@ class ServerAuthorizationsTest < ApplicationSystemTestCase
       Keys::PublicKeyAuthorization::Result.new(status: :added, error_title: nil, error_details: nil)
     end
 
-    stub_method(Keys::AuthorizedKeysReader, :call, reader) do
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(reader)) do
       stub_method(Keys::PublicKeyAuthorization, :call, authorizer) do
         visit server_path(servers(:web), tab: "keys")
 
@@ -78,7 +78,7 @@ class ServerAuthorizationsTest < ApplicationSystemTestCase
     end
     bob = Ssh::KeyGenerator.generate(comment: "bob@laptop").public_key
 
-    stub_method(Keys::AuthorizedKeysReader, :call, reader) do
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(reader)) do
       stub_method(Keys::PublicKeyAuthorization, :call, authorizer) do
         visit server_path(servers(:web), tab: "keys")
         assert_selector "li.authorized-key", count: 1

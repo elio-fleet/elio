@@ -21,7 +21,7 @@ class AuthorizedKeyRemovalSystemTest < ApplicationSystemTestCase
       Keys::AuthorizedKeyRemoval::Result.new(status: :removed, error_title: nil, error_details: nil)
     end
 
-    stub_method(Keys::AuthorizedKeysReader, :call, reader) do
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(reader)) do
       stub_method(Keys::AuthorizedKeyRemoval, :call, remover) do
         visit server_path(servers(:web), tab: "keys")
 

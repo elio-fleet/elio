@@ -22,7 +22,7 @@
               <%= link_to access.server.name, server_path(access.server), class: "font-medium hover:text-accent hover:underline" %>
               · <span class="font-mono"><%= access.unix_user %></span>
             </p>
-            <p class="text-xs text-ink-3">Vu <%= relative_time_tag access.read_at %></p>
+            <p class="text-xs text-ink-3"><%= t(".seen_html", time: relative_time_tag(access.read_at)) %></p>
           </div>
           <div class="flex shrink-0 items-center gap-2">
             <% if access.temporary_access %>
@@ -32,7 +32,7 @@
               <span class="rounded-full bg-subtle px-2 py-0.5 text-xs font-medium text-ink-2"><%= t("words.permanent") %></span>
             <% end %>
             <% if can?(:operate) %>
-              <%= button_to public_key_access_path(public_key), method: :delete, params: { server_id: access.server.id },
+              <%= button_to public_key_access_path(public_key), method: :delete, params: { server_id: access.server.id, account: access.unix_user },
                     title: t(".remove"), aria: { label: t(".remove_label", server_name: access.server.name) },
                     form: { data: { controller: "quiet-submit",
                                     turbo_confirm: t(".remove_confirm", public_key_name: public_key.name, server_name: access.server.name),

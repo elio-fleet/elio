@@ -197,6 +197,7 @@ fr:
     resources: ressources
     images: images
     packages: paquets
+    keys: clés
   words:
     none: aucun
     'yes': oui

@@ -254,3 +254,34 @@ keys:
       awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) next; print }' "$file" > "$tmp"
       cat "$tmp" > "$file"
       echo removed
+
+  read_accounts:
+    description: "Reads ~/.ssh/authorized_keys of every account that has a login shell and a home (root included), one section per account with a file. Needs root."
+    run_as: root
+    shell: true
+    default: |
+      getent passwd | while IFS=: read -r user _ _ _ _ home shell; do
+        case "$shell" in */nologin|*/false|*/sync|"") continue ;; esac
+        [ -n "$home" ] && [ -f "$home/.ssh/authorized_keys" ] || continue
+        printf '@@elio account %s\n' "$user"
+        cat "$home/.ssh/authorized_keys" 2>/dev/null || printf '@@elio unreadable\n'
+      done
+
+  remove_from_account:
+    description: "Removes every line whose key is the given one from the authorized_keys of another account (keeps its owner and rights). Needs root. Prints absent or removed."
+    writes: true
+    run_as: root
+    shell: true
+    default: |
+      set -e
+      home=$(getent passwd @{user} | cut -d: -f6)
+      if [ -z "$home" ]; then echo "unknown user" >&2; exit 3; fi
+      file="$home/.ssh/authorized_keys"
+      if [ ! -f "$file" ]; then echo absent; exit 0; fi
+      matches=$(awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
+      if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
+      tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
+      trap 'rm -f "$tmp"' EXIT
+      awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) next; print }' "$file" > "$tmp"
+      cat "$tmp" > "$file"
+      echo removed
