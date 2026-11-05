@@ -33,6 +33,25 @@ class InstantSearchTest < ApplicationSystemTestCase
     assert_selector "h1", text: servers(:web).name, wait: 10
   end
 
+  test "a result clicked while the search is still loading opens its page, the late results do not take it back" do
+    visit servers_path
+    # Every search answer arrives 800 ms late.
+    execute_script(<<~JS)
+      const fetch = window.fetch
+      window.fetch = (input, init) => {
+        const url = String(input.url || input)
+        return url.includes("q=") ? new Promise((resolve) => setTimeout(() => resolve(fetch(input, init)), 800)) : fetch(input, init)
+      }
+    JS
+    find("input.fleet-search").send_keys("Data")
+    sleep 0.4 # the search is sent (300 ms after the last key), its answer not back yet
+    within("#fleet-results #servers") { click_on servers(:web).name }
+    assert_selector "h1", text: servers(:web).name
+    sleep 1
+    assert_selector "h1", text: servers(:web).name
+    assert_current_path server_path(servers(:web))
+  end
+
   test "the ports search keeps the field" do
     visit ports_path
     field = find("input[name=q]")

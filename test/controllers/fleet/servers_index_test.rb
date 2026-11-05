@@ -277,7 +277,7 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     get servers_path(q: "web")
 
-    assert_select "form.fleet-filters[data-turbo-frame=fleet-results][data-turbo-action=replace]"
+    assert_select "form.fleet-filters[data-turbo-frame=fleet-results][data-controller=auto-submit]:not([data-turbo-action])"
     assert_select "turbo-frame#fleet-results form.fleet-filters", 0
     assert_select "turbo-frame#fleet-results[target=_top]" do
       assert_select "#servers tbody tr", 1
