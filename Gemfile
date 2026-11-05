@@ -83,3 +83,6 @@ gem "rubyzip", "~> 3.0", require: "zip"
 gem "mission_control-jobs", "~> 1.3"
 
 gem "bundler-audit", "~> 0.9.3", groups: [ :development, :test ], require: false
+
+# Markdown of the server notes (CommonMark + tables, rendered then sanitized: ServerNote#html)
+gem "commonmarker", "~> 2.10"
