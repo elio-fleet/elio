@@ -12,7 +12,14 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ### Changed
 
+- Fleet page: the actions (refresh the statuses, inventory or scan the keys of the whole fleet, import servers) are in an **Actions** menu; “Add a server” stays a button.
+- Server page: the tabs that don't fit go into a **More** menu (the current tab always stays visible), a drop-down list on a phone, in a new order (Overview, Vulnerabilities, Packages, Services, Docker, Ports, Scheduled tasks, SSH keys, extensions, History).
 - Health reasons are stored as translation keys and written in the reader's language; the reasons of an existing installation are computed again at the upgrade.
+
+### Fixed
+
+- Instant searches (Fleet, Packages, Ports, Scheduled tasks, Vulnerabilities, Docker, Probes, OVHcloud, a server's packages and vulnerabilities) no longer lose the characters typed while the results load: only the results are reloaded, the search field keeps its focus.
+- The two-factor QR code is black on white with a quiet zone in the dark theme too, so that phones can read it.
 
 ## [0.1.0-beta.2] — 2026-11-01
 

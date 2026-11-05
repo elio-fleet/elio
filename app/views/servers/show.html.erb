@@ -43,20 +43,17 @@
 
   <%= render "servers/health_bar", server: @server %>
 
-  <nav class="server-tabs scrollbar-none mt-5 flex gap-5 overflow-x-auto border-b border-line text-sm" aria-label="<%= t(".server_sections") %>">
-    <% [ [ "overview", t("servers.tabs.overview"), nil ], [ "packages", t("servers.tabs.packages"), packages["total"] ],
-         [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.fixable.distinct.count(:cve).nonzero? ], [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "active" } if services["units"]) ],
-         *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),
-         [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
-         [ "ports", t("servers.tabs.ports"), (Inventory::PortAnalysis.new(@server).public_ports.size if ports&.collected?) ], [ "keys", t("servers.tabs.keys"), snapshot&.keys&.size ],
-         *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] }, [ "history", t("servers.tabs.history"), nil ] ].each do |tab, label, count| %>
-      <% current = tab == @tab %>
-      <%= link_to server_path(@server, tab: (tab unless tab == "overview")), aria: { current: (current ? "page" : nil) }, data: { tab: tab },
-            class: "flex shrink-0 items-center gap-1.5 border-b-2 px-1 pb-2.5 #{current ? "border-accent font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink"}" do %>
-        <%= label %><% if count %><span class="rounded-full bg-subtle px-1.5 text-[11px] text-ink-2"><%= count %></span><% end %>
-      <% end %>
-    <% end %>
-  </nav>
+  <% tabs = [ [ "overview", t("servers.tabs.overview"), nil ],
+              [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.fixable.distinct.count(:cve).nonzero? ],
+              [ "packages", t("servers.tabs.packages"), packages["total"] ],
+              [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "active" } if services["units"]) ],
+              *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),
+              [ "ports", t("servers.tabs.ports"), (Inventory::PortAnalysis.new(@server).public_ports.size if ports&.collected?) ],
+              [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
+              [ "keys", t("servers.tabs.keys"), snapshot&.keys&.size ],
+              *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] },
+              [ "history", t("servers.tabs.history"), nil ] ] %>
+  <%= render "servers/tabs", server: @server, tabs: tabs, current: @tab %>
 
   <% case @tab %>
   <% when "overview" %>

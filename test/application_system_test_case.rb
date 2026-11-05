@@ -29,6 +29,12 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # next test (and slow it down) once this one is over.
   teardown { page.has_no_selector?("turbo-frame[busy]", wait: 10) }
 
+  # The fleet page's actions are in its "Actions" menu.
+  def fleet_action(label)
+    find("#fleet-actions summary").click
+    within("#fleet-actions [role=menu]") { click_on label }
+  end
+
   # The app replaces confirm() with its own dialog (app/javascript/confirm_dialog.js).
   # Looked up from the document root, whatever the current `within` scope.
   def accept_app_confirm(button = nil)
