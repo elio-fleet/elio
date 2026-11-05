@@ -6,7 +6,13 @@ class NotificationBatchesTest < ActiveJob::TestCase
   include StubHelpers
   include ActionMailer::TestHelper
 
-  setup { @channel = create_channel(group_minutes: 10, activity_kinds: %w[unknown_key_detected key_disappeared ssh_access_lost]) }
+  setup do
+    ActionMailer::Base.deliveries.clear
+    @channel = create_channel(group_minutes: 10, activity_kinds: %w[unknown_key_detected key_disappeared ssh_access_lost])
+  end
+
+  # The emails sent here must not be seen by the next test of the worker.
+  teardown { ActionMailer::Base.deliveries.clear }
 
   def notify(kind, **data) = Activity.record!(kind, server: servers(:web), user: nil, **data).tap { |activity| NotifyActivityJob.perform_now(activity) }
 
