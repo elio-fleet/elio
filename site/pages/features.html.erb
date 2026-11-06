@@ -46,9 +46,10 @@
       title: t(en: "What runs where, searchable across the fleet", fr: "Ce qui tourne où, cherchable sur tout le parc"),
       points: [ t(en: "Packages (dpkg, snap): “which servers have openssl, in which version?”", fr: "Paquets (dpkg, snap) : « quels serveurs ont openssl, et en quelle version ? »"),
                 t(en: "systemd services and Docker Compose projects; scheduled tasks — crontabs and systemd timers in plain words, failed or late timers.", fr: "Services systemd et projets Docker Compose ; tâches planifiées — crontabs et timers systemd en clair, timers en échec ou en retard."),
-                t(en: "Listening ports with their process, service or container; public, private or local; the firewall (ufw, nftables, iptables) and suggested ufw rules to copy — never applied.", fr: "Ports en écoute avec leur processus, service ou conteneur ; publics, privés ou locaux ; le firewall (ufw, nftables, iptables) et des règles ufw suggérées à copier — jamais appliquées."),
+                t(en: "Listening ports with their process, service or container; public, private or local.", fr: "Ports en écoute avec leur processus, service ou conteneur ; publics, privés ou locaux."),
+                t(en: "A Firewall tab: the server's firewall (ufw, nftables, iptables) and the OVHcloud one side by side for each public port, IPv6 included, and ufw rules to copy — SSH open only to the sources you list, incoming IPv6 blocked if you want; never applied.", fr: "Un onglet Firewall : le firewall du serveur (ufw, nftables, iptables) et celui d'OVHcloud côte à côte pour chaque port public, IPv6 compris, et des règles ufw à copier — SSH ouvert seulement aux sources que vous listez, IPv6 entrant bloqué si vous le voulez ; jamais appliquées."),
                 t(en: "Network addresses, WireGuard and other VPNs included; host names; search a server by IP.", fr: "Adresses réseau, WireGuard et autres VPN compris ; noms d'hôte ; recherche d'un serveur par IP.") ],
-      shots: [ [ "scheduled-tasks", t(en: "Scheduled tasks of a server", fr: "Les tâches planifiées d'un serveur") ], [ "ports", t(en: "Ports and firewall of a server", fr: "Ports et firewall d'un serveur") ] ] },
+      shots: [ [ "scheduled-tasks", t(en: "Scheduled tasks of a server", fr: "Les tâches planifiées d'un serveur") ], [ "firewall", t(en: "The Firewall tab of a server", fr: "L'onglet Firewall d'un serveur") ] ] },
     { id: "ssh-keys", eyebrow: t(en: "SSH keys", fr: "Clés SSH"),
       title: t(en: "Who can log in, and for how long", fr: "Qui peut se connecter, et pour combien de temps"),
       points: [ t(en: "A keyring of the team's and the machines' public keys; add or remove one on a server in a click.", fr: "Un trousseau des clés publiques de l'équipe et des machines ; en ajouter ou en retirer une sur un serveur en un clic."),
@@ -113,27 +114,37 @@
       <ul class="mt-4 space-y-3 text-ink-2">
         <% [ t(en: "An API key limited to GET requests: Elio lists the exact rights for the products you check and opens OVH's token page already filled in; the connection test warns if the key could write.", fr: "Une clé d'API limitée aux requêtes GET : Elio liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie ; le test de connexion prévient si la clé permet d'écrire."),
              t(en: "Each product is a checkbox: IPs and reverse DNS, network firewall, anti-DDoS, DNS zones, dedicated servers, VPS, Public Cloud instances.", fr: "Chaque produit est une case à cocher : IP et reverse DNS, firewall réseau, anti-DDoS, zones DNS, serveurs dédiés, VPS, instances Public Cloud."),
-             t(en: "An OVH tab on each server: the service and its expiration, the IPs, the network firewall rules and whether they let each public port through, and a prompt for an AI assistant to propose the network firewall rules; its DNS records go to the DNS of the fleet.", fr: "Un onglet OVH sur chaque serveur : le service et son expiration, les IP, les règles du firewall réseau et si elles laissent passer chaque port public, et un prompt pour un assistant IA qui propose les règles du firewall réseau ; ses enregistrements DNS vont dans le DNS du parc."),
+             t(en: "An OVH tab on each server: the service and its expiration, the IPs and reverse; the network firewall rules, whether they let each public port through (IPv4 only: IPv6 is not covered) and a prompt for an AI assistant are in the Firewall tab; its DNS records go to the DNS of the fleet.", fr: "Un onglet OVH sur chaque serveur : le service et son expiration, les IP et reverse ; les règles du firewall réseau, si elles laissent passer chaque port public (IPv4 seulement : l'IPv6 n'est pas couvert) et un prompt pour un assistant IA sont dans l'onglet Firewall ; ses enregistrements DNS vont dans le DNS du parc."),
              t(en: "Alerts to choose: service about to expire, firewall disabled, reverse DNS that does not match, OVH service not followed by Elio.", fr: "Alertes au choix : service bientôt expiré, firewall désactivé, reverse DNS qui ne correspond pas, service OVH non suivi par Elio.") ].each do |point| -%>
           <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
         <% end -%>
       </ul>
     </div>
-    <figure class="lg:col-span-3"><%= screenshot("ovh", t(en: "The OVH tab of a server: service, IPs, network firewall per port, DNS records", fr: "L'onglet OVH d'un serveur : service, IP, firewall réseau port par port, enregistrements DNS")) %>
-      <figcaption class="mt-2 text-center text-sm text-ink-3"><%= t en: "What OVH knows about a server, and what its network firewall lets through", fr: "Ce qu'OVH sait d'un serveur, et ce que son firewall réseau laisse passer" %></figcaption></figure>
+    <figure class="lg:col-span-3"><%= screenshot("ovh", t(en: "The OVH tab of a server: service, IPs and reverse", fr: "L'onglet OVH d'un serveur : service, IP et reverse")) %>
+      <figcaption class="mt-2 text-center text-sm text-ink-3"><%= t en: "What OVH knows about a server", fr: "Ce qu'OVH sait d'un serveur" %></figcaption></figure>
   </div>
   <div class="mt-16 max-w-3xl">
     <h3 class="text-xl font-semibold">Technitium DNS</h3>
     <ul class="mt-4 space-y-3 text-ink-2">
       <% [ t(en: "The API token of a user that can only view the zones; the connection test gives the version and warns if the token could change them.", fr: "Le jeton d'API d'un utilisateur qui peut seulement voir les zones ; le test de connexion donne la version et prévient si le jeton permet de les modifier."),
            t(en: "The A, AAAA and CNAME records of the zones, attached to the servers they point to (by IP, or by the name a CNAME points to), or by hand.", fr: "Les enregistrements A, AAAA et CNAME des zones, rattachés aux serveurs vers lesquels ils pointent (par IP, ou par le nom visé par un CNAME), ou à la main."),
-           t(en: "One DNS of the fleet with OVHcloud's records: one DNS tab and one DNS page, the source of each record, names that differ between sources flagged.", fr: "Un seul DNS du parc avec les enregistrements d'OVHcloud : un onglet et une page DNS, la source de chaque enregistrement, les noms qui diffèrent selon la source signalés."),
+           t(en: "One DNS of the fleet with OVHcloud's and Gandi's records: one DNS tab and one DNS page, the source of each record, names that differ between sources flagged.", fr: "Un seul DNS du parc avec les enregistrements d'OVHcloud et de Gandi : un onglet et une page DNS, la source de chaque enregistrement, les noms qui diffèrent selon la source signalés."),
            t(en: "Common DNS alerts: record pointing outside the fleet, server without a DNS name; the fleet search, ⌘K and Uptime Kuma use these names.", fr: "Alertes DNS communes : enregistrement hors du parc, serveur sans nom DNS ; la recherche du Parc, ⌘K et Uptime Kuma utilisent ces noms.") ].each do |point| -%>
         <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
       <% end -%>
     </ul>
   </div>
-  <p class="mt-8 text-sm text-ink-3"><%= t en: "Not yet tried on real accounts: built and tested on recorded API answers. Feedback welcome.", fr: "Pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées. Vos retours sont bienvenus." %></p>
+  <div class="mt-16 max-w-3xl">
+    <h3 class="text-xl font-semibold">Gandi</h3>
+    <ul class="mt-4 space-y-3 text-ink-2">
+      <% [ t(en: "A personal access token with read rights only (domains and LiveDNS records); GET requests only, the token in an Authorization header.", fr: "Un jeton d'accès personnel avec des droits de lecture seulement (domaines et enregistrements LiveDNS) ; uniquement des requêtes GET, le jeton dans un en-tête Authorization."),
+           t(en: "The A, AAAA and CNAME records of the domains served by LiveDNS, in the DNS of the fleet like the other sources.", fr: "Les enregistrements A, AAAA et CNAME des domaines servis par LiveDNS, dans le DNS du parc comme les autres sources."),
+           t(en: "Your domains with their expiry date and auto renewal, and an optional alert when one is about to expire.", fr: "Vos domaines avec leur date d'expiration et leur renouvellement automatique, et une alerte en option quand l'un d'eux va expirer.") ].each do |point| -%>
+        <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
+      <% end -%>
+    </ul>
+  </div>
+  <p class="mt-8 text-sm text-ink-3"><%= t en: "Uptime Kuma, OVHcloud and Gandi are not yet tried on real accounts: built and tested on recorded or documented API answers (Technitium DNS was tried on a real instance). Feedback welcome.", fr: "Uptime Kuma, OVHcloud et Gandi ne sont pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées ou documentées (Technitium DNS a été essayé sur une vraie instance). Vos retours sont bienvenus." %></p>
 </section>
 
 <section id="team" class="mx-auto mt-20 max-w-6xl px-5">
