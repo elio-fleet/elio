@@ -18,6 +18,7 @@
     <% [ [ t(".all"), nil ], [ t(".people"), "person" ], [ t(".servers"), "server" ] ].each do |label, value| %>
       <%= filter_pill label, public_keys_path(kind: value), active: @kind == value %>
     <% end %>
+    <%= filter_pill t("public_keys.outside.title"), public_keys_path(kind: "outside"), active: false, count: @insights.outside_keys.size.nonzero?, data: { kind: "outside" } %>
   </nav>
 
   <% if @public_keys.any? %>

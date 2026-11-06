@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_225805) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -58,6 +58,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.text "docker_registry_credentials"
     t.jsonb "score_bands", default: [{"from" => 0, "color" => "green"}, {"from" => 4, "color" => "orange"}, {"from" => 7, "color" => "red"}], null: false
     t.string "default_locale", default: "en", null: false
+    t.boolean "dns_alert_outside", default: false, null: false
+    t.boolean "dns_alert_without_name", default: false, null: false
+    t.jsonb "dns_without_name_ignored_group_ids", default: [], null: false
+    t.boolean "dns_alert_conflict", default: false, null: false
+    t.jsonb "dns_alert_state", default: {}, null: false
   end
 
   create_table "automations", force: :cascade do |t|
@@ -130,6 +135,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.datetime "fetched_at", null: false
     t.index ["cve", "provider_key"], name: "index_cve_scores_on_cve_and_provider_key", unique: true
     t.index ["provider_key"], name: "index_cve_scores_on_provider_key"
+  end
+
+  create_table "dns_links", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "server_id"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_dns_links_on_name", unique: true
+    t.index ["server_id"], name: "index_dns_links_on_server_id"
+    t.index ["user_id"], name: "index_dns_links_on_user_id"
+  end
+
+  create_table "dns_records", force: :cascade do |t|
+    t.string "source", null: false
+    t.string "source_id", null: false
+    t.string "zone", null: false
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.string "value", null: false
+    t.integer "ttl"
+    t.boolean "disabled", default: false, null: false
+    t.bigint "server_id"
+    t.string "matched_by"
+    t.string "matched_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_dns_records_on_name"
+    t.index ["server_id"], name: "index_dns_records_on_server_id"
+    t.index ["source", "source_id"], name: "index_dns_records_on_source_and_source_id", unique: true
   end
 
   create_table "image_updates", force: :cascade do |t|
@@ -254,6 +289,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.index ["started_by_id"], name: "index_key_rotations_on_started_by_id"
   end
 
+  create_table "notification_batches", force: :cascade do |t|
+    t.bigint "notification_channel_id", null: false
+    t.string "kind", null: false
+    t.bigint "activity_ids", default: [], null: false, array: true
+    t.datetime "send_at", null: false
+    t.datetime "closed_at"
+    t.datetime "delivered_at"
+    t.datetime "failed_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["notification_channel_id", "kind"], name: "index_notification_batches_open", unique: true, where: "(closed_at IS NULL)"
+    t.index ["send_at"], name: "index_notification_batches_undelivered", where: "((delivered_at IS NULL) AND (failed_at IS NULL))"
+  end
+
   create_table "notification_channels", force: :cascade do |t|
     t.string "name", null: false
     t.string "kind", default: "slack", null: false
@@ -270,6 +319,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.boolean "daily_digest", default: false, null: false
     t.datetime "last_digest_at"
     t.string "locale"
+    t.integer "group_minutes", default: 10, null: false
     t.index ["name"], name: "index_notification_channels_on_name", unique: true
   end
 
@@ -333,6 +383,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
     t.datetime "updated_at", null: false
     t.string "expected_ports"
     t.index "lower((name)::text)", name: "index_server_groups_on_lower_name", unique: true
+  end
+
+  create_table "server_notes", force: :cascade do |t|
+    t.bigint "server_id", null: false
+    t.bigint "user_id"
+    t.text "body", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["server_id", "created_at"], name: "index_server_notes_on_server_id_and_created_at"
+    t.index ["user_id"], name: "index_server_notes_on_user_id"
   end
 
   create_table "server_vulnerabilities", force: :cascade do |t|
@@ -486,6 +546,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
   add_foreign_key "background_task_items", "servers", on_delete: :nullify
   add_foreign_key "background_tasks", "automations", on_delete: :nullify
   add_foreign_key "background_tasks", "users", on_delete: :nullify
+  add_foreign_key "dns_links", "servers", on_delete: :cascade
+  add_foreign_key "dns_links", "users", on_delete: :nullify
+  add_foreign_key "dns_records", "servers", on_delete: :nullify
   add_foreign_key "integration_links", "integrations", on_delete: :cascade
   add_foreign_key "integration_links", "servers", on_delete: :cascade
   add_foreign_key "integration_links", "users", on_delete: :nullify
@@ -499,9 +562,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_02_120000) do
   add_foreign_key "key_rotations", "ssh_keys", column: "new_key_id", on_delete: :nullify
   add_foreign_key "key_rotations", "ssh_keys", column: "old_key_id", on_delete: :nullify
   add_foreign_key "key_rotations", "users", column: "started_by_id", on_delete: :nullify
+  add_foreign_key "notification_batches", "notification_channels", on_delete: :cascade
   add_foreign_key "ovh_resources", "servers", on_delete: :nullify
   add_foreign_key "server_group_memberships", "server_groups", on_delete: :cascade
   add_foreign_key "server_group_memberships", "servers", on_delete: :cascade
+  add_foreign_key "server_notes", "servers", on_delete: :cascade
+  add_foreign_key "server_notes", "users", on_delete: :nullify
   add_foreign_key "server_vulnerabilities", "servers", on_delete: :cascade
   add_foreign_key "temporary_accesses", "public_keys", on_delete: :nullify
   add_foreign_key "temporary_accesses", "servers", on_delete: :cascade

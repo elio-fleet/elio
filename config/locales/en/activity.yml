@@ -177,7 +177,7 @@ en:
         description: An OVHcloud service (dedicated, VPS) is about to expire.
       dns_record_outside_fleet:
         label: DNS to an IP outside the fleet
-        description: An OVH DNS record points to an IP that belongs to no server of the fleet.
+        description: A DNS record (OVHcloud or Technitium) points to an IP that belongs to no server of the fleet.
       ovh_service_unmanaged:
         label: OVH service not followed
         description: An OVHcloud service is attached to no server of the fleet.
@@ -190,6 +190,12 @@ en:
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
+      server_note_added:
+        label: Note added
+        description: Someone left a note on a server (Notes tab).
+      dns_record_conflict:
+        label: DNS name that differs by source
+        description: A DNS name has different records in two sources (OVHcloud, Technitium…).
     categories:
       keys: SSH keys
       servers: Servers
@@ -299,6 +305,9 @@ en:
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
       automation_run: "%{automation}: %{result}"
+      server_note_added: 'Note on “%{server}” by %{author}: %{excerpt}'
+      dns_record_conflict: "%{record} differs between %{sources}"
+    target_account: "“%{server_name}” (%{account} account)"
   automation:
     whole_fleet: The whole fleet
     extension_off: 'Extension turned off: nothing to do'
@@ -342,6 +351,7 @@ en:
       one: "%{count} event"
       other: "%{count} events"
     vulnerabilities: 'Vulnerabilities: %{cves} known, %{fixable} fixable including %{serious} serious, on %{servers}.'
+    image_vulnerabilities: 'In the Docker images (%{images}): known CVEs %{cves}, fixable %{fixable}, serious and fixable %{serious}.'
   notifications:
     discord:
       by: By %{author_name}
@@ -362,6 +372,12 @@ en:
     webhook:
       test: The channel “%{channel_name}” receives the notifications.
       service: The webhook
+    batch:
+      title: "%{count} × %{label}"
+      more:
+        one: "…and %{count} more"
+        other: "…and %{count} more"
+      see_all: See them in Elio
   notification_mailer:
     test_subject: "[Elio] Test of the channel “%{channel_name}”"
     activity:
@@ -370,6 +386,9 @@ en:
     test:
       text_html: 'Elio test: the channel “%{channel_name}” receives the notifications.'
     activity_subject: "[Elio] %{label}: %{summary}"
+    batch_subject: "[Elio] %{title}"
+    batch:
+      see_all: 'See them in Elio:'
   settings:
     notifications:
       show:
@@ -412,6 +431,12 @@ en:
         language: Language
         instance_language: Language of this Elio (%{language})
         language_hint: The language of the messages, the tests and the daily digest of this channel.
+        group_minutes: Group the notifications
+        group_none: No, send each one right away
+        group_for:
+          one: Over %{count} minute
+          other: Over %{count} minutes
+        group_hint: The activities of one type that occur within this time leave as a single message. Critical ones are always sent right away.
       edit:
         edit_html: Edit “%{name_was}”
       new:
@@ -428,3 +453,6 @@ en:
       discord: Discord
       webhook: Webhook (signed JSON)
       email: Email
+    group:
+      one: grouped over %{count} min
+      other: grouped over %{count} min

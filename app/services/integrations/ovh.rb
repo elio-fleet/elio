@@ -18,21 +18,19 @@ class Integrations::Ovh < Integrations::Base
         Integrations::Field.new(key: :consumer_key, label: "Consumer Key", secret: true, required: true,
                   hint: I18n.t("integrations.ovh.consumer_key_hint")),
 
-        Integrations::Field.new(key: :products, label: I18n.t("integrations.ovh.products"), type: :checkboxes, section: "Ressources",
+        Integrations::Field.new(key: :products, label: I18n.t("integrations.ovh.products"), type: :checkboxes, section: I18n.t("integrations.sections.resources"),
                   options: Integrations::Ovh::Fetch::PRODUCTS.map { |product| [ product, I18n.t("integrations.ovh.product_labels.#{product}") ] }, default: Integrations::Ovh::Fetch::PRODUCTS),
-        Integrations::Field.new(key: :zones, label: I18n.t("integrations.ovh.zones"), type: :list, default: [], section: "Ressources", placeholder: "example.com, example.fr",
+        Integrations::Field.new(key: :zones, label: I18n.t("integrations.ovh.zones"), type: :list, default: [], section: I18n.t("integrations.sections.resources"), placeholder: "example.com, example.fr",
                   hint: I18n.t("integrations.ovh.zones_hint")),
-        Integrations::Field.new(key: :projects, label: I18n.t("integrations.ovh.projects"), type: :list, default: [], section: "Ressources", placeholder: I18n.t("integrations.ovh.projects_placeholder"),
+        Integrations::Field.new(key: :projects, label: I18n.t("integrations.ovh.projects"), type: :list, default: [], section: I18n.t("integrations.sections.resources"), placeholder: I18n.t("integrations.ovh.projects_placeholder"),
                   hint: I18n.t("integrations.ovh.projects_hint")),
 
-        Integrations::Field.new(key: :alert_expiring, label: I18n.t("integrations.ovh.alert_expiring"), type: :boolean, default: true, section: "Alertes"),
-        Integrations::Field.new(key: :expiring_days, label: I18n.t("integrations.ovh.expiring_days"), type: :number, default: 30, section: "Alertes"),
-        Integrations::Field.new(key: :expiring_ignore_auto_renew, label: I18n.t("integrations.ovh.expiring_ignore_auto_renew"), type: :boolean, default: true, section: "Alertes"),
-        Integrations::Field.new(key: :alert_firewall_disabled, label: I18n.t("integrations.ovh.alert_firewall_disabled"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :alert_reverse_mismatch, label: I18n.t("integrations.ovh.alert_reverse_mismatch"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :alert_server_without_dns, label: I18n.t("integrations.ovh.alert_server_without_dns"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :alert_dns_outside, label: I18n.t("integrations.ovh.alert_dns_outside"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :alert_unmanaged_service, label: I18n.t("integrations.ovh.alert_unmanaged_service"), type: :boolean, default: false, section: "Alertes",
+        Integrations::Field.new(key: :alert_expiring, label: I18n.t("integrations.ovh.alert_expiring"), type: :boolean, default: true, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :expiring_days, label: I18n.t("integrations.ovh.expiring_days"), type: :number, default: 30, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :expiring_ignore_auto_renew, label: I18n.t("integrations.ovh.expiring_ignore_auto_renew"), type: :boolean, default: true, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :alert_firewall_disabled, label: I18n.t("integrations.ovh.alert_firewall_disabled"), type: :boolean, default: false, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :alert_reverse_mismatch, label: I18n.t("integrations.ovh.alert_reverse_mismatch"), type: :boolean, default: false, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :alert_unmanaged_service, label: I18n.t("integrations.ovh.alert_unmanaged_service"), type: :boolean, default: false, section: I18n.t("integrations.sections.alerts"),
                   hint: I18n.t("integrations.ovh.alert_unmanaged_service_hint"))
       ]
     end
@@ -65,6 +63,9 @@ class Integrations::Ovh < Integrations::Base
 
     def products(integration) = Array(integration.value(:products))
 
+    # With the DNS product, its records are in the DNS of the fleet.
+    def dns_source?(integration) = products(integration).include?("dns")
+
     # Rights to give to the API key, and the prefilled token creation page.
     def rights(integration) = Integrations::Ovh::Fetch.rights(products(integration))
 
@@ -84,8 +85,6 @@ class Integrations::Ovh < Integrations::Base
       integration.value(:expiring_ignore_auto_renew) ? scope.where("NOT COALESCE((ovh_resources.data->>'renew_automatic')::boolean, false)") : scope
     end
 
-    # A/AAAA records whose IP belongs to no server of the fleet.
-    def records_outside_fleet = OvhResource.of_kind("dns_record").unattached.where("ovh_resources.data->>'type' IN ('A', 'AAAA')")
 
     def health_reasons(integration, server)
       return [] unless integration.last_synced_at
@@ -112,9 +111,6 @@ class Integrations::Ovh < Integrations::Base
             reasons << (reverse.blank? ? reason("warn", :no_reverse, ip: ip) : reason("warn", :reverse_mismatch, ip: ip, reverse: reverse))
           end
         end
-      end
-      if integration.value(:alert_server_without_dns) && ip_blocks.any? && resources.none? { |resource| resource.kind == "dns_record" }
-        reasons << reason("warn", :no_dns)
       end
       reasons
     end

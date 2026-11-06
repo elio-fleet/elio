@@ -130,15 +130,20 @@ class Inventory::HealthStatus
     containers.one? ? self.class.reason("warn", :"container_#{state}", name: containers.first["name"]) : self.class.reason("warn", :"containers_#{state}", count: containers.size)
   end
 
-  # Fixable CVEs from the alert severity of the settings: critical.
+  # Fixable CVEs from the alert severity of the settings: critical on the
+  # server itself, a warning in its Docker images.
   def vulnerability_reasons
     minimum = @settings.vulnerability_alert_severity
     return [] if minimum == "none"
 
-    cves = @server.server_vulnerabilities.fixable.at_least(minimum).distinct.pluck(:cve)
-    return [] if cves.empty?
-
-    [ cves.one? ? self.class.reason("crit", :vulnerability, cve: cves.first) : self.class.reason("crit", :vulnerabilities, count: cves.size) ]
+    serious = @server.server_vulnerabilities.fixable.at_least(minimum)
+    cves = serious.host.distinct.pluck(:cve)
+    reasons = []
+    reasons << (cves.one? ? self.class.reason("crit", :vulnerability, cve: cves.first) : self.class.reason("crit", :vulnerabilities, count: cves.size)) if cves.any?
+    # In the Docker images: fixed by updating the image, not the server.
+    images = serious.images.distinct.count(:cve)
+    reasons << self.class.reason("warn", :image_vulnerabilities, count: images, images: serious.images.distinct.count(:image)) if images.positive?
+    reasons
   end
 
   def port_reasons

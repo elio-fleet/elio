@@ -5,7 +5,7 @@
 <% schedules = @server.inventory("scheduled_tasks")&.data || {} %>
 <% docker = @server.inventory("docker")&.data || {} %>
 <% ports = @server.inventory("ports") %>
-<% snapshot = @server.account_snapshots.find { |candidate| candidate.unix_user == @server.username } %>
+<% snapshots = @server.account_snapshots.to_a %>
 
 <div class="mx-auto max-w-6xl">
   <p class="text-xs text-ink-3">
@@ -44,14 +44,15 @@
   <%= render "servers/health_bar", server: @server %>
 
   <% tabs = [ [ "overview", t("servers.tabs.overview"), nil ],
-              [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.fixable.distinct.count(:cve).nonzero? ],
+              [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.host.fixable.distinct.count(:cve).nonzero? ],
               [ "packages", t("servers.tabs.packages"), packages["total"] ],
               [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "active" } if services["units"]) ],
               *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),
               [ "ports", t("servers.tabs.ports"), (Inventory::PortAnalysis.new(@server).public_ports.size if ports&.collected?) ],
               [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
-              [ "keys", t("servers.tabs.keys"), snapshot&.keys&.size ],
+              [ "keys", t("servers.tabs.keys"), (snapshots.sum { |snapshot| snapshot.keys.size } if snapshots.any?) ],
               *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] },
+              [ "notes", t("servers.tabs.notes"), @server.notes.count.nonzero? ],
               [ "history", t("servers.tabs.history"), nil ] ] %>
   <%= render "servers/tabs", server: @server, tabs: tabs, current: @tab %>
 
@@ -93,11 +94,13 @@
     </section>
   <% when *@integration_tabs.map { |tab| tab[:key] } %>
     <% tab = @integration_tabs.find { |candidate| candidate[:key] == @tab } %>
-    <%= render "integrations/#{tab[:integration].kind}/server_tab", server: @server, integration: tab[:integration] %>
+    <%= render tab[:partial] || "integrations/#{tab[:integration].kind}/server_tab", server: @server, integration: tab[:integration] %>
+  <% when "notes" %>
+    <%= render "server_notes/tab", server: @server, notes: @notes, pager: @pager %>
   <% when "history" %>
     <section id="server-activity" class="card mt-6 px-5 pt-4 pb-2">
       <div class="flex items-center justify-between">
-        <h2 class="flex items-center gap-2 font-semibold"><%= icon :clock, class: "h-4 w-4 text-ink-3" %> Historique</h2>
+        <h2 class="flex items-center gap-2 font-semibold"><%= icon :clock, class: "h-4 w-4 text-ink-3" %> <%= t("servers.tabs.history") %></h2>
         <%= link_to t("dashboard.index.see_all"), activities_path(server_id: @server.id), class: "text-xs font-medium text-accent hover:underline" %>
       </div>
       <% if @activities.any? %>

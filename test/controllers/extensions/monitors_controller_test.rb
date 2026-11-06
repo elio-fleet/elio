@@ -139,4 +139,14 @@ class MonitorsControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_includes response.body, %("label":"Sondes","hint":"extension","url":"/monitors")
   end
+
+  test "the Monitors tab offers a prompt for an AI, for every role" do
+    sign_in users(:viewer)
+    get server_path(servers(:web), tab: "monitors")
+    assert_select "#server-monitors .server-prompt[data-kind=monitors]" do
+      assert_select "button.server-prompt-button", /Prompt pour proposer des sondes/
+      assert_select "dialog textarea.server-prompt-text[readonly]", /Je surveille mes serveurs Linux avec Uptime Kuma.*\[SRV\] Web ping/m
+      assert_select "button[data-action='clipboard#copy']"
+    end
+  end
 end

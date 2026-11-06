@@ -29,6 +29,8 @@
                 t(en: "Matched with the packages already inventoried, by source package and version, like dpkg compares them: no extra command on the servers. The running kernel counts, not an old one left installed.", fr: "Rapprochés des paquets déjà inventoriés, par paquet source et version, comme dpkg les compare : aucune commande de plus sur les serveurs. C'est le noyau en cours qui compte, pas un ancien resté installé."),
                 t(en: "Grouped by package: the version to install, how many CVEs it fixes, whether your repositories already offer it, and the apt command to copy.", fr: "Regroupées par paquet : la version à installer, combien de CVE elle corrige, si vos dépôts la proposent déjà, et la commande apt à copier."),
                 t(en: "Scores from NVD, Red Hat and CVE.org (averaged), or from your own providers — a JSON API or a web page; exploitation from EPSS and the CISA KEV catalog.", fr: "Notes de NVD, Red Hat et CVE.org (moyennées), ou de vos propres fournisseurs — une API JSON ou une page web ; exploitation d'après EPSS et le catalogue CISA KEV."),
+                t(en: "The server's own CVEs apart from those of its Docker images; signed packages (grub, shim, kernel, fwupd) compared with the code they sign.", fr: "Les CVE du serveur à part de celles de ses images Docker ; les paquets signés (grub, shim, noyau, fwupd) comparés au code qu'ils signent."),
+                t(en: "The commands to fix a CVE, to copy: apt-get --only-upgrade of the installed packages (after apt-get update if needed), or docker compose pull and up -d for an image. Never run by Elio.", fr: "Les commandes pour corriger une CVE, à copier : apt-get --only-upgrade des paquets installés (après apt-get update si besoin), ou docker compose pull et up -d pour une image. Jamais lancées par Elio."),
                 t(en: "A click on a CVE: its description, the score and CVSS vector of each provider in plain words, the packages, the other servers touched.", fr: "Un clic sur une CVE : sa description, la note et le vecteur CVSS de chaque fournisseur en clair, les paquets, les autres serveurs touchés.") ],
       shots: [ [ "vulnerabilities-by-package", t(en: "Vulnerabilities grouped by package, with the update to make", fr: "Vulnérabilités par paquet, avec la mise à jour à faire") ],
                [ "vulnerability-detail", t(en: "A CVE in detail: scores per provider, CVSS vector in words", fr: "Une CVE en détail : notes par fournisseur, vecteur CVSS en clair") ] ] },
@@ -37,8 +39,9 @@
       points: [ t(en: "Unhealthy containers, restart loops, containers stopped for long; CPU and memory.", fr: "Conteneurs en mauvaise santé, redémarrages en boucle, conteneurs arrêtés depuis longtemps ; CPU et mémoire."),
                 t(en: "Images per server: age, size, unused ones, moving tags like latest; the same image at different versions across the fleet.", fr: "Images par serveur : âge, taille, inutilisées, tags mouvants comme latest ; la même image à des versions différentes selon les serveurs."),
                 t(en: "New versions published on the registries (Docker Hub, GHCR, Quay, private ones with a read-only token), checked with HEAD requests.", fr: "Nouvelles versions publiées sur les registres (Docker Hub, GHCR, Quay, privés avec un jeton en lecture), vérifiées par des requêtes HEAD."),
-                t(en: "CVEs of the images with Trivy or Grype when installed, else from the packages of the image. Environment variables are never read.", fr: "CVE des images avec Trivy ou Grype s'ils sont installés, sinon d'après les paquets de l'image. Les variables d'environnement ne sont jamais lues.") ],
-      shots: [ [ "docker", t(en: "Docker on a server: containers and images", fr: "Docker sur un serveur : conteneurs et images") ] ] },
+                t(en: "CVEs of the images with Trivy or Grype when installed, else from the packages of the image, in a CVE tab by image with the servers and containers that run it. Environment variables are never read.", fr: "CVE des images avec Trivy ou Grype s'ils sont installés, sinon d'après les paquets de l'image, dans un onglet CVE par image avec les serveurs et conteneurs qui l'utilisent. Les variables d'environnement ne sont jamais lues.") ],
+      shots: [ [ "docker", t(en: "Docker on a server: containers and images", fr: "Docker sur un serveur : conteneurs et images") ],
+               [ "docker-cves", t(en: "The CVEs of the Docker images of the fleet, by image", fr: "Les CVE des images Docker du parc, par image") ] ] },
     { id: "inventory", eyebrow: t(en: "Inventory", fr: "Inventaire"),
       title: t(en: "What runs where, searchable across the fleet", fr: "Ce qui tourne où, cherchable sur tout le parc"),
       points: [ t(en: "Packages (dpkg, snap): “which servers have openssl, in which version?”", fr: "Paquets (dpkg, snap) : « quels serveurs ont openssl, et en quelle version ? »"),
@@ -50,12 +53,14 @@
       title: t(en: "Who can log in, and for how long", fr: "Qui peut se connecter, et pour combien de temps"),
       points: [ t(en: "A keyring of the team's and the machines' public keys; add or remove one on a server in a click.", fr: "Un trousseau des clés publiques de l'équipe et des machines ; en ajouter ou en retirer une sur un serveur en un clic."),
                 t(en: "Temporary access: the key expires on its own (OpenSSH expiry-time), even if Elio is down.", fr: "Accès temporaires : la clé expire toute seule (expiry-time d'OpenSSH), même si Elio est arrêté."),
-                t(en: "Keys found on a server and unknown to the keyring are flagged; rotation of Elio's own key without downtime.", fr: "Les clés trouvées sur un serveur et inconnues du trousseau sont signalées ; rotation de la clé d'Elio sans coupure.") ],
-      shots: [ [ "ssh-keys", t(en: "The SSH keys of a server", fr: "Les clés SSH d'un serveur") ] ] },
+                t(en: "With root, the keys of every account of a server, removable from any of them (links and files the account does not own are refused).", fr: "Avec root, les clés de tous les comptes d'un serveur, retirables de chacun (liens et fichiers qui n'appartiennent pas au compte refusés)."),
+                t(en: "Keys found on a server and unknown to the keyring are flagged and gathered in an Outside the keyring list; rotation of Elio's own key without downtime.", fr: "Les clés trouvées sur un serveur et inconnues du trousseau sont signalées et réunies dans une liste Hors trousseau ; rotation de la clé d'Elio sans coupure.") ],
+      shots: [ [ "ssh-keys", t(en: "The SSH keys of every account of a server", fr: "Les clés SSH de tous les comptes d'un serveur") ],
+               [ "keyring-outside", t(en: "The keys of the fleet that are in no keyring key", fr: "Les clés du parc absentes du trousseau") ] ] },
     { id: "alerts", eyebrow: t(en: "Alerts & automation", fr: "Alertes et automatisations"),
       title: t(en: "Told when it matters, quiet otherwise", fr: "Prévenu quand ça compte, tranquille sinon"),
       points: [ t(en: "The overview lists what needs attention, most serious first, with a button to act.", fr: "La vue d'ensemble liste ce qui demande attention, le plus grave d'abord, avec un bouton pour agir."),
-                t(en: "An activity log of everything that changed; notifications to Slack, Discord, email or signed webhooks, chosen per kind; a daily digest.", fr: "Un journal de tout ce qui a changé ; notifications Slack, Discord, email ou webhooks signés, au choix par type ; un résumé quotidien."),
+                t(en: "An activity log of everything that changed; notifications to Slack, Discord, email or signed webhooks, chosen per kind and grouped by type over a few minutes (critical ones right away); a daily digest.", fr: "Un journal de tout ce qui a changé ; notifications Slack, Discord, email ou webhooks signés, au choix par type et regroupées par type sur quelques minutes (les critiques tout de suite) ; un résumé quotidien."),
                 t(en: "Every collection on schedule, on the fleet or per group, followed live in the Tasks page.", fr: "Chaque collecte à la fréquence voulue, sur le parc ou par groupe, suivie en direct dans la page Tâches.") ],
       shots: [ [ "overview", t(en: "The overview: what needs attention", fr: "La vue d'ensemble : ce qui est à traiter") ], [ "automations", t(en: "Automations", fr: "Automatisations") ] ] }
   ]
@@ -91,6 +96,7 @@
       <ul class="mt-4 space-y-3 text-ink-2">
         <% [ t(en: "Reads the /metrics page of your instance every 15 minutes, with an API key (Uptime Kuma 1.x and 2.x).", fr: "Lit la page /metrics de votre instance toutes les 15 minutes, avec une clé d'API (Uptime Kuma 1.x et 2.x)."),
              t(en: "Attaches each monitor to its server: by the IP it watches (WireGuard included), by host name — with DNS resolution as an option — or by the server's name in the monitor's name. Corrections by hand are kept.", fr: "Rattache chaque sonde à son serveur : par l'IP surveillée (WireGuard compris), par le nom d'hôte — avec résolution DNS en option — ou par le nom du serveur dans celui de la sonde. Les corrections à la main sont gardées."),
+             t(en: "A prompt to copy into an AI assistant, built from the server's inventory, to propose the monitors to create.", fr: "Un prompt à copier dans un assistant IA, construit d'après l'inventaire du serveur, pour proposer les sondes à créer."),
              t(en: "A Monitors tab on each server; a page with the monitors attached to no server and the servers without any monitor.", fr: "Un onglet Sondes sur chaque serveur ; une page avec les sondes rattachées à aucun serveur et les serveurs sans sonde."),
              t(en: "Alerts to choose: server without a monitor, monitor down or back, certificate about to expire, uptime under a threshold, maintenance that lasts.", fr: "Alertes au choix : serveur sans sonde, sonde hors ligne ou de retour, certificat bientôt expiré, disponibilité sous un seuil, maintenance qui dure.") ].each do |point| -%>
           <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
@@ -107,8 +113,8 @@
       <ul class="mt-4 space-y-3 text-ink-2">
         <% [ t(en: "An API key limited to GET requests: Elio lists the exact rights for the products you check and opens OVH's token page already filled in; the connection test warns if the key could write.", fr: "Une clé d'API limitée aux requêtes GET : Elio liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie ; le test de connexion prévient si la clé permet d'écrire."),
              t(en: "Each product is a checkbox: IPs and reverse DNS, network firewall, anti-DDoS, DNS zones, dedicated servers, VPS, Public Cloud instances.", fr: "Chaque produit est une case à cocher : IP et reverse DNS, firewall réseau, anti-DDoS, zones DNS, serveurs dédiés, VPS, instances Public Cloud."),
-             t(en: "An OVH tab on each server: the service and its expiration, the IPs, the network firewall rules and whether they let each public port through, the DNS records pointing to it.", fr: "Un onglet OVH sur chaque serveur : le service et son expiration, les IP, les règles du firewall réseau et si elles laissent passer chaque port public, les enregistrements DNS qui pointent vers lui."),
-             t(en: "Alerts to choose: service about to expire, firewall disabled, reverse DNS that does not match, DNS record pointing outside the fleet, OVH service not followed by Elio.", fr: "Alertes au choix : service bientôt expiré, firewall désactivé, reverse DNS qui ne correspond pas, enregistrement DNS vers une IP hors du parc, service OVH non suivi par Elio.") ].each do |point| -%>
+             t(en: "An OVH tab on each server: the service and its expiration, the IPs, the network firewall rules and whether they let each public port through, and a prompt for an AI assistant to propose the network firewall rules; its DNS records go to the DNS of the fleet.", fr: "Un onglet OVH sur chaque serveur : le service et son expiration, les IP, les règles du firewall réseau et si elles laissent passer chaque port public, et un prompt pour un assistant IA qui propose les règles du firewall réseau ; ses enregistrements DNS vont dans le DNS du parc."),
+             t(en: "Alerts to choose: service about to expire, firewall disabled, reverse DNS that does not match, OVH service not followed by Elio.", fr: "Alertes au choix : service bientôt expiré, firewall désactivé, reverse DNS qui ne correspond pas, service OVH non suivi par Elio.") ].each do |point| -%>
           <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
         <% end -%>
       </ul>
@@ -116,16 +122,28 @@
     <figure class="lg:col-span-3"><%= screenshot("ovh", t(en: "The OVH tab of a server: service, IPs, network firewall per port, DNS records", fr: "L'onglet OVH d'un serveur : service, IP, firewall réseau port par port, enregistrements DNS")) %>
       <figcaption class="mt-2 text-center text-sm text-ink-3"><%= t en: "What OVH knows about a server, and what its network firewall lets through", fr: "Ce qu'OVH sait d'un serveur, et ce que son firewall réseau laisse passer" %></figcaption></figure>
   </div>
+  <div class="mt-16 max-w-3xl">
+    <h3 class="text-xl font-semibold">Technitium DNS</h3>
+    <ul class="mt-4 space-y-3 text-ink-2">
+      <% [ t(en: "The API token of a user that can only view the zones; the connection test gives the version and warns if the token could change them.", fr: "Le jeton d'API d'un utilisateur qui peut seulement voir les zones ; le test de connexion donne la version et prévient si le jeton permet de les modifier."),
+           t(en: "The A, AAAA and CNAME records of the zones, attached to the servers they point to (by IP, or by the name a CNAME points to), or by hand.", fr: "Les enregistrements A, AAAA et CNAME des zones, rattachés aux serveurs vers lesquels ils pointent (par IP, ou par le nom visé par un CNAME), ou à la main."),
+           t(en: "One DNS of the fleet with OVHcloud's records: one DNS tab and one DNS page, the source of each record, names that differ between sources flagged.", fr: "Un seul DNS du parc avec les enregistrements d'OVHcloud : un onglet et une page DNS, la source de chaque enregistrement, les noms qui diffèrent selon la source signalés."),
+           t(en: "Common DNS alerts: record pointing outside the fleet, server without a DNS name; the fleet search, ⌘K and Uptime Kuma use these names.", fr: "Alertes DNS communes : enregistrement hors du parc, serveur sans nom DNS ; la recherche du Parc, ⌘K et Uptime Kuma utilisent ces noms.") ].each do |point| -%>
+        <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
+      <% end -%>
+    </ul>
+  </div>
   <p class="mt-8 text-sm text-ink-3"><%= t en: "Not yet tried on real accounts: built and tested on recorded API answers. Feedback welcome.", fr: "Pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées. Vos retours sont bienvenus." %></p>
 </section>
 
 <section id="team" class="mx-auto mt-20 max-w-6xl px-5">
   <p class="eyebrow"><%= t en: "Team", fr: "Équipe" %></p>
   <h2 class="mt-3 text-2xl font-semibold"><%= t en: "Made to be shared, safely", fr: "Fait pour être partagé, sans risque" %></h2>
-  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+  <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
     <% [ [ t(en: "Roles", fr: "Rôles"), t(en: "Administrators, operators and read-only users.", fr: "Administrateurs, opérateurs et lecture seule.") ],
          [ t(en: "Two-factor authentication", fr: "Double authentification"), t(en: "TOTP and backup codes, mandatory by default for admins and operators.", fr: "TOTP et codes de secours, obligatoire par défaut pour les admins et opérateurs.") ],
          [ t(en: "Invitations", fr: "Invitations"), t(en: "No public sign-up: the first account, then invitations only.", fr: "Pas d'inscription publique : le premier compte, puis des invitations.") ],
+         [ t(en: "Notes", fr: "Notes"), t(en: "What the team should know about a server, in Markdown, on its Notes tab.", fr: "Ce que l'équipe doit savoir d'un serveur, en Markdown, dans son onglet Notes.") ],
          [ t(en: "Everywhere", fr: "Partout"), t(en: "⌘K search, light and dark themes, works on a phone. Interface in English and French.", fr: "Recherche ⌘K, thèmes clair et sombre, utilisable sur téléphone. Interface en anglais et en français.") ] ].each do |title, text| -%>
       <div class="card p-5"><h3 class="font-semibold"><%= title %></h3><p class="mt-1.5 text-sm text-ink-2"><%= text %></p></div>
     <% end -%>

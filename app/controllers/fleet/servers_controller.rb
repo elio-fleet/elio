@@ -19,6 +19,7 @@ class ServersController < ApplicationController
     servers = (@group ? Server.in_group(@group) : Server.all).order(:name).includes(:server_groups, :inventory_snapshots)
     servers = servers.where(os_name: @os) if @os
     @q = params[:q].to_s.strip.first(100)
+    servers = servers.includes(:dns_records) if @q.present?
     servers = servers.to_a if @state || @q.present?
     servers = servers.select { |server| server.health_state == @state } if @state
     servers = servers.select { |server| server.matches_search?(@q) } if @q.present?
@@ -35,7 +36,8 @@ class ServersController < ApplicationController
     end
   end
 
-  TABS = %w[overview vulnerabilities packages services docker ports schedules keys history].freeze
+  TABS = %w[overview vulnerabilities packages services docker ports schedules keys notes history].freeze
+  NOTES_PER_PAGE = 20
   VULNERABILITIES_PER_PAGE = 100
   VULNERABILITY_PACKAGES_PER_PAGE = 50
   VULNERABILITY_VIEWS = %w[packages cves].freeze
@@ -44,6 +46,10 @@ class ServersController < ApplicationController
   def show
     @integration_tabs = Integration.server_tabs
     @tab = params[:tab].presence_in(TABS + @integration_tabs.map { |tab| tab[:key] }) || "overview"
+    if @tab == "notes"
+      @pager = paginate(@server.notes.recent.includes(:user), per_page: NOTES_PER_PAGE)
+      @notes = @pager.records
+    end
     if @tab == "history"
       @pager = paginate(Activity.recent.where(server: @server).includes(:user, :server, :public_key), per_page: HISTORY_PER_PAGE)
       @activities = @pager.records
@@ -104,10 +110,15 @@ class ServersController < ApplicationController
   end
 
   # Vulnerabilities tab: fixable first, most serious first (?fixable=1, ?severity=, ?origin=).
+  # Only the server's own packages by default; ?containers=1 adds the Docker
+  # images (remembered in a cookie).
   def show_vulnerabilities
-    scope = @server.server_vulnerabilities
+    all = @server.server_vulnerabilities
+    @include_images = include_image_vulnerabilities?
+    scope = @include_images ? all : all.host
     @vulnerability_counts = { total: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve),
-                              by_severity: scope.group(:severity).distinct.count(:cve) }
+                              by_severity: scope.group(:severity).distinct.count(:cve),
+                              host: all.host.distinct.count(:cve), images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
     @fixable_only = params[:fixable] == "1"
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     scope = scope.fixable if @fixable_only
@@ -127,6 +138,15 @@ class ServersController < ApplicationController
       @pager = paginate(scope, per_page: VULNERABILITIES_PER_PAGE)
       @vulnerabilities = @pager.records
     end
+  end
+
+  def include_image_vulnerabilities?
+    if params.key?(:containers)
+      value = params[:containers] == "1"
+      cookies.permanent[:elio_vulnerability_containers] = { value: value ? "1" : "0", same_site: :lax, httponly: true }
+      return value
+    end
+    cookies[:elio_vulnerability_containers] == "1"
   end
 
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.

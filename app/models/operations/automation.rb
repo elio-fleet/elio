@@ -29,7 +29,8 @@ class Automation < ApplicationRecord
     Definition.new(key: :docker_image_updates, default_interval: 360, default_enabled: true),
     Definition.new(key: :keys_scan, default_interval: 360),
     Definition.new(key: :uptime_kuma_sync, default_interval: 15, default_enabled: true, quiet: true, integration: "uptime_kuma"),
-    Definition.new(key: :ovh_sync, default_interval: 360, default_enabled: true, integration: "ovh")
+    Definition.new(key: :ovh_sync, default_interval: 360, default_enabled: true, integration: "ovh"),
+    Definition.new(key: :technitium_sync, default_interval: 60, default_enabled: true, quiet: true, integration: "technitium")
   ].index_by(&:key).freeze
 
   INTERVALS = [ 5, 15, 60, 360, 1440 ].freeze

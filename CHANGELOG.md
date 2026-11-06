@@ -4,9 +4,27 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.1.0-beta.3] — 2026-11-06
+
+### Upgrading from 0.1.0-beta.2
+
+- The database migrations run at start, as usual. They move the DNS records of the OVHcloud extension into the new DNS of the fleet, and turn its DNS alerts into the common ones of *Settings → Extensions → DNS*: an alert on in the extension stays on, and the records already reported are not reported again.
+- Each notification channel now groups its non-critical notifications over 10 minutes. Set *Group the notifications* to *No* on a channel to keep the previous behaviour.
+- To see the SSH keys of every account of a server, Elio needs root (log in as root, or password-less `sudo`); without it, nothing changes.
+
 ### Added
 
 - The interface in **English and French**, and any other language by adding a folder of translations (`config/locales/<language>/`). Each user picks a language in My account; otherwise Elio follows the browser, then the default language of the installation (Settings → General: English on a new installation, French on an existing one). Notification channels have their own language, and an invitation is sent in the language chosen for it.
+
+- **Commands to fix a vulnerability**, in the window of a CVE: the `apt-get` command for the installed packages (after `apt-get update` when the server had not seen the fixed version yet, then a reboot for the kernel), or for an image `docker pull` and the `docker compose pull` / `up -d` of the Compose services that use it; “no fix for now” otherwise. From the fleet page, the commands of each server. Elio never runs them.
+- **One DNS for the fleet**: the DNS records of the OVHcloud and Technitium extensions are stored together and attached to the servers the same way (a CNAME of one source follows a name of the other; a manual attachment, by name, applies to every source). One DNS page (`/dns`, filter by source) and one DNS tab on the server page, with the source of each record; the OVH tab and the OVHcloud page link to them. A name whose records differ between sources (split horizon) is flagged “differs by source” and can be filtered; ⌘K finds who has a DNS name. The DNS alerts are common to every source, in *Settings → Extensions → DNS*: record pointing outside the fleet (once per name and IP, whatever the source), server without a DNS name (only if no source has one, with groups to ignore), and, optionally, a name that differs between sources. The checkboxes of the two extensions are carried over. The fleet search and ⌘K find a server by one of its DNS names.
+- **Technitium DNS extension** (read-only API token): every hour, the A, AAAA and CNAME records of its zones, attached to the servers they point to (by IP, by the name a CNAME points to, or by hand). It adds a DNS tab on each server and a DNS page (records outside the fleet, not attached), plus optional alerts for a record pointing outside the fleet and a server without a DNS name. Uptime Kuma monitors are attached through these names too, and the prompt that proposes monitors lists them. Tried on a real Technitium DNS Server 15.6.
+- **Grouped notifications**: on each channel, the activities of one type that occur within 10 minutes (adjustable, or 0 for right away) leave as a single message, e.g. “12 × Fixable vulnerability” with their summaries and a link to the activity page filtered on that type. Critical activities are always sent right away. Grouped messages exist for Slack, Discord, email and webhooks (event `activities`, with every activity in `events`). The waiting messages are kept in the database, so a restart loses nothing.
+- **Prompts for an AI assistant**, to copy: on the Probes tab of a server (Uptime Kuma), which monitors to create; on its OVH tab, which rules to set in the OVHcloud network firewall. They are generated from the last inventory (system, addresses, services, containers, ports, existing monitors, the machine's firewall, the network firewall rules), in the reader's language, and contain no key, token or password.
+- **Notes on a server** (Notes tab): every role leaves notes in Markdown (tables, code, links), with a preview. Their author edits or deletes them, an admin deletes any. The Markdown is rendered without raw HTML or images, and links open without a referrer. A note is logged as an activity (`server_note_added`, which can be notified).
+- **SSH keys of every account**: with root (or sudo without a password), the SSH keys tab of a server lists the keys of every account that has a login shell and an `authorized_keys` file, one section per account, and a key can be removed from any of them (Elio's key stays protected). Keys are still added to Elio's login account. The key scan and the unknown keys cover every account; the activities name the account when it is not the login one.
+- Keyring: an **Outside the keyring** tab with every key seen on the fleet that matches no keyring key, grouped by fingerprint, with the servers and accounts where it is and “Add to the keyring”.
+- Docker page: a **CVE** tab with the vulnerabilities of the images of the fleet, by image then by package, with the servers and containers that run each image.
 
 - Tasks left “queued” or “running” for more than 3 hours by a job that no longer exists (a killed worker, a reset queue) are finished every 15 minutes: their items fail with “Interrupted: the job no longer exists”. A task whose job still waits or runs is never touched.
 
@@ -14,10 +32,17 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 - Fleet page: the actions (refresh the statuses, inventory or scan the keys of the whole fleet, import servers) are in an **Actions** menu; “Add a server” stays a button.
 - Server page: the tabs that don't fit go into a **More** menu (the current tab always stays visible), a drop-down list on a phone, in a new order (Overview, Vulnerabilities, Packages, Services, Docker, Ports, Scheduled tasks, SSH keys, extensions, History).
+- The Vulnerabilities tab of a server shows the vulnerabilities of the server itself by default (“53 on the server · 12 in 3 Docker images”); a switch, remembered, adds those of its Docker images. Health, the to-do list, the notifications and the daily digest tell the two apart: serious vulnerabilities in images are a warning, fixed by updating the image.
 - Health reasons are stored as translation keys and written in the reader's language; the reasons of an existing installation are computed again at the upgrade.
 
 ### Fixed
 
+- Reading the keys of other accounts as root no longer follows a symbolic link nor reads a file the account does not own: a user could otherwise make Elio show (and remove keys from) another account's file, such as root's.
+- A notification added while its batch was being sent could be lost; it now opens a new batch.
+- The commands to fix a kernel vulnerability no longer include `reboot` in the block to copy (a note says when to reboot).
+- Texts left in French in the English interface: “unexpected” ports, “fixable”, the OVH anti-DDoS mode, the sections of the extension settings, the vulnerability counts by severity.
+
+- Signed packages (Secure Boot) were compared with the fixed versions under their own version: `grub-efi-amd64-signed` 1+2.12+9+deb13u2 looked older than grub2's fix 2.12-6, so fixed vulnerabilities were reported, and “not in the repositories yet”. The inventory now reads `Built-Using` and compares the code they sign (grub2, shim, linux, and fwupd-efi — `fwupd-amd64-signed` was wrongly matched with fwupd). Older inventories and the versions offered by apt are converted too.
 - Instant searches (Fleet, Packages, Ports, Scheduled tasks, Vulnerabilities, Docker, Probes, OVHcloud, a server's packages and vulnerabilities) no longer lose the characters typed while the results load: only the results are reloaded, the search field keeps its focus.
 - The two-factor QR code is black on white with a quiet zone in the dark theme too, so that phones can read it.
 
@@ -89,6 +114,7 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.2...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3...HEAD
+[0.1.0-beta.3]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/elio-fleet/elio/releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/elio-fleet/elio/releases/tag/v0.1.0-beta.1

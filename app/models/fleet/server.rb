@@ -10,6 +10,8 @@ class Server < ApplicationRecord
   has_many :health_samples, class_name: "Inventory::HealthSample", dependent: :delete_all
   has_many :packages, class_name: "Inventory::Package", dependent: :delete_all
   has_many :server_vulnerabilities, dependent: :delete_all
+  has_many :notes, class_name: "ServerNote", dependent: :delete_all
+  has_many :dns_records, dependent: :nullify
   # Tasks keep the server's name; a server deleted while waiting fails its items.
   has_many :background_task_items, dependent: :nullify
   has_many :uptime_kuma_monitors, -> { by_name }, dependent: :nullify
@@ -84,9 +86,12 @@ class Server < ApplicationRecord
   # Search of the fleet page: name, SSH host, host name or any address (part of it).
   def matches_search?(query)
     words = query.to_s.downcase.split
-    haystack = [ name, host, hostname, *addresses ].compact.join(" ").downcase
+    haystack = [ name, host, hostname, *addresses, *dns_names ].compact.join(" ").downcase
     words.all? { |word| haystack.include?(word) }
   end
+
+  # The DNS names that point to the server (every DNS source).
+  def dns_names = dns_records.map(&:name).uniq
 
   # Text field of the form: "203.0.113.4, 2001:db8::1".
   def extra_addresses_text = extra_addresses.join(", ")

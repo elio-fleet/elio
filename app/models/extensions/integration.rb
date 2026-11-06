@@ -4,7 +4,7 @@
 # Integrations::Base, found through REGISTRY. A disabled extension leaves no
 # trace in the interface; its data is kept for when it is enabled again.
 class Integration < ApplicationRecord
-  REGISTRY = { "uptime_kuma" => "Integrations::UptimeKuma", "ovh" => "Integrations::Ovh" }.freeze
+  REGISTRY = { "uptime_kuma" => "Integrations::UptimeKuma", "ovh" => "Integrations::Ovh", "technitium" => "Integrations::Technitium" }.freeze
 
   class << self
     attr_writer :registry
@@ -24,13 +24,23 @@ class Integration < ApplicationRecord
     def find_enabled(kind) = registry.key?(kind.to_s) ? find_by(kind: kind.to_s, enabled: true) : nil
 
     # Tabs the enabled extensions add to the server page: [{ key:, label:, count:, integration: }].
-    def server_tabs = enabled_kinds.flat_map { |integration| integration.definition.server_tabs.map { |tab| tab.merge(integration: integration) } }
+    # Tabs of the server page added by the enabled extensions, then the DNS
+    # tab when one of them feeds the DNS of the fleet (Dns).
+    def server_tabs
+      tabs = enabled_kinds.flat_map { |integration| integration.definition.server_tabs.map { |tab| tab.merge(integration: integration) } }
+      tabs << { key: "dns", label: I18n.t("dns_records.tab"), count: ->(server) { server.dns_records.size.nonzero? }, partial: "dns_records/server_tab" } if Dns.enabled?
+      tabs
+    end
 
-    # Sidebar links of the enabled extensions: [{ label:, path:, icon:, controller: }].
-    def sidebar_links = enabled_kinds.flat_map { |integration| integration.definition.sidebar_links }
+    # Sidebar links of the enabled extensions: [{ label:, path:, icon:, controller: }], and the DNS page.
+    def sidebar_links
+      links = enabled_kinds.flat_map { |integration| integration.definition.sidebar_links }
+      links << { label: I18n.t("dns_records.tab"), path: :dns_records_path, icon: :globe, controller: "dns_records" } if Dns.enabled?
+      links
+    end
 
     # Health reasons the enabled extensions raise for a server.
-    def health_reasons(server) = enabled_kinds.flat_map { |integration| integration.definition.health_reasons(integration, server) }
+    def health_reasons(server) = enabled_kinds.flat_map { |integration| integration.definition.health_reasons(integration, server) } + Dns.health_reasons(server)
   end
 
   def self.http_url?(value)

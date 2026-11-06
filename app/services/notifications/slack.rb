@@ -32,6 +32,15 @@ class Notifications::Slack
     text.to_s.gsub("&", "&amp;").gsub("<", "&lt;").gsub(">", "&gt;")
   end
 
+  # Several activities of one kind (NotificationBatch::Group), as one message.
+  def self.deliver_batch(channel, group)
+    title = "#{"<!channel> " if channel.mention_channel}#{SEVERITY_EMOJIS.fetch(group.severity)} *#{escape(group.title)}*"
+    lines = group.lines.map { |line| "• #{escape(line)}" }
+    lines << "<#{group.url}|#{escape(I18n.t("notifications.batch.see_all"))}>" if group.url
+    text = "#{title}\n#{lines.join("\n")}"
+    post(channel.webhook_url, { text: text, blocks: [ { type: "section", text: { type: "mrkdwn", text: text.first(3000) } } ] })
+  end
+
   def self.deliver_digest(channel, digest)
     post(channel.webhook_url, { text: "*#{escape(digest.title)}*\n#{digest.lines.map { |line| escape(line) }.join("\n")}" })
   end

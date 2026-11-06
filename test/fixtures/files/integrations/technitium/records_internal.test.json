@@ -1,0 +1,91 @@
+{
+    "response": {
+        "zone": {
+            "name": "internal.test",
+            "type": "Primary",
+            "lastModified": "2026-11-05T18:55:08.3245995Z",
+            "disabled": false,
+            "soaSerial": 3,
+            "catalog": null,
+            "dnssecStatus": "Unsigned",
+            "hasDnssecPrivateKeys": false,
+            "notifyFailed": false,
+            "notifyFailedFor": []
+        },
+        "records": [
+            {
+                "name": "internal.test",
+                "type": "NS",
+                "ttl": 14400,
+                "ttlString": "4h",
+                "disabled": false,
+                "rData": {
+                    "nameServer": "dns.test.local"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.2445253Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "internal.test",
+                "type": "SOA",
+                "ttl": 900,
+                "ttlString": "15m",
+                "disabled": false,
+                "rData": {
+                    "primaryNameServer": "dns.test.local",
+                    "responsiblePerson": "hostadmin@internal.test",
+                    "serial": 3,
+                    "refresh": 900,
+                    "retry": 300,
+                    "expire": 604800,
+                    "minimum": 900,
+                    "refreshString": "15m",
+                    "retryString": "5m",
+                    "expireString": "1w",
+                    "minimumString": "15m",
+                    "useSerialDateScheme": false
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.244523Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "db.internal.test",
+                "type": "A",
+                "ttl": 3600,
+                "ttlString": "1h",
+                "disabled": false,
+                "rData": {
+                    "ipAddress": "10.0.0.12"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.2919317Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "vpn.internal.test",
+                "type": "A",
+                "ttl": 3600,
+                "ttlString": "1h",
+                "disabled": false,
+                "rData": {
+                    "ipAddress": "10.8.0.100"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.3245864Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            }
+        ]
+    },
+    "server": "dns.test.local",
+    "status": "ok"
+}

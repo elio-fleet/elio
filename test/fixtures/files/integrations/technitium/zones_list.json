@@ -1,0 +1,32 @@
+{
+    "response": {
+        "zones": [
+            {
+                "name": "example.test",
+                "type": "Primary",
+                "lastModified": "2026-11-05T18:55:08.3347877Z",
+                "disabled": false,
+                "soaSerial": 6,
+                "catalog": null,
+                "dnssecStatus": "Unsigned",
+                "hasDnssecPrivateKeys": false,
+                "notifyFailed": false,
+                "notifyFailedFor": []
+            },
+            {
+                "name": "internal.test",
+                "type": "Primary",
+                "lastModified": "2026-11-05T18:55:08.3245995Z",
+                "disabled": false,
+                "soaSerial": 3,
+                "catalog": null,
+                "dnssecStatus": "Unsigned",
+                "hasDnssecPrivateKeys": false,
+                "notifyFailed": false,
+                "notifyFailedFor": []
+            }
+        ]
+    },
+    "server": "dns.test.local",
+    "status": "ok"
+}

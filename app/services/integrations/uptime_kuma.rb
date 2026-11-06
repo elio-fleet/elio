@@ -27,18 +27,18 @@ class Integrations::UptimeKuma < Integrations::Base
         Integrations::Field.new(key: :match_by_name, label: I18n.t("integrations.uptime_kuma.match_by_name"), type: :boolean, default: true, section: I18n.t("integrations.uptime_kuma.section_matching"),
                   hint: I18n.t("integrations.uptime_kuma.match_by_name_hint")),
 
-        Integrations::Field.new(key: :alert_no_monitor, label: I18n.t("integrations.uptime_kuma.alert_no_monitor"), type: :boolean, default: true, section: "Alertes"),
-        Integrations::Field.new(key: :no_monitor_ignored_groups, label: I18n.t("integrations.uptime_kuma.ignored_groups"), type: :checkboxes, default: [], section: "Alertes",
+        Integrations::Field.new(key: :alert_no_monitor, label: I18n.t("integrations.uptime_kuma.alert_no_monitor"), type: :boolean, default: true, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :no_monitor_ignored_groups, label: I18n.t("integrations.uptime_kuma.ignored_groups"), type: :checkboxes, default: [], section: I18n.t("integrations.sections.alerts"),
                   options: ServerGroup.order(:name).map { |group| [ group.id.to_s, group.name ] }),
-        Integrations::Field.new(key: :alert_down, label: I18n.t("integrations.uptime_kuma.alert_down"), type: :boolean, default: false, section: "Alertes",
+        Integrations::Field.new(key: :alert_down, label: I18n.t("integrations.uptime_kuma.alert_down"), type: :boolean, default: false, section: I18n.t("integrations.sections.alerts"),
                   hint: I18n.t("integrations.uptime_kuma.alert_down_hint")),
-        Integrations::Field.new(key: :alert_cert, label: I18n.t("integrations.uptime_kuma.alert_cert"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :cert_days, label: I18n.t("integrations.uptime_kuma.cert_days"), type: :number, default: 14, section: "Alertes"),
-        Integrations::Field.new(key: :alert_uptime, label: I18n.t("integrations.uptime_kuma.alert_uptime"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :uptime_threshold, label: I18n.t("integrations.uptime_kuma.uptime_threshold"), type: :number, default: 99, section: "Alertes"),
-        Integrations::Field.new(key: :uptime_window, label: I18n.t("integrations.uptime_kuma.uptime_window"), type: :select, options: WINDOWS.map { |window| [ I18n.t("integrations.uptime_kuma.windows.w#{window}"), window ] }, default: "30d", section: "Alertes"),
-        Integrations::Field.new(key: :alert_maintenance, label: I18n.t("integrations.uptime_kuma.alert_maintenance"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :maintenance_days, label: I18n.t("integrations.uptime_kuma.maintenance_days"), type: :number, default: 7, section: "Alertes")
+        Integrations::Field.new(key: :alert_cert, label: I18n.t("integrations.uptime_kuma.alert_cert"), type: :boolean, default: false, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :cert_days, label: I18n.t("integrations.uptime_kuma.cert_days"), type: :number, default: 14, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :alert_uptime, label: I18n.t("integrations.uptime_kuma.alert_uptime"), type: :boolean, default: false, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :uptime_threshold, label: I18n.t("integrations.uptime_kuma.uptime_threshold"), type: :number, default: 99, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :uptime_window, label: I18n.t("integrations.uptime_kuma.uptime_window"), type: :select, options: WINDOWS.map { |window| [ I18n.t("integrations.uptime_kuma.windows.w#{window}"), window ] }, default: "30d", section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :alert_maintenance, label: I18n.t("integrations.uptime_kuma.alert_maintenance"), type: :boolean, default: false, section: I18n.t("integrations.sections.alerts")),
+        Integrations::Field.new(key: :maintenance_days, label: I18n.t("integrations.uptime_kuma.maintenance_days"), type: :number, default: 7, section: I18n.t("integrations.sections.alerts"))
       ]
     end
 

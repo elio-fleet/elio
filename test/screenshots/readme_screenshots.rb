@@ -73,9 +73,10 @@ class ReadmeScreenshots < ApplicationSystemTestCase
     stub_method_until_teardown(Servers::Ping, :reachable?, ->(host, *, **) { !host.end_with?(".77") })
     stub_method_until_teardown(Ssh::Check, :call, ->(*, **) { Ssh::Check::Result.new(success: true, message: "Connexion SSH réussie", details: "ok") })
     keys = [ public_keys(:alice).content, public_keys(:ci).content, ssh_keys(:main).public_key, Ssh::KeyGenerator.generate(comment: "jdupont@old-laptop").public_key ]
-    stub_method_until_teardown(Keys::AuthorizedKeysReader, :call, lambda { |*, **|
+    # Elio logs in as root on "backup": the keys of its other accounts are read too.
+    stub_method_until_teardown(Keys::AuthorizedKeysReader, :call_all, keys_read(lambda { |*, **|
       Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse(keys.join("\n")), error_title: nil, error_details: nil)
-    })
+    }, others: { "backup" => [ public_keys(:ci).content ] }))
     Server.delete_all
     production = server_groups(:production).tap { |group| group.update!(expected_ports: "22, 80, 443, 6432") }
     infra = ServerGroup.create!(name: "Infra", color: "emerald")
@@ -142,6 +143,25 @@ class ReadmeScreenshots < ApplicationSystemTestCase
                           .gsub("198.51.100.20", "198.51.100.11").gsub("203.0.113.10", "198.51.100.20").gsub("web.example.com.", "db-prod.example.internal.")
                           .gsub("198.51.100.7", "198.51.100.40")))
     Integration.find_by!(kind: "ovh").sync!
+    # Technitium (internal zone) next to OVH's public one: the DNS of the fleet, a name that differs by source.
+    Integration.find_or_initialize_by(kind: "technitium").update!(enabled: true, settings: { "url" => "https://dns.example.internal:53443" }, secrets: { "api_token" => "t" },
+                                                                  last_synced_at: 20.minutes.ago)
+    Dns::Store.replace("technitium", [
+      { zone: "lan.example.internal", name: "db.lan.example.internal", record_type: "A", value: "198.51.100.20" },
+      { zone: "lan.example.internal", name: "pg.lan.example.internal", record_type: "CNAME", value: "db.lan.example.internal" },
+      { zone: "lan.example.internal", name: "backup.lan.example.internal", record_type: "A", value: "198.51.100.40" },
+      { zone: "lan.example.internal", name: "old-vpn.lan.example.internal", record_type: "A", value: "192.0.2.44" }
+    ])
+    db.notes.create!(user: users(:operator), created_at: 3.days.ago, updated_at: 3.days.ago, body: <<~MD)
+      ## Role
+      Main **PostgreSQL 16** of the shop, replicated to `backup` every night.
+
+      - Restart: `systemctl restart postgresql@16-main`
+      - Maintenance window: Sunday 02:00–04:00
+
+      Runbook: https://wiki.example.internal/db-prod
+    MD
+    db.notes.create!(user: users(:one), body: "> Incident 2026-11-03: disk full (WAL). `wal_keep_size` lowered to 2 GB.")
 
     Server.find_each(&:refresh_health!)
     Activity.record!(:vulnerability_found, server: db, user: nil, count: 2, cves: %w[CVE-2024-45491 CVE-2024-45492], packages: %w[expat], image: "nginx:1.27")
@@ -207,6 +227,10 @@ class ReadmeScreenshots < ApplicationSystemTestCase
       shoot.("automations", settings_automations_path)
       shoot.("uptime-kuma-monitors", monitors_path)
       shoot.("ovh", server_path(db, tab: "ovh"))
+      shoot.("dns", dns_records_path)
+      shoot.("notes", server_path(db, tab: "notes"))
+      shoot.("docker-cves", docker_path(tab: "cves")) { first("section.image-vulnerabilities details summary").click }
+      shoot.("keyring-outside", public_keys_path(kind: "outside"))
     end
   end
 end

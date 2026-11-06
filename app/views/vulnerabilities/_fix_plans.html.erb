@@ -1,0 +1,26 @@
+<%# How to fix a CVE on a server (Vulnerabilities::FixCommands): copyable commands, never run by Elio. %>
+<% plans.each do |plan| %>
+  <div class="fix-plan rounded-lg border border-line p-3" data-state="<%= plan.state %>" data-image="<%= plan.image %>">
+    <p class="flex flex-wrap items-center gap-2 text-sm">
+      <% if show_server %><strong><%= server.name %></strong><% end %>
+      <span class="text-ink-2"><%= plan.host? ? t("vulnerabilities.fix_plans.system") : t("vulnerabilities.fix_plans.image_html", image: tag.code(plan.image, class: "font-mono text-xs")) %></span>
+      <% if plan.state == :available %><%= status_badge :good, t("vulnerabilities.fix_plans.available") %>
+      <% elsif plan.state == :pending %><%= status_badge :warn, t("vulnerabilities.fix_plans.pending") %>
+      <% elsif plan.state == :image %><%= status_badge :warn, t("vulnerabilities.fix_plans.update_image") %>
+      <% end %>
+    </p>
+    <% if plan.fixable? %>
+      <p class="mt-1 text-xs text-ink-3">
+        <%= t("vulnerabilities.fix_plans.hint_#{plan.state}") %>
+        <% if plan.reboot %><%= t("vulnerabilities.fix_plans.reboot") %><% end %>
+        <% if plan.containers.any? %><%= t("vulnerabilities.fix_plans.containers", containers: plan.containers.join(", ")) %><% end %>
+      </p>
+      <div class="mt-2 flex items-start gap-2" data-controller="clipboard">
+        <pre class="fix-commands min-w-0 flex-1 overflow-x-auto rounded-md bg-neutral-950 px-3 py-2 font-mono text-xs text-neutral-100" data-clipboard-target="source"><%= plan.commands.join("\n") %></pre>
+        <%= render "settings/copy_button" %>
+      </div>
+    <% else %>
+      <p class="fix-none mt-1 text-xs text-ink-3"><%= t(plan.host? ? "vulnerabilities.fix_plans.none_host" : "vulnerabilities.fix_plans.none_image") %></p>
+    <% end %>
+  </div>
+<% end %>

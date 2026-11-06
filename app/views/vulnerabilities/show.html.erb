@@ -70,11 +70,23 @@
                 <td class="font-mono text-xs"><%= row.source_package %><% if row.image %><span class="block font-sans text-[11px] text-ink-3">image <%= row.image %></span><% end %></td>
                 <td class="font-mono text-xs"><%= row.packages.join(", ") %></td>
                 <td class="font-mono text-xs"><%= row.installed_version %></td>
-                <td class="font-mono text-xs"><%= row.fixed_version ? tag.span(row.fixed_version, class: "text-good-ink") : tag.span("pas de correctif", class: "font-sans text-ink-3") %></td>
+                <td class="font-mono text-xs"><%= row.fixed_version ? tag.span(row.fixed_version, class: "text-good-ink") : tag.span(t("words.no_fix"), class: "font-sans text-ink-3") %></td>
               </tr>
             <% end %>
           </tbody>
         </table>
+      </section>
+    <% end %>
+
+    <% if @fix_plans.any? %>
+      <section class="detail-fix">
+        <h3 class="text-xs font-semibold tracking-wide text-ink-3 uppercase"><%= t(".how_to_fix") %></h3>
+        <div class="mt-2 space-y-2">
+          <% @fix_plans.each do |server, plans| %>
+            <%= render "vulnerabilities/fix_plans", server: server, plans: plans, show_server: @server.nil? %>
+          <% end %>
+        </div>
+        <p class="mt-1.5 text-[11px] text-ink-3"><%= t(".fix_never_run") %></p>
       </section>
     <% end %>
 

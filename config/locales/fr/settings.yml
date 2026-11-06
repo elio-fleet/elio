@@ -58,3 +58,15 @@ fr:
       copy: Copier
       copied: Copié
     automation_active: active, %{interval}
+    dns_alerts:
+      title: DNS
+      intro: Alertes sur le DNS du parc, quelle que soit la source (%{sources}).
+      outside: Un enregistrement pointe vers une IP hors du parc
+      outside_hint: Une activité pour chaque nouvel enregistrement A / AAAA dont l'IP n'est à aucun serveur (souvent un ancien serveur ou un nom oublié).
+      without_name: Serveur sans nom DNS
+      without_name_hint: Un avertissement sur les serveurs vers lesquels aucun enregistrement d'aucune source ne pointe.
+      conflict: Un nom diffère selon la source
+      conflict_hint: 'Une activité quand un nom a d''autres enregistrements dans une autre source. Désactivé par défaut : une IP publique dans l''une et privée dans l''autre est souvent voulu.'
+      ignored_groups: 'Groupes non concernés par « sans nom DNS » :'
+      save: Enregistrer les alertes DNS
+      saved: Alertes DNS enregistrées.

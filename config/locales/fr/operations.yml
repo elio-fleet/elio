@@ -37,6 +37,9 @@ fr:
       ovh_sync:
         label: Synchronisation OVHcloud
         description: Relit les ressources OVHcloud (IP, firewall, DNS, services), les rattache aux serveurs et lève les alertes choisies.
+      technitium_sync:
+        label: Synchronisation Technitium DNS
+        description: Relit les enregistrements Technitium DNS, les rattache aux serveurs et lève les alertes choisies dans l'extension.
     intervals:
       i5: Toutes les 5 minutes
       i15: Toutes les 15 minutes
@@ -56,6 +59,7 @@ fr:
       activity_yet: Aucune activité pour le moment.
       history: Historique de ce qui s'est passé
       history_on: Historique de ce qui s'est passé sur « %{server_name} »
+      remove_kind_filter: Retirer le filtre
   tasks:
     progress:
       progress: Progression

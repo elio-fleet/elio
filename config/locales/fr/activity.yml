@@ -177,7 +177,7 @@ fr:
         description: Un service OVHcloud (dédié, VPS) arrive à expiration.
       dns_record_outside_fleet:
         label: DNS vers une IP hors du parc
-        description: Un enregistrement DNS OVH pointe vers une IP qui n'est à aucun serveur du parc.
+        description: Un enregistrement DNS (OVHcloud ou Technitium) pointe vers une IP qui n'appartient à aucun serveur du parc.
       ovh_service_unmanaged:
         label: Service OVH non suivi
         description: Un service OVHcloud n'est rattaché à aucun serveur du parc.
@@ -190,6 +190,12 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      server_note_added:
+        label: Note ajoutée
+        description: Quelqu'un a laissé une note sur un serveur (onglet Notes).
+      dns_record_conflict:
+        label: Nom DNS différent selon la source
+        description: Un nom DNS a des enregistrements différents dans deux sources (OVHcloud, Technitium…).
     categories:
       keys: Clés SSH
       servers: Serveurs
@@ -299,6 +305,9 @@ fr:
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
       automation_run: "%{automation} : %{result}"
+      server_note_added: 'Note sur « %{server} » par %{author} : %{excerpt}'
+      dns_record_conflict: "%{record} diffère entre %{sources}"
+    target_account: "« %{server_name} » (compte %{account})"
   automation:
     whole_fleet: Tout le parc
     extension_off: 'Extension désactivée : rien à faire'
@@ -342,6 +351,7 @@ fr:
       one: "%{count} événement"
       other: "%{count} événements"
     vulnerabilities: 'Vulnérabilités : %{cves} connue(s), %{fixable} corrigeable(s) dont %{serious} grave(s), sur %{servers}.'
+    image_vulnerabilities: 'Dans les images Docker (%{images}) : CVE connues %{cves}, corrigeables %{fixable}, graves et corrigeables %{serious}.'
   notifications:
     discord:
       by: Par %{author_name}
@@ -362,6 +372,12 @@ fr:
     webhook:
       test: Le canal « %{channel_name} » reçoit bien les notifications.
       service: Le webhook
+    batch:
+      title: "%{count} × %{label}"
+      more:
+        one: "…et %{count} autre"
+        other: "…et %{count} autres"
+      see_all: Les voir dans Elio
   notification_mailer:
     test_subject: "[Elio] Test du canal « %{channel_name} »"
     activity:
@@ -370,6 +386,9 @@ fr:
     test:
       text_html: 'Test Elio : le canal « %{channel_name} » reçoit bien les notifications.'
     activity_subject: "[Elio] %{label} : %{summary}"
+    batch_subject: "[Elio] %{title}"
+    batch:
+      see_all: 'Les voir dans Elio :'
   settings:
     notifications:
       show:
@@ -412,6 +431,12 @@ fr:
         language: Langue
         instance_language: Langue de cet Elio (%{language})
         language_hint: La langue des messages, des tests et du résumé quotidien de ce canal.
+        group_minutes: Regrouper les notifications
+        group_none: Non, envoyer chacune tout de suite
+        group_for:
+          one: Sur %{count} minute
+          other: Sur %{count} minutes
+        group_hint: Les activités d'un même type survenues pendant ce temps partent en un seul message. Les critiques partent toujours tout de suite.
       edit:
         edit_html: Modifier « %{name_was} »
       new:
@@ -428,3 +453,6 @@ fr:
       discord: Discord
       webhook: Webhook (JSON signé)
       email: Email
+    group:
+      one: regroupées sur %{count} min
+      other: regroupées sur %{count} min

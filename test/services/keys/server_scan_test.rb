@@ -15,7 +15,7 @@ class Keys::ServerScanTest < ActiveSupport::TestCase
     accounts = []
     reader = ->(_server, account:, **) { accounts << account.unix_user; read_result(keys: public_keys(:alice).content) }
 
-    result = stub_method(Keys::AuthorizedKeysReader, :call, reader) { Keys::ServerScan.call(@server) }
+    result = stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(reader)) { Keys::ServerScan.call(@server) }
 
     assert result.success?
     assert_equal %w[deploy], accounts
@@ -26,7 +26,7 @@ class Keys::ServerScanTest < ActiveSupport::TestCase
   test "records a refused key and no snapshot" do
     refused = read_result(error_title: "Clé SSH refusée par le serveur", reason: :key_refused)
 
-    result = stub_method(Keys::AuthorizedKeysReader, :call, refused) { Keys::ServerScan.call(@server) }
+    result = stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(refused)) { Keys::ServerScan.call(@server) }
 
     assert_not result.success?
     assert_equal "Clé SSH refusée par le serveur", result.error_title
@@ -35,7 +35,7 @@ class Keys::ServerScanTest < ActiveSupport::TestCase
   end
 
   test "an unreachable server keeps its SSH status" do
-    stub_method(Keys::AuthorizedKeysReader, :call, read_result(error_title: "Connexion impossible")) { Keys::ServerScan.call(@server) }
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(read_result(error_title: "Connexion impossible"))) { Keys::ServerScan.call(@server) }
 
     assert_nil @server.reload.ssh_ok
   end

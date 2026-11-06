@@ -57,6 +57,8 @@ fr:
       fixes_release: Correctifs par version
       derived: 'non évaluée par %{distribution} : déduite de la note'
       exploited_since: ", depuis le %{date}"
+      how_to_fix: Pour corriger
+      fix_never_run: 'Commandes à lancer vous-même : Elio ne fait que lire les serveurs.'
     debian_tracker:
       not_tracker: Ce fichier n'est pas celui du Debian Security Tracker
       unreadable: 'Fichier du Debian Security Tracker illisible : %{truncate}'
@@ -94,6 +96,19 @@ fr:
       no_server: "%{label} : aucun serveur concerné"
       done: "%{label} : %{count} vulnérabilités (%{releases_join})"
       nothing_for_fleet: Aucune vulnérabilité des versions du parc (%{releases_join}) dans ce fichier
+    fix_plans:
+      system: Paquets du système
+      image_html: Image %{image}
+      available: correctif disponible
+      pending: pas encore vu par le serveur
+      update_image: mettre à jour l'image
+      hint_available: Les dépôts du serveur proposent la version corrigée.
+      hint_pending: 'Une version corrigée existe, mais le serveur ne la proposait pas à son dernier inventaire : rafraîchissez d''abord la liste des paquets. Si apt ne propose toujours rien, le correctif n''est pas encore arrivé dans les dépôts.'
+      hint_image: Téléchargez à nouveau l'image (ou reconstruisez-la si elle est construite sur place), puis recréez ses conteneurs.
+      reboot: Le noyau n'est remplacé qu'au prochain redémarrage.
+      containers: 'Conteneurs : %{containers}. Un conteneur lancé sans Compose doit être recréé avec ses options.'
+      none_host: 'Pas de correctif pour l''instant : la distribution n''a pas publié de version corrigée.'
+      none_image: 'Pas de correctif dans la distribution de l''image pour l''instant : un tag plus récent de l''image repose peut-être sur une version corrigée.'
   servers:
     vulnerabilities_card:
       whole_fleet: Tout le parc
@@ -128,6 +143,32 @@ fr:
       fixable:
         one: "%{count} corrigeable"
         other: "%{count} corrigeables"
+      on_server:
+        one: "%{count} sur le serveur"
+        other: "%{count} sur le serveur"
+      in_images:
+        one: "%{count} dans %{images}"
+        other: "%{count} dans %{images}"
+      images:
+        one: "%{count} image Docker"
+        other: "%{count} images Docker"
+      include_images: Inclure celles des conteneurs Docker
+      by_severity:
+        critical:
+          one: "%{count} critique"
+          other: "%{count} critiques"
+        high:
+          one: "%{count} haute"
+          other: "%{count} hautes"
+        medium:
+          one: "%{count} moyenne"
+          other: "%{count} moyennes"
+        low:
+          one: "%{count} faible"
+          other: "%{count} faibles"
+        unknown:
+          one: "%{count} non évaluée"
+          other: "%{count} non évaluées"
     vulnerability_packages:
       highest_score: Note la plus haute
       repositories_server_already_offer: Les dépôts du serveur proposent déjà cette version
@@ -205,6 +246,30 @@ fr:
       vulnerabilities: Vulnérabilités
       versions_fleet_html: "%{count} versions sur le parc"
       container: aucun conteneur
+    tabs:
+      images: Conteneurs et images
+      cves: CVE
+    cves:
+      intro: 'Les vulnérabilités des images Docker du parc : elles se corrigent en mettant à jour l''image, pas le serveur.'
+      images: Images vulnérables
+      cves: CVE dans les images
+      fixable: Corrigeables
+      by_updating: en mettant à jour l'image
+      servers: Serveurs concernés
+      highest_score: Note la plus haute
+      counts_html: "%{cves} CVE, %{fixable}"
+      fixable_count:
+        one: "%{count} corrigeable"
+        other: "%{count} corrigeables"
+      used_by: 'Utilisée par :'
+      on_servers: 'Sur :'
+      advice_update: 'Mettez à jour l''image : téléchargez un tag plus récent (ou reconstruisez-la sur une image de base à jour), puis recréez les conteneurs. La commande pour chaque serveur est dans la fenêtre d''une CVE.'
+      advice_none: 'Pas de correctif dans la distribution de l''image pour l''instant : un tag plus récent repose peut-être sur une version corrigée.'
+      by_package:
+        one: "%{count} paquet"
+        other: "%{count} paquets"
+      none: Aucune vulnérabilité connue dans les images Docker du parc.
+      none_matches: Aucune image vulnérable ne correspond à cette recherche.
   settings:
     docker:
       show:
