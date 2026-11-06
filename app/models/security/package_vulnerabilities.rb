@@ -52,6 +52,18 @@ class PackageVulnerabilities
     end
   end
 
+  # One CVE of one package (and image) on the servers it touches: what a
+  # group needs, aggregated in SQL (a big fleet has tens of thousands of
+  # ServerVulnerability rows, too many for Active Record objects).
+  Row = Data.define(:cve, :severity, :source_package, :image, :source, :fixed_version, :installed_version, :packages, :servers) do
+    def fixable? = fixed_version.present?
+    def server = servers.first
+  end
+  # The worst severity of the aggregated rows, in the order of Vulnerability::SEVERITIES (a test checks it).
+  SEVERITIES_SQL = "ARRAY['critical', 'high', 'medium', 'low', 'unknown']"
+  WORST_SEVERITY = Arel.sql("(ARRAY['critical', 'high', 'medium', 'low', 'unknown'])[MIN(array_position(ARRAY['critical', 'high', 'medium', 'low', 'unknown'], server_vulnerabilities.severity::text))]")
+
+  # `scope`: a relation of ServerVulnerability (read with a pluck) or rows already loaded.
   def initialize(scope, server: nil)
     @scope = scope
     @server = server
@@ -59,7 +71,7 @@ class PackageVulnerabilities
 
   def groups
     @groups ||= begin
-      rows = @scope.to_a
+      rows = load_rows
       ratings = CveRating.for(rows.map(&:cve).uniq)
       offers = @server ? repository_offers : {}
       rows.group_by { |row| [ row.source_package, row.image, row.source ] }.map do |(package, image, source), list|
@@ -67,7 +79,7 @@ class PackageVulnerabilities
         installed = list.filter_map(&:installed_version).min { |left, right| Inventory::DebianVersion.compare(left, right) }
         offer = offers[package] || {}
         available = target && offer[:version] && !Inventory::DebianVersion.older?(offer[:version], target)
-        Group.new(source_package: package, image: image, source: source, rows: list, ratings: ratings, servers: list.map(&:server).uniq.sort_by(&:name),
+        Group.new(source_package: package, image: image, source: source, rows: list, ratings: ratings, servers: list.flat_map(&:servers).uniq.sort_by(&:name),
                   installed_version: installed, target_version: target, available: available.present?,
                   upgrade_packages: image ? [] : Array(offer[:packages]))
       end.sort_by { |group| sort_key(group) }
@@ -77,10 +89,35 @@ class PackageVulnerabilities
   # Most worth updating first: fixable ones, by worst severity, then by number.
   def sort_key(group)
     [ group.fixable_count.positive? ? 0 : 1, Vulnerability::SEVERITIES.keys.index(group.fixable_count.positive? ? fixable_severity(group) : group.severity) || 9,
-      -group.fixable_count, -group.count, group.source_package ]
+      -group.fixable_count, -group.count, group.source_package, group.image.to_s ]
   end
 
   private
+
+  def load_rows
+    return @scope.map { |row| row_of(row) } unless @scope.is_a?(ActiveRecord::Relation)
+
+    values = @scope.except(:includes, :preload, :order, :select).group(:cve, :source_package, :image, :source).pluck(
+      :cve, :source_package, :image, :source,
+      WORST_SEVERITY,
+      # No DISTINCT in the aggregates (twice as slow on a big fleet): duplicates are dropped below.
+      Arel.sql("ARRAY_AGG(server_vulnerabilities.fixed_version)"), Arel.sql("ARRAY_AGG(server_vulnerabilities.installed_version)"),
+      Arel.sql("STRING_AGG(ARRAY_TO_STRING(server_vulnerabilities.packages, ','), ',')"), Arel.sql("ARRAY_AGG(server_vulnerabilities.server_id)")
+    )
+    servers = Server.where(id: values.flat_map(&:last).uniq).index_by(&:id)
+    values.map do |cve, package, image, source, severity, fixed, installed, packages, server_ids|
+      Row.new(cve: cve, severity: severity, source_package: package, image: image, source: source,
+              fixed_version: fixed.compact.uniq.max { |left, right| Inventory::DebianVersion.compare(left, right) },
+              installed_version: installed.compact.uniq.min { |left, right| Inventory::DebianVersion.compare(left, right) },
+              packages: packages.to_s.split(",").uniq, servers: server_ids.uniq.filter_map { |id| servers[id] })
+    end
+  end
+
+  # A ServerVulnerability already loaded (Docker page, fix commands).
+  def row_of(row)
+    Row.new(cve: row.cve, severity: row.severity, source_package: row.source_package, image: row.image, source: row.source,
+            fixed_version: row.fixed_version, installed_version: row.installed_version, packages: row.packages, servers: [ row.server ].compact)
+  end
 
   def fixable_severity(group)
     group.rows.select(&:fixable?).map(&:severity).min_by { |severity| Vulnerability::SEVERITIES.keys.index(severity) || 9 }

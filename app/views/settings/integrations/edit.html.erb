@@ -33,7 +33,7 @@
     <span><span class="font-semibold"><%= t(".turn_extension") %></span> <span class="text-ink-3"><%= t(".tabs_pages_alerts_appear") %></span></span>
   </label>
 
-  <% @integration.fields.group_by(&:section).each do |section, fields| %>
+  <% @integration.fields.group_by(&:section_label).each do |section, fields| %>
     <fieldset class="integration-section space-y-4 border-t border-line pt-5">
       <legend class="text-sm font-semibold text-ink"><%= section %></legend>
       <%= render partial: "settings/integrations/field", collection: fields, as: :field, locals: { integration: @integration } %>

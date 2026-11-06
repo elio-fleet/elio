@@ -43,8 +43,18 @@ class ServerPromptTest < ActiveSupport::TestCase
     assert_includes text, "## Ce que je demande\nPropose la liste des sondes à créer"
   end
 
-  test "the OVH firewall prompt: public ports, the machine's firewall, the network firewall rules in order" do
-    text = ServerPrompt.new(@server).ovh_firewall
+  test "the firewall prompt without OVH: the machine's firewall only, as ufw commands" do
+    text = ServerPrompt.new(@server).firewall
+
+    assert text.start_with?("Voici ce qu'Elio (un outil d'inventaire) sait de mon serveur Linux.")
+    assert_includes text, "## Firewall de la machine"
+    assert_not_includes text, "OVHcloud"
+    assert_includes text, "commandes ufw"
+  end
+
+  test "the firewall prompt with OVH: public ports, the machine's firewall, the network firewall rules in order" do
+    Integration.create!(kind: "ovh").update_column(:enabled, true)
+    text = ServerPrompt.new(@server).firewall
 
     assert text.start_with?("Mon serveur Linux est hébergé chez OVHcloud.")
     assert_includes text, "## Ports publics"
@@ -58,11 +68,20 @@ class ServerPromptTest < ActiveSupport::TestCase
   test "never anything secret" do
     Integration.create!(kind: "ovh", enabled: true, settings: { "application_key" => "AK-public-looking" }, secrets: { "application_secret" => "SECRET-AS", "consumer_key" => "SECRET-CK" })
     @server.notes.create!(body: "password: hunter2", user: users(:one))
-    [ ServerPrompt.new(@server).monitors, ServerPrompt.new(@server).ovh_firewall ].each do |text|
+    [ ServerPrompt.new(@server).monitors, ServerPrompt.new(@server).firewall ].each do |text|
       [ "SECRET-AS", "SECRET-CK", "AK-public-looking", "hunter2", ssh_keys(:main).public_key.split[1], "PRIVATE KEY" ].each do |secret|
         assert_not_includes text, secret
       end
     end
+  end
+
+  test "the instructions of the administrator come last, only in their prompt" do
+    AppSetting.current.update!(prompt_instructions: { "firewall" => "Pour le port SSH, mets les règles toujours en dernier." })
+
+    text = ServerPrompt.new(@server).firewall
+    assert text.end_with?("## Consignes supplémentaires\nPour le port SSH, mets les règles toujours en dernier.")
+    assert_operator text.index("## Ce que je demande"), :<, text.index("## Consignes supplémentaires")
+    assert_not_includes ServerPrompt.new(@server).monitors, "Consignes supplémentaires"
   end
 
   test "in the reader's language, and without inventory" do

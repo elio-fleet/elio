@@ -87,6 +87,7 @@ en:
           one: 'OVH service “%{name}”: expires in %{count} day'
           other: 'OVH service “%{name}”: expires in %{count} days'
         firewall_disabled: OVH network firewall disabled on %{ip}
+        ipv6_not_covered: 'Ports reachable in IPv6 without the OVH network firewall: %{ports}'
         no_reverse: No reverse DNS for %{ip}
         reverse_mismatch: Reverse DNS of %{ip} (%{reverse}) ≠ host name
       endpoint: Endpoint
@@ -138,10 +139,13 @@ en:
         attached_html: attached %{ovh_match_label}
         state: State
         ovh_service: OVH service
-        ovh_ips_reverse_network: OVH IPs, reverse and network firewall
+        ovh_ips_reverse: OVH IPs and reverse
         reverse: Reverse of
         ovh_network_firewall_not: OVH network firewall not configured.
-        firewall: Firewall of
+        firewalls:
+          one: "Network firewall: %{count} IP, %{enabled} on."
+          other: "Network firewall: %{count} IPs, %{enabled} on."
+        see_firewall_tab: Firewall tab →
         anti_ddos: Anti-DDoS of
         dns_records_server: DNS records to this server
         dns_record_zones_read: No DNS record of the zones read points to this server.
@@ -193,6 +197,48 @@ en:
     sync_job:
       turned_off: 'Extension turned off: nothing to do'
       internal_error: Internal error (%{class})
+    gandi:
+      description: The A, AAAA and CNAME records of your domains served by Gandi LiveDNS, attached to the servers they point to, and your domains with their expiry date (optional alert).
+      api_token: Personal access token
+      api_token_hint: A token with read rights only (see below). Gandi tokens expire, renew it in time.
+      organization: Organization (sharing ID)
+      organization_hint: "Optional: the ID of the Gandi organization that owns the domains. Empty: the domains of your personal organization only."
+      domains: Domains to read
+      domains_hint: "Separated by commas. Empty: every domain the token can see."
+      alert_expiring: Alert when a domain expires soon
+      expiring_days: Expiry threshold (days)
+      expiring_ignore_auto_renew: Ignore the domains renewed automatically
+      connected:
+        one: "Connected to Gandi: %{count} domain readable, %{livedns} on LiveDNS"
+        other: "Connected to Gandi: %{count} domains readable, %{livedns} on LiveDNS"
+      read_only_reminder: ". Elio only reads: give the token read rights only."
+      unexpected: "Unexpected answer from Gandi: is the token valid, and does it have the read rights?"
+      sync:
+        no_domains: " (the list of domains could not be read: %{message})"
+        summary: "%{domains}, %{records}, %{unattached}"
+        domains:
+          one: "%{count} LiveDNS domain"
+          other: "%{count} LiveDNS domains"
+        records:
+          one: "%{count} record"
+          other: "%{count} records"
+        unattached:
+          one: "%{count} attached to no server"
+          other: "%{count} attached to no server"
+      help:
+        title: Create a read-only personal access token in Gandi
+        step1_html: "In the <strong>Gandi Admin</strong> (admin.gandi.net), open <strong>Organizations</strong>, then <strong>Personal access tokens</strong> (or your account settings), and create a token."
+        step2_html: "Choose the <strong>organization</strong> that owns the domains, and a short <strong>expiry</strong> that you will renew."
+        step3_html: "Give it <strong>only the rights to see the domains and their DNS records (LiveDNS)</strong>: no right to change, renew, transfer or buy anything."
+        step4_html: "Paste the token here; if the domains belong to another organization than your personal one, paste its ID in <strong>Organization</strong>."
+        reads_html: "Elio only reads, with the token in an <code>Authorization: Bearer</code> header: <code>GET /v5/livedns/domains</code>, <code>GET /v5/livedns/domains/{domain}/records</code> and <code>GET /v5/domain/domains</code>. Not tested against a real Gandi account yet."
+        domains: Domains
+        domains_count:
+          one: "%{count} domain at the last sync"
+          other: "%{count} domains at the last sync"
+        domain: Domain
+        autorenew: Auto renewal
+        other_dns: other DNS
     technitium:
       description: The A, AAAA and CNAME records of your Technitium DNS Server zones, attached to the servers they point to; alerts for records pointing outside the fleet and servers without a DNS name.
       url: Address of the web console
@@ -229,6 +275,7 @@ en:
         step4_html: Log in as that user, then <strong>Create API Token</strong> (user menu, top right), and paste it here.
         reads_html: 'Elio only reads: <code>/api/user/session/get</code>, <code>/api/zones/list</code> and <code>/api/zones/records/get</code>, with the token in an <code>Authorization: Bearer</code> header (tested with Technitium DNS Server 15.6).'
     sections:
+      connection: Connection
       alerts: Alerts
       resources: Resources
   integration:
@@ -359,6 +406,7 @@ en:
       permit: 'OVH: allowed'
       deny: 'OVH: blocked'
       restricted: 'OVH: limited sources'
+      not_covered: 'OVH: not covered (IPv6)'
     auto_renew: "(auto renewal)"
     permit: allow
     deny: deny
@@ -371,6 +419,8 @@ en:
       unknown: Unknown
   server_prompt:
     task: What I need
+    instructions: Additional instructions
+    ssh_sources_rule: 'Allow the SSH port %{port} only from these sources, in both firewalls:'
     none: "(none)"
     no_ports_inventory: "(no inventory of the ports yet)"
     sections:
@@ -383,6 +433,7 @@ en:
       existing_monitors: Uptime Kuma monitors already attached to this server
       local_firewall: Firewall of the machine
       ovh_firewall: OVHcloud network firewall (per IP)
+      ssh_sources: Sources allowed to reach SSH
       dns_names: DNS names pointing to it
     fields:
       name: 'Name in Elio: %{value}'
@@ -413,6 +464,7 @@ en:
     anywhere: anywhere
     ovh:
       not_read: "%{block}: firewall not read (product not chosen in the extension)"
+      ipv6_not_covered: 'Public IPv6 %{addresses}: not covered by the OVH network firewall (IPv4 only); ports listening in IPv6: %{ports}'
       none: "%{block}: no network firewall created"
       enabled:
         one: "%{ip}: enabled, %{count} rule"
@@ -424,9 +476,13 @@ en:
     monitors:
       intro: I monitor my Linux servers with Uptime Kuma. Here is what Elio (an inventory tool) knows about one of them. Propose the Uptime Kuma monitors to create for it.
       task: 'Propose the list of monitors to create, as a table: type (HTTP(s), HTTP(s) keyword, TCP port, ping, DNS, Docker container…), target (URL, host:port), check interval, and why. Do not repeat the monitors that already exist. Prefer what users actually reach (public addresses, domain names); a monitor on a private or VPN address needs an Uptime Kuma instance on that network: say so. Add a certificate expiry check for HTTPS services. Ask me if something is missing (domain names, URLs to check).'
-    ovh_firewall:
-      intro: My Linux server is hosted at OVHcloud. Here is what Elio (an inventory tool) knows about it. Propose the rules of the OVHcloud network firewall (Edge Network Firewall) of its public IP addresses.
-      task: 'Propose the rules of the OVHcloud network firewall for each public IP, as a table: sequence (0 to 19, the first matching rule applies), action (permit / deny), protocol, destination port, source, TCP option. Keep the SSH access of Elio on port %{ssh_port} open (restrict its source only if I give you Elio''s address). Allow only the public ports that must be reachable, and explain those you would close or restrict. This firewall is stateless: include what lets the replies to the server''s own outgoing connections back in (e.g. TCP option established), and end with a rule that denies the rest. Point out the ports exposed by Docker and the differences with the firewall of the machine.'
+    firewall:
+      local:
+        intro: Here is what Elio (an inventory tool) knows about my Linux server. Propose the rules of its firewall.
+        task: 'Propose the rules of the firewall of the machine, as ufw commands to run in order. Keep the SSH access of Elio on port %{ssh_port} open (restrict its source only if I give you Elio''s address). Allow only the public ports that must be reachable, and explain those you would close or restrict. Point out the ports exposed by Docker (they bypass ufw) and what would cut the current connections.'
+      ovh:
+        intro: My Linux server is hosted at OVHcloud. Here is what Elio (an inventory tool) knows about it. Propose the rules of its firewalls, the one of the machine and the OVHcloud network firewall (Edge Network Firewall) of its public IP addresses.
+        task: 'Propose, first, the rules of the OVHcloud network firewall for each public IP, as a table: sequence (0 to 19, the first matching rule applies), action (permit / deny), protocol, destination port, source, TCP option. This firewall is stateless: include what lets the replies to the server''s own outgoing connections back in (e.g. TCP option established), and end with a rule that denies the rest. It filters only IPv4. Then the rules of the firewall of the machine, as ufw commands. Keep the SSH access of Elio on port %{ssh_port} open (restrict its source only if I give you Elio''s address). Allow only the public ports that must be reachable, and explain those you would close or restrict. Point out the ports exposed by Docker and the differences between the two firewalls.'
   server_prompts:
     dialog:
       copy_hint: Generated from the last inventory. No key, token or password is included.
@@ -434,9 +490,12 @@ en:
     monitors:
       button: Prompt to propose monitors
       title: 'Prompt for an AI: monitors to create'
-    ovh_firewall:
+    firewall:
       button: Prompt to propose firewall rules
-      title: 'Prompt for an AI: OVHcloud network firewall'
+      title: 'Prompt for an AI: firewall rules'
+    custom:
+      included: Your instructions are included.
+      edit: Edit the instructions
   dns_records:
     index:
       records: Records

@@ -4,6 +4,34 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.1.0-beta.4] — 2026-11-06
+
+### Upgrading from 0.1.0-beta.3.1
+
+- Change the image tag to `0.1.0-beta.4` (or pull `beta`) and restart: the migrations run at start (instructions of the prompts, SSH sources, firewall options) and nothing changes until you use the new settings. The first background tick then computes the health of every server again.
+- The image is now built on **Debian 13 (trixie) with Ruby 3.4.12** (it was Debian 12.10): same size, nothing to do. Keep the same `.env` (or environment variables) as before.
+- The OVHcloud network firewall, its anti-DDoS and the firewall prompt moved from the **OVH** tab to the new **Firewall** tab; the suggested ufw rules moved from the **Ports** tab to it.
+- New tab *Settings → Firewall*: the sources allowed to reach SSH (none by default: the suggested rules open SSH to everyone, as before) and two options, off by default.
+
+### Added
+
+- **Gandi extension** (DNS source): the A, AAAA and CNAME records of the domains served by Gandi LiveDNS go into the DNS of the fleet (attached to the servers, common DNS alerts, DNS page and tab), with a personal access token that has read rights only (`GET` only, `Authorization: Bearer`). The domains are listed with their expiry date and auto renewal, with an optional alert when one expires soon. Tested against a fake API built on the examples of the Gandi documentation only (no real account yet).
+- **Firewall tab** on the server page: the server's own firewall (ufw, nftables or iptables, with its rules), the OVHcloud network firewall of its OVH IPs (rules, anti-DDoS), the public ports with the verdict of each firewall side by side, the ufw rules to copy and the prompt for an AI. The Ports and OVH tabs link to it.
+- **SSH open only to some addresses** in the suggested firewall rules: a named list of sources (*Settings → Firewall*, e.g. "Elio → 203.0.113.5", "Coolify → …"), and each group of servers can choose some of them. The ufw rules then allow SSH only from them (with a reminder that Elio's own address must be among them), the firewall prompt asks to restrict SSH to them, and the Firewall tab says where SSH is open from. Without any source, nothing changes.
+- **IPv6 and the OVHcloud network firewall**: it filters only IPv4, so the Firewall tab shows the public ports listening in IPv6 as "Not covered (IPv6)", with a warning, and the prompt says so. Optional health reason (*Settings → Firewall*, off by default).
+- **Block all the incoming IPv6** in the suggested ufw rules (option, off by default): the ports are allowed from IPv4 only, so the default policy denies every incoming IPv6 connection.
+- **Instructions for the prompts** (*Settings → General → Prompts for an AI*): your own text, added at the end of the prompt, e.g. "For the SSH port, always put the rules last". The firewall prompt now covers the server's firewall, and the OVHcloud one when the extension is on.
+
+### Changed
+
+- After an upgrade, the health of every server is computed again by the first background tick when its rules changed (instead of a migration that could run before the columns it needs).
+- **The Docker image is built on Debian 13 (trixie) with Ruby 3.4.12, and takes the Debian security updates at every build.** The previous image (Debian 12.10, never updated) carried 89 CVEs that Debian had fixed (openssl, gnutls28, glibc, pcre2, systemd, pam, libcap2, apt, gnupg2, libgcrypt20…): none is left. The CI fails when a security update is pending in the image, and Dependabot proposes the new base images.
+
+### Fixed
+
+- **Faster vulnerability pages** on a big fleet: the vulnerabilities are aggregated in the database instead of being loaded one by one (by package: 1.4 s → 0.5 s on 69,000 rows; by CVE: 0.26 s → 0.16 s), and the *CVE* tab of the Docker page loads the packages of an image when it is unfolded (1.5 s and 18 MB of HTML → 0.1 s and 72 KB).
+- The default section of the extension settings read “Connexion” in the English interface.
+
 ## [0.1.0-beta.3.1] — 2026-11-06
 
 A fix for upgrades to 0.1.0-beta.3.
@@ -126,7 +154,8 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3.1...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4...HEAD
+[0.1.0-beta.4]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3.1...v0.1.0-beta.4
 [0.1.0-beta.3.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3...v0.1.0-beta.3.1
 [0.1.0-beta.3]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/elio-fleet/elio/releases/tag/v0.1.0-beta.2

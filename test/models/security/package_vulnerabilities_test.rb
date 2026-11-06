@@ -48,4 +48,9 @@ class PackageVulnerabilitiesTest < ActiveSupport::TestCase
   test "the most worth updating first" do
     assert_equal %w[linux openssl openssl@nginx:1.27 curl], groups.keys
   end
+
+  test "the SQL of the worst severity follows the order of the severities" do
+    assert_equal "ARRAY[#{Vulnerability::SEVERITIES.keys.map { |key| "'#{key}'" }.join(", ")}]", PackageVulnerabilities::SEVERITIES_SQL
+    assert_equal 2, PackageVulnerabilities::WORST_SEVERITY.to_s.scan(PackageVulnerabilities::SEVERITIES_SQL).size
+  end
 end

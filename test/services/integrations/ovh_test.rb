@@ -125,6 +125,22 @@ class Integrations::OvhTest < ActiveSupport::TestCase
     assert_equal [ [ "warn", "Firewall réseau OVH désactivé sur 203.0.113.10" ], [ "warn", "Reverse DNS de 203.0.113.10 (ns1234.ip-203-0-113.eu) ≠ hostname" ] ], reasons.call
   end
 
+  test "health reason for the ports reachable in IPv6 without the OVH firewall, only when enabled in the settings" do
+    extend PortHelpers
+    fake_ovh
+    @integration.sync!
+    record_ports(servers(:web))
+    servers(:web).update_columns(extra_addresses: [ "2001:db8::10" ])
+    reasons = -> { Integrations::Ovh.health_reasons(@integration.reload, servers(:web).reload).map(&:text) }
+    assert_not reasons.call.any? { |text| text.include?("IPv6") }
+
+    AppSetting.current.update!(ovh_ipv6_health: true)
+    assert_includes reasons.call, "Ports joignables en IPv6 sans le firewall réseau OVH : 22/tcp, 9100/tcp"
+
+    servers(:web).update_columns(extra_addresses: [])
+    assert_not reasons.call.any? { |text| text.include?("IPv6") }, "no public IPv6"
+  end
+
   test "test_connection checks the rights: missing ones, and a key that could write" do
     fake_ovh
     assert_equal "clé valide (validated)", Integrations::Ovh.test_connection(@integration)

@@ -32,9 +32,12 @@ jobs:
           context: .
           load: true
           tags: elio:release
+          build-args: APT_REFRESH=${{ github.run_id }}
           cache-from: type=gha
 
       - run: bin/smoke-image elio:release
+
+      - run: bin/image-security-updates elio:release
 
       - name: Log in to the GitHub Container Registry
         uses: docker/login-action@v4
@@ -63,6 +66,7 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
+          build-args: APT_REFRESH=${{ github.run_id }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}

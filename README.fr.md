@@ -30,20 +30,20 @@
 
 Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels vont bien, ce qui tourne dessus, quels paquets sont vulnérables et comment les corriger, qui a une clé SSH dessus. Rien à installer sur les serveurs : Elio s'y connecte avec sa propre clé SSH et lance une courte liste de **commandes en lecture seule**, toutes écrites dans un seul fichier à relire — [`config/ssh_commands.yml`](config/ssh_commands.yml).
 
-> **Bêta.** Elio est jeune (`v0.1.0-beta.3.1`). Il tourne sur de vrais serveurs, mais attendez-vous à quelques aspérités, et lisez les [limites connues](#limites-connues).
+> **Bêta.** Elio est jeune (`v0.1.0-beta.4`). Il tourne sur de vrais serveurs, mais attendez-vous à quelques aspérités, et lisez les [limites connues](#limites-connues).
 
 ## Fonctionnalités
 
 | | |
 |---|---|
 | **Santé** | Charge, mémoire, swap, disques et inodes, redémarrage requis, services en échec, horloge, mises à jour en attente — avec vos seuils et 30 jours d'historique. |
-| **Inventaire** | Système et date de fin de support, adresses réseau (WireGuard compris), paquets (dpkg, snap), services systemd, **Docker** (conteneurs, images, projets Compose), **tâches planifiées** (cron, timers systemd), ports en écoute et firewall (ufw, nftables, iptables), avec des règles ufw suggérées à copier. |
+| **Inventaire** | Système et date de fin de support, adresses réseau (WireGuard compris), paquets (dpkg, snap), services systemd, **Docker** (conteneurs, images, projets Compose), **tâches planifiées** (cron, timers systemd), ports en écoute, et un onglet **Firewall** : le firewall du serveur (ufw, nftables, iptables) et celui d'OVHcloud côte à côte pour chaque port public, avec des règles ufw à copier — SSH ouvert seulement aux sources que vous listez, IPv6 entrant bloqué si vous le voulez. |
 | **Vulnérabilités** | Les CVE de chaque paquet, d'après le Debian Security Tracker et les données OSV d'Ubuntu, rapprochées de l'inventaire — aucune commande de plus sur les serveurs ; les paquets signés (grub, shim, noyau, fwupd) comparés au code qu'ils signent. Regroupées **par paquet, avec la mise à jour à faire**, celles du serveur à part de celles de ses images Docker, et **les commandes pour corriger une CVE** (`apt-get install --only-upgrade …`, ou `docker compose pull` et `up -d` pour une image) — à copier, jamais lancées par Elio. Notes de NVD, Red Hat et CVE.org (ou de vos propres fournisseurs), exploitation d'après EPSS et le catalogue CISA KEV. |
 | **Docker** | Conteneurs en mauvaise santé ou qui redémarrent en boucle, images par serveur, **nouvelles versions publiées sur les registres** (Docker Hub, GHCR, Quay, registres privés), vulnérabilités des images (Trivy ou Grype s'ils sont installés, sinon le rapprochement d'Elio) dans un onglet **CVE** : par image, avec les serveurs et conteneurs qui l'utilisent. |
 | **Clés SSH** | Un trousseau commun (personnes et machines), des clés ajoutées ou retirées d'un serveur en un clic, des **accès temporaires** qui expirent tout seuls, **les clés de tous les comptes** d'un serveur (avec root), les clés inconnues signalées et réunies dans une liste **Hors trousseau**, la rotation de la clé d'Elio sans coupure. |
 | **Alertes** | Ce qui demande votre attention, par gravité, sur la vue d'ensemble ; journal d'activité ; notifications Slack, Discord, email ou webhook signé, regroupées par type (les critiques tout de suite) ; résumé quotidien. |
 | **Automatisations** | Chaque collecte tourne à la fréquence voulue, sur tout le parc ou par groupe, suivie en direct dans la page *Tâches*. |
-| **Extensions** | **Uptime Kuma** (sondes rattachées à chaque serveur), **OVHcloud** (IP, firewall réseau, enregistrements DNS, services) et **Technitium DNS** (zones et enregistrements), en lecture seule, avec **un DNS du parc** et des **prompts pour une IA** (sondes à créer, règles du firewall OVH). |
+| **Extensions** | **Uptime Kuma** (sondes rattachées à chaque serveur), **OVHcloud** (IP, firewall réseau, enregistrements DNS, services), **Technitium DNS** (zones et enregistrements) et **Gandi** (enregistrements LiveDNS, domaines et leur expiration), en lecture seule, avec **un DNS du parc** et des **prompts pour une IA** (sondes à créer, règles de firewall) qui se terminent par vos propres consignes. |
 | **Équipe** | Rôles (admin, opérateur, lecture), invitations, double authentification obligatoire, **des notes sur chaque serveur** (Markdown), recherche ⌘K partout, thèmes clair et sombre. |
 
 | | |
@@ -57,9 +57,11 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 | ![Clés SSH de tous les comptes](docs/screenshots/fr/ssh-keys.png) | ![Notes](docs/screenshots/fr/notes.png) |
 | **Clés SSH** de tous les comptes d'un serveur | **Notes** de l'équipe sur un serveur |
 | ![Sondes Uptime Kuma](docs/screenshots/fr/uptime-kuma-monitors.png) | ![OVHcloud](docs/screenshots/fr/ovh.png) |
-| **Uptime Kuma** : les sondes rattachées à chaque serveur | **OVHcloud** : service, IP, firewall réseau port par port |
+| **Uptime Kuma** : les sondes rattachées à chaque serveur | **OVHcloud** : service, IP et reverse |
 | ![DNS du parc](docs/screenshots/fr/dns.png) | ![CVE des images Docker](docs/screenshots/fr/docker-cves.png) |
-| **DNS du parc** : OVHcloud et Technitium ensemble | **CVE des images Docker**, par image |
+| **DNS du parc** : OVHcloud, Technitium et Gandi ensemble | **CVE des images Docker**, par image |
+| ![Onglet Firewall](docs/screenshots/fr/firewall.png) | ![Réglages du firewall](docs/screenshots/fr/firewall-settings.png) |
+| **Firewall** : celui du serveur et celui d'OVH, port par port, IPv6 compris | **Règles proposées** : sources SSH, IPv6 entrant |
 
 L'interface existe en **anglais et en français**. Chaque utilisateur choisit sa langue dans *Mon compte* ; sinon Elio suit le navigateur, puis la langue par défaut de l'installation (*Paramètres → Général*). Les canaux de notification et les invitations ont leur propre langue. Ajouter une langue, c'est ajouter un dossier de traductions : voir [CONTRIBUTING.md](CONTRIBUTING.md#translating-elio).
 
@@ -130,6 +132,12 @@ Pris en charge : **Debian et Ubuntu** (les autres systèmes : santé et système
 
 Elio **ne modifie jamais le firewall** et n'installe rien : les règles ufw suggérées et les commandes de mise à jour sont à relire et à lancer vous-même.
 
+### L'onglet Firewall
+
+Chaque serveur a un onglet **Firewall** : les règles de son propre firewall (ufw, nftables ou iptables, lues en root), le firewall réseau OVHcloud de ses IP OVH et son anti-DDoS, et un tableau de ses ports publics avec le verdict de chaque firewall côte à côte. Le firewall OVHcloud ne filtre **que l'IPv4** : sur un serveur qui a une adresse IPv6 publique, les ports en écoute en IPv6 sont marqués *non couvert (IPv6)*, et une raison de santé peut les signaler (*Paramètres → Firewall*).
+
+Les **règles ufw proposées** peuvent n'ouvrir le SSH qu'aux sources que vous listez dans *Paramètres → Firewall* (l'adresse d'Elio, Coolify, votre bureau… — chaque groupe de serveurs peut en choisir ; mettez-y l'adresse d'Elio, sinon appliquer les règles coupe son accès), et peuvent **bloquer tout l'IPv6 entrant** (les ports ne sont alors autorisés qu'en IPv4). Le prompt du firewall pour une IA se termine par vos propres consignes (*Paramètres → Général*), par exemple « pour le port SSH, mets les règles toujours en dernier ».
+
 ## Extensions
 
 Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque serveur. Activez-les dans *Paramètres → Extensions* (administrateurs). Elles **ne font que lire** : Elio ne crée, ne modifie et ne supprime jamais rien sur ces services, et une extension désactivée ne laisse aucune trace dans l'interface. Chaque alerte qu'elles lèvent est au choix, avec son seuil.
@@ -145,14 +153,14 @@ Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque
 
 - **Réglage** : le point d'accès de l'API (EU, CA, US), une Application Key, un Application Secret et une Consumer Key **limitée aux requêtes GET**. *Droits à donner à la clé API* liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie. *Tester la connexion* signale les droits manquants, et **prévient si la clé permet d'écrire** — refaites-en une dans ce cas.
 - Chaque produit est une case à cocher : IP et reverse DNS, firewall réseau, anti-DDoS, zones DNS (toutes ou certaines), serveurs dédiés, VPS, instances Public Cloud (tous les projets ou certains).
-- Un onglet **OVH** sur chaque serveur : le service OVH (offre, datacenter, expiration), ses IP et reverse, les règles du firewall réseau et **si elles laissent passer chaque port public**, l'anti-DDoS. Une page **OVHcloud** : services, IP, ressources rattachées à aucun serveur. Ses enregistrements DNS vont dans le [DNS du parc](#dns-du-parc).
+- Un onglet **OVH** sur chaque serveur : le service OVH (offre, datacenter, expiration), ses IP et reverse ; les règles du firewall réseau, **si elles laissent passer chaque port public** et l'anti-DDoS sont dans l'[onglet Firewall](#longlet-firewall). Une page **OVHcloud** : services, IP, ressources rattachées à aucun serveur. Ses enregistrements DNS vont dans le [DNS du parc](#dns-du-parc).
 - Alertes au choix : service bientôt expiré (renouvellement automatique pris en compte), firewall réseau désactivé, reverse DNS qui ne correspond pas, service OVH non suivi par Elio.
 
 Le client OVH d'Elio ne connaît que la méthode GET : il ne peut pas écrire, quels que soient les droits de la clé.
 
 ### DNS du parc
 
-Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS) alimentent **un seul DNS du parc** :
+Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS, Gandi) alimentent **un seul DNS du parc** :
 - chaque enregistrement A, AAAA et CNAME est rattaché à son serveur de la même façon, quelle que soit sa source : un rattachement manuel **par nom** (valable pour toutes les sources), l'IP d'un enregistrement A / AAAA, ou un CNAME vers un nom de n'importe quelle source ;
 - un seul onglet **DNS** sur chaque serveur et une seule page **DNS** (filtres par source, zone, *hors du parc*, *non rattachés*, *diffère selon la source*), avec la source de chaque enregistrement ;
 - un nom dont les enregistrements diffèrent selon la source (une IP publique chez OVH, une IP privée dans Technitium) est signalé *diffère selon la source* ;
@@ -166,18 +174,25 @@ Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS)
 - Ses enregistrements vont dans le [DNS du parc](#dns-du-parc).
 - Le jeton passe dans un en-tête `Authorization: Bearer` (jamais dans l'URL). Testé avec Technitium DNS Server 15.6.
 
+### Gandi
+
+- **Réglage** : un **jeton d'accès personnel** créé dans l'admin Gandi (*Organisations → Jetons d'accès personnels*) avec **seulement les droits de voir les domaines et leurs enregistrements DNS** (LiveDNS), et une expiration que vous renouvellerez ; en option l'ID de l'organisation propriétaire des domaines (sinon Gandi ne liste que ceux de votre organisation personnelle). *Tester la connexion* donne les domaines lisibles et ceux sur LiveDNS.
+- Toutes les heures, Elio lit les enregistrements **A, AAAA et CNAME** des domaines servis par LiveDNS (tous, ou ceux que vous listez) et les envoie au [DNS du parc](#dns-du-parc) ; la page de réglages liste vos domaines avec leur date d'expiration et leur renouvellement automatique, et une alerte en option signale un domaine qui va expirer.
+- Elio n'envoie que des requêtes `GET` à `https://api.gandi.net/v5/`, le jeton dans un en-tête `Authorization: Bearer`.
+
 ## Sécurité
 
 - La clé SSH d'Elio, les clés d'API, les webhooks et les secrets 2FA sont **chiffrés en base** et jamais renvoyés au navigateur.
 - Double authentification (TOTP et codes de secours), obligatoire par défaut pour les administrateurs et les opérateurs ; rôles ; invitations seulement (pas d'inscription publique) ; connexion limitée en débit et verrouillage ; Content Security Policy stricte.
 - L'empreinte de chaque serveur est mémorisée à la première connexion ; un changement bloque la connexion jusqu'à ce qu'un administrateur l'accepte.
-- **Connexions sortantes** d'Elio : les bases de vulnérabilités et fournisseurs de notes (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — seulement les versions et CVE de votre parc), les registres Docker (requêtes `HEAD` sur les manifestes), et les extensions que vous activez (votre instance Uptime Kuma, l'API OVH, votre serveur Technitium DNS — en lecture seule, voir [Extensions](#extensions)). Rien d'autre, aucune télémétrie. En réseau fermé, les bases peuvent être importées à la main.
+- **Connexions sortantes** d'Elio : les bases de vulnérabilités et fournisseurs de notes (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — seulement les versions et CVE de votre parc), les registres Docker (requêtes `HEAD` sur les manifestes), et les extensions que vous activez (votre instance Uptime Kuma, l'API OVH, votre serveur Technitium DNS, l'API Gandi — en lecture seule, voir [Extensions](#extensions)). Rien d'autre, aucune télémétrie. En réseau fermé, les bases peuvent être importées à la main.
+- L'image Docker est construite sur Debian 13 et prend les mises à jour de sécurité Debian à chaque construction ; les CVE qu'Elio peut lister dans son propre conteneur sont celles que Debian n'a pas encore corrigées (voir [SECURITY.md](SECURITY.md#the-docker-image)).
 - Vous avez trouvé une faille ? Signalez-la en privé : voir [SECURITY.md](SECURITY.md).
 
 ## Limites connues
 
 - Inventaire complet pour **Debian et Ubuntu** seulement. Ubuntu n'a pas encore été essayé sur un vrai serveur.
-- Les extensions Uptime Kuma et OVHcloud ont été construites sur des réponses d'API enregistrées, pas encore essayées sur un vrai compte (Technitium DNS a été essayé sur une vraie instance).
+- Les extensions Uptime Kuma, OVHcloud et Gandi ont été construites sur des réponses d'API enregistrées ou documentées, pas encore essayées sur un vrai compte (Technitium DNS a été essayé sur une vraie instance).
 - CVE des images Docker sans Trivy ni Grype : images Debian et Ubuntu seulement (pas Alpine). Trivy et Grype n'ont pas encore été essayés sur un vrai serveur.
 - Paquets EFI signés (grub, shim, fwupd) : vérifiés sur les données réelles des dépôts, pas encore sur un vrai serveur EFI.
 - Debian note peu de ses CVE : les notes viennent des fournisseurs que vous activez (NVD, Red Hat, CVE.org par défaut).

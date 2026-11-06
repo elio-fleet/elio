@@ -1,4 +1,4 @@
-<%# Ports of the server and firewall (Inventory::PortAnalysis), with the ufw rules to copy. %>
+<%# Ports of the server (Inventory::PortAnalysis); the firewalls and the rules to copy are in the Firewall tab. %>
 <% analysis = Inventory::PortAnalysis.new(server) %>
 <% snapshot = analysis.snapshot %>
 <section id="server-ports" class="card mt-6">
@@ -49,17 +49,10 @@
       <p class="px-4 py-4 text-sm text-ink-3"><%= t(".listening_port") %></p>
     <% end %>
 
-    <details class="ufw-rules border-t border-line" data-controller="clipboard">
-      <summary class="flex cursor-pointer items-center justify-between gap-3 px-4 py-2.5 text-sm font-medium">
-        <%= t(".suggested_ufw_rules") %>
-        <span class="text-xs font-normal text-ink-3"><%= t(".elio_never_changes_firewall") %></span>
-      </summary>
-      <div class="flex items-start gap-3 px-4 pb-4">
-        <textarea readonly rows="<%= analysis.suggested_ufw_rules.lines.size %>" data-clipboard-target="source" aria-label="<%= t(".suggested_ufw_rules") %>"
-                  class="block w-full resize-none rounded-lg border border-line bg-subtle px-3 py-2 font-mono text-xs text-ink-2"><%= analysis.suggested_ufw_rules %></textarea>
-        <%= render "settings/copy_button" %>
-      </div>
-    </details>
+    <p class="firewall-link border-t border-line px-4 py-2.5 text-xs text-ink-3">
+      <%= t(".firewall_tab_hint") %>
+      <%= link_to t(".see_firewall_tab"), server_path(server, tab: "firewall"), class: "font-medium text-accent hover:underline" %>
+    </p>
   <% elsif snapshot&.status == "unsupported" %>
     <p class="ports-empty px-4 py-4 text-sm text-ink-3"><%= snapshot.message %></p>
   <% elsif snapshot&.failed? %>

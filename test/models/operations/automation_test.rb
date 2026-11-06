@@ -7,11 +7,11 @@ class AutomationTest < ActiveSupport::TestCase
     automations = Automation.all_kinds
 
     assert_equal %w[health_check servers_ping inventory_os inventory_packages inventory_services inventory_ports vulnerabilities_update cve_scores_update docker_image_updates
-                    keys_scan uptime_kuma_sync ovh_sync technitium_sync], automations.map(&:kind)
-    assert_equal [ 15, 15, 1440, 360, 60, 60, 1440, 360, 360, 360, 15, 360, 60 ], automations.map(&:interval_minutes)
-    assert_equal %w[health_check vulnerabilities_update cve_scores_update docker_image_updates uptime_kuma_sync ovh_sync technitium_sync], automations.select(&:enabled?).map(&:kind)
+                    keys_scan uptime_kuma_sync ovh_sync technitium_sync gandi_sync], automations.map(&:kind)
+    assert_equal [ 15, 15, 1440, 360, 60, 60, 1440, 360, 360, 360, 15, 360, 60, 60 ], automations.map(&:interval_minutes)
+    assert_equal %w[health_check vulnerabilities_update cve_scores_update docker_image_updates uptime_kuma_sync ovh_sync technitium_sync gandi_sync], automations.select(&:enabled?).map(&:kind)
     assert_equal automations, Automation.all_kinds
-    assert_equal 13, Automation.count
+    assert_equal 14, Automation.count
     assert_equal %w[health_check servers_ping inventory_os inventory_packages inventory_services inventory_ports vulnerabilities_update cve_scores_update docker_image_updates keys_scan],
                  Automation.available.map(&:kind),
                  "an extension's sync only shows once it is enabled"

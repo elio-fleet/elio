@@ -8,7 +8,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
   # Accented letters of French, French punctuation, and common French words.
-  FRENCH = /[àâçéèêëîïôûùüÿœ«»]|\b(?:le|la|les|des|du|une|est|sont|aucun|aucune|pour|avec|sans|dans|sur|serveurs?|clés?|tâches?|paramètres|groupes?|mise|jour|activité|vue|ensemble|voir|tout|rien|nouveaux?|nouvelles?|ajouter|supprimer|modifier|enregistrer|lancer|retour|fermer|oui|non|parc|inventaire|sondes?|disponible|corrige|empreinte|statut|nom|commande|fichier|ligne|taille|noyau|horloge|quand|couleur|registre|alertes|adresses?|cible|offre|projet|trousseau|conteneurs?|processus|correctif|inattendu|corrigeable|automatique|ressources|permanente)\b/i
+  FRENCH = /[àâçéèêëîïôûùüÿœ«»]|\b(?:le|la|les|des|du|une|est|sont|aucun|aucune|pour|avec|sans|dans|sur|serveurs?|clés?|tâches?|paramètres|groupes?|mise|jour|activité|vue|ensemble|voir|tout|rien|nouveaux?|nouvelles?|ajouter|supprimer|modifier|enregistrer|lancer|retour|fermer|oui|non|parc|inventaire|sondes?|disponible|corrige|empreinte|statut|nom|commande|fichier|ligne|taille|noyau|horloge|quand|couleur|registre|alertes|adresses?|cible|offre|projet|trousseau|conteneurs?|processus|correctif|inattendu|corrigeable|automatique|ressources|permanente|connexion|rattachement)\b/i
 
   # Texts and attributes a user reads, but those of `except` (data).
   def self.french_texts(html, scope: nil, except: [])
@@ -77,7 +77,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
 
   test "the inventory pages" do
     data = [ ".sidebar-groups", ".account-link", ".server-group-filter", "#servers td:nth-child(2)" ]
-    %w[overview packages services ports schedules].each do |tab|
+    %w[overview packages services ports firewall schedules].each do |tab|
       assert_english server_path(servers(:web), tab: tab), except: data
     end
     assert_english server_packages_path(servers(:web)), except: data
@@ -85,6 +85,21 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english packages_path(q: "openssl"), except: data
     assert_english ports_path, except: data
     assert_english scheduled_tasks_path, except: data
+  end
+
+  test "the Firewall tab with an inventory, OVH and custom instructions" do
+    extend PortHelpers
+    record_ports(servers(:web))
+    Integration.create!(kind: "ovh").update_column(:enabled, true)
+    OvhResource.create!(kind: "ip", external_id: "203.0.113.10/32", name: "203.0.113.10/32", server: servers(:web),
+                        data: { "firewall" => { "203.0.113.10" => { "enabled" => true, "rules" => [ { "sequence" => 0, "action" => "permit", "protocol" => "tcp", "destinationPort" => "eq 22" } ] } } })
+    app_settings(:main).update!(prompt_instructions: { "firewall" => "SSH last." })
+    SshSource.create!(name: "Elio", cidr: "203.0.113.5")
+    data = [ ".sidebar-groups", ".account-link", "textarea" ]
+    assert_english server_path(servers(:web), tab: "firewall"), except: data
+    assert_english settings_path, except: data + [ "#ssh-key", ".ssh-source" ]
+    assert_english edit_server_group_path(server_groups(:production)), except: data
+    assert_english settings_firewall_path, except: data + [ ".ssh-source" ]
   end
 
   test "the access pages" do
@@ -158,6 +173,10 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english dns_records_path, except: data
     assert_english server_path(servers(:web), tab: "dns"), except: data
     assert_english edit_settings_integration_path("technitium"), except: data
+    Integration.find_or_initialize_by(kind: "gandi").update!(enabled: true, secrets: { "api_token" => "t" },
+                                                            state: { "domains" => [ { "fqdn" => "example.test", "expires_at" => 1.year.from_now.iso8601, "autorenew" => true, "livedns" => true } ] })
+    assert_english edit_settings_integration_path("gandi"), except: data + [ ".gandi-domain td:first-child" ]
+    assert_english settings_integrations_path, except: data
   end
 
   test "the check finds French" do

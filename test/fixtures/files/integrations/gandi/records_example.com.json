@@ -1,0 +1,9 @@
+[
+  { "rrset_name": "@", "rrset_type": "A", "rrset_ttl": 10800, "rrset_values": [ "203.0.113.10" ], "rrset_href": "https://api.gandi.net/v5/livedns/domains/example.com/records/%40/A" },
+  { "rrset_name": "@", "rrset_type": "MX", "rrset_ttl": 10800, "rrset_values": [ "10 spool.mail.gandi.net." ], "rrset_href": "https://api.gandi.net/v5/livedns/domains/example.com/records/%40/MX" },
+  { "rrset_name": "www", "rrset_type": "CNAME", "rrset_ttl": 10800, "rrset_values": [ "@" ], "rrset_href": "https://api.gandi.net/v5/livedns/domains/example.com/records/www/CNAME" },
+  { "rrset_name": "api", "rrset_type": "A", "rrset_ttl": 300, "rrset_values": [ "203.0.113.10", "198.51.100.99" ], "rrset_href": "https://api.gandi.net/v5/livedns/domains/example.com/records/api/A" },
+  { "rrset_name": "app", "rrset_type": "CNAME", "rrset_ttl": 300, "rrset_values": [ "api" ], "rrset_href": "https://api.gandi.net/v5/livedns/domains/example.com/records/app/CNAME" },
+  { "rrset_name": "cdn", "rrset_type": "CNAME", "rrset_ttl": 300, "rrset_values": [ "cdn.provider.example." ], "rrset_href": "https://api.gandi.net/v5/livedns/domains/example.com/records/cdn/CNAME" },
+  { "rrset_name": "v6", "rrset_type": "AAAA", "rrset_values": [ "2001:db8::10" ], "rrset_href": "https://api.gandi.net/v5/livedns/domains/example.com/records/v6/AAAA" }
+]

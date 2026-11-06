@@ -5,7 +5,7 @@
 # or, for a CNAME, a name already attached or a server's host name.
 class DnsRecord < ApplicationRecord
   TYPES = %w[A AAAA CNAME].freeze
-  SOURCES = { "ovh" => "OVHcloud", "technitium" => "Technitium" }.freeze
+  SOURCES = { "ovh" => "OVHcloud", "technitium" => "Technitium", "gandi" => "Gandi" }.freeze
 
   belongs_to :server, optional: true
 

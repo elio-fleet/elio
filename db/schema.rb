@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_06_080000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_07_110000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -63,6 +63,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_080000) do
     t.jsonb "dns_without_name_ignored_group_ids", default: [], null: false
     t.boolean "dns_alert_conflict", default: false, null: false
     t.jsonb "dns_alert_state", default: {}, null: false
+    t.jsonb "prompt_instructions", default: {}, null: false
+    t.boolean "ufw_block_ipv6", default: false, null: false
+    t.boolean "ovh_ipv6_health", default: false, null: false
+    t.integer "health_version", default: 0, null: false
   end
 
   create_table "automations", force: :cascade do |t|
@@ -382,6 +386,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_080000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "expected_ports"
+    t.jsonb "ssh_source_ids", default: [], null: false
     t.index "lower((name)::text)", name: "index_server_groups_on_lower_name", unique: true
   end
 
@@ -445,6 +450,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_06_080000) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.string "state", default: "active", null: false
+  end
+
+  create_table "ssh_sources", force: :cascade do |t|
+    t.string "name", null: false
+    t.string "cidr", null: false
+    t.integer "position", default: 0, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index "lower((name)::text)", name: "index_ssh_sources_on_lower_name", unique: true
   end
 
   create_table "temporary_accesses", force: :cascade do |t|

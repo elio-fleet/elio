@@ -7,20 +7,30 @@ class DockerController < ApplicationController
   PER_PAGE = 100
   IMAGES_PER_PAGE = 20
   TABS = %w[images cves].freeze
-  # The CVEs of an image, with the servers and containers that run it.
-  ImageVulnerabilities = Data.define(:image, :rows, :groups, :uses) do
-    def cves = rows.map(&:cve).uniq
-    def fixable = rows.select(&:fixable?).map(&:cve).uniq
-    def severity = Vulnerability::SEVERITIES.keys.find { |key| rows.any? { |row| row.severity == key } } || "unknown"
-    def max_score = groups.filter_map(&:max_score).max
-    def servers = uses.map(&:first).uniq
+  # The CVEs of an image, counted in SQL, with the servers and containers
+  # that run it; its packages are loaded when it is unfolded (#image_cves).
+  ImageVulnerabilities = Data.define(:image, :cve_count, :fixable_count, :severity, :max_score, :servers, :package_count, :uses) do
+    def self.frame_id(image) = "image-cves-#{Digest::MD5.hexdigest(image).first(12)}"
+    def frame_id = self.class.frame_id(image)
   end
+  PACKAGES_PER_PAGE = 50
   Version = Data.define(:tag, :image, :servers, :state, :cves, :fixable)
   Repository = Data.define(:name, :versions) do
     def servers = versions.flat_map(&:servers).uniq
     def updates? = versions.any? { |version| version.state == :available }
     def cves = versions.sum(&:cves)
     def unused? = versions.all? { |version| version.servers.empty? }
+  end
+
+  # The packages of an image and their CVEs (lazy frame of the CVE tab).
+  def image_cves
+    @group = ServerGroup.find_by(id: params[:group]) if params[:group].present?
+    @image = params[:image].to_s
+    rows = ServerVulnerability.images.where(image: @image)
+    rows = rows.where(server_id: Server.in_group(@group).select(:id)) if @group
+    @pager = paginate(PackageVulnerabilities.new(rows).groups, per_page: PACKAGES_PER_PAGE)
+    @frame_id = ImageVulnerabilities.frame_id(@image)
+    render layout: false
   end
 
   def index
@@ -50,18 +60,25 @@ class DockerController < ApplicationController
   private
 
   def index_cves(servers, dockers)
-    rows = ServerVulnerability.images.where(server: servers).includes(:server)
+    rows = ServerVulnerability.images.where(server: servers)
     rows = rows.where("server_vulnerabilities.image ILIKE ?", "%#{ServerVulnerability.sanitize_sql_like(@q)}%") if @q.present?
     containers = dockers.flat_map { |server, data| Array(data["containers"]).map { |container| [ server, container ] } }
-    images = rows.to_a.group_by(&:image).map do |image, list|
-      ImageVulnerabilities.new(image: image, rows: list, groups: PackageVulnerabilities.new(list).groups,
-                               uses: containers.select { |server, container| container["image"] == image && list.any? { |row| row.server_id == server.id } })
+    by_id = servers.index_by(&:id)
+    images = rows.left_joins(:rating).group(:image).pluck(
+      :image, Arel.sql("COUNT(DISTINCT server_vulnerabilities.cve)"),
+      Arel.sql("COUNT(DISTINCT server_vulnerabilities.cve) FILTER (WHERE server_vulnerabilities.fixed_version IS NOT NULL)"),
+      PackageVulnerabilities::WORST_SEVERITY, Arel.sql("MAX(cve_ratings.score)"),
+      Arel.sql("ARRAY_AGG(DISTINCT server_vulnerabilities.server_id)"), Arel.sql("COUNT(DISTINCT server_vulnerabilities.source_package)")
+    ).map do |image, cves, fixable, severity, score, server_ids, packages|
+      touched = server_ids.filter_map { |id| by_id[id] }.sort_by(&:name)
+      ImageVulnerabilities.new(image: image, cve_count: cves, fixable_count: fixable, severity: severity || "unknown", max_score: score, servers: touched, package_count: packages,
+                               uses: containers.select { |server, container| container["image"] == image && server_ids.include?(server.id) })
     end
-    @pager = paginate(images.sort_by { |image| [ image.fixable.empty? ? 1 : 0, Vulnerability::SEVERITIES.keys.index(image.severity), -image.cves.size, image.image ] },
+    @pager = paginate(images.sort_by { |image| [ image.fixable_count.zero? ? 1 : 0, Vulnerability::SEVERITIES.keys.index(image.severity), -image.cve_count, image.image ] },
                       per_page: IMAGES_PER_PAGE)
     @images = @pager.records
-    @summary = { images: images.size, cves: images.flat_map(&:cves).uniq.size, fixable: images.flat_map(&:fixable).uniq.size,
-                 servers: images.flat_map { |image| image.rows.map(&:server_id) }.uniq.size }
+    @summary = { images: images.size, cves: rows.distinct.count(:cve), fixable: rows.fixable.distinct.count(:cve),
+                 servers: images.flat_map(&:servers).uniq.size }
     render :cves
   end
 
