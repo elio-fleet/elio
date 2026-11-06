@@ -250,6 +250,7 @@ fr:
       images: Conteneurs et images
       cves: CVE
     cves:
+      loading: Chargement…
       intro: 'Les vulnérabilités des images Docker du parc : elles se corrigent en mettant à jour l''image, pas le serveur.'
       images: Images vulnérables
       cves: CVE dans les images
