@@ -8,6 +8,7 @@ en:
       docker: Docker
       schedules: Scheduled tasks
       ports: Ports
+      firewall: Firewall
       keys: SSH keys
       history: History
       server_sections: Server sections
@@ -197,6 +198,8 @@ en:
       expected_ports: Expected ports
       optional: "(optional)"
       ports_servers_group_may: 'Ports that the servers of the group may expose publicly. Any other public port is reported as unexpected. Empty: no check.'
+      ssh_sources: Sources allowed to reach SSH
+      ssh_sources_hint: 'The suggested firewall rules of its servers open SSH only to these sources. None checked: no restriction from this group.'
       servers: Servers
       check_uncheck_all: Check / uncheck all
       server_yet_you_can: 'No server yet: you can add some to the group later.'

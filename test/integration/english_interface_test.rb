@@ -77,7 +77,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
 
   test "the inventory pages" do
     data = [ ".sidebar-groups", ".account-link", ".server-group-filter", "#servers td:nth-child(2)" ]
-    %w[overview packages services ports schedules].each do |tab|
+    %w[overview packages services ports firewall schedules].each do |tab|
       assert_english server_path(servers(:web), tab: tab), except: data
     end
     assert_english server_packages_path(servers(:web)), except: data
@@ -85,6 +85,20 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english packages_path(q: "openssl"), except: data
     assert_english ports_path, except: data
     assert_english scheduled_tasks_path, except: data
+  end
+
+  test "the Firewall tab with an inventory, OVH and custom instructions" do
+    extend PortHelpers
+    record_ports(servers(:web))
+    Integration.create!(kind: "ovh").update_column(:enabled, true)
+    OvhResource.create!(kind: "ip", external_id: "203.0.113.10/32", name: "203.0.113.10/32", server: servers(:web),
+                        data: { "firewall" => { "203.0.113.10" => { "enabled" => true, "rules" => [ { "sequence" => 0, "action" => "permit", "protocol" => "tcp", "destinationPort" => "eq 22" } ] } } })
+    app_settings(:main).update!(prompt_instructions: { "firewall" => "SSH last." })
+    SshSource.create!(name: "Elio", cidr: "203.0.113.5")
+    data = [ ".sidebar-groups", ".account-link", "textarea" ]
+    assert_english server_path(servers(:web), tab: "firewall"), except: data
+    assert_english settings_path, except: data + [ "#ssh-key", ".ssh-source" ]
+    assert_english edit_server_group_path(server_groups(:production)), except: data
   end
 
   test "the access pages" do

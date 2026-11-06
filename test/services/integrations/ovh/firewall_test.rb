@@ -23,4 +23,10 @@ class Integrations::Ovh::FirewallTest < ActiveSupport::TestCase
     assert_nil verdict("tcp", 22, { "enabled" => false, "rules" => RULES })
     assert_nil verdict("tcp", 22, nil)
   end
+
+  test "an IPv6 address is not covered: the OVH network firewall filters only IPv4" do
+    assert_equal :not_covered, Integrations::Ovh::Firewall.verdict({ "enabled" => true, "rules" => RULES }, "tcp", 22, ip: "2001:db8::10")
+    assert_equal :not_covered, Integrations::Ovh::Firewall.verdict(nil, "tcp", 22, ip: "2001:db8::/64")
+    assert_equal :deny, Integrations::Ovh::Firewall.verdict({ "enabled" => true, "rules" => RULES }, "tcp", 3306, ip: "203.0.113.10")
+  end
 end

@@ -1,12 +1,16 @@
 # Texts to paste into an AI assistant, generated from what Elio knows about a
 # server (its last inventory): which Uptime Kuma monitors to create, which
-# rules to set in the OVHcloud network firewall. In the reader's language.
-# Never anything secret: no key, token, password or API credential, only
-# names, addresses, ports and versions.
+# firewall rules to set (the server's own firewall, and the OVHcloud network
+# firewall when the extension is on). In the reader's language. Never
+# anything secret: no key, token, password or API credential, only names,
+# addresses, ports and versions. The instructions of the administrator
+# (AppSetting#prompt_instructions) come last.
 #
 #   ServerPrompt.new(server).monitors
-#   ServerPrompt.new(server).ovh_firewall
+#   ServerPrompt.new(server).firewall
 class ServerPrompt
+  KINDS = %i[monitors firewall].freeze
+
   def initialize(server)
     @server = server
   end
@@ -18,18 +22,24 @@ class ServerPrompt
     ])
   end
 
-  def ovh_firewall
-    document(:ovh_firewall, [
-      server_section, addresses_section, dns_names_section, ports_section(public_only: true), local_firewall_section, ovh_firewall_section
-    ])
+  def firewall
+    overview = FirewallOverview.new(@server)
+    ovh = overview.ovh_blocks.any?
+    document(:firewall, [
+      server_section, addresses_section, dns_names_section, ports_section(public_only: true), local_firewall_section,
+      (ovh_firewall_section(overview) if ovh), ssh_sources_section
+    ], variant: (ovh ? "ovh" : "local"))
   end
 
   private
 
   def t(key, **options) = I18n.t("server_prompt.#{key}", **options)
 
-  def document(kind, sections)
-    [ t("#{kind}.intro"), *sections.compact, "## #{t("task")}\n#{t("#{kind}.task", ssh_port: @server.port)}" ].join("\n\n")
+  def document(kind, sections, variant: nil)
+    key = [ kind, variant ].compact.join(".")
+    instructions = AppSetting.current.prompt_instruction(kind)
+    [ t("#{key}.intro"), *sections.compact, "## #{t("task")}\n#{t("#{key}.task", ssh_port: @server.port)}",
+      ("## #{t("instructions")}\n#{instructions}" if instructions) ].compact.join("\n\n")
   end
 
   # "## Title\n- line\n- line", or "(none)" under the title when empty.
@@ -106,8 +116,16 @@ class ServerPrompt
     section(:local_firewall, lines)
   end
 
-  def ovh_firewall_section
-    blocks = @server.ovh_resources.where(kind: "ip").order(:name).to_a
+  # Where SSH must be reachable from (SshSource), when the list is not empty.
+  def ssh_sources_section
+    sources = @server.ssh_sources
+    return if sources.empty?
+
+    section(:ssh_sources, [ t("ssh_sources_rule", port: @server.port), *sources.map(&:label) ])
+  end
+
+  def ovh_firewall_section(overview)
+    blocks = overview.ovh_blocks
     lines = blocks.flat_map do |block|
       firewalls = block.data["firewall"]
       next [ t("ovh.not_read", block: block.name) ] if firewalls.nil?
@@ -119,6 +137,8 @@ class ServerPrompt
           *rules.map { |rule| "  #{t("ovh.rule", sequence: rule["sequence"], action: rule["action"], protocol: rule["protocol"] || "any", port: rule["destinationPort"] || "*", source: rule["source"] || "any", option: [ rule["tcpOption"], rule["fragments"] && "fragments" ].compact.join(" "))}".rstrip } ]
       end
     end
+    ipv6 = overview.ipv6_bypassing_ovh
+    lines << t("ovh.ipv6_not_covered", addresses: overview.public_ipv6.join(", "), ports: ipv6.map(&:key).join(", ")) if ipv6.any?
     section(:ovh_firewall, lines)
   end
 
