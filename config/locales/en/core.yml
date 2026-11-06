@@ -197,6 +197,7 @@ en:
     resources: resources
     images: images
     packages: packages
+    keys: keys
   words:
     none: none
     'yes': 'yes'

@@ -62,7 +62,7 @@ en:
       edit: Edit
       server_sections: Server sections
       authorized_ssh_keys: Authorized SSH keys
-      public_keys_can_log: Public keys that can log in to this server with Elio's login account.
+      public_keys_can_log: "Public keys that can log in to this server, on every account Elio can read. Keys are added to Elio's login account."
       activity_server_yet: No activity on this server yet.
     row:
       load_over_24_h: Load over 24 h (in % of the processors)

@@ -1,5 +1,5 @@
 # Removes a public key from the authorized_keys file of an account (see
-# AuthorizedKeysAccount). The protected keys (Elio's, by default) are refused:
+# AuthorizedKeysAccount): the login account, or another one through root. The protected keys (Elio's, by default) are refused:
 # every line whose key blob is `blob` is dropped, other lines (comments,
 # other keys) are kept byte for byte. The Elio key can never be removed,
 # since the app would lose access to the server.
@@ -18,16 +18,24 @@ class Keys::AuthorizedKeyRemoval
     return error(I18n.t("keys.authorized_key_removal.forbidden_title"), I18n.t("keys.authorized_key_removal.forbidden_details")) if Array(protected_keys).any? { |key| key.blob == blob }
 
     output = Ssh::Connection.open(server, **connection_options) do |ssh|
-      ssh.run_command!("keys.remove", blob: blob).stdout
+      if account.login?
+        ssh.run_command!("keys.remove", blob: blob).stdout
+      elsif ssh.privileged?
+        ssh.run_command!("keys.remove_from_account", user: account.unix_user, blob: blob).stdout
+      else
+        next :root_needed
+      end
     end
+    return error(I18n.t("keys.authorized_key_removal.root_needed_title"), I18n.t("keys.authorized_key_removal.root_needed_details", account: account.unix_user)) if output == :root_needed
 
     Result.new(status: output.include?("removed") ? :removed : :absent, error_title: nil, error_details: nil)
   rescue Ssh::Connection::Error => e
     error(*account.error_for(e))
   end
 
-  # The command sent (config/ssh_commands.yml: keys.remove), also run locally by the tests.
+  # The commands sent (config/ssh_commands.yml: keys.remove, keys.remove_from_account), also run locally by the tests.
   def self.command(blob) = Ssh::Commands.render("keys.remove", blob: blob)
+  def self.account_command(user, blob) = Ssh::Commands.render("keys.remove_from_account", user: user, blob: blob)
 
   def self.error(title, details)
     Result.new(status: :error, error_title: title, error_details: details)

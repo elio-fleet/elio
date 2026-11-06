@@ -116,7 +116,7 @@ class UiTest < ApplicationSystemTestCase
     bob = Ssh::KeyGenerator.generate(comment: "bob@desktop").public_key
     reader = ->(*, **) { Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse([ ssh_keys(:main).public_key, bob ].join("\n")), error_title: nil, error_details: nil) }
 
-    stub_method(Keys::AuthorizedKeysReader, :call, reader) do
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(reader)) do
       visit server_path(servers(:web), tab: "keys")
 
       within("#server-authorized-keys") do

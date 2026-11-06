@@ -16,11 +16,13 @@ class PublicKeyAccessesController < ApplicationController
 
   def destroy
     server = Server.find(params.expect(:server_id))
-    account = AuthorizedKeysAccount.login(server)
+    account = AuthorizedKeysAccount.for(server, params[:account])
+    return head(:unprocessable_content) unless account
+
     result = Keys::Revocation.call(server, @public_key.authorized_key.key, account: account, key_name: @public_key.authorized_key.comment || @public_key.name, public_key: @public_key)
 
     if result.success?
-      respond_with_accesses(:notice, t("public_key_accesses_controller.removed", public_key_name: @public_key.name, server_name: server.name))
+      respond_with_accesses(:notice, t("public_key_accesses_controller.removed", public_key_name: @public_key.name, server_name: account.login? ? server.name : "#{server.name} (#{account.unix_user})"))
     else
       respond_with_accesses(:alert, t("public_key_accesses_controller.remove_failed", error_title: result.error_title, error_details: result.error_details))
     end

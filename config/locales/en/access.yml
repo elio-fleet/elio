@@ -9,6 +9,7 @@ en:
       access: Access
       servers_where_key_installed: Servers where this key is installed, from the last key reading.
       known_access_add_below: No known access. Add it below, or run a scan if keys were added by hand.
+      seen_html: Seen %{time}
     bulk_form:
       duration: Duration
       permanent: Permanent
@@ -57,6 +58,12 @@ en:
       edit: Edit
       ssh_key: SSH key
       public_key: Public key
+    outside:
+      title: Outside the keyring
+      intro: 'The keys found on the servers that match no key of the keyring: add the ones you know, remove the others from their servers.'
+      'on': 'On:'
+      none: Every key found on the servers is in the keyring.
+      not_scanned: 'No key read yet: scan the keys of the fleet (Fleet → Actions).'
   server_authorized_keys:
     frame:
       reading_authorized_keys: Reading the authorized keys…
@@ -85,6 +92,15 @@ en:
         one: If you recognize it, add it with the “Add to the keyring” button; otherwise delete it.
         other: If you recognize them, add them with the “Add to the keyring” button; otherwise delete them.
       details_of: Details of the key %{name}
+      accounts:
+        one: "%{count} account"
+        other: "%{count} accounts"
+      root_needed: 'Only the keys of %{login} are shown: Elio needs root (or sudo without a password) to read the other accounts.'
+    account:
+      login: Elio's login
+      unreadable: Its authorized_keys file could not be read, even as root.
+      no_key: No key in this file.
+      key_will_be_removed_from: The key “%{nom}” will be removed from the %{account} account of “%{server_name}”. It will no longer be able to log in to that account.
   servers:
     add_key_dialog:
       keyring: From the keyring
@@ -130,6 +146,8 @@ en:
       invalid_details: The key to delete is not a valid public key.
       forbidden_title: Deletion forbidden
       forbidden_details: 'Elio''s key cannot be deleted: the application would lose access to the server.'
+      root_needed_title: Root needed
+      root_needed_details: Elio needs root (or sudo without a password) to change the keys of the %{account} account.
     bulk_access:
       added_for: added for %{label_for}
       added: added
@@ -181,6 +199,7 @@ en:
     deleted: The key “%{name}” has been deleted from %{target}.
     absent: The key “%{name}” was no longer present on %{target}.
     failed: 'Cannot delete the key “%{name}” from %{target}: %{error_title} — %{error_details}'
+    target_account: "“%{server_name}” (%{account} account)"
   ssh_keys_controller:
     regenerated: New SSH key generated. Replace the old public key on your servers.
     generated: SSH key generated. Add the public key on your servers.

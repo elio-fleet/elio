@@ -1,16 +1,29 @@
-# The Unix account whose authorized_keys file Elio manages on a server: always
-# the SSH user Elio logs in as (`server.username`).
+# A Unix account of a server whose authorized_keys Elio reads: the SSH user
+# Elio logs in as (`server.username`), where keys are added, or another
+# account read through root (listed and removed only).
 class AuthorizedKeysAccount
+  # Unix user names Elio accepts from a request (as useradd does).
+  NAME_FORMAT = /\A[a-z_][a-z0-9_.-]{0,31}\$?\z/i
+
   attr_reader :server, :unix_user
 
   def self.login(server) = new(server)
 
-  def initialize(server)
+  def self.for(server, unix_user)
+    unix_user = unix_user.to_s
+    return login(server) if unix_user.blank? || unix_user == server.username
+
+    new(server, unix_user) if unix_user.match?(NAME_FORMAT)
+  end
+
+  def initialize(server, unix_user = server.username)
     @server = server
-    @unix_user = server.username
+    @unix_user = unix_user
   end
 
   def name = unix_user
+
+  def login? = unix_user == server.username
 
   def path = "~#{unix_user}/.ssh/authorized_keys"
 

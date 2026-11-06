@@ -53,4 +53,42 @@ class PublicKeysIndexTest < ActionDispatch::IntegrationTest
     get public_keys_path(kind: "nope")
     assert_select "#keyring tbody tr", 2
   end
+
+  test "outside the keyring: the keys of the servers in no keyring key, grouped, with where they are" do
+    bob = Ssh::KeyGenerator.generate(comment: "bob@laptop").public_key
+    unnamed = Ssh::KeyGenerator.generate(comment: "").public_key.strip
+    AccountSnapshot.create!(server: servers(:web), unix_user: "deploy", content: [ ssh_keys(:main).public_key, bob, public_keys(:alice).content ].join("\n"), read_at: Time.current)
+    AccountSnapshot.create!(server: servers(:web), unix_user: "root", content: bob, read_at: Time.current)
+    AccountSnapshot.create!(server: servers(:db), unix_user: "admin", content: [ bob, unnamed ].join("\n"), read_at: Time.current)
+    sign_in users(:operator)
+
+    get public_keys_path
+    assert_select "nav.key-kind-filter a[data-kind=outside][href=?]", public_keys_path(kind: "outside"), text: /Hors trousseau\s*2/
+
+    get public_keys_path(kind: "outside")
+    assert_response :success
+    assert_select "nav.key-kind-filter a[data-kind=outside][aria-current=page]"
+    assert_select "li.outside-key", 2
+    assert_select "li.outside-key:first-child" do
+      assert_select ".key-name", "bob@laptop"
+      assert_select ".key-places a", 3
+      assert_select ".key-places a[href=?]", server_path(servers(:web), tab: "keys"), text: "Web (root)"
+      assert_select "a.add-to-keyring[href*='return_to=%2Fkeys%3Fkind%3Doutside']"
+    end
+    assert_select "li.outside-key:last-child .key-name", "Sans nom"
+
+    sign_in users(:viewer)
+    get public_keys_path(kind: "outside")
+    assert_select "a.add-to-keyring", 0
+  end
+
+  test "outside the keyring, empty or never scanned" do
+    sign_in users(:viewer)
+    get public_keys_path(kind: "outside")
+    assert_select ".outside-none", /scannez les clés/
+
+    AccountSnapshot.create!(server: servers(:web), unix_user: "deploy", content: public_keys(:alice).content, read_at: Time.current)
+    get public_keys_path(kind: "outside")
+    assert_select ".outside-none", /Toutes les clés/
+  end
 end
