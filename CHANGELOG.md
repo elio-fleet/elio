@@ -4,6 +4,18 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.1.0-beta.3.1] — 2026-11-06
+
+A fix for upgrades to 0.1.0-beta.3.
+
+### Upgrading
+
+Change the image tag to `0.1.0-beta.3.1` (or pull `beta`) and restart: a migration converts the health reasons of every server, from the inventory already stored (no SSH). Nothing else to do, from 0.1.0-beta.2 or 0.1.0-beta.3.
+
+### Fixed
+
+- Upgrading from 0.1.0-beta.2: the health reasons of the servers were not converted to the new format (the migration ran before the columns it needed, and failed for every server), so they stayed in French until the next health check. They are now converted by the last migration.
+
 ## [0.1.0-beta.3] — 2026-11-06
 
 ### Upgrading from 0.1.0-beta.2
@@ -114,7 +126,8 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3.1...HEAD
+[0.1.0-beta.3.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3...v0.1.0-beta.3.1
 [0.1.0-beta.3]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.2...v0.1.0-beta.3
 [0.1.0-beta.2]: https://github.com/elio-fleet/elio/releases/tag/v0.1.0-beta.2
 [0.1.0-beta.1]: https://github.com/elio-fleet/elio/releases/tag/v0.1.0-beta.1
