@@ -4,6 +4,10 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Fixed
+
+- Upgrading from 0.1.0-beta.2: the health reasons of the servers were not converted to the new format (the migration ran before the columns it needed, and failed for every server), so they stayed in French until the next health check. They are now converted by the last migration.
+
 ## [0.1.0-beta.3] — 2026-11-06
 
 ### Upgrading from 0.1.0-beta.2
