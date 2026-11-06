@@ -19,6 +19,7 @@ class ServersController < ApplicationController
     servers = (@group ? Server.in_group(@group) : Server.all).order(:name).includes(:server_groups, :inventory_snapshots)
     servers = servers.where(os_name: @os) if @os
     @q = params[:q].to_s.strip.first(100)
+    servers = servers.includes(:dns_records) if @q.present?
     servers = servers.to_a if @state || @q.present?
     servers = servers.select { |server| server.health_state == @state } if @state
     servers = servers.select { |server| server.matches_search?(@q) } if @q.present?
