@@ -197,6 +197,47 @@ en:
     sync_job:
       turned_off: 'Extension turned off: nothing to do'
       internal_error: Internal error (%{class})
+    gandi:
+      description: The A, AAAA and CNAME records of your domains served by Gandi LiveDNS, attached to the servers they point to, and your domains with their expiry date (optional alert).
+      api_token: Personal access token
+      api_token_hint: A token with read rights only (see below). Gandi tokens expire, renew it in time.
+      organization: Organization (sharing ID)
+      organization_hint: "Optional: the ID of the Gandi organization that owns the domains. Empty: the domains of your personal organization only."
+      domains: Domains to read
+      domains_hint: "Separated by commas. Empty: every domain the token can see."
+      alert_expiring: Alert when a domain expires soon
+      expiring_days: Expiry threshold (days)
+      expiring_ignore_auto_renew: Ignore the domains renewed automatically
+      connected:
+        one: "Connected to Gandi: %{count} domain readable, %{livedns} on LiveDNS"
+        other: "Connected to Gandi: %{count} domains readable, %{livedns} on LiveDNS"
+      read_only_reminder: ". Elio only reads: give the token read rights only."
+      unexpected: "Unexpected answer from Gandi: is the token valid, and does it have the read rights?"
+      sync:
+        summary: "%{domains}, %{records}, %{unattached}"
+        domains:
+          one: "%{count} LiveDNS domain"
+          other: "%{count} LiveDNS domains"
+        records:
+          one: "%{count} record"
+          other: "%{count} records"
+        unattached:
+          one: "%{count} attached to no server"
+          other: "%{count} attached to no server"
+      help:
+        title: Create a read-only personal access token in Gandi
+        step1_html: "In the <strong>Gandi Admin</strong> (admin.gandi.net), open <strong>Organizations</strong>, then <strong>Personal access tokens</strong> (or your account settings), and create a token."
+        step2_html: "Choose the <strong>organization</strong> that owns the domains, and a short <strong>expiry</strong> that you will renew."
+        step3_html: "Give it <strong>only the rights to see the domains and their DNS records (LiveDNS)</strong>: no right to change, renew, transfer or buy anything."
+        step4_html: "Paste the token here; if the domains belong to another organization than your personal one, paste its ID in <strong>Organization</strong>."
+        reads_html: "Elio only reads, with the token in an <code>Authorization: Bearer</code> header: <code>GET /v5/livedns/domains</code>, <code>GET /v5/livedns/domains/{domain}/records</code> and <code>GET /v5/domain/domains</code>. Not tested against a real Gandi account yet."
+        domains: Domains
+        domains_count:
+          one: "%{count} domain at the last sync"
+          other: "%{count} domains at the last sync"
+        domain: Domain
+        autorenew: Auto renewal
+        other_dns: other DNS
     technitium:
       description: The A, AAAA and CNAME records of your Technitium DNS Server zones, attached to the servers they point to; alerts for records pointing outside the fleet and servers without a DNS name.
       url: Address of the web console

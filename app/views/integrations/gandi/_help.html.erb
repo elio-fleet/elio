@@ -1,0 +1,39 @@
+<%# How to create the Gandi token, then the domains read at the last sync (expiry date, auto renewal, LiveDNS). %>
+<div class="integration-help mt-4 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-2">
+  <p class="font-medium text-ink"><%= t("integrations.gandi.help.title") %></p>
+  <ol class="mt-1 list-decimal space-y-0.5 pl-5">
+    <li><%= t("integrations.gandi.help.step1_html") %></li>
+    <li><%= t("integrations.gandi.help.step2_html") %></li>
+    <li><%= t("integrations.gandi.help.step3_html") %></li>
+    <li><%= t("integrations.gandi.help.step4_html") %></li>
+  </ol>
+  <p class="mt-2 text-xs text-ink-3"><%= t("integrations.gandi.help.reads_html") %></p>
+</div>
+
+<% domains = Integrations::Gandi.domains(integration) %>
+<% if domains.any? %>
+  <section id="gandi-domains" class="card mt-4">
+    <div class="card-header">
+      <h3 class="font-semibold"><%= t("integrations.gandi.help.domains") %></h3>
+      <span class="text-xs text-ink-3"><%= t("integrations.gandi.help.domains_count", count: domains.size) %></span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="table-dense">
+        <thead><tr><th class="pl-4"><%= t("integrations.gandi.help.domain") %></th><th><%= t("words.expiry") %></th><th><%= t("integrations.gandi.help.autorenew") %></th><th class="pr-4">LiveDNS</th></tr></thead>
+        <tbody>
+          <% expiring = Integrations::Gandi.expiring_domains(integration).map { |domain| domain["fqdn"] } %>
+          <% domains.sort_by { |domain| domain["expires_at"].to_s }.each do |domain| %>
+            <tr class="gandi-domain" data-fqdn="<%= domain["fqdn"] %>">
+              <td class="pl-4 font-mono text-xs"><%= domain["fqdn"] %></td>
+              <td class="text-xs <%= expiring.include?(domain["fqdn"]) ? "font-medium text-warn-ink" : "text-ink-2" %>">
+                <%= domain["expires_at"] ? l(Time.zone.parse(domain["expires_at"]).to_date, format: :long) : "—" %>
+              </td>
+              <td class="text-xs"><%= domain["autorenew"] ? t("words.yes") : t("words.no") %></td>
+              <td class="pr-4 text-xs"><%= domain["livedns"] ? t("words.yes") : t("integrations.gandi.help.other_dns") %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+  </section>
+<% end %>
