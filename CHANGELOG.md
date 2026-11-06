@@ -7,6 +7,7 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 ### Added
 
 - **Firewall tab** on the server page: the server's own firewall (ufw, nftables or iptables, with its rules), the OVHcloud network firewall of its OVH IPs (rules, anti-DDoS), the public ports with the verdict of each firewall side by side, the ufw rules to copy and the prompt for an AI. The Ports and OVH tabs link to it.
+- **SSH open only to some addresses** in the suggested firewall rules: a named list of sources (*Settings → General → Suggested firewall rules*, e.g. "Elio → 203.0.113.5", "Coolify → …"), and each group of servers can choose some of them. The ufw rules then allow SSH only from them (with a reminder that Elio's own address must be among them), the firewall prompt asks to restrict SSH to them, and the Firewall tab says where SSH is open from. Without any source, nothing changes.
 - **Instructions for the prompts** (*Settings → General → Prompts for an AI*): your own text, added at the end of the prompt, e.g. "For the SSH port, always put the rules last". The firewall prompt now covers the server's firewall, and the OVHcloud one when the extension is on.
 
 ## [0.1.0-beta.3.1] — 2026-11-06

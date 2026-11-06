@@ -236,6 +236,19 @@ en:
       memory_critical: 'Memory: critical (%)'
       load_warning_processors: 'Load: warning (× processors)'
       save_thresholds: Save the thresholds
+      firewall_settings: Suggested firewall rules
+      firewall_settings_hint: "What Elio proposes in the Firewall tab of the servers. It never applies anything."
+      ssh_sources: Sources allowed to reach SSH
+      ssh_sources_hint: "With at least one source, the suggested rules open SSH only to them. Each group of servers can choose some of them in its settings; servers whose groups chose none get the whole list."
+      ssh_sources_elio: "Add Elio's own address (the public address it connects from), otherwise applying the rules cuts its SSH access."
+      no_ssh_source: "No source yet: the suggested rules open SSH to everyone."
+      ssh_source_name: Name
+      ssh_source_cidr: Address or network
+      add_ssh_source: Add
+      move_up: Move up
+      move_down: Move down
+      delete_source_label: Delete
+      delete_ssh_source: "Delete the source %{name}? The groups that chose it no longer do."
       prompt_instructions: Prompts for an AI
       prompt_instructions_hint: Your instructions, added at the end of each prompt, on every server.
       prompt_labels:
@@ -282,6 +295,9 @@ en:
         in_progress:
           one: 'In progress: %{done}/%{count} server'
           other: 'In progress: %{done}/%{count} servers'
+  ssh_sources_controller:
+    created: SSH source %{name} added.
+    deleted: SSH source %{name} deleted.
   prompt_instructions_controller:
     saved: Instructions of the prompts saved.
   health_thresholds_controller:

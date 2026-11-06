@@ -23,6 +23,13 @@ class ServerGroup < ApplicationRecord
   validates :color, inclusion: { in: COLORS.keys }
   validate :expected_ports_must_be_valid
 
+  # The SSH sources chosen for the group (none = the whole list, SshSource).
+  def ssh_sources = SshSource.where(id: ssh_source_ids).ordered
+
+  def ssh_source_ids=(ids)
+    super(Array(ids).compact_blank.map(&:to_i).uniq)
+  end
+
   def badge_classes = COLORS.dig(color, 0)
   def dot_classes = COLORS.dig(color, 1)
 

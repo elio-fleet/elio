@@ -77,6 +77,17 @@ class Server < ApplicationRecord
     hostname if hostname.present? && hostname.split(".").first.casecmp?(name.parameterize) == false && !hostname.casecmp?(name)
   end
 
+  # The addresses allowed to reach its SSH port (SshSource): those chosen by
+  # its groups (a group without a choice does not restrict), the whole list
+  # when no group chose. Empty list = SSH open to everyone.
+  def ssh_sources
+    chosen = server_groups.flat_map(&:ssh_source_ids).uniq
+    chosen.any? ? SshSource.where(id: chosen).ordered.to_a : SshSource.ordered.to_a
+  end
+
+  # The groups whose choice restricts its SSH sources (for the explanation).
+  def ssh_source_groups = server_groups.select { |group| group.ssh_source_ids.any? }
+
   # Every address of the server: collected by the network inventory, added by
   # hand, and the SSH host when it is an IP. Public addresses first.
   def addresses

@@ -236,6 +236,19 @@ fr:
       memory_critical: 'Mémoire : critique (%)'
       load_warning_processors: 'Charge : attention (× processeurs)'
       save_thresholds: Enregistrer les seuils
+      firewall_settings: Règles de firewall proposées
+      firewall_settings_hint: "Ce qu'Elio propose dans l'onglet Firewall des serveurs. Il n'applique jamais rien."
+      ssh_sources: Sources autorisées pour le SSH
+      ssh_sources_hint: "Avec au moins une source, les règles proposées n'ouvrent le SSH qu'à elles. Chaque groupe de serveurs peut en choisir dans ses réglages ; les serveurs dont les groupes n'en ont choisi aucune ont toute la liste."
+      ssh_sources_elio: "Ajoutez l'adresse d'Elio (l'adresse publique depuis laquelle il se connecte), sinon appliquer les règles coupe son accès SSH."
+      no_ssh_source: "Aucune source pour l'instant : les règles proposées ouvrent le SSH à tous."
+      ssh_source_name: Nom
+      ssh_source_cidr: Adresse ou réseau
+      add_ssh_source: Ajouter
+      move_up: Monter
+      move_down: Descendre
+      delete_source_label: Supprimer
+      delete_ssh_source: "Supprimer la source %{name} ? Les groupes qui l'avaient choisie ne l'ont plus."
       prompt_instructions: Prompts pour une IA
       prompt_instructions_hint: Vos consignes, ajoutées à la fin de chaque prompt, sur tous les serveurs.
       prompt_labels:
@@ -282,6 +295,9 @@ fr:
         in_progress:
           one: 'En cours : %{done}/%{count} serveur'
           other: 'En cours : %{done}/%{count} serveurs'
+  ssh_sources_controller:
+    created: Source SSH %{name} ajoutée.
+    deleted: Source SSH %{name} supprimée.
   prompt_instructions_controller:
     saved: Consignes des prompts enregistrées.
   health_thresholds_controller:
