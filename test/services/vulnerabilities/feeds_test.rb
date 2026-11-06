@@ -47,9 +47,11 @@ class Vulnerabilities::FeedsTest < ActiveSupport::TestCase
   end
 
   test "Ubuntu OSV: a broken archive is refused" do
-    path = Rails.root.join("tmp", "test", "broken.zip").to_s
-    File.write(path, "PK not a zip")
-    assert_raises(Vulnerabilities::Error) { Vulnerabilities::UbuntuOsv.each_row(path, releases: %w[24.04]) { } }
+    Dir.mktmpdir do |dir| # its own folder: tmp/test may not exist yet, depending on the order of the tests
+      path = File.join(dir, "broken.zip")
+      File.write(path, "PK not a zip")
+      assert_raises(Vulnerabilities::Error) { Vulnerabilities::UbuntuOsv.each_row(path, releases: %w[24.04]) { } }
+    end
   end
 
   test "the kind of an imported file is recognized from its content" do
