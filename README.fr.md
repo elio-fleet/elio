@@ -141,17 +141,25 @@ Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque
 
 - **Réglage** : le point d'accès de l'API (EU, CA, US), une Application Key, un Application Secret et une Consumer Key **limitée aux requêtes GET**. *Droits à donner à la clé API* liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie. *Tester la connexion* signale les droits manquants, et **prévient si la clé permet d'écrire** — refaites-en une dans ce cas.
 - Chaque produit est une case à cocher : IP et reverse DNS, firewall réseau, anti-DDoS, zones DNS (toutes ou certaines), serveurs dédiés, VPS, instances Public Cloud (tous les projets ou certains).
-- Un onglet **OVH** sur chaque serveur : le service OVH (offre, datacenter, expiration), ses IP et reverse, les règles du firewall réseau et **si elles laissent passer chaque port public**, l'anti-DDoS, les enregistrements DNS qui pointent vers lui. Une page **OVHcloud** : services, IP, enregistrements DNS, ressources rattachées à aucun serveur.
-- Alertes au choix : service bientôt expiré (renouvellement automatique pris en compte), firewall réseau désactivé, reverse DNS qui ne correspond pas, serveur sans enregistrement DNS, enregistrement DNS vers une IP hors du parc, service OVH non suivi par Elio.
+- Un onglet **OVH** sur chaque serveur : le service OVH (offre, datacenter, expiration), ses IP et reverse, les règles du firewall réseau et **si elles laissent passer chaque port public**, l'anti-DDoS. Une page **OVHcloud** : services, IP, ressources rattachées à aucun serveur. Ses enregistrements DNS vont dans le [DNS du parc](#dns-du-parc).
+- Alertes au choix : service bientôt expiré (renouvellement automatique pris en compte), firewall réseau désactivé, reverse DNS qui ne correspond pas, service OVH non suivi par Elio.
 
 Le client OVH d'Elio ne connaît que la méthode GET : il ne peut pas écrire, quels que soient les droits de la clé.
+
+### DNS du parc
+
+Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS) alimentent **un seul DNS du parc** :
+- chaque enregistrement A, AAAA et CNAME est rattaché à son serveur de la même façon, quelle que soit sa source : un rattachement manuel **par nom** (valable pour toutes les sources), l'IP d'un enregistrement A / AAAA, ou un CNAME vers un nom de n'importe quelle source ;
+- un seul onglet **DNS** sur chaque serveur et une seule page **DNS** (filtres par source, zone, *hors du parc*, *non rattachés*, *diffère selon la source*), avec la source de chaque enregistrement ;
+- un nom dont les enregistrements diffèrent selon la source (une IP publique chez OVH, une IP privée dans Technitium) est signalé *diffère selon la source* ;
+- les **alertes** se règlent une fois, dans *Paramètres → Extensions → DNS* : enregistrement vers une IP hors du parc, serveur sans nom DNS (seulement si aucune source n'en a ; des groupes peuvent être ignorés), et en option un nom qui diffère selon la source. Rien n'est signalé pour les premiers enregistrements d'une source qu'on vient d'activer ;
+- la recherche du Parc, ⌘K, les sondes Uptime Kuma et les prompts utilisent ces noms.
 
 ### Technitium DNS
 
 - **Réglage** : l'adresse de la console web (port 5380 ou 53443) et le jeton d'API d'un utilisateur qui peut seulement **voir** les zones. Technitium a aussi des **droits par zone** : donnez *View* au groupe de cet utilisateur sur chaque zone à lire, sinon le jeton n'en voit aucune. *Tester la connexion* donne la version et les zones lisibles, et prévient si le jeton permet de les modifier.
 - Toutes les heures, Elio lit les enregistrements **A, AAAA et CNAME** des zones (toutes, ou celles que vous listez) et rattache chacun à son serveur : par l'IP d'un enregistrement A / AAAA, et pour un CNAME par l'enregistrement ou l'hôte vers lequel il pointe. Un nom peut être rattaché à la main, et le rattachement est gardé.
-- Un onglet **DNS** sur chaque serveur (les noms qui pointent vers lui) et une page **DNS** : tous les enregistrements, filtres *hors du parc* et *non rattachés*. Les sondes Uptime Kuma se rattachent aussi par ces noms, et le prompt qui propose des sondes les liste.
-- Alertes au choix : enregistrement vers une IP hors du parc, serveur sans nom DNS.
+- Ses enregistrements vont dans le [DNS du parc](#dns-du-parc).
 - Le jeton passe dans un en-tête `Authorization: Bearer` (jamais dans l'URL). Testé avec Technitium DNS Server 15.6.
 
 ## Sécurité
