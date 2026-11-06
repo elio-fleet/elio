@@ -152,6 +152,23 @@ class ReadmeScreenshots < ApplicationSystemTestCase
       { zone: "lan.example.internal", name: "backup.lan.example.internal", record_type: "A", value: "198.51.100.40" },
       { zone: "lan.example.internal", name: "old-vpn.lan.example.internal", record_type: "A", value: "192.0.2.44" }
     ])
+    # Gandi (public domain) as a third DNS source, with its domains.
+    Integration.find_or_initialize_by(kind: "gandi").update!(enabled: true, secrets: { "api_token" => "pat" }, last_synced_at: 12.minutes.ago,
+                                                             settings: { "alert_expiring" => true },
+                                                             state: { "domains" => [ { "fqdn" => "example.org", "expires_at" => 18.days.from_now.iso8601, "autorenew" => false, "livedns" => true },
+                                                                                     { "fqdn" => "shop.example", "expires_at" => 240.days.from_now.iso8601, "autorenew" => true, "livedns" => true } ] })
+    Dns::Store.replace("gandi", [
+      { zone: "example.org", name: "example.org", record_type: "A", value: "198.51.100.10" },
+      { zone: "example.org", name: "www.example.org", record_type: "CNAME", value: "example.org" },
+      { zone: "shop.example", name: "shop.example", record_type: "A", value: "198.51.100.20" }
+    ])
+    # Firewall: SSH only from Elio and the office (the Production group), an IPv6 not covered by the OVH firewall.
+    elio_source = SshSource.create!(name: "Elio", cidr: "198.51.100.250", position: 0)
+    SshSource.create!(name: "Office", cidr: "192.0.2.0/24", position: 1)
+    server_groups(:production).update!(ssh_source_ids: [ elio_source.id ])
+    db.update!(extra_addresses_text: "2001:db8:20::20")
+    AppSetting.current.update!(prompt_instructions: { "firewall" => "For the SSH port, always put the rules last." })
+
     db.notes.create!(user: users(:operator), created_at: 3.days.ago, updated_at: 3.days.ago, body: <<~MD)
       ## Role
       Main **PostgreSQL 16** of the shop, replicated to `backup` every night.
@@ -221,6 +238,9 @@ class ReadmeScreenshots < ApplicationSystemTestCase
       shoot.("docker", server_path(db, tab: "docker"))
       shoot.("scheduled-tasks", server_path(db, tab: "schedules"))
       shoot.("ports", server_path(db, tab: "ports"))
+      shoot.("firewall", server_path(db, tab: "firewall"))
+      shoot.("firewall-settings", settings_firewall_path)
+      shoot.("gandi", edit_settings_integration_path("gandi"))
       shoot.("ssh-keys", server_path(backup, tab: "keys"))
       shoot.("packages", packages_path(q: "ssl"))
       shoot.("score-providers", settings_vulnerabilities_path) { find("#score-providers").scroll_to(:top) }

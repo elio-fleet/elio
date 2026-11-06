@@ -47,6 +47,9 @@ class SshSourceTest < ActiveSupport::TestCase
     server_groups(:staging).update!(ssh_source_ids: [ elio.id ])
     assert_equal [ elio, office ], server.reload.ssh_sources
 
+    server_groups(:production).update!(ssh_source_ids: [ 999_999 ])
+    assert_empty server_groups(:production).reload.ssh_source_ids, "an unknown source is not kept: it would open SSH to the whole list"
+
     SshSource.delete_all
     assert_empty servers(:backup).ssh_sources
   end

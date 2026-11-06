@@ -16,6 +16,7 @@ fr:
       users: Utilisateurs
       vulnerabilities: Vulnérabilités
       docker: Docker
+      firewall: Firewall
       extensions: Extensions
     users:
       index:

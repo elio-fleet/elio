@@ -214,6 +214,7 @@ fr:
       read_only_reminder: ". Elio ne fait que lire : ne donnez au jeton que des droits de lecture."
       unexpected: "Réponse inattendue de Gandi : le jeton est-il valide, avec les droits de lecture ?"
       sync:
+        no_domains: " (la liste des domaines n'a pas pu être lue : %{message})"
         summary: "%{domains}, %{records}, %{unattached}"
         domains:
           one: "%{count} domaine LiveDNS"
@@ -274,6 +275,7 @@ fr:
         step4_html: Connectez-vous avec cet utilisateur, puis <strong>Create API Token</strong> (menu de l'utilisateur, en haut à droite), et collez-le ici.
         reads_html: 'Elio ne fait que lire : <code>/api/user/session/get</code>, <code>/api/zones/list</code> et <code>/api/zones/records/get</code>, avec le jeton dans un en-tête <code>Authorization: Bearer</code> (testé avec Technitium DNS Server 15.6).'
     sections:
+      connection: Connexion
       alerts: Alertes
       resources: Ressources
   integration:

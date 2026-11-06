@@ -24,6 +24,12 @@ class PromptInstructionsControllerTest < ActionDispatch::IntegrationTest
     assert_nil AppSetting.current.prompt_instruction(:monitors)
   end
 
+  test "a malformed form is not an error" do
+    patch settings_prompt_instructions_path, params: { prompt_instructions: "firewall" }
+    assert_redirected_to settings_path(anchor: "prompt-instructions")
+    assert_equal({}, AppSetting.current.reload.prompt_instructions)
+  end
+
   test "refuses instructions that are too long" do
     patch settings_prompt_instructions_path, params: { prompt_instructions: { firewall: "a" * (AppSetting::PROMPT_INSTRUCTIONS_MAX + 1) } }
     assert_redirected_to settings_path(anchor: "prompt-instructions")

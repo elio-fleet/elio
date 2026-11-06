@@ -6,19 +6,19 @@ class SshSourcesControllerTest < ActionDispatch::IntegrationTest
 
   setup { sign_in users(:one) }
 
-  test "the general settings list the sources, with the warning about Elio's address" do
-    get settings_path
+  test "the Firewall tab of the settings lists the sources, with the warning about Elio's address" do
+    get settings_firewall_path
     assert_select "#firewall-settings .ssh-sources-warning", text: /adresse d'Elio/
     assert_select "#firewall-settings", text: /Aucune source/
 
     SshSource.create!(name: "Elio", cidr: "203.0.113.5")
-    get settings_path
+    get settings_firewall_path
     assert_select "#firewall-settings li.ssh-source[data-name=Elio]", text: /203\.0\.113\.5/
   end
 
   test "adds a source, refuses an invalid one" do
     post settings_ssh_sources_path, params: { ssh_source: { name: "Coolify", cidr: "203.0.113.6" } }
-    assert_redirected_to settings_path(anchor: "firewall-settings")
+    assert_redirected_to settings_firewall_path
     assert_equal "Source SSH Coolify ajoutée.", flash[:notice]
     assert_equal "203.0.113.6", SshSource.sole.cidr
 
@@ -37,7 +37,7 @@ class SshSourcesControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[Office Elio], SshSource.ordered.pluck(:name)
 
     delete settings_ssh_source_path(elio)
-    assert_redirected_to settings_path(anchor: "firewall-settings")
+    assert_redirected_to settings_firewall_path
     assert_equal [ office.id ], server_groups(:production).reload.ssh_source_ids
   end
 

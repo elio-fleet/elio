@@ -97,6 +97,15 @@ class Integrations::GandiTest < ActiveSupport::TestCase
     assert_match "Réponse inattendue de Gandi", assert_raises(Integrations::Error) { sync }.message
   end
 
+  test "without the right to list the domains, the DNS is still synced and the previous list kept" do
+    sync
+    fake_gandi({ "/v5/domain/domains" => ->(_) { raise Integrations::Error, "Gandi: accès refusé (403)" } })
+    summary = sync
+    assert_match "la liste des domaines n'a pas pu être lue : Gandi: accès refusé (403)", summary
+    assert_equal 8, DnsRecord.of_source("gandi").count
+    assert_equal 3, Integrations::Gandi.domains(@integration.reload).size
+  end
+
   test "a domain name that is not one is never put in a URL" do
     fake_gandi({ "/v5/livedns/domains" => [ { "fqdn" => "../domain/domains" } ].to_json })
     assert_raises(Integrations::Error) { sync }

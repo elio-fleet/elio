@@ -6,8 +6,12 @@ class FirewallOptionsControllerTest < ActionDispatch::IntegrationTest
 
   setup { sign_in users(:one) }
 
-  test "the options are in the firewall card of the general settings" do
+  test "the options are in the Firewall tab of the settings, not in General" do
     get settings_path
+    assert_select "#firewall-settings", 0
+    assert_select "nav.settings-nav a[href=?]", settings_firewall_path, text: "Firewall"
+    get settings_firewall_path
+    assert_select "nav.settings-nav a[aria-current=page][href=?]", settings_firewall_path
     assert_select "#firewall-settings form.firewall-options" do
       assert_select "input[type=checkbox][name='app_setting[ufw_block_ipv6]']:not([checked])"
       assert_select "input[type=checkbox][name='app_setting[ovh_ipv6_health]']:not([checked])"
@@ -19,7 +23,7 @@ class FirewallOptionsControllerTest < ActionDispatch::IntegrationTest
     stub_method(Server, :find_each, ->(&block) { refreshed << :all }) do
       patch settings_firewall_options_path, params: { app_setting: { ufw_block_ipv6: "1", ovh_ipv6_health: "0" } }
     end
-    assert_redirected_to settings_path(anchor: "firewall-settings")
+    assert_redirected_to settings_firewall_path
     assert AppSetting.current.ufw_block_ipv6
     assert_empty refreshed
 

@@ -214,6 +214,7 @@ en:
       read_only_reminder: ". Elio only reads: give the token read rights only."
       unexpected: "Unexpected answer from Gandi: is the token valid, and does it have the read rights?"
       sync:
+        no_domains: " (the list of domains could not be read: %{message})"
         summary: "%{domains}, %{records}, %{unattached}"
         domains:
           one: "%{count} LiveDNS domain"
@@ -274,6 +275,7 @@ en:
         step4_html: Log in as that user, then <strong>Create API Token</strong> (user menu, top right), and paste it here.
         reads_html: 'Elio only reads: <code>/api/user/session/get</code>, <code>/api/zones/list</code> and <code>/api/zones/records/get</code>, with the token in an <code>Authorization: Bearer</code> header (tested with Technitium DNS Server 15.6).'
     sections:
+      connection: Connection
       alerts: Alerts
       resources: Resources
   integration:
