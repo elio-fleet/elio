@@ -101,7 +101,33 @@ fr:
     systemd_unit:
       failed: en échec
       boot: au démarrage
+    firewall_card:
+      elio_never_changes: Lu dans le dernier inventaire et les extensions. Elio ne modifie jamais un firewall.
+      server_firewall: Firewall du serveur
+      needs_root: Le firewall ne se lit qu'en root (ou avec sudo sans mot de passe).
+      allow: autorise
+      from: depuis %{source}
+      from_anywhere: depuis partout
+      no_allow_rule: Aucune règle d'autorisation.
+      public_ports: Ports publics et firewalls
+      all_ports: Tous les ports
+      ovh_ip: OVH %{ip}
+      no_public_port: Aucun port public.
+      ovh_firewall: Firewall réseau OVHcloud
+      ovh_tab: Onglet OVH
+      ovh_not_read: Le firewall de %{block} n'a pas été lu (droit manquant sur la clé API OVH).
+      no_ovh_rule: Aucune règle.
+      ipv6_column: IPv6
+      ipv6_column_hint: "Le firewall réseau OVHcloud ne filtre que l'IPv4 : en IPv6, seul le firewall du serveur s'applique."
+      not_covered_ipv6: Non couvert (IPv6)
+      ipv6_warning: "Joignables en IPv6 sans le firewall réseau OVH (il ne filtre que l'IPv4) : %{ports}, sur %{addresses}. Seul le firewall du serveur les protège."
+      ssh_limited: 'SSH limité à : %{names}'
+      ssh_limited_by: "(choix de %{groups})"
+      ssh_open: SSH ouvert à tous dans les règles proposées.
+      ssh_sources_settings: Sources
     ports_card:
+      firewall_tab_hint: Le firewall du serveur, celui d'OVH et les règles à copier sont dans l'onglet Firewall.
+      see_firewall_tab: Onglet Firewall →
       private: privé
       ports: Ports
       read_html: relevé %{collected_at}
@@ -264,6 +290,9 @@ fr:
       no_firewall: aucun firewall actif
       unknown_firewall: firewall inconnu (accès root requis)
       header: "# Règles ufw suggérées pour %{server_name} (à relire avant de les appliquer)"
+      ssh_sources: "# SSH seulement depuis : %{names} (Paramètres → Général → Règles de firewall proposées)"
+      ssh_sources_elio: "# L'adresse d'Elio doit en faire partie, sinon Elio perd son accès SSH."
+      ipv6_blocked: "# Tout l'IPv6 entrant est bloqué : les ports ci-dessous ne sont autorisés qu'en IPv4 (depuis 0.0.0.0/0). Gardez IPV6=yes dans /etc/default/ufw."
       docker: "# %{key} publié par Docker (%{container}) : ufw ne le filtre pas. Publiez-le sur 127.0.0.1 ou filtrez-le dans la chaîne DOCKER-USER."
       unexpected: "# %{key} (%{label}) : port inattendu, à fermer ou à ajouter aux ports attendus du groupe"
       private: "# %{key} (%{comment_for}) écoute sur le réseau privé (%{addresses_join}) : à autoriser depuis ce réseau si besoin"

@@ -56,23 +56,38 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.ovh-resource", 1
   end
 
-  test "the server tab: service, IP with reverse, firewall rules and their effect on the public ports, DNS records" do
+  test "the server tab: service, IP with reverse and a link to the Firewall tab, DNS records" do
     record_ports(servers(:web))
     get server_path(servers(:web), tab: "ovh")
 
     assert_select "nav.server-tabs a[data-tab=ovh][aria-current=page]", text: /OVH/
     assert_select ".ovh-service", text: /Serveur dédié · web\.example\.com.*Advance-1.*gra3/m
     assert_select ".ovh-ip[data-block='203.0.113.10/32'] .ovh-reverse", "web.example.com"
-    assert_select ".ovh-firewall-rule", 3
-    assert_select ".ovh-firewall-rule", text: "0 autoriser tcp eq 22 depuis 192.0.2.0/24"
-    assert_select ".ovh-port[data-port='22/tcp'] .ovh-firewall-verdict", "OVH : sources limitées"
-    assert_select ".ovh-port[data-port='9100/tcp'] .ovh-firewall-verdict", "OVH : bloqué"
-    assert_select ".ovh-mitigation", text: /automatique/
+    assert_select ".ovh-firewall-summary", text: /Firewall réseau : 1 IP, 1 actif/
+    assert_select ".ovh-firewall-summary a[href=?]", server_path(servers(:web), tab: "firewall")
+    assert_select ".ovh-firewall-rule", 0
+    assert_select ".server-prompt", 0
     assert_select "tr.ovh-dns-record", 0
     assert_select ".ovh-dns-link a[href=?]", server_path(servers(:web), tab: "dns"), text: "2 noms DNS → onglet DNS"
 
     get server_path(servers(:web), tab: "dns")
     assert_select "#server-dns tr.dns-record[data-source=ovh]", 2
+  end
+
+  test "the Firewall tab: the ports listening in IPv6 are not covered by the OVH firewall" do
+    record_ports(servers(:web))
+    get server_path(servers(:web), tab: "firewall")
+    assert_select "#server-firewall-ports th", text: "IPv6", count: 0
+    assert_select ".ipv6-warning", 0
+
+    servers(:web).update_columns(extra_addresses: [ "2001:db8::10" ])
+    get server_path(servers(:web), tab: "firewall")
+    assert_select "#server-firewall-ports th", text: "IPv6"
+    assert_select "tr.firewall-port[data-port='22/tcp'] .ipv6-not-covered", "Non couvert (IPv6)"
+    assert_select "tr.firewall-port[data-port='9100/tcp'] .ipv6-not-covered"
+    assert_select "tr.firewall-port[data-port='6432/tcp'] .ipv6-not-covered", 0
+    assert_select ".ipv6-warning", text: /22\/tcp, 9100\/tcp, sur 2001:db8::10/
+    assert_select ".server-prompt[data-kind=firewall] textarea", text: /IPv6 publique 2001:db8::10 : non couverte par le firewall réseau OVH/
   end
 
   test "attach a service by hand, back to automatic through a sync" do
@@ -104,10 +119,17 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_not_includes response.body, "app-secret"
   end
 
-  test "the OVH tab offers a prompt for the network firewall rules" do
+  test "the Firewall tab: OVH network firewall rules, their effect on each public port, anti-DDoS, and the prompt" do
     record_ports(servers(:web))
-    get server_path(servers(:web), tab: "ovh")
-    assert_select "#server-ovh .server-prompt[data-kind=ovh_firewall]" do
+    get server_path(servers(:web), tab: "firewall")
+
+    assert_select "#server-ovh-firewall .ovh-firewall-rule", 3
+    assert_select "#server-ovh-firewall .ovh-firewall-rule", text: "0 autoriser tcp eq 22 depuis 192.0.2.0/24"
+    assert_select "#server-ovh-firewall .ovh-mitigation", text: /automatique/
+    assert_select "#server-firewall-ports th", text: "OVH 203.0.113.10"
+    assert_select "tr.firewall-port[data-port='22/tcp'] .ovh-port .ovh-firewall-verdict", "OVH : sources limitées"
+    assert_select "tr.firewall-port[data-port='9100/tcp'] .ovh-port .ovh-firewall-verdict", "OVH : bloqué"
+    assert_select "#server-firewall .server-prompt[data-kind=firewall]" do
       assert_select "button.server-prompt-button", /Prompt pour proposer des règles de firewall/
       assert_select "dialog textarea.server-prompt-text", /hébergé chez OVHcloud.*203\.0\.113\.10.*n°\d+ (permit|deny)/m
     end

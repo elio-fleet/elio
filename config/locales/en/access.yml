@@ -236,6 +236,34 @@ en:
       memory_critical: 'Memory: critical (%)'
       load_warning_processors: 'Load: warning (× processors)'
       save_thresholds: Save the thresholds
+      firewall_settings: Suggested firewall rules
+      firewall_settings_hint: "What Elio proposes in the Firewall tab of the servers. It never applies anything."
+      ufw_block_ipv6: Block all the incoming IPv6
+      ufw_block_ipv6_hint: The suggested ufw rules allow the ports from IPv4 only, so the default policy denies every incoming IPv6 connection (an SSH source in IPv6 stays allowed).
+      ovh_ipv6_health: Warn when ports are reachable in IPv6 without the OVH network firewall
+      ovh_ipv6_health_hint: A health reason (watch) on the servers that have a public IPv6 and OVH IPs, for the public ports listening in IPv6. Off by default.
+      save_firewall_options: Save the options
+      ssh_sources: Sources allowed to reach SSH
+      ssh_sources_hint: "With at least one source, the suggested rules open SSH only to them. Each group of servers can choose some of them in its settings; servers whose groups chose none get the whole list."
+      ssh_sources_elio: "Add Elio's own address (the public address it connects from), otherwise applying the rules cuts its SSH access."
+      no_ssh_source: "No source yet: the suggested rules open SSH to everyone."
+      ssh_source_name: Name
+      ssh_source_cidr: Address or network
+      add_ssh_source: Add
+      move_up: Move up
+      move_down: Move down
+      delete_source_label: Delete
+      delete_ssh_source: "Delete the source %{name}? The groups that chose it no longer do."
+      prompt_instructions: Prompts for an AI
+      prompt_instructions_hint: Your instructions, added at the end of each prompt, on every server.
+      prompt_labels:
+        monitors: Uptime Kuma monitors
+        firewall: Firewall rules
+      prompt_placeholders:
+        monitors: 'e.g. Always use a 60 s interval and a keyword monitor for the web sites.'
+        firewall: 'e.g. For the SSH port, always put the rules last.'
+      prompt_instructions_footer: "Free text, %{count} characters at most. Never put a password or a token here: the prompt is meant to be pasted into an AI."
+      save_prompt_instructions: Save the instructions
       ssh_key_application: SSH key of the application
       generated: Generated on
       public_key: Public key
@@ -272,6 +300,13 @@ en:
         in_progress:
           one: 'In progress: %{done}/%{count} server'
           other: 'In progress: %{done}/%{count} servers'
+  firewall_options_controller:
+    saved: Firewall options saved.
+  ssh_sources_controller:
+    created: SSH source %{name} added.
+    deleted: SSH source %{name} deleted.
+  prompt_instructions_controller:
+    saved: Instructions of the prompts saved.
   health_thresholds_controller:
     saved: Health thresholds saved.
     invalid: 'Invalid thresholds: %{full_messages_to_sentence}'

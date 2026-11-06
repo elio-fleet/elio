@@ -51,7 +51,7 @@ class MenusAndTabsTest < ApplicationSystemTestCase
     visit server_path(servers(:web))
     assert_no_selector ".server-tabs-more summary"
     tabs = all("nav.server-tabs .server-tabs-bar > a[data-tab]").map { |link| link["data-tab"] }
-    assert_equal %w[overview vulnerabilities packages services ports schedules keys notes history], tabs - %w[docker]
+    assert_equal %w[overview vulnerabilities packages services ports firewall schedules keys notes history], tabs - %w[docker]
   end
 
   test "on a phone the tabs are a drop-down list" do

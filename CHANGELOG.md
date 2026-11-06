@@ -4,6 +4,18 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Added
+
+- **Firewall tab** on the server page: the server's own firewall (ufw, nftables or iptables, with its rules), the OVHcloud network firewall of its OVH IPs (rules, anti-DDoS), the public ports with the verdict of each firewall side by side, the ufw rules to copy and the prompt for an AI. The Ports and OVH tabs link to it.
+- **SSH open only to some addresses** in the suggested firewall rules: a named list of sources (*Settings → General → Suggested firewall rules*, e.g. "Elio → 203.0.113.5", "Coolify → …"), and each group of servers can choose some of them. The ufw rules then allow SSH only from them (with a reminder that Elio's own address must be among them), the firewall prompt asks to restrict SSH to them, and the Firewall tab says where SSH is open from. Without any source, nothing changes.
+- **IPv6 and the OVHcloud network firewall**: it filters only IPv4, so the Firewall tab shows the public ports listening in IPv6 as "Not covered (IPv6)", with a warning, and the prompt says so. Optional health reason (*Settings → General → Suggested firewall rules*, off by default).
+- **Block all the incoming IPv6** in the suggested ufw rules (option, off by default): the ports are allowed from IPv4 only, so the default policy denies every incoming IPv6 connection.
+- **Instructions for the prompts** (*Settings → General → Prompts for an AI*): your own text, added at the end of the prompt, e.g. "For the SSH port, always put the rules last". The firewall prompt now covers the server's firewall, and the OVHcloud one when the extension is on.
+
+### Changed
+
+- After an upgrade, the health of every server is computed again by the first background tick when its rules changed (instead of a migration that could run before the columns it needs).
+
 ### Fixed
 
 - **Faster vulnerability pages** on a big fleet: the vulnerabilities are aggregated in the database instead of being loaded one by one (by package: 1.4 s → 0.5 s on 69,000 rows; by CVE: 0.26 s → 0.16 s), and the *CVE* tab of the Docker page loads the packages of an image when it is unfolded (1.5 s and 18 MB of HTML → 0.1 s and 72 KB).

@@ -1,10 +1,8 @@
-<%# "OVH" tab of a server: its OVH service, IP blocks (reverse, network firewall vs. its public ports, anti-DDoS). Its DNS names are in the DNS tab. %>
+<%# "OVH" tab of a server: its OVH service and IP blocks (reverse). The network firewall and the anti-DDoS are in the Firewall tab, its DNS names in the DNS tab. %>
 <% resources = server.ovh_resources.order(:kind, :name).to_a %>
 <% services = resources.select(&:service?) %>
 <% blocks = resources.select { |resource| resource.kind == "ip" } %>
-<% public_ports = Inventory::PortAnalysis.new(server).public_ports %>
 <div id="server-ovh">
-  <div class="mt-6 flex justify-end"><%= render "server_prompts/dialog", server: server, kind: :ovh_firewall %></div>
   <% if resources.empty? %>
     <p class="card mt-6 px-4 py-6 text-sm text-ink-3">
       <%= t(".ovhcloud_resource_attached_server") %><%= t(".not_synchronized_yet") unless integration.last_synced_at %>.
@@ -33,7 +31,7 @@
 
   <% if blocks.any? %>
     <section id="server-ovh-ips" class="card mt-6">
-      <div class="card-header"><h2 class="flex items-center gap-2 font-semibold"><%= icon :globe, class: "h-4 w-4 text-ink-3" %> <%= t(".ovh_ips_reverse_network") %></h2></div>
+      <div class="card-header"><h2 class="flex items-center gap-2 font-semibold"><%= icon :globe, class: "h-4 w-4 text-ink-3" %> <%= t(".ovh_ips_reverse") %></h2></div>
       <% blocks.each do |block| %>
         <div class="ovh-ip border-t border-line px-4 py-3 text-sm first:border-t-0" data-block="<%= block.name %>">
           <p class="flex flex-wrap items-center gap-2">
@@ -45,32 +43,10 @@
           <% end %>
           <% if block.data.key?("firewall") %>
             <% firewalls = block.data["firewall"] %>
-            <% if firewalls.empty? %>
-              <p class="mt-1 text-xs text-warn-ink"><%= t(".ovh_network_firewall_not") %></p>
-            <% end %>
-            <% firewalls.each do |ip, firewall| %>
-              <div class="ovh-firewall mt-2" data-ip="<%= ip %>">
-                <p class="text-xs">
-                  <%= t(".firewall") %> <span class="font-mono"><%= ip %></span> :
-                  <%= firewall["enabled"] ? status_badge(:good, t(".text")) : status_badge(:warn, t(".off")) %>
-                </p>
-                <% if Array(firewall["rules"]).any? %>
-                  <ul class="mt-1 space-y-0.5 font-mono text-[11px] text-ink-2">
-                    <% firewall["rules"].sort_by { |rule| rule["sequence"].to_i }.each do |rule| %><li class="ovh-firewall-rule"><%= ovh_firewall_rule(rule) %></li><% end %>
-                  </ul>
-                <% end %>
-                <% if public_ports.any? %>
-                  <ul class="mt-2 flex flex-wrap gap-1.5 text-xs">
-                    <% public_ports.each do |port| %>
-                      <li class="ovh-port inline-flex items-center gap-1" data-port="<%= port.port %>/<%= port.proto %>"><span class="font-mono"><%= port.port %>/<%= port.proto %></span><%= ovh_firewall_badge(Integrations::Ovh::Firewall.verdict(firewall, port.proto, port.port)) %></li>
-                    <% end %>
-                  </ul>
-                <% end %>
-              </div>
-            <% end %>
-          <% end %>
-          <% Array(block.data["mitigation"]).each do |ip, mitigation| %>
-            <p class="ovh-mitigation mt-1 text-xs text-ink-2"><%= t(".anti_ddos") %> <span class="font-mono"><%= ip %></span> : <%= mitigation["permanent"] ? t("integrations.ovh.server_tab.mitigation_permanent") : t("integrations.ovh.server_tab.mitigation_automatic") %><%= " (#{mitigation["state"]})" if mitigation["state"] %></p>
+            <p class="ovh-firewall-summary mt-1 text-xs text-ink-2">
+              <%= firewalls.empty? ? t(".ovh_network_firewall_not") : t(".firewalls", count: firewalls.size, enabled: firewalls.count { |_, firewall| firewall["enabled"] }) %>
+              <%= link_to t(".see_firewall_tab"), server_path(server, tab: "firewall"), class: "font-medium text-accent hover:underline" %>
+            </p>
           <% end %>
         </div>
       <% end %>

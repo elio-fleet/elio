@@ -54,12 +54,17 @@ class Inventory::PortAnalysis
     end
   end
 
-  # Commands to copy, SSH first so the session is not cut.
-  def suggested_ufw_rules
+  # Commands to copy, SSH first so the session is not cut. With "block all
+  # the incoming IPv6" (AppSetting#ufw_block_ipv6), the ports are allowed from
+  # IPv4 only: the default policy then denies every IPv6 connection (an SSH
+  # source in IPv6 stays allowed). Never IPV6=no in /etc/default/ufw: ufw
+  # would stop managing IPv6 and leave it open.
+  def suggested_ufw_rules(block_ipv6: AppSetting.current.ufw_block_ipv6)
+    @block_ipv6 = block_ipv6
     ssh_port = server.port
     lines = [ I18n.t("inventory.port_analysis.header", server_name: server.name),
-              "sudo ufw default deny incoming", "sudo ufw default allow outgoing",
-              "sudo ufw allow #{ssh_port}/tcp comment 'ssh (Elio)'" ]
+              *(I18n.t("inventory.port_analysis.ipv6_blocked") if block_ipv6),
+              "sudo ufw default deny incoming", "sudo ufw default allow outgoing", *ssh_rules(ssh_port) ]
     public_ports.reject { |entry| entry.port == ssh_port && entry.proto == "tcp" }.each do |entry|
       label = comment_for(entry)
       lines << if entry.container
@@ -67,7 +72,7 @@ class Inventory::PortAnalysis
       elsif entry.unexpected
         I18n.t("inventory.port_analysis.unexpected", key: entry.key, label: label)
       else
-        "sudo ufw allow #{entry.key} comment '#{label}'"
+        allow_rule(entry.port, entry.proto, label)
       end
     end
     ports.select { |entry| entry.scope == "private" }.each do |entry|
@@ -126,6 +131,23 @@ class Inventory::PortAnalysis
         port.between?(from, to || from)
       end
     end
+  end
+
+  # SSH first: open to everyone, or only from the SSH sources of the server
+  # (with a reminder that Elio's own address must be among them).
+  def ssh_rules(ssh_port)
+    sources = server.ssh_sources
+    return [ allow_rule(ssh_port, "tcp", "ssh (Elio)") ] if sources.empty?
+
+    [ I18n.t("inventory.port_analysis.ssh_sources", names: sources.map(&:name).join(", ")),
+      I18n.t("inventory.port_analysis.ssh_sources_elio"),
+      *sources.map { |source| "sudo ufw allow from #{source.cidr} to any port #{ssh_port} proto tcp comment 'ssh (#{source.comment_name})'" } ]
+  end
+
+  def allow_rule(port, proto, comment)
+    return "sudo ufw allow #{port}/#{proto} comment '#{comment}'" unless @block_ipv6
+
+    "sudo ufw allow from 0.0.0.0/0 to any port #{port} proto #{proto} comment '#{comment}'"
   end
 
   # Process or unit name, limited to safe characters for a ufw comment.

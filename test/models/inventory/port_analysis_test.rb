@@ -93,6 +93,36 @@ class Inventory::PortAnalysisTest < ActiveSupport::TestCase
     assert_not rules.any? { |rule| rule.include?("3306") }
   end
 
+  test "with SSH sources, the SSH rules allow only them, with a reminder for Elio's own address" do
+    SshSource.create!(name: "Elio", cidr: "203.0.113.5", position: 0)
+    SshSource.create!(name: "Bureau d'Anna", cidr: "2001:db8:1::/48", position: 1)
+    collect_ports
+
+    rules = analysis.suggested_ufw_rules.lines.map(&:chomp)
+
+    assert_equal [ "# SSH seulement depuis : Elio, Bureau d'Anna (Paramètres → Général → Règles de firewall proposées)",
+                   "# L'adresse d'Elio doit en faire partie, sinon Elio perd son accès SSH.",
+                   "sudo ufw allow from 203.0.113.5 to any port 22 proto tcp comment 'ssh (Elio)'",
+                   "sudo ufw allow from 2001:db8:1::/48 to any port 22 proto tcp comment 'ssh (Bureau dAnna)'" ], rules[3, 4]
+    assert_not rules.any? { |rule| rule.start_with?("sudo ufw allow 22/tcp") }
+  end
+
+  test "blocking all the incoming IPv6: the ports are allowed from IPv4 only, an IPv6 SSH source stays" do
+    SshSource.create!(name: "V6", cidr: "2001:db8:1::/48")
+    collect_ports
+
+    rules = analysis.suggested_ufw_rules(block_ipv6: true).lines.map(&:chomp)
+
+    assert_match(/Tout l'IPv6 entrant est bloqué.*IPV6=yes/, rules[1])
+    assert_includes rules, "sudo ufw allow from 2001:db8:1::/48 to any port 22 proto tcp comment 'ssh (V6)'"
+    assert_includes rules, "sudo ufw allow from 0.0.0.0/0 to any port 9100 proto tcp comment 'node-exporter'"
+    assert_not rules.any? { |rule| rule.start_with?("sudo ufw allow 9100") }
+
+    SshSource.delete_all
+    AppSetting.current.update!(ufw_block_ipv6: true)
+    assert_includes analysis.suggested_ufw_rules, "sudo ufw allow from 0.0.0.0/0 to any port 22 proto tcp comment 'ssh (Elio)'"
+  end
+
   test "nothing collected" do
     assert_not analysis.collected?
     assert_empty analysis.ports

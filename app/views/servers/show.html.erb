@@ -49,6 +49,7 @@
               [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "active" } if services["units"]) ],
               *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),
               [ "ports", t("servers.tabs.ports"), (Inventory::PortAnalysis.new(@server).public_ports.size if ports&.collected?) ],
+              [ "firewall", t("servers.tabs.firewall"), nil ],
               [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
               [ "keys", t("servers.tabs.keys"), (snapshots.sum { |snapshot| snapshot.keys.size } if snapshots.any?) ],
               *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] },
@@ -79,6 +80,8 @@
     <%= render "servers/scheduled_tasks_card", server: @server %>
   <% when "ports" %>
     <%= render "servers/ports_card", server: @server %>
+  <% when "firewall" %>
+    <%= render "servers/firewall_card", server: @server %>
   <% when "keys" %>
     <section id="server-authorized-keys" class="card mt-6 p-5">
       <div class="flex flex-wrap items-start justify-between gap-3">
