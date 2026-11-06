@@ -61,7 +61,8 @@ class VulnerabilitiesController < ApplicationController
     cookies.permanent[:elio_vulnerability_view] = { value: @view, same_site: :lax, httponly: true } if @view
     @view ||= cookies[:elio_vulnerability_view].presence_in(%w[packages cves]) || "packages"
     if @view == "packages"
-      @package_groups = PackageVulnerabilities.new(scope.includes(:server)).groups
+      @package_groups = PackageVulnerabilities.new(scope).groups
+      # Separate counts: each uses an index, much faster than one query with several COUNT(DISTINCT … ) FILTER.
       @summary = { cves: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve), servers: scope.distinct.count(:server_id),
                    serious: scope.fixable.at_least("high").distinct.count(:cve) }
       @pager = paginate(@package_groups, per_page: 50)
@@ -69,12 +70,16 @@ class VulnerabilitiesController < ApplicationController
       return
     end
 
-    servers = Server.where(id: scope.select(:server_id)).index_by(&:id)
-    rows = scope.pluck(:cve, :severity, :source_package, :server_id, :image, :fixed_version, :description, :source).group_by(&:first).map do |cve, entries|
-      Row.new(cve: cve, severity: entries.map { |entry| entry[1] }.max_by { |severity| Vulnerability.severity_rank(severity) },
-              packages: entries.map { |entry| entry[2] }.uniq.sort, servers: entries.map { |entry| servers[entry[3]] }.compact.uniq.sort_by(&:name),
-              images: entries.filter_map { |entry| entry[4] }.uniq.sort, fixable: entries.any? { |entry| entry[5] },
-              description: entries.filter_map { |entry| entry[6] }.first, source: entries.first[7])
+    values = scope.group(:cve).pluck(
+      :cve, PackageVulnerabilities::WORST_SEVERITY,
+      Arel.sql("ARRAY_AGG(DISTINCT server_vulnerabilities.source_package)"), Arel.sql("ARRAY_AGG(DISTINCT server_vulnerabilities.server_id)"),
+      Arel.sql("ARRAY_AGG(DISTINCT server_vulnerabilities.image) FILTER (WHERE server_vulnerabilities.image IS NOT NULL)"),
+      Arel.sql("BOOL_OR(server_vulnerabilities.fixed_version IS NOT NULL)"), Arel.sql("MAX(server_vulnerabilities.description)"), Arel.sql("MIN(server_vulnerabilities.source)")
+    )
+    servers = Server.where(id: values.flat_map { |row| row[3] }.uniq).index_by(&:id)
+    rows = values.map do |cve, severity, packages, server_ids, images, fixable, description, source|
+      Row.new(cve: cve, severity: severity, packages: packages.sort, servers: server_ids.filter_map { |id| servers[id] }.sort_by(&:name),
+              images: Array(images).sort, fixable: fixable, description: description, source: source)
     end
     @summary = { cves: rows.size, fixable: rows.count(&:fixable), servers: servers.size,
                  serious: rows.count { |row| row.fixable && row.severity.in?(%w[critical high]) } }

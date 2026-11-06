@@ -35,7 +35,7 @@
                 <%= score_pill(image.max_score, title: t("docker.cves.highest_score")) %>
               </p>
               <p class="mt-1 text-xs text-ink-2">
-                <%= t("docker.cves.counts_html", cves: tag.strong(image.cves.size, class: "text-ink"), fixable: tag.strong(t("docker.cves.fixable_count", count: image.fixable.size), class: image.fixable.any? ? "text-warn-ink" : "text-ink")) %>
+                <%= t("docker.cves.counts_html", cves: tag.strong(image.cve_count, class: "text-ink"), fixable: tag.strong(t("docker.cves.fixable_count", count: image.fixable_count), class: image.fixable_count.positive? ? "text-warn-ink" : "text-ink")) %>
               </p>
               <p class="image-uses mt-1 text-xs text-ink-3">
                 <% if image.uses.any? %>
@@ -43,17 +43,19 @@
                   <%= safe_join(image.uses.group_by(&:first).map { |server, uses| safe_join([ link_to(server.name, server_path(server, tab: "docker"), class: "font-medium text-ink-2 hover:text-accent hover:underline"), " (#{uses.map { |_, container| container["name"] }.join(", ")})" ]) }, ", ") %>
                 <% else %>
                   <%= t("docker.cves.on_servers") %>
-                  <%= safe_join(image.rows.map(&:server).uniq.sort_by(&:name).map { |server| link_to(server.name, server_path(server, tab: "docker"), class: "font-medium text-ink-2 hover:text-accent hover:underline") }, ", ") %>
+                  <%= safe_join(image.servers.map { |server| link_to(server.name, server_path(server, tab: "docker"), class: "font-medium text-ink-2 hover:text-accent hover:underline") }, ", ") %>
                 <% end %>
               </p>
             </div>
             <p class="image-advice max-w-sm text-xs text-ink-2">
-              <%= image.fixable.any? ? t("docker.cves.advice_update") : t("docker.cves.advice_none") %>
+              <%= image.fixable_count.positive? ? t("docker.cves.advice_update") : t("docker.cves.advice_none") %>
             </p>
           </div>
           <details class="border-t border-line">
-            <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-accent hover:underline"><%= t("docker.cves.by_package", count: image.groups.size) %></summary>
-            <%= render "servers/vulnerability_packages", server: nil, groups: image.groups %>
+            <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-accent hover:underline"><%= t("docker.cves.by_package", count: image.package_count) %></summary>
+            <%= turbo_frame_tag image.frame_id, src: docker_image_cves_path(image: image.image, group: @group&.id), loading: :lazy, target: "_top" do %>
+              <p class="px-4 py-3 text-xs text-ink-3"><%= t("docker.cves.loading") %></p>
+            <% end %>
           </details>
         </section>
       <% end %>

@@ -17,6 +17,10 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 - After an upgrade, the health of every server is computed again by the first background tick when its rules changed (instead of a migration that could run before the columns it needs).
 
+### Fixed
+
+- **Faster vulnerability pages** on a big fleet: the vulnerabilities are aggregated in the database instead of being loaded one by one (by package: 1.4 s → 0.5 s on 69,000 rows; by CVE: 0.26 s → 0.16 s), and the *CVE* tab of the Docker page loads the packages of an image when it is unfolded (1.5 s and 18 MB of HTML → 0.1 s and 72 KB).
+
 ## [0.1.0-beta.3.1] — 2026-11-06
 
 A fix for upgrades to 0.1.0-beta.3.
