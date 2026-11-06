@@ -250,6 +250,7 @@ en:
       images: Containers and images
       cves: CVE
     cves:
+      loading: Loading…
       intro: 'The vulnerabilities of the Docker images of the fleet: they are fixed by updating the image, not the server.'
       images: Vulnerable images
       cves: CVE in the images

@@ -1,0 +1,4 @@
+<%# The packages of an image and their CVEs, in the lazy frame of the CVE tab (DockerController#image_cves). %>
+<%= turbo_frame_tag @frame_id, target: "_top" do %>
+  <%= render "servers/vulnerability_packages", server: nil, groups: @pager.records, pager: @pager %>
+<% end %>

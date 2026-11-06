@@ -35,4 +35,18 @@ class VulnerabilitiesSystemTest < ApplicationSystemTestCase
     assert_selector "dialog.vulnerability-dialog[open] .vulnerability-detail[data-cve='CVE-2024-0002']"
     assert_selector "li.detail-provider-score[data-provider=nvd] .provider-pending", text: "pas encore demandé"
   end
+
+  test "on the Docker CVE tab, the packages of an image load when it is unfolded, and a CVE opens its detail" do
+    servers(:web).server_vulnerabilities.create!(origin: "image", image: "nginx:1.27", source: "debian", cve: "CVE-2024-6387", source_package: "openssh",
+                                                 packages: %w[openssh-client], installed_version: "1:9.2p1-2", fixed_version: "1:9.2p1-2+deb12u3", severity: "high")
+    visit docker_path(tab: "cves")
+
+    within("section.image-vulnerabilities[data-image='nginx:1.27']") do
+      assert_no_selector "li.vulnerability-package"
+      find("details > summary").click
+      assert_selector "li.vulnerability-package[data-package='openssh@nginx:1.27']"
+      click_on "CVE-2024-6387"
+    end
+    assert_selector "dialog.vulnerability-dialog[open] .vulnerability-detail[data-cve='CVE-2024-6387']"
+  end
 end

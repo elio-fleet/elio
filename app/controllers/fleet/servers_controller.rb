@@ -128,7 +128,7 @@ class ServersController < ApplicationController
     @package = params[:package].to_s.strip.presence&.first(100)
     @vulnerability_view = vulnerability_view
     if @vulnerability_view == "packages"
-      @package_groups = PackageVulnerabilities.new(scope.includes(:server), server: @server).groups
+      @package_groups = PackageVulnerabilities.new(scope, server: @server).groups
       @pager = paginate(@package_groups, per_page: VULNERABILITY_PACKAGES_PER_PAGE)
       @package_groups = @pager.records
     else

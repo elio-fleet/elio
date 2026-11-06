@@ -96,6 +96,7 @@ Rails.application.routes.draw do
   resources :scheduled_tasks, only: :index, path: "scheduled-tasks"
   resources :vulnerabilities, only: %i[index show], param: :cve, constraints: { cve: /[A-Za-z0-9-]+/ }
   get "docker", to: "docker#index", as: :docker
+  get "docker/image_cves", to: "docker#image_cves", as: :docker_image_cves
   # Uptime Kuma extension.
   resources :monitors, only: :index do
     resource :link, only: %i[create destroy], controller: "monitor_links"
