@@ -30,7 +30,7 @@
 
 Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are healthy, what runs on them, which packages are vulnerable and how to fix them, who has an SSH key on them. Nothing to install on the servers: Elio logs in with its own SSH key and runs a short list of **read-only commands**, all written in one file you can review — [`config/ssh_commands.yml`](config/ssh_commands.yml).
 
-> **Beta.** Elio is young (`v0.1.0-beta.2`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
+> **Beta.** Elio is young (`v0.1.0-beta.3`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
 
 ## Features
 
@@ -38,13 +38,13 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 |---|---|
 | **Health** | Load, memory, swap, disks and inodes, reboot required, failed services, clock sync, pending updates — with thresholds you set and 30 days of history. |
 | **Inventory** | System and end-of-support date, network addresses (WireGuard included), packages (dpkg, snap), systemd services, **Docker** (containers, images, Compose projects), **scheduled tasks** (cron, systemd timers), listening ports and firewall (ufw, nftables, iptables), with suggested ufw rules to copy. |
-| **Vulnerabilities** | CVEs of every package, from the Debian Security Tracker and Ubuntu's OSV data, matched with the inventory — no extra command on the servers. Grouped **by package with the update to make** (`apt-get install --only-upgrade linux-image-amd64`, then reboot). Scores from NVD, Red Hat and CVE.org (or your own providers), exploitation from EPSS and CISA KEV. |
-| **Docker** | Unhealthy and restarting containers, images per server, **new versions published on the registries** (Docker Hub, GHCR, Quay, private ones), vulnerabilities of the images (Trivy or Grype if installed, else Elio's own matching). |
-| **SSH keys** | A shared keyring (people and machines), keys added to or removed from a server in one click, **temporary access** that expires on its own, unknown keys flagged, rotation of Elio's own key without downtime. |
+| **Vulnerabilities** | CVEs of every package, from the Debian Security Tracker and Ubuntu's OSV data, matched with the inventory — no extra command on the servers; signed packages (grub, shim, kernel, fwupd) compared with the code they sign. Grouped **by package with the update to make**, the server's own CVEs apart from those of its Docker images, and **the commands to fix a CVE** (`apt-get install --only-upgrade …`, or `docker compose pull` and `up -d` for an image) — to copy, never run by Elio. Scores from NVD, Red Hat and CVE.org (or your own providers), exploitation from EPSS and CISA KEV. |
+| **Docker** | Unhealthy and restarting containers, images per server, **new versions published on the registries** (Docker Hub, GHCR, Quay, private ones), vulnerabilities of the images (Trivy or Grype if installed, else Elio's own matching) in a **CVE** tab: by image, with the servers and containers that run it. |
+| **SSH keys** | A shared keyring (people and machines), keys added to or removed from a server in one click, **temporary access** that expires on its own, **the keys of every account** of a server (with root), unknown keys flagged and gathered in an **Outside the keyring** list, rotation of Elio's own key without downtime. |
 | **Alerts** | What needs attention, by severity, on the overview; activity log; notifications to Slack, Discord, email or a signed webhook, grouped by type (critical ones right away); daily digest. |
 | **Automation** | Every collection runs on schedule, on the whole fleet or per group, followed live in the *Tasks* page. |
-| **Extensions** | **Uptime Kuma** (monitors attached to each server), **OVHcloud** (IPs, network firewall, DNS records, services) and **Technitium DNS** (zones and records), read-only. |
-| **Team** | Roles (admin, operator, read-only), invitations, mandatory two-factor authentication, ⌘K search everywhere, light and dark themes. |
+| **Extensions** | **Uptime Kuma** (monitors attached to each server), **OVHcloud** (IPs, network firewall, DNS records, services) and **Technitium DNS** (zones and records), read-only, with **one DNS of the fleet** and **prompts for an AI assistant** (monitors to create, OVH firewall rules). |
+| **Team** | Roles (admin, operator, read-only), invitations, mandatory two-factor authentication, **notes on each server** (Markdown), ⌘K search everywhere, light and dark themes. |
 
 | | |
 |:---:|:---:|
@@ -54,8 +54,12 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | **A server**: health, 24-hour charts, system | **Docker**: containers, images, updates, CVEs |
 | ![Overview](docs/screenshots/en/overview.png) | ![Dark theme](docs/screenshots/en/fleet-dark.png) |
 | **What needs attention**, most serious first | **Dark theme** |
+| ![SSH keys of every account](docs/screenshots/en/ssh-keys.png) | ![Notes](docs/screenshots/en/notes.png) |
+| **SSH keys** of every account of a server | **Notes** of the team on a server |
 | ![Uptime Kuma monitors](docs/screenshots/en/uptime-kuma-monitors.png) | ![OVHcloud](docs/screenshots/en/ovh.png) |
-| **Uptime Kuma**: monitors attached to each server | **OVHcloud**: service, IPs, network firewall per port, DNS |
+| **Uptime Kuma**: monitors attached to each server | **OVHcloud**: service, IPs, network firewall per port |
+| ![DNS of the fleet](docs/screenshots/en/dns.png) | ![CVEs of the Docker images](docs/screenshots/en/docker-cves.png) |
+| **DNS of the fleet**: OVHcloud and Technitium together | **CVEs of the Docker images**, by image |
 
 The interface is in **English and French**. Each user picks a language in *My account*; otherwise Elio follows the browser, then the default language of the installation (*Settings → General*). Notification channels and invitations have their own language. Adding a language is adding a folder of translations: see [CONTRIBUTING.md](CONTRIBUTING.md#translating-elio).
 
@@ -106,7 +110,7 @@ Everything else — thresholds, notifications, automations, score providers, Doc
 2. Add its public key to `~/.ssh/authorized_keys` of the account Elio will use (the page gives the command).
 3. Add the server (or import many from a CSV or your `~/.ssh/config`), then run an inventory.
 
-Elio reads everything an unprivileged account can read. Some details need root — the process behind each port, the firewall, Docker, the users' crontabs: log in as root, or give the account password-less `sudo`. Without it, those collections are marked *partial*.
+Elio reads everything an unprivileged account can read. Some details need root — the process behind each port, the firewall, Docker, the users' crontabs, the SSH keys of the other accounts: log in as root, or give the account password-less `sudo`. Without it, those collections are marked *partial*, and only the keys of Elio's account are listed.
 
 Supported: **Debian and Ubuntu** (others get health and system only), Docker, snap.
 
@@ -122,7 +126,7 @@ Supported: **Debian and Ubuntu** (others get health and system only), Docker, sn
 | Services, scheduled tasks | `systemctl list-units`, `list-unit-files`, `show` of the timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (state, health, restarts — **never the environment variables**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` if installed, `docker cp` of `os-release` and the dpkg status |
 | Ports | `ss -tulpn`, `/proc/<pid>/cgroup`, `ufw status verbose`, `nft list ruleset`, `iptables -S INPUT` |
-| SSH keys | reading `~/.ssh/authorized_keys`; **writing only** when you add or remove a key |
+| SSH keys | reading `~/.ssh/authorized_keys` (with root, of every account with a login shell — never through a link, nor a file the account does not own); **writing only** when you add a key (to Elio's account) or remove one |
 
 Elio **never changes the firewall** nor installs anything: suggested ufw rules and update commands are for you to review and run.
 
@@ -174,7 +178,8 @@ The extensions that read DNS (OVHcloud with its DNS product, Technitium DNS) fee
 
 - Full inventory for **Debian and Ubuntu** only. Ubuntu has not been tried on a real server yet.
 - The Uptime Kuma and OVHcloud extensions were built on recorded API answers, not tried on a real account yet (Technitium DNS was tried on a real instance).
-- Container image CVEs without Trivy or Grype: Debian and Ubuntu based images only (not Alpine).
+- Container image CVEs without Trivy or Grype: Debian and Ubuntu based images only (not Alpine). Trivy and Grype have not been tried on a real server yet.
+- Signed EFI packages (grub, shim, fwupd) were checked against real repository data, not on a real EFI server yet.
 - Debian rates few of its CVEs: the scores come from the providers you enable (NVD, Red Hat, CVE.org by default).
 
 ## Development
