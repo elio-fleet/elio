@@ -158,6 +158,10 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english dns_records_path, except: data
     assert_english server_path(servers(:web), tab: "dns"), except: data
     assert_english edit_settings_integration_path("technitium"), except: data
+    Integration.find_or_initialize_by(kind: "gandi").update!(enabled: true, secrets: { "api_token" => "t" },
+                                                            state: { "domains" => [ { "fqdn" => "example.test", "expires_at" => 1.year.from_now.iso8601, "autorenew" => true, "livedns" => true } ] })
+    assert_english edit_settings_integration_path("gandi"), except: data + [ ".gandi-domain td:first-child" ]
+    assert_english settings_integrations_path, except: data
   end
 
   test "the check finds French" do
