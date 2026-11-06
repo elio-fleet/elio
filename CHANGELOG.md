@@ -15,6 +15,7 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ### Changed
 
+- **The Docker image is built on Debian 13 (trixie) with Ruby 3.4.12, and takes the Debian security updates at every build.** The previous image (Debian 12.10, never updated) carried 89 CVEs that Debian had fixed (openssl, gnutls28, glibc, pcre2, systemd, pam, libcap2, apt, gnupg2, libgcrypt20…): none is left. The CI fails when a security update is pending in the image, and Dependabot proposes the new base images.
 - After an upgrade, the health of every server is computed again by the first background tick when its rules changed (instead of a migration that could run before the columns it needs).
 
 ### Fixed
