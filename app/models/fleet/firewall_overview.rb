@@ -36,8 +36,31 @@ class FirewallOverview
   # OVH blocks whose firewall was not read (rights missing on the API key).
   def unread_ovh_blocks = ovh_blocks.reject { |block| block.data.key?("firewall") }
 
-  # :permit, :deny, :restricted, or nil when that firewall is off.
-  def ovh_verdict(firewall, port) = Integrations::Ovh::Firewall.verdict(firewall.data, port.proto, port.port)
+  # :permit, :deny, :restricted, :not_covered (IPv6), or nil when that firewall is off.
+  def ovh_verdict(firewall, port) = Integrations::Ovh::Firewall.verdict(firewall.data, port.proto, port.port, ip: firewall.ip)
+
+  # The public IPv6 addresses of the server (temporary ones included: they are reachable too).
+  def public_ipv6
+    @public_ipv6 ||= server.addresses.select { |address| ipv6?(address) && Inventory::IpScope.of(address) == "public" }
+  end
+
+  # Public ports that listen on IPv6 (all interfaces, or one of its IPv6 addresses).
+  def ipv6_ports
+    return [] if public_ipv6.empty?
+
+    analysis.public_ports.select { |port| port.addresses.any? { |address| address.in?([ "::", "*", "[::]" ]) || public_ipv6.include?(address.delete("[]")) } }
+  end
+
+  # The OVH network firewall filters only IPv4: these ports skip it.
+  def ipv6_bypassing_ovh = ovh_blocks.any? ? ipv6_ports : []
 
   def anything? = analysis.collected? || ovh_blocks.any?
+
+  private
+
+  def ipv6?(address)
+    IPAddr.new(address.to_s).ipv6?
+  rescue IPAddr::Error
+    false
+  end
 end

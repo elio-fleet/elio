@@ -103,6 +103,10 @@ class Integrations::Ovh < Integrations::Base
         missing = ip_blocks.select { |block| block.data.key?("firewall") && block.data["firewall"].empty? }.map(&:name)
         (disabled + missing).uniq.each { |ip| reasons << reason("warn", :firewall_disabled, ip: ip) }
       end
+      if AppSetting.current.ovh_ipv6_health
+        ports = FirewallOverview.new(server).ipv6_bypassing_ovh
+        reasons << reason("warn", :ipv6_not_covered, ports: ports.map(&:key).join(", ")) if ports.any?
+      end
       if integration.value(:alert_reverse_mismatch) && server.hostname.present?
         ip_blocks.each do |block|
           Array(block.data["reverse"]).each do |ip, reverse|

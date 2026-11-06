@@ -238,6 +238,11 @@ en:
       save_thresholds: Save the thresholds
       firewall_settings: Suggested firewall rules
       firewall_settings_hint: "What Elio proposes in the Firewall tab of the servers. It never applies anything."
+      ufw_block_ipv6: Block all the incoming IPv6
+      ufw_block_ipv6_hint: The suggested ufw rules allow the ports from IPv4 only, so the default policy denies every incoming IPv6 connection (an SSH source in IPv6 stays allowed).
+      ovh_ipv6_health: Warn when ports are reachable in IPv6 without the OVH network firewall
+      ovh_ipv6_health_hint: A health reason (watch) on the servers that have a public IPv6 and OVH IPs, for the public ports listening in IPv6. Off by default.
+      save_firewall_options: Save the options
       ssh_sources: Sources allowed to reach SSH
       ssh_sources_hint: "With at least one source, the suggested rules open SSH only to them. Each group of servers can choose some of them in its settings; servers whose groups chose none get the whole list."
       ssh_sources_elio: "Add Elio's own address (the public address it connects from), otherwise applying the rules cuts its SSH access."
@@ -295,6 +300,8 @@ en:
         in_progress:
           one: 'In progress: %{done}/%{count} server'
           other: 'In progress: %{done}/%{count} servers'
+  firewall_options_controller:
+    saved: Firewall options saved.
   ssh_sources_controller:
     created: SSH source %{name} added.
     deleted: SSH source %{name} deleted.

@@ -117,6 +117,10 @@ en:
       ovh_tab: OVH tab
       ovh_not_read: The firewall of %{block} was not read (right missing on the OVH API key).
       no_ovh_rule: No rule.
+      ipv6_column: IPv6
+      ipv6_column_hint: "The OVHcloud network firewall filters only IPv4: in IPv6, only the server's own firewall applies."
+      not_covered_ipv6: Not covered (IPv6)
+      ipv6_warning: "Reachable in IPv6 without the OVH network firewall (it filters only IPv4): %{ports}, on %{addresses}. Only the server's firewall protects them."
       ssh_limited: 'SSH limited to: %{names}'
       ssh_limited_by: "(choice of %{groups})"
       ssh_open: SSH open to everyone in the suggested rules.
@@ -288,6 +292,7 @@ en:
       header: "# Suggested ufw rules for %{server_name} (read them before applying them)"
       ssh_sources: "# SSH only from: %{names} (Settings → General → Suggested firewall rules)"
       ssh_sources_elio: "# Elio's own address must be among them, otherwise Elio loses its SSH access."
+      ipv6_blocked: "# All the incoming IPv6 is blocked: the ports below are allowed from IPv4 only (from 0.0.0.0/0). Keep IPV6=yes in /etc/default/ufw."
       docker: "# %{key} published by Docker (%{container}): ufw does not filter it. Publish it on 127.0.0.1 or filter it in the DOCKER-USER chain."
       unexpected: "# %{key} (%{label}): unexpected port, to close or to add to the expected ports of the group"
       private: "# %{key} (%{comment_for}) listens on the private network (%{addresses_join}): allow it from this network if needed"

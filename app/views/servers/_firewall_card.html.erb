@@ -5,6 +5,8 @@
 <% analysis = overview.analysis %>
 <% snapshot = analysis.snapshot %>
 <% ovh_firewalls = overview.ovh_firewalls %>
+<% ipv6_bypassing = overview.ipv6_bypassing_ovh %>
+<% ipv6_column = overview.ovh_blocks.any? && overview.public_ipv6.any? %>
 <div id="server-firewall">
   <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
     <p class="text-xs text-ink-3"><%= t(".elio_never_changes") %></p>
@@ -61,6 +63,7 @@
                 <th><%= t("servers.ports_card.service_container") %></th>
                 <th><%= t(".server_firewall") %></th>
                 <% ovh_firewalls.each do |firewall| %><th class="font-mono"><%= t(".ovh_ip", ip: firewall.ip) %></th><% end %>
+                <% if ipv6_column %><th class="pr-4" title="<%= t(".ipv6_column_hint") %>"><%= t(".ipv6_column") %></th><% end %>
               </tr>
             </thead>
             <tbody>
@@ -73,6 +76,11 @@
                   <% ovh_firewalls.each do |firewall| %>
                     <td class="ovh-port text-xs" data-ip="<%= firewall.ip %>"><%= ovh_firewall_badge(overview.ovh_verdict(firewall, port)) %></td>
                   <% end %>
+                  <% if ipv6_column %>
+                    <td class="ipv6-port pr-4 text-xs">
+                      <% if ipv6_bypassing.include?(port) %><%= status_badge :warn, t(".not_covered_ipv6"), class: "ipv6-not-covered", title: t(".ipv6_column_hint") %><% else %><span class="text-ink-3">—</span><% end %>
+                    </td>
+                  <% end %>
                 </tr>
               <% end %>
             </tbody>
@@ -80,6 +88,12 @@
         </div>
       <% else %>
         <p class="px-4 py-4 text-sm text-ink-3"><%= t(".no_public_port") %></p>
+      <% end %>
+      <% if ipv6_bypassing.any? %>
+        <p class="ipv6-warning flex gap-2 border-t border-line bg-warn-soft px-4 py-2 text-xs text-warn-ink">
+          <%= icon :exclamation_triangle, class: "h-4 w-4 shrink-0" %>
+          <%= t(".ipv6_warning", ports: ipv6_bypassing.map(&:key).join(", "), addresses: overview.public_ipv6.join(", ")) %>
+        </p>
       <% end %>
       <% if analysis.public_ports.any? { |port| port.firewall == "docker" } %>
         <p class="docker-bypass flex gap-2 border-t border-line bg-warn-soft px-4 py-2 text-xs text-warn-ink">
@@ -131,8 +145,9 @@
         <%= render "settings/copy_button" %>
       </div>
       <div class="ufw-rules px-4 py-3">
-        <textarea readonly rows="<%= analysis.suggested_ufw_rules.lines.size + 2 %>" data-clipboard-target="source" aria-label="<%= t("servers.ports_card.suggested_ufw_rules") %>"
-                  class="block w-full resize-none rounded-lg border border-line bg-subtle px-3 py-2 font-mono text-xs text-ink-2"><%= analysis.suggested_ufw_rules %></textarea>
+        <% rules = analysis.suggested_ufw_rules %>
+        <textarea readonly rows="<%= rules.lines.size + 2 %>" data-clipboard-target="source" aria-label="<%= t("servers.ports_card.suggested_ufw_rules") %>"
+                  class="block w-full resize-none rounded-lg border border-line bg-subtle px-3 py-2 font-mono text-xs text-ink-2"><%= rules %></textarea>
         <% sources = server.ssh_sources %>
         <p class="ssh-sources-summary mt-2 text-xs text-ink-2">
           <% if sources.any? %>

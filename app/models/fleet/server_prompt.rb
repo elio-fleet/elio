@@ -137,6 +137,8 @@ class ServerPrompt
           *rules.map { |rule| "  #{t("ovh.rule", sequence: rule["sequence"], action: rule["action"], protocol: rule["protocol"] || "any", port: rule["destinationPort"] || "*", source: rule["source"] || "any", option: [ rule["tcpOption"], rule["fragments"] && "fragments" ].compact.join(" "))}".rstrip } ]
       end
     end
+    ipv6 = overview.ipv6_bypassing_ovh
+    lines << t("ovh.ipv6_not_covered", addresses: overview.public_ipv6.join(", "), ports: ipv6.map(&:key).join(", ")) if ipv6.any?
     section(:ovh_firewall, lines)
   end
 

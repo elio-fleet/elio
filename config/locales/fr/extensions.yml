@@ -87,6 +87,7 @@ fr:
           one: 'Service OVH « %{name} » : expire dans %{count} j'
           other: 'Service OVH « %{name} » : expire dans %{count} j'
         firewall_disabled: Firewall réseau OVH désactivé sur %{ip}
+        ipv6_not_covered: 'Ports joignables en IPv6 sans le firewall réseau OVH : %{ports}'
         no_reverse: Pas de reverse DNS pour %{ip}
         reverse_mismatch: Reverse DNS de %{ip} (%{reverse}) ≠ hostname
       endpoint: Point d'accès
@@ -362,6 +363,7 @@ fr:
       permit: 'OVH : autorisé'
       deny: 'OVH : bloqué'
       restricted: 'OVH : sources limitées'
+      not_covered: 'OVH : non couvert (IPv6)'
     auto_renew: "(renouvellement auto)"
     permit: autoriser
     deny: refuser
@@ -419,6 +421,7 @@ fr:
     anywhere: partout
     ovh:
       not_read: "%{block} : firewall non lu (produit non choisi dans l'extension)"
+      ipv6_not_covered: 'IPv6 publique %{addresses} : non couverte par le firewall réseau OVH (IPv4 seulement) ; ports en écoute en IPv6 : %{ports}'
       none: "%{block} : aucun firewall réseau créé"
       enabled:
         one: "%{ip} : activé, %{count} règle"

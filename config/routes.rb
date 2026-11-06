@@ -53,6 +53,7 @@ Rails.application.routes.draw do
     resource :security, only: :update
     resource :health_thresholds, only: :update
     resource :prompt_instructions, only: :update
+    resource :firewall_options, only: :update
     resources :ssh_sources, only: %i[create destroy] do
       patch :move, on: :member
     end
