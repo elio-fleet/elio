@@ -6,7 +6,7 @@ module Settings
 
     def update
       setting = AppSetting.current
-      setting.prompt_instructions_form = params.fetch(:prompt_instructions, {}).permit(*AppSetting::PROMPT_KINDS).to_h
+      setting.prompt_instructions_form = params.permit(prompt_instructions: AppSetting::PROMPT_KINDS)[:prompt_instructions]&.to_h || {}
       if setting.save
         redirect_to settings_path(anchor: "prompt-instructions"), notice: t("prompt_instructions_controller.saved")
       else

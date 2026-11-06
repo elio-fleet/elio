@@ -156,7 +156,7 @@
           <% else %>
             <%= t(".ssh_open") %>
           <% end %>
-          <% if can?(:administer) %><%= link_to t(".ssh_sources_settings"), settings_path(anchor: "firewall-settings"), class: "font-medium text-accent hover:underline" %><% end %>
+          <% if can?(:administer) %><%= link_to t(".ssh_sources_settings"), settings_firewall_path, class: "font-medium text-accent hover:underline" %><% end %>
         </p>
         <p class="mt-1 text-xs text-ink-3"><%= t("servers.ports_card.elio_never_changes_firewall") %></p>
       </div>

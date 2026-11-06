@@ -100,7 +100,7 @@ class Inventory::PortAnalysisTest < ActiveSupport::TestCase
 
     rules = analysis.suggested_ufw_rules.lines.map(&:chomp)
 
-    assert_equal [ "# SSH seulement depuis : Elio, Bureau d'Anna (Paramètres → Général → Règles de firewall proposées)",
+    assert_equal [ "# SSH seulement depuis : Elio, Bureau d'Anna (Paramètres → Firewall)",
                    "# L'adresse d'Elio doit en faire partie, sinon Elio perd son accès SSH.",
                    "sudo ufw allow from 203.0.113.5 to any port 22 proto tcp comment 'ssh (Elio)'",
                    "sudo ufw allow from 2001:db8:1::/48 to any port 22 proto tcp comment 'ssh (Bureau dAnna)'" ], rules[3, 4]

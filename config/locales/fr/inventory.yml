@@ -290,7 +290,7 @@ fr:
       no_firewall: aucun firewall actif
       unknown_firewall: firewall inconnu (accès root requis)
       header: "# Règles ufw suggérées pour %{server_name} (à relire avant de les appliquer)"
-      ssh_sources: "# SSH seulement depuis : %{names} (Paramètres → Général → Règles de firewall proposées)"
+      ssh_sources: "# SSH seulement depuis : %{names} (Paramètres → Firewall)"
       ssh_sources_elio: "# L'adresse d'Elio doit en faire partie, sinon Elio perd son accès SSH."
       ipv6_blocked: "# Tout l'IPv6 entrant est bloqué : les ports ci-dessous ne sont autorisés qu'en IPv4 (depuis 0.0.0.0/0). Gardez IPV6=yes dans /etc/default/ufw."
       docker: "# %{key} publié par Docker (%{container}) : ufw ne le filtre pas. Publiez-le sur 127.0.0.1 ou filtrez-le dans la chaîne DOCKER-USER."

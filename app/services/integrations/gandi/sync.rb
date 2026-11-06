@@ -15,19 +15,28 @@ class Integrations::Gandi::Sync
     wanted = Array(@integration.value(:domains)).map { |domain| domain.to_s.downcase.chomp(".") }
     livedns = @client.livedns_domains.map { |domain| domain["fqdn"].to_s.downcase }
     livedns &= wanted if wanted.any?
-    domains = @client.domains.map { |domain| domain_row(domain, livedns) }
-    domains.select! { |domain| wanted.include?(domain["fqdn"]) } if wanted.any?
-
     count = Dns::Store.replace(SOURCE, livedns.flat_map { |fqdn| records(fqdn) })
-    state = @integration.state.merge("domains" => domains)
-    @integration.update_columns(state: state)
-    log_expiring
-    I18n.t("integrations.gandi.sync.summary", domains: I18n.t("integrations.gandi.sync.domains", count: livedns.size),
-                                               records: I18n.t("integrations.gandi.sync.records", count: count),
-                                               unattached: I18n.t("integrations.gandi.sync.unattached", count: DnsRecord.of_source(SOURCE).unattached.count))
+    domains_read = read_domains(livedns, wanted)
+    summary = I18n.t("integrations.gandi.sync.summary", domains: I18n.t("integrations.gandi.sync.domains", count: livedns.size),
+                                                         records: I18n.t("integrations.gandi.sync.records", count: count),
+                                                         unattached: I18n.t("integrations.gandi.sync.unattached", count: DnsRecord.of_source(SOURCE).unattached.count))
+    domains_read ? summary : summary + I18n.t("integrations.gandi.sync.no_domains", message: @domains_error)
   end
 
   private
+
+  # The domains and their expiry: optional (another right of the token than
+  # LiveDNS), so their failure leaves the DNS sync done and the previous list.
+  def read_domains(livedns, wanted)
+    domains = @client.domains.map { |domain| domain_row(domain, livedns) }
+    domains.select! { |domain| wanted.include?(domain["fqdn"]) } if wanted.any?
+    @integration.update_columns(state: @integration.state.merge("domains" => domains))
+    log_expiring
+    true
+  rescue Integrations::Error => e
+    @domains_error = e.message
+    false
+  end
 
   def domain_row(domain, livedns)
     fqdn = domain["fqdn"].to_s.downcase

@@ -10,7 +10,8 @@ class DockerController < ApplicationController
   # The CVEs of an image, counted in SQL, with the servers and containers
   # that run it; its packages are loaded when it is unfolded (#image_cves).
   ImageVulnerabilities = Data.define(:image, :cve_count, :fixable_count, :severity, :max_score, :servers, :package_count, :uses) do
-    def frame_id = "image-cves-#{Digest::MD5.hexdigest(image).first(12)}"
+    def self.frame_id(image) = "image-cves-#{Digest::MD5.hexdigest(image).first(12)}"
+    def frame_id = self.class.frame_id(image)
   end
   PACKAGES_PER_PAGE = 50
   Version = Data.define(:tag, :image, :servers, :state, :cves, :fixable)
@@ -28,7 +29,7 @@ class DockerController < ApplicationController
     rows = ServerVulnerability.images.where(image: @image)
     rows = rows.where(server_id: Server.in_group(@group).select(:id)) if @group
     @pager = paginate(PackageVulnerabilities.new(rows).groups, per_page: PACKAGES_PER_PAGE)
-    @frame_id = ImageVulnerabilities.new(image: @image, cve_count: 0, fixable_count: 0, severity: nil, max_score: nil, servers: [], package_count: 0, uses: []).frame_id
+    @frame_id = ImageVulnerabilities.frame_id(@image)
     render layout: false
   end
 
