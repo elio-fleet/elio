@@ -31,12 +31,30 @@ class AppSetting < ApplicationRecord
     self.score_bands = values.to_h.values.map { |band| { "from" => band["from"].to_s.tr(",", ".").to_f, "color" => band["color"].to_s } }
   end
 
+  # Instructions of the administrator added at the end of each prompt for an AI.
+  PROMPT_KINDS = %w[monitors firewall].freeze
+  PROMPT_INSTRUCTIONS_MAX = 2000
+  validate :prompt_instructions_valid
+
+  def prompt_instruction(kind) = prompt_instructions[kind.to_s].to_s.strip.presence
+
+  # From the settings form: { "monitors" => "…", "firewall" => "…" }, blanks dropped.
+  def prompt_instructions_form=(values)
+    self.prompt_instructions = PROMPT_KINDS.to_h { |kind| [ kind, values.to_h[kind].to_s.strip.gsub("\r\n", "\n") ] }.compact_blank
+  end
+
   # "registry user token" lines (ImageRegistry::UpdateCheck.credentials).
   encrypts :docker_registry_credentials
 
   def self.current = first || create!
 
   private
+
+  def prompt_instructions_valid
+    errors.add(:prompt_instructions, :invalid) unless prompt_instructions.is_a?(Hash) && (prompt_instructions.keys - PROMPT_KINDS).empty?
+    too_long = PROMPT_KINDS.select { |kind| prompt_instructions.is_a?(Hash) && prompt_instructions[kind].to_s.size > PROMPT_INSTRUCTIONS_MAX }
+    errors.add(:prompt_instructions, :too_long, count: PROMPT_INSTRUCTIONS_MAX) if too_long.any?
+  end
 
   def score_bands_valid
     froms = score_bands.map { |band| band["from"].to_f }

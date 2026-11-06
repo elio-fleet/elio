@@ -101,7 +101,25 @@ en:
     systemd_unit:
       failed: failed
       boot: at boot
+    firewall_card:
+      elio_never_changes: Read from the last inventory and the extensions. Elio never changes a firewall.
+      server_firewall: Firewall of the server
+      needs_root: The firewall can be read only as root (or with password-less sudo).
+      allow: allow
+      from: from %{source}
+      from_anywhere: from anywhere
+      no_allow_rule: No allow rule.
+      public_ports: Public ports and firewalls
+      all_ports: All the ports
+      ovh_ip: OVH %{ip}
+      no_public_port: No public port.
+      ovh_firewall: OVHcloud network firewall
+      ovh_tab: OVH tab
+      ovh_not_read: The firewall of %{block} was not read (right missing on the OVH API key).
+      no_ovh_rule: No rule.
     ports_card:
+      firewall_tab_hint: The server's firewall, the OVH one and the rules to copy are in the Firewall tab.
+      see_firewall_tab: Firewall tab →
       private: private
       ports: Ports
       read_html: read %{collected_at}

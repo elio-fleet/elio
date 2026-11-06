@@ -1,4 +1,4 @@
-<%# A prompt for an AI assistant (ServerPrompt), in a modal with a copy button. `kind`: monitors or ovh_firewall. %>
+<%# A prompt for an AI assistant (ServerPrompt), in a modal with a copy button. `kind`: monitors or firewall (ServerPrompt::KINDS). %>
 <% text = ServerPrompt.new(server).public_send(kind) %>
 <div data-controller="modal" class="server-prompt shrink-0" data-kind="<%= kind %>">
   <button type="button" data-action="modal#open" class="server-prompt-button btn btn-secondary px-2.5 py-1 text-xs">
@@ -10,6 +10,12 @@
       <div>
         <h2 id="prompt-<%= kind %>-title" class="text-base font-semibold"><%= t("server_prompts.#{kind}.title") %></h2>
         <p class="mt-0.5 text-xs text-ink-3"><%= t("server_prompts.dialog.copy_hint") %></p>
+        <% if app_settings.prompt_instruction(kind) %>
+          <p class="server-prompt-custom mt-1 text-xs text-ink-2">
+            <%= t("server_prompts.custom.included") %>
+            <% if can?(:administer) %><%= link_to t("server_prompts.custom.edit"), settings_path(anchor: "prompt-instructions"), class: "font-medium text-accent hover:underline", data: { turbo_frame: "_top" } %><% end %>
+          </p>
+        <% end %>
       </div>
       <button type="button" data-action="modal#close" aria-label="<%= t("server_prompts.dialog.close") %>" class="btn btn-ghost btn-icon"><%= icon :x_mark %></button>
     </div>

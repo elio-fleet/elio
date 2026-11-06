@@ -129,6 +129,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "finalize a key rotation" => -> { post finalize_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "require 2FA for admins" => -> { patch settings_security_path, params: { app_setting: { require_admin_two_factor: "0" } } },
       "health thresholds" => -> { patch settings_health_thresholds_path, params: { app_setting: { health_disk_warn: 80 } } },
+      "prompt instructions" => -> { patch settings_prompt_instructions_path, params: { prompt_instructions: { firewall: "x" } } },
       "default language" => -> { patch settings_language_path, params: { app_setting: { default_locale: "en" } } }
     }
   }.freeze

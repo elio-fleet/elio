@@ -99,3 +99,23 @@
   <% end %>
 </section>
 
+<section id="prompt-instructions" class="card mt-6">
+  <div class="card-header">
+    <h2 class="font-semibold"><%= t(".prompt_instructions") %></h2>
+    <span class="text-xs text-ink-3"><%= t(".prompt_instructions_hint") %></span>
+  </div>
+  <%= form_with url: settings_prompt_instructions_path, method: :patch, class: "space-y-4 p-4" do %>
+    <% AppSetting::PROMPT_KINDS.each do |kind| %>
+      <% next if kind == "monitors" && !Integration.enabled?(:uptime_kuma) && setting.prompt_instruction(kind).nil? %>
+      <div>
+        <%= label_tag "prompt_instructions_#{kind}", t(".prompt_labels.#{kind}"), class: "label text-xs" %>
+        <%= text_area_tag "prompt_instructions[#{kind}]", setting.prompt_instructions[kind], id: "prompt_instructions_#{kind}", rows: 3,
+              maxlength: AppSetting::PROMPT_INSTRUCTIONS_MAX, placeholder: t(".prompt_placeholders.#{kind}"), class: "input mt-1 w-full text-sm" %>
+      </div>
+    <% end %>
+    <div class="flex items-center justify-between gap-3">
+      <p class="text-xs text-ink-3"><%= t(".prompt_instructions_footer", count: AppSetting::PROMPT_INSTRUCTIONS_MAX) %></p>
+      <%= submit_tag t(".save_prompt_instructions"), class: "btn btn-primary" %>
+    </div>
+  <% end %>
+</section>

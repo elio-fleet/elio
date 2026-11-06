@@ -1,0 +1,140 @@
+<%# Firewall tab of a server (FirewallOverview): its own firewall, the OVHcloud
+    network firewall of its OVH IPs, the public ports against both, and the
+    rules to copy with the prompt for an AI. Elio never changes a firewall. %>
+<% overview = FirewallOverview.new(server) %>
+<% analysis = overview.analysis %>
+<% snapshot = analysis.snapshot %>
+<% ovh_firewalls = overview.ovh_firewalls %>
+<div id="server-firewall">
+  <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+    <p class="text-xs text-ink-3"><%= t(".elio_never_changes") %></p>
+    <%= render "server_prompts/dialog", server: server, kind: :firewall %>
+  </div>
+
+  <section id="server-local-firewall" class="card mt-4">
+    <div class="card-header">
+      <h2 class="flex items-center gap-2 font-semibold"><%= icon :shield_check, class: "h-4 w-4 text-ink-3" %> <%= t(".server_firewall") %></h2>
+      <div class="flex items-center gap-2 text-xs text-ink-3">
+        <%= inventory_status_badge(snapshot) %>
+        <% if snapshot&.collected_at %><%= t("servers.ports_card.read_html", collected_at: relative_time_tag(snapshot.collected_at)) %><% end %>
+      </div>
+    </div>
+    <% if analysis.collected? %>
+      <% firewall = analysis.firewall %>
+      <p class="firewall-state flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm <%= analysis.firewall_active? ? "text-ink-2" : "text-warn-ink" %>">
+        <%= analysis.firewall_label %>
+      </p>
+      <% if firewall["active"].nil? %>
+        <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".needs_root") %></p>
+      <% elsif Array(firewall["allowed"]).any? %>
+        <ul class="local-firewall-rules divide-y divide-line border-t border-line">
+          <% firewall["allowed"].each do |rule| %>
+            <li class="local-firewall-rule flex flex-wrap items-center gap-2 px-4 py-2 text-xs">
+              <%= status_badge :good, t(".allow"), class: "shrink-0" %>
+              <span class="font-mono text-ink"><%= rule["rule"] %></span>
+              <span class="text-ink-3"><%= rule["from"] ? t(".from", source: rule["from"]) : t(".from_anywhere") %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% elsif analysis.firewall_active? %>
+        <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".no_allow_rule") %></p>
+      <% end %>
+    <% elsif snapshot&.failed? %>
+      <p class="inventory-error px-4 py-4 text-sm text-crit-ink"><%= snapshot.message %></p>
+    <% else %>
+      <p class="px-4 py-4 text-sm text-ink-3"><%= t("servers.ports_card.ports_inventory_yet") %></p>
+    <% end %>
+  </section>
+
+  <% if analysis.collected? %>
+    <section id="server-firewall-ports" class="card mt-6">
+      <div class="card-header">
+        <h2 class="flex items-center gap-2 font-semibold"><%= icon :globe, class: "h-4 w-4 text-ink-3" %> <%= t(".public_ports") %></h2>
+        <%= link_to t(".all_ports"), server_path(server, tab: "ports"), class: "text-xs font-medium text-accent hover:underline" %>
+      </div>
+      <% if analysis.public_ports.any? %>
+        <div class="overflow-x-auto">
+          <table class="firewall-ports table-dense">
+            <thead>
+              <tr>
+                <th class="pl-4"><%= t("servers.ports_card.port") %></th>
+                <th><%= t("servers.ports_card.service_container") %></th>
+                <th><%= t(".server_firewall") %></th>
+                <% ovh_firewalls.each do |firewall| %><th class="font-mono"><%= t(".ovh_ip", ip: firewall.ip) %></th><% end %>
+              </tr>
+            </thead>
+            <tbody>
+              <% analysis.public_ports.sort_by { |port| [ port.unexpected ? 0 : 1, port.port ] }.each do |port| %>
+                <tr class="firewall-port" data-port="<%= port.key %>">
+                  <td class="pl-4 font-mono font-medium"><%= port.port %><span class="text-ink-3">/<%= port.proto %></span>
+                    <% if port.unexpected %><%= status_badge :warn, t("words.unexpected"), class: "port-unexpected ml-1" %><% end %></td>
+                  <td class="text-xs text-ink-2"><%= port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || port.process || "—" %></td>
+                  <td class="text-xs"><%= render "servers/port_firewall", port: port %></td>
+                  <% ovh_firewalls.each do |firewall| %>
+                    <td class="ovh-port text-xs" data-ip="<%= firewall.ip %>"><%= ovh_firewall_badge(overview.ovh_verdict(firewall, port)) %></td>
+                  <% end %>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% else %>
+        <p class="px-4 py-4 text-sm text-ink-3"><%= t(".no_public_port") %></p>
+      <% end %>
+      <% if analysis.public_ports.any? { |port| port.firewall == "docker" } %>
+        <p class="docker-bypass flex gap-2 border-t border-line bg-warn-soft px-4 py-2 text-xs text-warn-ink">
+          <%= icon :exclamation_triangle, class: "h-4 w-4 shrink-0" %>
+          <%= t("servers.ports_card.docker_publishes_ports_adding") %>
+        </p>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if overview.ovh_blocks.any? %>
+    <section id="server-ovh-firewall" class="card mt-6">
+      <div class="card-header">
+        <h2 class="flex items-center gap-2 font-semibold"><%= icon :shield_check, class: "h-4 w-4 text-ink-3" %> <%= t(".ovh_firewall") %></h2>
+        <%= link_to t(".ovh_tab"), server_path(server, tab: "ovh"), class: "text-xs font-medium text-accent hover:underline" %>
+      </div>
+      <% overview.unread_ovh_blocks.each do |block| %>
+        <p class="border-b border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".ovh_not_read", block: block.name) %></p>
+      <% end %>
+      <% if ovh_firewalls.empty? && overview.unread_ovh_blocks.size < overview.ovh_blocks.size %>
+        <p class="px-4 py-2.5 text-xs text-warn-ink"><%= t("integrations.ovh.server_tab.ovh_network_firewall_not") %></p>
+      <% end %>
+      <% ovh_firewalls.each do |firewall| %>
+        <div class="ovh-firewall border-t border-line px-4 py-3 text-sm first:border-t-0" data-ip="<%= firewall.ip %>">
+          <p class="flex flex-wrap items-center gap-2 text-xs">
+            <span class="font-mono font-medium text-ink"><%= firewall.ip %></span>
+            <span class="text-ink-3"><%= firewall.block %></span>
+            <%= firewall.enabled ? status_badge(:good, t("integrations.ovh.server_tab.text")) : status_badge(:warn, t("integrations.ovh.server_tab.off")) %>
+          </p>
+          <% if firewall.rules.any? %>
+            <ul class="mt-1.5 space-y-0.5 font-mono text-[11px] text-ink-2">
+              <% firewall.sorted_rules.each do |rule| %><li class="ovh-firewall-rule"><%= ovh_firewall_rule(rule) %></li><% end %>
+            </ul>
+          <% else %>
+            <p class="mt-1 text-xs text-ink-3"><%= t(".no_ovh_rule") %></p>
+          <% end %>
+        </div>
+      <% end %>
+      <% overview.mitigations.each do |ip, mitigation| %>
+        <p class="ovh-mitigation border-t border-line px-4 py-2 text-xs text-ink-2"><%= t("integrations.ovh.server_tab.anti_ddos") %> <span class="font-mono"><%= ip %></span> : <%= mitigation["permanent"] ? t("integrations.ovh.server_tab.mitigation_permanent") : t("integrations.ovh.server_tab.mitigation_automatic") %><%= " (#{mitigation["state"]})" if mitigation["state"] %></p>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if analysis.collected? %>
+    <section id="server-firewall-suggested" class="card mt-6" data-controller="clipboard">
+      <div class="card-header">
+        <h2 class="flex items-center gap-2 font-semibold"><%= icon :clipboard, class: "h-4 w-4 text-ink-3" %> <%= t("servers.ports_card.suggested_ufw_rules") %></h2>
+        <%= render "settings/copy_button" %>
+      </div>
+      <div class="ufw-rules px-4 py-3">
+        <textarea readonly rows="<%= analysis.suggested_ufw_rules.lines.size + 2 %>" data-clipboard-target="source" aria-label="<%= t("servers.ports_card.suggested_ufw_rules") %>"
+                  class="block w-full resize-none rounded-lg border border-line bg-subtle px-3 py-2 font-mono text-xs text-ink-2"><%= analysis.suggested_ufw_rules %></textarea>
+        <p class="mt-2 text-xs text-ink-3"><%= t("servers.ports_card.elio_never_changes_firewall") %></p>
+      </div>
+    </section>
+  <% end %>
+</div>

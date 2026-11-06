@@ -4,6 +4,11 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Added
+
+- **Firewall tab** on the server page: the server's own firewall (ufw, nftables or iptables, with its rules), the OVHcloud network firewall of its OVH IPs (rules, anti-DDoS), the public ports with the verdict of each firewall side by side, the ufw rules to copy and the prompt for an AI. The Ports and OVH tabs link to it.
+- **Instructions for the prompts** (*Settings → General → Prompts for an AI*): your own text, added at the end of the prompt, e.g. "For the SSH port, always put the rules last". The firewall prompt now covers the server's firewall, and the OVHcloud one when the extension is on.
+
 ## [0.1.0-beta.3.1] — 2026-11-06
 
 A fix for upgrades to 0.1.0-beta.3.

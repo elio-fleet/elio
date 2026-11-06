@@ -52,6 +52,7 @@ Rails.application.routes.draw do
     resources :invitations, only: %i[create destroy]
     resource :security, only: :update
     resource :health_thresholds, only: :update
+    resource :prompt_instructions, only: :update
     resource :language, only: :update
     resource :docker, only: %i[show update], controller: "docker" do
       post :check

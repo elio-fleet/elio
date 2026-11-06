@@ -138,10 +138,13 @@ en:
         attached_html: attached %{ovh_match_label}
         state: State
         ovh_service: OVH service
-        ovh_ips_reverse_network: OVH IPs, reverse and network firewall
+        ovh_ips_reverse: OVH IPs and reverse
         reverse: Reverse of
         ovh_network_firewall_not: OVH network firewall not configured.
-        firewall: Firewall of
+        firewalls:
+          one: "Network firewall: %{count} IP, %{enabled} on."
+          other: "Network firewall: %{count} IPs, %{enabled} on."
+        see_firewall_tab: Firewall tab →
         anti_ddos: Anti-DDoS of
         dns_records_server: DNS records to this server
         dns_record_zones_read: No DNS record of the zones read points to this server.
@@ -371,6 +374,7 @@ en:
       unknown: Unknown
   server_prompt:
     task: What I need
+    instructions: Additional instructions
     none: "(none)"
     no_ports_inventory: "(no inventory of the ports yet)"
     sections:
@@ -424,9 +428,13 @@ en:
     monitors:
       intro: I monitor my Linux servers with Uptime Kuma. Here is what Elio (an inventory tool) knows about one of them. Propose the Uptime Kuma monitors to create for it.
       task: 'Propose the list of monitors to create, as a table: type (HTTP(s), HTTP(s) keyword, TCP port, ping, DNS, Docker container…), target (URL, host:port), check interval, and why. Do not repeat the monitors that already exist. Prefer what users actually reach (public addresses, domain names); a monitor on a private or VPN address needs an Uptime Kuma instance on that network: say so. Add a certificate expiry check for HTTPS services. Ask me if something is missing (domain names, URLs to check).'
-    ovh_firewall:
-      intro: My Linux server is hosted at OVHcloud. Here is what Elio (an inventory tool) knows about it. Propose the rules of the OVHcloud network firewall (Edge Network Firewall) of its public IP addresses.
-      task: 'Propose the rules of the OVHcloud network firewall for each public IP, as a table: sequence (0 to 19, the first matching rule applies), action (permit / deny), protocol, destination port, source, TCP option. Keep the SSH access of Elio on port %{ssh_port} open (restrict its source only if I give you Elio''s address). Allow only the public ports that must be reachable, and explain those you would close or restrict. This firewall is stateless: include what lets the replies to the server''s own outgoing connections back in (e.g. TCP option established), and end with a rule that denies the rest. Point out the ports exposed by Docker and the differences with the firewall of the machine.'
+    firewall:
+      local:
+        intro: Here is what Elio (an inventory tool) knows about my Linux server. Propose the rules of its firewall.
+        task: 'Propose the rules of the firewall of the machine, as ufw commands to run in order. Keep the SSH access of Elio on port %{ssh_port} open (restrict its source only if I give you Elio''s address). Allow only the public ports that must be reachable, and explain those you would close or restrict. Point out the ports exposed by Docker (they bypass ufw) and what would cut the current connections.'
+      ovh:
+        intro: My Linux server is hosted at OVHcloud. Here is what Elio (an inventory tool) knows about it. Propose the rules of its firewalls, the one of the machine and the OVHcloud network firewall (Edge Network Firewall) of its public IP addresses.
+        task: 'Propose, first, the rules of the OVHcloud network firewall for each public IP, as a table: sequence (0 to 19, the first matching rule applies), action (permit / deny), protocol, destination port, source, TCP option. This firewall is stateless: include what lets the replies to the server''s own outgoing connections back in (e.g. TCP option established), and end with a rule that denies the rest. It filters only IPv4. Then the rules of the firewall of the machine, as ufw commands. Keep the SSH access of Elio on port %{ssh_port} open (restrict its source only if I give you Elio''s address). Allow only the public ports that must be reachable, and explain those you would close or restrict. Point out the ports exposed by Docker and the differences between the two firewalls.'
   server_prompts:
     dialog:
       copy_hint: Generated from the last inventory. No key, token or password is included.
@@ -434,9 +442,12 @@ en:
     monitors:
       button: Prompt to propose monitors
       title: 'Prompt for an AI: monitors to create'
-    ovh_firewall:
+    firewall:
       button: Prompt to propose firewall rules
-      title: 'Prompt for an AI: OVHcloud network firewall'
+      title: 'Prompt for an AI: firewall rules'
+    custom:
+      included: Your instructions are included.
+      edit: Edit the instructions
   dns_records:
     index:
       records: Records
