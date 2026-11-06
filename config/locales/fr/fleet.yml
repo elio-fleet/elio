@@ -8,6 +8,7 @@ fr:
       docker: Docker
       schedules: Tâches planifiées
       ports: Ports
+      firewall: Firewall
       keys: Clés SSH
       history: Historique
       server_sections: Sections du serveur

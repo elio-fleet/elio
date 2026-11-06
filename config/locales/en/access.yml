@@ -236,6 +236,16 @@ en:
       memory_critical: 'Memory: critical (%)'
       load_warning_processors: 'Load: warning (× processors)'
       save_thresholds: Save the thresholds
+      prompt_instructions: Prompts for an AI
+      prompt_instructions_hint: Your instructions, added at the end of each prompt, on every server.
+      prompt_labels:
+        monitors: Uptime Kuma monitors
+        firewall: Firewall rules
+      prompt_placeholders:
+        monitors: 'e.g. Always use a 60 s interval and a keyword monitor for the web sites.'
+        firewall: 'e.g. For the SSH port, always put the rules last.'
+      prompt_instructions_footer: "Free text, %{count} characters at most. Never put a password or a token here: the prompt is meant to be pasted into an AI."
+      save_prompt_instructions: Save the instructions
       ssh_key_application: SSH key of the application
       generated: Generated on
       public_key: Public key
@@ -272,6 +282,8 @@ en:
         in_progress:
           one: 'In progress: %{done}/%{count} server'
           other: 'In progress: %{done}/%{count} servers'
+  prompt_instructions_controller:
+    saved: Instructions of the prompts saved.
   health_thresholds_controller:
     saved: Health thresholds saved.
     invalid: 'Invalid thresholds: %{full_messages_to_sentence}'

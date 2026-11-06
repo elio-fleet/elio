@@ -236,6 +236,16 @@ fr:
       memory_critical: 'Mémoire : critique (%)'
       load_warning_processors: 'Charge : attention (× processeurs)'
       save_thresholds: Enregistrer les seuils
+      prompt_instructions: Prompts pour une IA
+      prompt_instructions_hint: Vos consignes, ajoutées à la fin de chaque prompt, sur tous les serveurs.
+      prompt_labels:
+        monitors: Sondes Uptime Kuma
+        firewall: Règles de firewall
+      prompt_placeholders:
+        monitors: 'Ex. : Utilise toujours un intervalle de 60 s et une sonde par mot-clé pour les sites web.'
+        firewall: 'Ex. : Pour le port SSH, mets les règles toujours en dernier.'
+      prompt_instructions_footer: "Texte libre, %{count} caractères au plus. N'y mettez jamais de mot de passe ni de jeton : le prompt est fait pour être collé dans une IA."
+      save_prompt_instructions: Enregistrer les consignes
       ssh_key_application: Clé SSH de l'application
       generated: Générée le
       public_key: Clé publique
@@ -272,6 +282,8 @@ fr:
         in_progress:
           one: 'En cours : %{done}/%{count} serveur'
           other: 'En cours : %{done}/%{count} serveurs'
+  prompt_instructions_controller:
+    saved: Consignes des prompts enregistrées.
   health_thresholds_controller:
     saved: Seuils de santé enregistrés.
     invalid: 'Seuils invalides : %{full_messages_to_sentence}'

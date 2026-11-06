@@ -8,6 +8,7 @@ en:
       docker: Docker
       schedules: Scheduled tasks
       ports: Ports
+      firewall: Firewall
       keys: SSH keys
       history: History
       server_sections: Server sections

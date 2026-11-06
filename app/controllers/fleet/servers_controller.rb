@@ -36,7 +36,7 @@ class ServersController < ApplicationController
     end
   end
 
-  TABS = %w[overview vulnerabilities packages services docker ports schedules keys notes history].freeze
+  TABS = %w[overview vulnerabilities packages services docker ports firewall schedules keys notes history].freeze
   NOTES_PER_PAGE = 20
   VULNERABILITIES_PER_PAGE = 100
   VULNERABILITY_PACKAGES_PER_PAGE = 50
