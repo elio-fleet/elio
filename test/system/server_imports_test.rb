@@ -7,7 +7,7 @@ class ServerImportsTest < ApplicationSystemTestCase
 
   test "previewing then importing servers from an ssh config" do
     visit servers_path
-    click_on "Importer"
+    fleet_action "Importer des serveurs"
 
     choose "~/.ssh/config"
     fill_in "Contenu", with: "Host api\n  HostName 10.0.0.12\n  User deploy\nHost web\n  HostName 10.0.0.99\n"

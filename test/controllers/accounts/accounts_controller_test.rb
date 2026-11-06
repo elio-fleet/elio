@@ -46,6 +46,11 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
 
     get new_two_factor_path
     assert_select ".two-factor-qr img[src^='data:image/svg+xml;base64,'][alt]"
+    # Black on white with a quiet zone, whatever the theme (readable in dark mode).
+    svg = Base64.decode64(css_select(".two-factor-qr img").first["src"].delete_prefix("data:image/svg+xml;base64,"))
+    assert_match(/fill="#fff"/, svg)
+    assert_match(/fill="#000"/, svg)
+    assert_select ".two-factor-qr.bg-white"
     assert_select "form[action=?][data-turbo=false]", two_factor_path
     secret = session[:pending_otp_secret]
     assert_select ".two-factor-secret", secret.scan(/.{4}/).join(" ")

@@ -29,7 +29,7 @@
   <% end %>
 </nav>
 
-<%= form_with url: ovh_path, method: :get, data: { controller: "auto-submit", turbo_action: "advance" }, class: "mt-3 flex flex-wrap items-center gap-3" do |f| %>
+<%= form_with url: ovh_path, method: :get, data: search_form_data, class: "mt-3 flex flex-wrap items-center gap-3" do |f| %>
   <%= hidden_field_tag :tab, @tab %>
   <%= f.search_field :q, value: @q, placeholder: t(".name_ip_target"), aria: { label: t(".search") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1 text-xs" %>
   <label class="flex items-center gap-1.5 text-xs text-ink-2">
@@ -38,6 +38,7 @@
   </label>
 <% end %>
 
+<%= search_results_frame do %>
 <% if @pager.records.any? %>
   <div class="card mt-3 overflow-x-auto">
     <table id="ovh-resources" class="table-dense">
@@ -92,4 +93,5 @@
   <%= render "shared/pagination", pager: @pager, noun: t("nouns.resources") %>
 <% else %>
   <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @integration.last_synced_at ? t(".resource_matches") : t(".not_synchronized_ovhcloud_yet") %></p>
+<% end %>
 <% end %>

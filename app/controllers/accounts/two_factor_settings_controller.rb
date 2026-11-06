@@ -8,7 +8,7 @@ class TwoFactorSettingsController < ApplicationController
 
     session[:pending_otp_secret] ||= User.generate_otp_secret
     @secret = session[:pending_otp_secret]
-    @qr_code = RQRCode::QRCode.new(current_user.otp_provisioning_uri(@secret)).as_svg(module_size: 4, standalone: true, use_path: true)
+    @qr_code = RQRCode::QRCode.new(current_user.otp_provisioning_uri(@secret)).as_svg(module_size: 4, standalone: true, use_path: true, color: "000", fill: "fff", offset: 16)
   end
 
   def create

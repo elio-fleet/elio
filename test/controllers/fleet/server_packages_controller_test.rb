@@ -36,7 +36,9 @@ class ServerPackagesControllerTest < ActionDispatch::IntegrationTest
       assert_select "tr.package:first-child td", text: /\Acurl/m
       assert_select "tr.package", text: /openssl.*→ 3\.0\.15\s+sécurité/m
       assert_select "tr.package td", text: /libssl3\s*i386/
-      assert_select "form.packages-filters[data-turbo-frame=?]", ActionView::RecordIdentifier.dom_id(servers(:web), :packages)
+      # The search reloads only the results: the field keeps its focus.
+      assert_select "form.packages-filters[data-turbo-frame=?]", ActionView::RecordIdentifier.dom_id(servers(:web), :package_results)
+      assert_select "turbo-frame##{ActionView::RecordIdentifier.dom_id(servers(:web), :package_results)} tr.package"
     end
   end
 

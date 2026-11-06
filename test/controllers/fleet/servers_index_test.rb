@@ -247,6 +247,42 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] input[name=badge][value=health]", server_pings_path
     assert_select "form[action=?][data-server-ping-badge-param=?] input[name=badge][value=health]",
                   server_ping_path(servers(:web)), ActionView::RecordIdentifier.dom_id(servers(:web), :status)
-    assert_select "form[action=?] button", server_inventories_path, text: /Inventaire/
+    assert_select "form[action=?] button", server_inventories_path, text: /Inventorier tout le parc/
+  end
+
+  test "the fleet actions are grouped in a menu, adding a server stays a button" do
+    sign_in users(:one)
+    get servers_path
+
+    assert_select "details#fleet-actions[data-controller=dropdown]" do
+      assert_select "summary[aria-haspopup=menu]", text: /Actions/
+      assert_select "[role=menu] [role=menuitem]", 4
+      assert_select "form[action=?] button[role=menuitem]", server_inventories_path, text: /Inventorier tout le parc/
+      assert_select "form[action=?] button[role=menuitem]", server_scans_path, text: /Scanner les clés de tout le parc/
+      assert_select "a[role=menuitem][href=?]", new_server_import_path, text: /Importer des serveurs/
+    end
+    assert_select "#fleet-actions a[href=?]", new_server_path, 0
+    assert_select "a.btn-primary[href=?]", new_server_path
+  end
+
+  test "a viewer's menu only refreshes the statuses" do
+    sign_in users(:viewer)
+    get servers_path
+
+    assert_select "#fleet-actions [role=menuitem]", 1
+    assert_select "#fleet-actions [role=menuitem]", text: /Actualiser les statuts/
+  end
+
+  test "the search reloads only the results frame" do
+    sign_in users(:one)
+    get servers_path(q: "web")
+
+    assert_select "form.fleet-filters[data-turbo-frame=fleet-results][data-controller=auto-submit]:not([data-turbo-action])"
+    assert_select "turbo-frame#fleet-results form.fleet-filters", 0
+    assert_select "turbo-frame#fleet-results[target=_top]" do
+      assert_select "#servers tbody tr", 1
+      assert_select "nav.server-group-filter"
+      assert_select ".view-toggle"
+    end
   end
 end

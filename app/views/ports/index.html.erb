@@ -5,7 +5,7 @@
   <p class="text-xs text-ink-3"><%= t(".what_each_server_exposes") %></p>
 </div>
 
-<%= form_with url: ports_path, method: :get, data: { controller: "auto-submit", turbo_action: "advance" }, class: "ports-filters mt-5 flex flex-wrap items-center gap-2" do |f| %>
+<%= form_with url: ports_path, method: :get, data: search_form_data, class: "ports-filters mt-5 flex flex-wrap items-center gap-2" do |f| %>
   <%= f.select :group, [ [ t(".all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
         aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
   <%= f.search_field :q, value: @port, placeholder: t(".port_e_g_3306"), inputmode: "numeric", aria: { label: t(".port") },
@@ -13,6 +13,7 @@
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
 <% end %>
 
+<%= search_results_frame do %>
 <% if @rows.any? %>
   <div class="card mt-3 overflow-x-auto">
     <table id="public-ports" class="table-dense">
@@ -38,4 +39,5 @@
 
 <% if @without_inventory.any? %>
   <p class="mt-3 text-xs text-ink-3"><%= t(".without_ports_inventory") %> <%= safe_join(@without_inventory.map { |server| link_to(server.name, server_path(server), class: "hover:underline") }, ", ") %>.</p>
+<% end %>
 <% end %>

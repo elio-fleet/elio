@@ -12,22 +12,30 @@
       </p>
     </div>
     <div class="flex flex-wrap items-center justify-end gap-2">
-      <% if @summary.total.positive? %>
-        <%= button_to server_pings_path, params: { badge: "health" }, form: server_ping_form, title: t(".check_every_server_answers"),
-              class: "group btn btn-secondary" do %>
-          <%= icon :arrow_path, class: "h-4 w-4 group-disabled:animate-spin" %> <%= t(".refresh_statuses") %>
-        <% end %>
-        <% if can?(:operate) %>
-          <%= button_to server_inventories_path, title: t(".read_again_system_health"), class: "btn btn-secondary" do %>
-            <%= icon :pulse %> <%= t("words.inventory") %>
+      <% if @summary.total.positive? || can?(:operate) %>
+        <%= render "shared/dropdown", label: t("words.actions"), id: "fleet-actions" do %>
+          <% item = "dropdown-item flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-ink-2 hover:bg-subtle hover:text-ink focus:bg-subtle focus:text-ink focus:outline-none" %>
+          <% if @summary.total.positive? %>
+            <%= button_to server_pings_path, params: { badge: "health" }, form: server_ping_form, title: t("servers.index.check_every_server_answers"), role: "menuitem", class: "group #{item}" do %>
+              <%= icon :arrow_path, class: "h-4 w-4 group-disabled:animate-spin" %> <%= t("servers.index.refresh_statuses") %>
+            <% end %>
+            <% if can?(:operate) %>
+              <%= button_to server_inventories_path, title: t("servers.index.read_again_system_health"), role: "menuitem", class: item do %>
+                <%= icon :pulse, class: "h-4 w-4" %> <%= t("servers.index.inventory_whole_fleet") %>
+              <% end %>
+              <%= button_to server_scans_path, title: t("servers.index.read_keys_every_server"), role: "menuitem", class: item do %>
+                <%= icon :key, class: "h-4 w-4" %> <%= t("servers.index.scan_keys_whole_fleet") %>
+              <% end %>
+            <% end %>
           <% end %>
-          <%= button_to server_scans_path, title: t(".read_keys_every_server"), class: "btn btn-secondary" do %>
-            <%= icon :key %> <%= t("dashboard.index.scan_keys") %>
+          <% if can?(:operate) %>
+            <%= link_to new_server_import_path, role: "menuitem", class: item do %>
+              <%= icon :list_bullet, class: "h-4 w-4" %> <%= t("servers.index.import_servers") %>
+            <% end %>
           <% end %>
         <% end %>
       <% end %>
       <% if can?(:operate) %>
-        <%= link_to t(".import"), new_server_import_path, class: "btn btn-secondary" %>
         <%= link_to new_server_path, class: "btn btn-primary" do %>
           <%= icon :plus %> <%= t("command_palette.add_server") %>
         <% end %>
@@ -46,27 +54,11 @@
     </div>
   <% end %>
 
-  <div class="mt-5 flex flex-wrap items-center gap-2">
-    <nav class="server-group-filter flex flex-wrap items-center gap-2" aria-label="<%= t(".groups") %>">
-      <% chip = "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs" %>
-      <% if @groups.any? %>
-        <%= link_to t(".all"), servers_path(os: @os, state: @state), aria: { current: (@group ? nil : "page") },
-              class: "#{chip} #{@group ? "border border-line bg-surface text-ink-2 hover:bg-subtle" : "bg-ink font-medium text-canvas"}" %>
-        <% @groups.each do |group| %>
-          <% current = group == @group %>
-          <%= link_to servers_path(group: group.id, os: @os, state: @state), aria: { current: (current ? "page" : nil) },
-                class: "#{chip} #{current ? "bg-ink font-medium text-canvas" : "border border-line bg-surface text-ink-2 hover:bg-subtle"}" do %>
-            <span class="h-2 w-2 rounded-full <%= group.dot_classes %>"></span><%= group.name %>
-          <% end %>
-        <% end %>
-      <% end %>
-      <%= link_to (@groups.any? ? t(".manage_groups") : t(".organize_servers_groups")), server_groups_path, class: "text-xs font-medium text-accent hover:underline" %>
-    </nav>
-
-    <%= form_with url: servers_path, method: :get, data: { controller: "auto-submit", turbo_action: "advance" }, class: "fleet-filters ml-auto flex flex-wrap items-center gap-2" do |f| %>
+  <div class="mt-5">
+    <%= form_with url: servers_path, method: :get, data: search_form_data("fleet-results"), class: "fleet-filters flex flex-wrap items-center gap-2" do |f| %>
       <%= hidden_field_tag :group, @group.id if @group %>
       <%= f.search_field :q, value: @q, placeholder: t(".name_hostname_ip"), aria: { label: t(".search_server") },
-            data: { action: "input->auto-submit#submitLater" }, class: "fleet-search input w-44 py-1 text-xs" %>
+            data: { action: "input->auto-submit#submitLater" }, class: "fleet-search input w-56 py-1 text-xs" %>
       <% if @os_names.any? %>
         <span class="os-filter">
           <%= f.select :os, [ [ t(".all_systems"), "" ], *@os_names.map { |name| [ name, name ] } ], { selected: @os },
@@ -79,6 +71,26 @@
       </span>
       <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
     <% end %>
+  </div>
+
+  <%= search_results_frame "fleet-results" do %>
+  <div class="mt-3 flex flex-wrap items-center gap-2">
+    <nav class="server-group-filter flex flex-wrap items-center gap-2" aria-label="<%= t(".groups") %>">
+      <% chip = "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs" %>
+      <% if @groups.any? %>
+        <%= link_to t(".all"), servers_path(os: @os, state: @state, q: @q.presence), aria: { current: (@group ? nil : "page") },
+              class: "#{chip} #{@group ? "border border-line bg-surface text-ink-2 hover:bg-subtle" : "bg-ink font-medium text-canvas"}" %>
+        <% @groups.each do |group| %>
+          <% current = group == @group %>
+          <%= link_to servers_path(group: group.id, os: @os, state: @state, q: @q.presence), aria: { current: (current ? "page" : nil) },
+                class: "#{chip} #{current ? "bg-ink font-medium text-canvas" : "border border-line bg-surface text-ink-2 hover:bg-subtle"}" do %>
+            <span class="h-2 w-2 rounded-full <%= group.dot_classes %>"></span><%= group.name %>
+          <% end %>
+        <% end %>
+      <% end %>
+      <%= link_to (@groups.any? ? t(".manage_groups") : t(".organize_servers_groups")), server_groups_path, class: "text-xs font-medium text-accent hover:underline" %>
+    </nav>
+    <div class="ml-auto"></div>
     <div class="view-toggle flex rounded-lg border border-line bg-surface p-0.5" role="group" aria-label="<%= t(".display") %>">
       <% [ [ "list", t(".list"), :list_bullet ], [ "grid", t(".grid"), :squares_2x2 ] ].each do |view, label, icon_name| %>
         <%= link_to servers_path(request.query_parameters.except("page").merge("view" => view)), title: t(".view_label", label_downcase: label.downcase), data: { view: view },
@@ -131,5 +143,6 @@
         <%= link_to t(".add_your_first_server"), new_server_path, class: "mt-2 inline-block text-sm font-medium text-accent hover:underline" %>
       <% end %>
     </div>
+  <% end %>
   <% end %>
 </section>

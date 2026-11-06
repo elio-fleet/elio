@@ -11,14 +11,14 @@ class UiTest < ApplicationSystemTestCase
 
   test "toasts can be closed and disappear by themselves" do
     visit servers_path
-    click_on "Scanner les clés"
+    fleet_action "Scanner les clés de tout le parc"
 
     assert_selector "#flash .toast", text: "Scan des clés lancé"
     find("#flash .toast button[aria-label=Fermer]").click
     assert_no_selector "#flash .toast"
 
     visit servers_path
-    click_on "Scanner les clés"
+    fleet_action "Scanner les clés de tout le parc"
     assert_selector "#flash .toast"
     execute_script("document.querySelector('#flash [data-controller=toast]').dispatchEvent(new MouseEvent('mouseleave'))")
     assert_no_selector "#flash .toast", wait: 8

@@ -13,7 +13,7 @@ class ServerImportsControllerTest < ActionDispatch::IntegrationTest
   test "the form, linked from the servers page" do
     sign_in users(:one)
     get servers_path
-    assert_select "a[href=?]", new_server_import_path, text: "Importer"
+    assert_select "a[href=?]", new_server_import_path, text: "Importer des serveurs"
 
     get new_server_import_path
     assert_response :success

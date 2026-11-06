@@ -10,6 +10,9 @@ en:
       ports: Ports
       keys: SSH keys
       history: History
+      server_sections: Server sections
+      section: Section
+      more: More
     index:
       check_every_server_answers: Check that every server answers
       read_again_system_health: Read again the system, health and services of every server
@@ -49,6 +52,9 @@ en:
         one: on %{count} server
         other: on %{count} servers
       updates: Updates
+      inventory_whole_fleet: Inventory the whole fleet
+      scan_keys_whole_fleet: Scan the keys of the whole fleet
+      import_servers: Import servers
     show:
       search_whole_fleet: Search the whole fleet
       activities: activities
