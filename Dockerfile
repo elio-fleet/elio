@@ -8,14 +8,18 @@
 # For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
 
 # Make sure RUBY_VERSION matches the Ruby version in .ruby-version
-ARG RUBY_VERSION=3.4.2
-FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
+ARG RUBY_VERSION=3.4.12
+FROM docker.io/library/ruby:$RUBY_VERSION-slim-trixie AS base
 
 # Rails app lives here
 WORKDIR /rails
 
-# Install base packages
-RUN apt-get update -qq && \
+# Install base packages, with the security updates published since the base
+# image was built (it is not rebuilt for each Debian fix). APT_REFRESH (a date
+# in the CI, the run in a release) makes a cached build take them again.
+ARG APT_REFRESH=none
+RUN echo "packages of ${APT_REFRESH}" && apt-get update -qq && \
+    apt-get upgrade -y --no-install-recommends && \
     apt-get install --no-install-recommends -y curl libjemalloc2 libvips postgresql-client && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 

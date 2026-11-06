@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# Fails when a built Elio image still has Debian security updates to apply
+# (its base image or its build cache has aged): they are listed.
+#
+#   bin/image-security-updates ghcr.io/elio-fleet/elio:beta
+set -euo pipefail
+
+image="${1:?usage: bin/image-security-updates <image>}"
+updates="$(docker run --rm --user root --entrypoint sh "$image" -c \
+  'apt-get update -qq >/dev/null && apt list --upgradable 2>/dev/null | grep -- "-security" || true')"
+
+if [ -n "$updates" ]; then
+  echo "Security updates not applied in $image:"
+  echo "$updates"
+  exit 1
+fi
+echo "No pending security update in $image."

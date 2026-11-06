@@ -111,14 +111,22 @@ jobs:
 
       - uses: docker/setup-buildx-action@v4
 
+      - name: The date, to take the Debian updates once a day despite the cache
+        id: date
+        run: echo "day=$(date -u +%F)" >> "$GITHUB_OUTPUT"
+
       - name: Build the image
         uses: docker/build-push-action@v7
         with:
           context: .
           load: true
           tags: elio:ci
+          build-args: APT_REFRESH=${{ steps.date.outputs.day }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
       - name: Start it with PostgreSQL
         run: bin/smoke-image elio:ci
+
+      - name: No pending security update in it
+        run: bin/image-security-updates elio:ci
