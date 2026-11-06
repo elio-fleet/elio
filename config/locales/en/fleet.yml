@@ -13,6 +13,7 @@ en:
       server_sections: Server sections
       section: Section
       more: More
+      notes: Notes
     index:
       check_every_server_answers: Check that every server answers
       read_again_system_health: Read again the system, health and services of every server
@@ -62,7 +63,7 @@ en:
       edit: Edit
       server_sections: Server sections
       authorized_ssh_keys: Authorized SSH keys
-      public_keys_can_log: "Public keys that can log in to this server, on every account Elio can read. Keys are added to Elio's login account."
+      public_keys_can_log: Public keys that can log in to this server, on every account Elio can read. Keys are added to Elio's login account.
       activity_server_yet: No activity on this server yet.
     row:
       load_over_24_h: Load over 24 h (in % of the processors)
@@ -311,3 +312,26 @@ en:
       indigo: Indigo
       violet: Violet
       pink: Pink
+  server_notes:
+    deleted_user: a deleted user
+    tab:
+      title: Notes
+      intro: 'What the team should know about this server: its role, a procedure, an incident. Markdown is supported.'
+      none: No note yet.
+    form:
+      placeholder: 'Write a note… (Markdown: **bold**, `code`, lists, links, tables)'
+      label: Note
+      add: Add the note
+      save: Save
+      cancel: Cancel
+      preview: Preview
+      preview_empty: Nothing to preview.
+    note:
+      edited: edited
+      edit: Edit
+      delete: Delete
+      delete_confirm: This note will be deleted.
+  server_notes_controller:
+    added: Note added.
+    updated: Note updated.
+    deleted: Note deleted.

@@ -8,7 +8,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
   # Accented letters of French, French punctuation, and common French words.
-  FRENCH = /[àâçéèêëîïôûùüÿœ«»]|\b(?:le|la|les|des|du|une|est|sont|aucun|aucune|pour|avec|sans|dans|sur|serveurs?|clés?|tâches?|paramètres|groupes?|mise|jour|activité|vue|ensemble|voir|tout|rien|nouveaux?|nouvelles?|ajouter|supprimer|modifier|enregistrer|lancer|retour|fermer|oui|non|parc|inventaire|sondes?|disponible|corrige|empreinte|statut|nom|commande|fichier|ligne|taille|noyau|horloge|quand|couleur|registre|alertes|adresses?|cible|offre|projet|trousseau|conteneurs?|processus|correctif|note)\b/i
+  FRENCH = /[àâçéèêëîïôûùüÿœ«»]|\b(?:le|la|les|des|du|une|est|sont|aucun|aucune|pour|avec|sans|dans|sur|serveurs?|clés?|tâches?|paramètres|groupes?|mise|jour|activité|vue|ensemble|voir|tout|rien|nouveaux?|nouvelles?|ajouter|supprimer|modifier|enregistrer|lancer|retour|fermer|oui|non|parc|inventaire|sondes?|disponible|corrige|empreinte|statut|nom|commande|fichier|ligne|taille|noyau|horloge|quand|couleur|registre|alertes|adresses?|cible|offre|projet|trousseau|conteneurs?|processus|correctif)\b/i
 
   # Texts and attributes a user reads, but those of `except` (data).
   def self.french_texts(html, scope: nil, except: [])
@@ -94,6 +94,8 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english new_public_key_path, except: data
     assert_english edit_public_key_path(public_keys(:alice)), except: data
     assert_english server_path(servers(:web), tab: "keys"), except: data
+    servers(:web).notes.create!(body: "Front **nginx**", user: users(:one))
+    assert_english server_path(servers(:web), tab: "notes"), except: data + [ ".note-body" ]
     assert_english settings_path, except: data
   end
 

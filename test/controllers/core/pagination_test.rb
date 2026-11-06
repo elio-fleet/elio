@@ -107,4 +107,15 @@ class PaginationTest < ActionDispatch::IntegrationTest
       assert_equal({ "tab" => "history", "page" => "2" }, next_page_query)
     end
   end
+
+  test "the notes of a server" do
+    3.times { |index| servers(:web).notes.create!(body: "Note #{index}", user: users(:one), created_at: index.minutes.ago) }
+    sign_in users(:one)
+    with_per_page(ServersController, 2, name: :NOTES_PER_PAGE) do
+      get server_path(servers(:web), tab: "notes", page: 2)
+    end
+    assert_select "article.server-note", 1
+    assert_select "article.server-note .note-body", "Note 2"
+    assert_select "#server-notes nav.pagination"
+  end
 end

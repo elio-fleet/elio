@@ -27,6 +27,9 @@ Rails.application.routes.draw do
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
     resource :authorized_key, only: :destroy, controller: "server_authorized_keys"
     resources :authorizations, only: :create, controller: "server_authorizations"
+    resources :notes, only: %i[create edit update destroy], controller: "server_notes" do
+      post :preview, on: :collection
+    end
   end
   resource :server_pings, only: :create, path: "servers/pings"
   resource :server_scans, only: :create, path: "servers/scans"

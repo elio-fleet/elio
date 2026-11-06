@@ -1,0 +1,20 @@
+<%= turbo_frame_tag note do %>
+  <article class="server-note px-4 py-3" data-note="<%= note.id %>">
+    <header class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-3">
+      <span class="note-author font-medium text-ink-2"><%= note.author_name %></span>
+      <span>·</span><%= relative_time_tag note.created_at %>
+      <% if note.edited? %><span class="note-edited">(<%= t("server_notes.note.edited") %>)</span><% end %>
+      <span class="ml-auto flex items-center gap-1">
+        <% if note.editable_by?(current_user) %>
+          <%= link_to t("server_notes.note.edit"), edit_server_note_path(server, note), class: "edit-note btn btn-ghost px-2 py-1 text-xs" %>
+        <% end %>
+        <% if note.deletable_by?(current_user) %>
+          <%= button_to t("server_notes.note.delete"), server_note_path(server, note), method: :delete,
+                form: { data: { turbo_frame: "_top", turbo_confirm: t("server_notes.note.delete_confirm"), confirm_label: t("server_notes.note.delete"), confirm_variant: "danger" } },
+                class: "delete-note btn btn-ghost px-2 py-1 text-xs text-crit-ink" %>
+        <% end %>
+      </span>
+    </header>
+    <div class="note-body prose-note mt-1.5 text-sm text-ink"><%= note.html %></div>
+  </article>
+<% end %>
