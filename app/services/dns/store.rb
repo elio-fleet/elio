@@ -23,6 +23,7 @@ module Dns::Store
     end
     servers = Dns::Matcher.call
     servers.each(&:refresh_health!)
+    Dns::Alerts.call
     rows.size
   end
 end

@@ -61,8 +61,8 @@ class Integrations::TechnitiumTest < ActiveSupport::TestCase
     assert_equal [ nil, nil ], DnsRecord.where(name: "web.example.test").pluck(:server_id)
   end
 
-  test "outside-the-fleet records are logged once, not on the first sync, when the alert is on" do
-    @integration.update!(settings: @integration.settings.merge("alert_outside" => true))
+  test "outside-the-fleet records are logged once, not on the first sync, when the DNS alert is on" do
+    AppSetting.current.update!(dns_alert_outside: true)
     assert_no_difference -> { Activity.of_kind(:dns_record_outside_fleet).count } do
       sync
     end
@@ -76,11 +76,18 @@ class Integrations::TechnitiumTest < ActiveSupport::TestCase
     end
   end
 
-  test "servers without a DNS name get a warning when the alert is on" do
+  test "servers without a DNS name get a warning when the DNS alert is on, unless their group is ignored" do
     sync
-    @integration.update!(last_synced_at: Time.current, settings: @integration.settings.merge("alert_server_without_dns" => true))
-    assert_equal [ "Aucun nom DNS dans Technitium" ], Integrations::Technitium.health_reasons(@integration, servers(:backup)).map { |reason| Inventory::HealthStatus.text(reason.to_h.stringify_keys) }
-    assert_empty Integrations::Technitium.health_reasons(@integration, servers(:web))
+    @integration.update!(last_synced_at: Time.current)
+    settings = AppSetting.current
+    settings.update!(dns_alert_without_name: true)
+    text = ->(server) { Dns.health_reasons(server.reload, settings: settings).map { |reason| Inventory::HealthStatus.text(reason.to_h.stringify_keys) } }
+    assert_equal [ "Aucun nom DNS" ], text.(servers(:backup))
+    assert_empty text.(servers(:web))
+
+    settings.update!(dns_without_name_ignored_group_ids: servers(:backup).server_groups.ids + [ server_groups(:staging).id ])
+    servers(:backup).server_groups << server_groups(:staging) unless servers(:backup).server_groups.include?(server_groups(:staging))
+    assert_empty text.(servers(:backup))
   end
 
   test "test the connection: version, zones, a warning when the token can write" do

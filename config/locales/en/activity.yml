@@ -193,6 +193,9 @@ en:
       server_note_added:
         label: Note added
         description: Someone left a note on a server (Notes tab).
+      dns_record_conflict:
+        label: DNS name that differs by source
+        description: A DNS name has different records in two sources (OVHcloud, Technitium…).
     categories:
       keys: SSH keys
       servers: Servers
@@ -303,6 +306,7 @@ en:
       integration_sync_failed: "%{integration} sync failed: %{error}"
       automation_run: "%{automation}: %{result}"
       server_note_added: 'Note on “%{server}” by %{author}: %{excerpt}'
+      dns_record_conflict: "%{record} differs between %{sources}"
     target_account: "“%{server_name}” (%{account} account)"
   automation:
     whole_fleet: The whole fleet

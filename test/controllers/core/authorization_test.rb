@@ -88,6 +88,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "revoke a public_key access" => -> { delete public_key_access_path(public_keys(:alice)), params: { server_id: servers(:web).id } }
     },
     administer: {
+      "DNS alerts" => -> { patch settings_dns_alerts_path, params: { dns_alerts: { outside: "1" } } },
       "general settings" => -> { get settings_path },
       "generate the Elio key" => -> { post ssh_key_path },
       "trust a new host key" => -> { post server_host_key_path(servers(:web)), params: { fingerprint: "SHA256:new" } },

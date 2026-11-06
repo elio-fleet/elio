@@ -30,8 +30,6 @@ class Integrations::Ovh < Integrations::Base
         Integrations::Field.new(key: :expiring_ignore_auto_renew, label: I18n.t("integrations.ovh.expiring_ignore_auto_renew"), type: :boolean, default: true, section: "Alertes"),
         Integrations::Field.new(key: :alert_firewall_disabled, label: I18n.t("integrations.ovh.alert_firewall_disabled"), type: :boolean, default: false, section: "Alertes"),
         Integrations::Field.new(key: :alert_reverse_mismatch, label: I18n.t("integrations.ovh.alert_reverse_mismatch"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :alert_server_without_dns, label: I18n.t("integrations.ovh.alert_server_without_dns"), type: :boolean, default: false, section: "Alertes"),
-        Integrations::Field.new(key: :alert_dns_outside, label: I18n.t("integrations.ovh.alert_dns_outside"), type: :boolean, default: false, section: "Alertes"),
         Integrations::Field.new(key: :alert_unmanaged_service, label: I18n.t("integrations.ovh.alert_unmanaged_service"), type: :boolean, default: false, section: "Alertes",
                   hint: I18n.t("integrations.ovh.alert_unmanaged_service_hint"))
       ]
@@ -87,16 +85,12 @@ class Integrations::Ovh < Integrations::Base
       integration.value(:expiring_ignore_auto_renew) ? scope.where("NOT COALESCE((ovh_resources.data->>'renew_automatic')::boolean, false)") : scope
     end
 
-    # A/AAAA records whose IP belongs to no server of the fleet.
-    def records_outside_fleet = DnsRecord.of_source("ovh").outside_fleet
 
     def health_reasons(integration, server)
       return [] unless integration.last_synced_at
 
       resources = server.ovh_resources.to_a
       return [] if resources.empty?
-
-      dns_names = server.dns_records.of_source("ovh").exists?
 
       reasons = []
       if integration.value(:alert_expiring)
@@ -117,9 +111,6 @@ class Integrations::Ovh < Integrations::Base
             reasons << (reverse.blank? ? reason("warn", :no_reverse, ip: ip) : reason("warn", :reverse_mismatch, ip: ip, reverse: reverse))
           end
         end
-      end
-      if integration.value(:alert_server_without_dns) && ip_blocks.any? && !dns_names
-        reasons << reason("warn", :no_dns)
       end
       reasons
     end
