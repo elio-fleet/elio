@@ -73,9 +73,10 @@ class ReadmeScreenshots < ApplicationSystemTestCase
     stub_method_until_teardown(Servers::Ping, :reachable?, ->(host, *, **) { !host.end_with?(".77") })
     stub_method_until_teardown(Ssh::Check, :call, ->(*, **) { Ssh::Check::Result.new(success: true, message: "Connexion SSH réussie", details: "ok") })
     keys = [ public_keys(:alice).content, public_keys(:ci).content, ssh_keys(:main).public_key, Ssh::KeyGenerator.generate(comment: "jdupont@old-laptop").public_key ]
+    # Elio logs in as root on "backup": the keys of its other accounts are read too.
     stub_method_until_teardown(Keys::AuthorizedKeysReader, :call_all, keys_read(lambda { |*, **|
       Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse(keys.join("\n")), error_title: nil, error_details: nil)
-    }))
+    }, others: { "backup" => [ public_keys(:ci).content ] }))
     Server.delete_all
     production = server_groups(:production).tap { |group| group.update!(expected_ports: "22, 80, 443, 6432") }
     infra = ServerGroup.create!(name: "Infra", color: "emerald")

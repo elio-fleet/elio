@@ -422,6 +422,12 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
     assert_select "section.authorized-keys-account", 1
     assert_select "section.authorized-keys-account h3", 0
     assert_select ".accounts-root-needed", /Seules les clés de deploy/
+
+    sign_in users(:one)
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(keys_result(public_keys(:alice).content))) do
+      get server_authorized_keys_path(servers(:backup))
+    end
+    assert_select ".accounts-root-needed", 0, "Elio logs in as root: nothing is missing"
   end
 
   test "removing a key from another account" do

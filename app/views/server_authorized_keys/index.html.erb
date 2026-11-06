@@ -36,7 +36,7 @@
       <% @result.accounts.each do |entry| %>
         <%= render "server_authorized_keys/account", entry: entry, show_header: @result.privileged %>
       <% end %>
-      <% unless @result.privileged %>
+      <% unless @result.privileged || @server.username == "root" %>
         <p class="accounts-root-needed text-xs text-ink-3"><%= t(".root_needed", login: @server.username) %></p>
       <% end %>
     <% end %>
