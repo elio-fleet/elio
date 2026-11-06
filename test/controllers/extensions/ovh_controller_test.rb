@@ -97,4 +97,13 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=password][name='integration[values][application_secret]']:not([value])"
     assert_not_includes response.body, "app-secret"
   end
+
+  test "the OVH tab offers a prompt for the network firewall rules" do
+    record_ports(servers(:web))
+    get server_path(servers(:web), tab: "ovh")
+    assert_select "#server-ovh .server-prompt[data-kind=ovh_firewall]" do
+      assert_select "button.server-prompt-button", /Prompt pour proposer des règles de firewall/
+      assert_select "dialog textarea.server-prompt-text", /hébergé chez OVHcloud.*203\.0\.113\.10.*n°\d+ (permit|deny)/m
+    end
+  end
 end

@@ -5,6 +5,7 @@
 <% records = resources.select { |resource| resource.kind == "dns_record" } %>
 <% public_ports = Inventory::PortAnalysis.new(server).public_ports %>
 <div id="server-ovh">
+  <div class="mt-6 flex justify-end"><%= render "server_prompts/dialog", server: server, kind: :ovh_firewall %></div>
   <% if resources.empty? %>
     <p class="card mt-6 px-4 py-6 text-sm text-ink-3">
       <%= t(".ovhcloud_resource_attached_server") %><%= t(".not_synchronized_yet") unless integration.last_synced_at %>.

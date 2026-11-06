@@ -325,3 +325,70 @@ en:
       pending: Pending
       maintenance: Maintenance
       unknown: Unknown
+  server_prompt:
+    task: What I need
+    none: "(none)"
+    no_ports_inventory: "(no inventory of the ports yet)"
+    sections:
+      server: Server
+      addresses: IP addresses
+      services: Active systemd services
+      containers: Docker containers
+      ports: Listening ports
+      public_ports: Public ports (reachable from the Internet if no firewall blocks them)
+      existing_monitors: Uptime Kuma monitors already attached to this server
+      local_firewall: Firewall of the machine
+      ovh_firewall: OVHcloud network firewall (per IP)
+    fields:
+      name: 'Name in Elio: %{value}'
+      hostname: 'Hostname: %{value}'
+      system: 'System: %{value}'
+      virtualization: 'Virtualization: %{value}'
+      ssh: 'SSH address used by Elio: %{value}'
+      groups: 'Groups: %{value}'
+    expected_ports: "(expected public ports: %{ports})"
+    scopes:
+      public: public
+      private: private / VPN
+      local: local only
+    manual_address: added by hand in Elio
+    container: image %{image}, %{state}
+    published: ports %{ports}
+    compose: Compose project %{project}
+    'on': on %{addresses}
+    in_container: container %{container}
+    unexpected: not expected by its groups
+    local_firewall:
+      allowed: allowed by the machine's firewall
+      blocked: blocked by the machine's firewall
+      open: no filtering on the machine
+      docker: published by Docker, which bypasses ufw
+      unknown: machine's firewall not readable
+    allowed_rule: allows %{rule} from %{from}
+    anywhere: anywhere
+    ovh:
+      not_read: "%{block}: firewall not read (product not chosen in the extension)"
+      none: "%{block}: no network firewall created"
+      enabled:
+        one: "%{ip}: enabled, %{count} rule"
+        other: "%{ip}: enabled, %{count} rules"
+      disabled:
+        one: "%{ip}: disabled, %{count} rule"
+        other: "%{ip}: disabled, %{count} rules"
+      rule: "#%{sequence} %{action} %{protocol} port %{port} source %{source} %{option}"
+    monitors:
+      intro: I monitor my Linux servers with Uptime Kuma. Here is what Elio (an inventory tool) knows about one of them. Propose the Uptime Kuma monitors to create for it.
+      task: 'Propose the list of monitors to create, as a table: type (HTTP(s), HTTP(s) keyword, TCP port, ping, DNS, Docker container…), target (URL, host:port), check interval, and why. Do not repeat the monitors that already exist. Prefer what users actually reach (public addresses, domain names); a monitor on a private or VPN address needs an Uptime Kuma instance on that network: say so. Add a certificate expiry check for HTTPS services. Ask me if something is missing (domain names, URLs to check).'
+    ovh_firewall:
+      intro: My Linux server is hosted at OVHcloud. Here is what Elio (an inventory tool) knows about it. Propose the rules of the OVHcloud network firewall (Edge Network Firewall) of its public IP addresses.
+      task: 'Propose the rules of the OVHcloud network firewall for each public IP, as a table: sequence (0 to 19, the first matching rule applies), action (permit / deny), protocol, destination port, source, TCP option. Keep the SSH access of Elio on port %{ssh_port} open (restrict its source only if I give you Elio''s address). Allow only the public ports that must be reachable, and explain those you would close or restrict. This firewall is stateless: include what lets the replies to the server''s own outgoing connections back in (e.g. TCP option established), and end with a rule that denies the rest. Point out the ports exposed by Docker and the differences with the firewall of the machine.'
+  server_prompts:
+    dialog:
+      copy_hint: Generated from the last inventory. No key, token or password is included.
+      close: Close
+    monitors:
+      button: Prompt to propose monitors
+      title: 'Prompt for an AI: monitors to create'
+    ovh_firewall:
+      button: Prompt to propose firewall rules
+      title: 'Prompt for an AI: OVHcloud network firewall'

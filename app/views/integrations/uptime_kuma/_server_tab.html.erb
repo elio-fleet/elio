@@ -4,10 +4,13 @@
 <section id="server-monitors" class="card mt-6">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :signal, class: "h-4 w-4 text-ink-3" %> <%= t(".uptime_kuma_monitors") %></h2>
-    <span class="text-xs text-ink-3">
-      <% if integration.last_synced_at %><%= t(".synchronized_html", last_synced_at: (relative_time_tag integration.last_synced_at)) %><% end %>
-      · <%= link_to t(".all_monitors"), monitors_path, class: "text-accent hover:underline" %>
-    </span>
+    <div class="flex flex-wrap items-center gap-3">
+      <span class="text-xs text-ink-3">
+        <% if integration.last_synced_at %><%= t(".synchronized_html", last_synced_at: (relative_time_tag integration.last_synced_at)) %><% end %>
+        · <%= link_to t(".all_monitors"), monitors_path, class: "text-accent hover:underline" %>
+      </span>
+      <%= render "server_prompts/dialog", server: server, kind: :monitors %>
+    </div>
   </div>
   <% if monitors.any? %>
     <div class="overflow-x-auto">
