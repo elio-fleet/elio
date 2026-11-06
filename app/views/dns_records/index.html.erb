@@ -26,8 +26,9 @@
 
 <div class="mt-5 flex flex-wrap items-center gap-2">
   <nav class="dns-filters flex flex-wrap gap-2" aria-label="<%= t("dns_records.index.filters") %>">
-    <% [ [ t("dns_records.index.all"), nil ], [ t("dns_records.index.outside"), "outside" ], [ t("dns_records.index.unattached"), "unattached" ] ].each do |label, filter| %>
-      <%= filter_pill label, dns_records_path(filter: filter, zone: @zone, source: @source), active: @filter == filter, data: { filter: filter || "all" } %>
+    <% [ [ t("dns_records.index.all"), nil ], [ t("dns_records.index.outside"), "outside" ], [ t("dns_records.index.unattached"), "unattached" ],
+         *([ [ t("dns_records.index.conflicts"), "conflicts", @counts[:conflicts] ] ] if @sources.size > 1 || @counts[:conflicts].positive?) ].each do |label, filter, count| %>
+      <%= filter_pill label, dns_records_path(filter: filter, zone: @zone, source: @source), active: @filter == filter, count: count&.nonzero?, data: { filter: filter || "all" } %>
     <% end %>
   </nav>
   <%= form_with url: dns_records_path, method: :get, data: search_form_data, class: "ml-auto flex flex-wrap items-center gap-2" do |f| %>
@@ -57,7 +58,7 @@
                 <span class="block font-sans text-[11px] text-ink-3"><%= record.zone %></span></td>
               <td class="font-mono text-xs"><%= record.record_type %></td>
               <td class="font-mono text-xs"><%= record.value %></td>
-              <td><%= dns_source_badge(record.source) %></td>
+              <td><%= dns_source_badge(record.source) %><% if @conflicts.include?(record.name) %> <%= dns_conflict_badge %><% end %></td>
               <td class="text-xs">
                 <% if record.server %>
                   <%= link_to record.server.name, server_path(record.server, tab: "dns"), class: "font-medium hover:text-accent hover:underline" %>

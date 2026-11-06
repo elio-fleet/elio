@@ -1,5 +1,6 @@
 <%# "DNS" tab of a server: the names that point to it, from every DNS source (OVHcloud, Technitium…). %>
 <% records = server.dns_records.order(:zone, :name, :record_type, :source).to_a %>
+<% conflicts = records.any? ? DnsRecord.where(name: records.map(&:name)).conflicting_names.to_set : Set.new %>
 <section id="server-dns" class="card mt-6">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :globe, class: "h-4 w-4 text-ink-3" %> <%= t("dns_records.server_tab.title") %></h2>
@@ -15,7 +16,7 @@
               <td class="pl-4 font-mono text-xs"><%= record.name %></td>
               <td class="font-mono text-xs"><%= record.record_type %></td>
               <td class="font-mono text-xs"><%= record.value %></td>
-              <td><%= dns_source_badge(record.source) %></td>
+              <td><%= dns_source_badge(record.source) %><% if conflicts.include?(record.name) %> <%= dns_conflict_badge %><% end %></td>
               <td class="text-xs text-ink-3"><%= record.matched_label %></td>
               <% if can?(:operate) %><td class="pr-4"><%= render "dns_records/link_form", record: record %></td><% end %>
             </tr>

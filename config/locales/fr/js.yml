@@ -24,3 +24,4 @@ fr:
       search: Rechercher
       port: Qui expose le port %{port} ?
       package: Chercher le paquet « %{package} » sur le parc
+      dns_name: Qui a le nom DNS « %{name} » ?
