@@ -4,6 +4,10 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Fixed
+
+- **Uptime Kuma 1.x**: the probes were not read at all (Uptime Kuma 1.x gives them no id in `/metrics`); they are now identified by their name. A probe without answer no longer shows a response time of -1 ms.
+
 ## [0.1.0-beta.4] — 2026-11-06
 
 ### Upgrading from 0.1.0-beta.3.1

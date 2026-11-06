@@ -1,0 +1,17 @@
+# HELP monitor_cert_days_remaining The number of days remaining until the certificate expires
+# TYPE monitor_cert_days_remaining gauge
+# HELP monitor_cert_is_valid Is the certificate still valid? (1 = Yes, 0= No)
+# TYPE monitor_cert_is_valid gauge
+# HELP monitor_response_time Monitor Response Time (ms)
+# TYPE monitor_response_time gauge
+monitor_response_time{monitor_name="bench-target",monitor_type="port",monitor_url="null",monitor_hostname="target",monitor_port="22"} 2
+monitor_response_time{monitor_name="bench-target web",monitor_type="port",monitor_url="null",monitor_hostname="target",monitor_port="80"} 2
+monitor_response_time{monitor_name="Old VPN gateway",monitor_type="port",monitor_url="null",monitor_hostname="192.0.2.44",monitor_port="443"} -1
+# HELP monitor_status Monitor Status (1 = UP, 0= DOWN, 2= PENDING, 3= MAINTENANCE)
+# TYPE monitor_status gauge
+monitor_status{monitor_name="bench-target",monitor_type="port",monitor_url="null",monitor_hostname="target",monitor_port="22"} 1
+monitor_status{monitor_name="bench-target web",monitor_type="port",monitor_url="null",monitor_hostname="target",monitor_port="80"} 1
+monitor_status{monitor_name="Old VPN gateway",monitor_type="port",monitor_url="null",monitor_hostname="192.0.2.44",monitor_port="443"} 0
+# HELP app_version The service version by package.json
+# TYPE app_version gauge
+app_version{version="1.23.16",major="1",minor="23",patch="16"} 1
