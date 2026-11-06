@@ -31,6 +31,9 @@ shared: &shared
   sweep_stale_tasks:
     class: SweepStaleTasksJob
     schedule: every 15 minutes
+  deliver_due_notification_batches:
+    class: DeliverDueNotificationBatchesJob
+    schedule: every 5 minutes
 
 development:
   <<: *shared

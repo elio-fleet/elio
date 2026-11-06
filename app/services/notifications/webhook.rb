@@ -7,10 +7,19 @@ require "openssl"
 # and refuses old messages (replays), e.g. older than 5 minutes.
 class Notifications::Webhook
   def self.deliver(channel, activity)
-    post(channel, "activity", {
-      kind: activity.kind, label: activity.label, category: activity.category, severity: activity.severity, summary: activity.summary,
-      server: activity.server_name, unix_user: activity.unix_user, author: activity.user&.email, created_at: activity.created_at.iso8601
-    })
+    post(channel, "activity", activity_data(activity))
+  end
+
+  # Several activities of one kind (NotificationBatch::Group): event
+  # "activities", with every activity in `events`.
+  def self.deliver_batch(channel, group)
+    post(channel, "activities", { kind: group.kind, label: group.label, category: group.category, severity: group.severity, count: group.count,
+                                  title: group.title, url: group.url, events: group.activities.map { |activity| activity_data(activity) } }.compact)
+  end
+
+  def self.activity_data(activity)
+    { kind: activity.kind, label: activity.label, category: activity.category, severity: activity.severity, summary: activity.summary,
+      server: activity.server_name, unix_user: activity.unix_user, author: activity.user&.email, created_at: activity.created_at.iso8601 }
   end
 
   def self.deliver_test(channel)

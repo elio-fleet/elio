@@ -52,6 +52,7 @@ class Notifications::OtherNotifiersTest < ActiveSupport::TestCase
 
   test "email: the activity, a test and a digest to the recipients" do
     email = channel("email", recipients: "ops@acme.fr, alice@acme.fr")
+    ActionMailer::Base.deliveries.clear
 
     assert_emails(3) do
       Notifications::Email.deliver(email, @activity)

@@ -174,4 +174,24 @@ class NotificationChannelsControllerTest < ActionDispatch::IntegrationTest
       assert_select "input[type=checkbox][name='notification_channel[daily_digest]']"
     end
   end
+
+  test "the grouping of the notifications is chosen per channel, 10 minutes for a new one" do
+    sign_in users(:one)
+    get new_settings_notification_channel_path
+    assert_select "select[name='notification_channel[group_minutes]'] option[selected][value='10']"
+
+    post settings_notification_channels_path, params: valid_params(group_minutes: "30")
+    channel = NotificationChannel.find_by!(name: "#ops")
+    assert_equal 30, channel.group_minutes
+
+    get settings_notifications_path
+    assert_select ".channel-group", "regroupées sur 30 min"
+
+    patch settings_notification_channel_path(channel), params: { notification_channel: { group_minutes: "7" } }
+    assert_response :unprocessable_content
+    patch settings_notification_channel_path(channel), params: { notification_channel: { group_minutes: "0" } }
+    assert_equal 0, channel.reload.group_minutes
+    get settings_notifications_path
+    assert_select ".channel-group", 0
+  end
 end
