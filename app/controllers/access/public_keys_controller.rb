@@ -6,7 +6,17 @@ class PublicKeysController < ApplicationController
   before_action :set_public_key, only: %i[show edit update destroy]
 
   # Optional filter: ?kind=person|server.
+  # ?kind=outside: the keys seen on the servers that are in no keyring key.
   def index
+    @insights = KeyInsights.new
+    if params[:kind] == "outside"
+      @kind = "outside"
+      @pager = paginate(@insights.outside_keys, per_page: PER_PAGE)
+      @outside_keys = @pager.records
+      @public_key_count = PublicKey.count
+      return render :outside
+    end
+
     @kind = params[:kind].presence_in(PublicKey::KINDS)
     public_keys = PublicKey.order(:name)
     public_keys = public_keys.of_kind(@kind) if @kind

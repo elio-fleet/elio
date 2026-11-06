@@ -35,20 +35,22 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "#stat-ovh-services .stat-value", "3"
     assert_select "#stat-ovh-unattached .stat-value", "1"
     assert_select "#stat-ovh-expiring .stat-value", "1"
-    assert_select "#stat-ovh-dns-outside .stat-value", "1"
+    assert_select "a[href=?] #stat-ovh-dns .stat-value", dns_records_path(source: "ovh"), "3"
     assert_select "tr.ovh-resource", 3
     assert_select "tr.ovh-resource[data-kind=dedicated] .ovh-server a[href=?]", server_path(servers(:web), tab: "ovh"), text: "Web"
     assert_select "tr.ovh-resource[data-kind=dedicated] .ovh-expiration", text: /\d{4}/
     assert_select "form.ovh-link-form", 0
   end
 
-  test "IP and DNS tabs, filters" do
+  test "IP tab, filters; the DNS records are on the DNS page of the fleet" do
     get ovh_path(tab: "ips")
     assert_select "tr.ovh-resource[data-kind=ip]", 2
 
-    get ovh_path(tab: "dns", unattached: "1")
-    assert_select "tr.ovh-resource", 1
-    assert_select "tr.ovh-resource", text: /old\.example\.com.*hors du parc/m
+    get ovh_path(tab: "dns")
+    assert_redirected_to dns_records_path(source: "ovh")
+    get dns_records_path(source: "ovh", filter: "outside")
+    assert_select "tr.dns-record[data-source=ovh]", 1
+    assert_select "tr.dns-record", text: /old\.example\.com.*hors du parc/m
 
     get ovh_path(tab: "services", q: "staging")
     assert_select "tr.ovh-resource", 1
@@ -66,7 +68,11 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select ".ovh-port[data-port='22/tcp'] .ovh-firewall-verdict", "OVH : sources limitées"
     assert_select ".ovh-port[data-port='9100/tcp'] .ovh-firewall-verdict", "OVH : bloqué"
     assert_select ".ovh-mitigation", text: /automatique/
-    assert_select "tr.ovh-dns-record", 2
+    assert_select "tr.ovh-dns-record", 0
+    assert_select ".ovh-dns-link a[href=?]", server_path(servers(:web), tab: "dns"), text: "2 noms DNS → onglet DNS"
+
+    get server_path(servers(:web), tab: "dns")
+    assert_select "#server-dns tr.dns-record[data-source=ovh]", 2
   end
 
   test "attach a service by hand, back to automatic through a sync" do
@@ -96,5 +102,14 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[type=checkbox][name='integration[values][products][]']", 7
     assert_select "input[type=password][name='integration[values][application_secret]']:not([value])"
     assert_not_includes response.body, "app-secret"
+  end
+
+  test "the OVH tab offers a prompt for the network firewall rules" do
+    record_ports(servers(:web))
+    get server_path(servers(:web), tab: "ovh")
+    assert_select "#server-ovh .server-prompt[data-kind=ovh_firewall]" do
+      assert_select "button.server-prompt-button", /Prompt pour proposer des règles de firewall/
+      assert_select "dialog textarea.server-prompt-text", /hébergé chez OVHcloud.*203\.0\.113\.10.*n°\d+ (permit|deny)/m
+    end
   end
 end

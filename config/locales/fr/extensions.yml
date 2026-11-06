@@ -89,7 +89,6 @@ fr:
         firewall_disabled: Firewall réseau OVH désactivé sur %{ip}
         no_reverse: Pas de reverse DNS pour %{ip}
         reverse_mismatch: Reverse DNS de %{ip} (%{reverse}) ≠ hostname
-        no_dns: Aucun enregistrement DNS OVH ne pointe vers ce serveur
       endpoint: Point d'accès
       ovh_eu: OVHcloud Europe (ovh-eu)
       ovh_ca: OVHcloud Canada (ovh-ca)
@@ -106,8 +105,6 @@ fr:
       expiring_ignore_auto_renew: Ignorer les services en renouvellement automatique
       alert_firewall_disabled: Firewall réseau OVH désactivé sur une IP d'un serveur
       alert_reverse_mismatch: Reverse DNS absent ou différent du hostname
-      alert_server_without_dns: Serveur avec une IP OVH mais aucun enregistrement DNS
-      alert_dns_outside: Enregistrement DNS vers une IP hors du parc
       alert_unmanaged_service: Service OVH rattaché à aucun serveur du parc
       alert_unmanaged_service_hint: une machine payée mais pas suivie par Elio.
       writable: ". ⚠ Cette clé permet aussi d'écrire (%{writes_first}) : refaites-en une en lecture seule"
@@ -148,6 +145,11 @@ fr:
         anti_ddos: Anti-DDoS de
         dns_records_server: Enregistrements DNS vers ce serveur
         dns_record_zones_read: Aucun enregistrement DNS des zones lues ne pointe vers ce serveur.
+        dns_names:
+          one: "%{count} nom DNS → onglet DNS"
+          other: "%{count} noms DNS → onglet DNS"
+        mitigation_permanent: permanente
+        mitigation_automatic: automatique
       client:
         unknown_endpoint: 'Point d''accès OVH inconnu : %{endpoint}'
         unreadable: Réponse d'OVHcloud illisible pour %{path}
@@ -191,6 +193,44 @@ fr:
     sync_job:
       turned_off: 'Extension désactivée : rien à faire'
       internal_error: Erreur interne (%{class})
+    technitium:
+      description: Les enregistrements A, AAAA et CNAME de vos zones Technitium DNS Server, rattachés aux serveurs vers lesquels ils pointent ; alertes pour les enregistrements hors du parc et les serveurs sans nom DNS.
+      url: Adresse de la console web
+      url_hint: L'adresse de sa console web et de son API (port 5380 en HTTP, 53443 en HTTPS par défaut).
+      api_token: Jeton d'API
+      api_token_hint: Le jeton d'un utilisateur qui peut seulement voir les zones (voir ci-dessous).
+      self_signed: Accepter un certificat auto-signé
+      zones: Zones à lire
+      zones_hint: 'Séparées par des virgules. Vide : toutes les zones que le jeton peut voir.'
+      connected:
+        one: 'Connecté à Technitium DNS Server %{version} : %{count} zone lisible'
+        other: 'Connecté à Technitium DNS Server %{version} : %{count} zones lisibles'
+      writable: ". Attention : ce jeton peut aussi modifier ou supprimer des zones ; Elio n'a besoin que de les voir."
+      http_warning: ". L'adresse est en HTTP : le jeton circule en clair."
+      invalid_token: 'Jeton invalide ou expiré : créez-en un nouveau dans Technitium.'
+      api_error: 'Technitium a refusé la requête : %{message}'
+      not_json: 'Réponse inattendue : est-ce bien l''adresse d''un Technitium DNS Server ?'
+      sync:
+        summary: "%{zones}, %{records}, %{unattached}"
+        zones:
+          one: "%{count} zone"
+          other: "%{count} zones"
+        records:
+          one: "%{count} enregistrement"
+          other: "%{count} enregistrements"
+        unattached:
+          one: "%{count} rattaché à aucun serveur"
+          other: "%{count} rattachés à aucun serveur"
+      help:
+        title: Créer un jeton d'API en lecture seule dans Technitium
+        step1_html: "<strong>Administration → Groups</strong> : ajoutez un groupe (par exemple <code>Elio read-only</code>), puis dans <strong>Administration → Permissions</strong> donnez-lui seulement <strong>View</strong> sur <strong>Zones</strong>."
+        step2_html: "<strong>Administration → Users</strong> : ajoutez un utilisateur (par exemple <code>elio</code>) membre de ce groupe seulement."
+        step3_html: 'Technitium a aussi des <strong>droits par zone</strong> : sur chaque zone à lire (<strong>Zones</strong>, la zone, <strong>Permissions</strong>), donnez <strong>View</strong> au groupe. Sans cela, le jeton ne voit aucune zone.'
+        step4_html: Connectez-vous avec cet utilisateur, puis <strong>Create API Token</strong> (menu de l'utilisateur, en haut à droite), et collez-le ici.
+        reads_html: 'Elio ne fait que lire : <code>/api/user/session/get</code>, <code>/api/zones/list</code> et <code>/api/zones/records/get</code>, avec le jeton dans un en-tête <code>Authorization: Bearer</code> (testé avec Technitium DNS Server 15.6).'
+    sections:
+      alerts: Alertes
+      resources: Ressources
   integration:
     sync_label: Synchronisation %{label}
     required: "%{label} : obligatoire pour activer l'extension"
@@ -201,6 +241,8 @@ fr:
       dns: par résolution DNS
       name: par son nom
       manual: à la main
+      technitium: par un nom DNS Technitium
+      dns_record: par un nom DNS
   ovh_resource:
     matches:
       address: par son adresse IP
@@ -265,6 +307,8 @@ fr:
       ovh_service: Service OVH
       server: Serveur
       attach: Rattacher à
+      dns_names: Noms DNS
+      dns_names_caption: sur la page DNS
   settings:
     integrations:
       field:
@@ -325,3 +369,126 @@ fr:
       pending: En attente
       maintenance: Maintenance
       unknown: Inconnu
+  server_prompt:
+    task: Ce que je demande
+    none: "(rien)"
+    no_ports_inventory: "(pas encore d'inventaire des ports)"
+    sections:
+      server: Serveur
+      addresses: Adresses IP
+      services: Services systemd actifs
+      containers: Conteneurs Docker
+      ports: Ports en écoute
+      public_ports: Ports publics (joignables depuis Internet si aucun firewall ne les bloque)
+      existing_monitors: Sondes Uptime Kuma déjà rattachées à ce serveur
+      local_firewall: Firewall de la machine
+      ovh_firewall: Firewall réseau OVHcloud (par IP)
+      dns_names: Noms DNS qui pointent vers lui
+    fields:
+      name: 'Nom dans Elio : %{value}'
+      hostname: 'Nom d''hôte : %{value}'
+      system: 'Système : %{value}'
+      virtualization: 'Virtualisation : %{value}'
+      ssh: 'Adresse SSH utilisée par Elio : %{value}'
+      groups: 'Groupes : %{value}'
+    expected_ports: "(ports publics attendus : %{ports})"
+    scopes:
+      public: publique
+      private: privée / VPN
+      local: locale uniquement
+    manual_address: ajoutée à la main dans Elio
+    container: image %{image}, %{state}
+    published: ports %{ports}
+    compose: projet Compose %{project}
+    'on': sur %{addresses}
+    in_container: conteneur %{container}
+    unexpected: non attendu par ses groupes
+    local_firewall:
+      allowed: autorisé par le firewall de la machine
+      blocked: bloqué par le firewall de la machine
+      open: aucun filtrage sur la machine
+      docker: publié par Docker, qui contourne ufw
+      unknown: firewall de la machine illisible
+    allowed_rule: autorise %{rule} depuis %{from}
+    anywhere: partout
+    ovh:
+      not_read: "%{block} : firewall non lu (produit non choisi dans l'extension)"
+      none: "%{block} : aucun firewall réseau créé"
+      enabled:
+        one: "%{ip} : activé, %{count} règle"
+        other: "%{ip} : activé, %{count} règles"
+      disabled:
+        one: "%{ip} : désactivé, %{count} règle"
+        other: "%{ip} : désactivé, %{count} règles"
+      rule: n°%{sequence} %{action} %{protocol} port %{port} source %{source} %{option}
+    monitors:
+      intro: Je surveille mes serveurs Linux avec Uptime Kuma. Voici ce qu'Elio (un outil d'inventaire) sait de l'un d'eux. Propose les sondes Uptime Kuma à créer pour lui.
+      task: 'Propose la liste des sondes à créer, sous forme de tableau : type (HTTP(s), HTTP(s) mot-clé, port TCP, ping, DNS, conteneur Docker…), cible (URL, hôte:port), intervalle de vérification, et pourquoi. Ne reprends pas les sondes qui existent déjà. Privilégie ce que les utilisateurs atteignent vraiment (adresses publiques, noms de domaine) ; une sonde sur une adresse privée ou VPN demande une instance Uptime Kuma sur ce réseau : précise-le. Ajoute une vérification de l''expiration du certificat pour les services HTTPS. Demande-moi ce qui manque (noms de domaine, URL à vérifier).'
+    ovh_firewall:
+      intro: Mon serveur Linux est hébergé chez OVHcloud. Voici ce qu'Elio (un outil d'inventaire) en sait. Propose les règles du firewall réseau OVHcloud (Edge Network Firewall) de ses adresses IP publiques.
+      task: 'Propose les règles du firewall réseau OVHcloud pour chaque IP publique, sous forme de tableau : séquence (0 à 19, la première règle qui correspond s''applique), action (permit / deny), protocole, port de destination, source, option TCP. Garde l''accès SSH d''Elio ouvert sur le port %{ssh_port} (ne restreins sa source que si je te donne l''adresse d''Elio). N''autorise que les ports publics qui doivent être joignables, et explique ceux que tu fermerais ou restreindrais. Ce firewall est sans état : prévois ce qui laisse revenir les réponses aux connexions sortantes du serveur (par exemple l''option TCP established), et termine par une règle qui refuse le reste. Signale les ports exposés par Docker et les différences avec le firewall de la machine.'
+  server_prompts:
+    dialog:
+      copy_hint: Généré depuis le dernier inventaire. Aucune clé, aucun jeton ni mot de passe n'y figure.
+      close: Fermer
+    monitors:
+      button: Prompt pour proposer des sondes
+      title: 'Prompt pour une IA : sondes à créer'
+    ovh_firewall:
+      button: Prompt pour proposer des règles de firewall
+      title: 'Prompt pour une IA : firewall réseau OVHcloud'
+  dns_records:
+    index:
+      records: Enregistrements
+      outside: Hors du parc
+      outside_caption: A / AAAA vers une IP inconnue
+      unattached: Non rattachés
+      servers_without: Serveurs sans nom
+      filters: Filtres
+      all: Tous
+      all_zones: Toutes les zones
+      zone: Zone
+      search: Nom ou valeur
+      name: Nom
+      value: Valeur
+      server: Serveur
+      attach: Rattacher
+      disabled: désactivé
+      outside_fleet: hors du parc
+      none: Aucun enregistrement ne correspond.
+      title: Enregistrements DNS
+      intro: Les enregistrements A, AAAA et CNAME lus par les extensions, rattachés aux serveurs vers lesquels ils pointent.
+      not_synchronized_yet: pas encore synchronisé
+      settings: réglages
+      source: Source
+      all_sources: Toutes les sources
+      no_record_yet: 'Aucun enregistrement DNS pour l''instant : les sources n''ont pas encore été synchronisées.'
+      synchronized_html: synchronisé %{time}
+      last_sync_failed: "· dernière synchronisation en échec : %{error}"
+      conflicts: Diffère selon la source
+    link:
+      server: "— aucun serveur —"
+      server_of: Serveur de %{name}
+      attach: Rattacher
+      automatic: Revenir au rattachement automatique
+    server_tab:
+      all_records: Tous les enregistrements
+      matched: Rattachement
+      see_unattached: Voir les enregistrements rattachés à aucun serveur
+      title: Noms DNS
+      none: Aucun enregistrement DNS ne pointe vers ce serveur.
+    tab: DNS
+    differs: diffère selon la source
+    differs_hint: 'Ce nom a d''autres enregistrements dans une autre source (souvent voulu : une IP publique dans l''une, privée ou VPN dans l''autre).'
+  dns_record:
+    matches:
+      manual: rattaché à la main
+      address: par son IP %{address}
+      cname: CNAME vers un de ses noms
+  dns_links_controller:
+    attached: "%{name} est rattaché à « %{server_name} »."
+    detached: "%{name} n'est rattaché à aucun serveur."
+    automatic: "%{name} revient au rattachement automatique."
+  dns:
+    health:
+      no_name: Aucun nom DNS

@@ -52,10 +52,11 @@ class ActivityTest < ActiveSupport::TestCase
     web = servers(:web)
     {
       [ :key_added, { public_key: public_keys(:alice), unix_user: "deploy", duration_label: "10 minutes" } ] => "« Alice » ajoutée sur « Web » pendant 10 minutes",
-      [ :key_removed, { unix_user: "root", key_name: "bob" } ] => "Clé « bob » supprimée de « Web »",
+      [ :key_removed, { unix_user: "deploy", key_name: "bob" } ] => "Clé « bob » supprimée de « Web »",
+      [ :key_removed, { unix_user: "root", key_name: "bob" } ] => "Clé « bob » supprimée de « Web » (compte root)",
       [ :key_expired, { public_key: public_keys(:ci), unix_user: "deploy" } ] => "Accès temporaire de « CI » retiré de « Web »",
-      [ :unknown_key_detected, { unix_user: "root" } ] => "Clé inconnue « sans nom » trouvée sur « Web »",
-      [ :key_disappeared, { unix_user: "root", key_name: "bob" } ] => "Clé « bob » disparue de « Web »",
+      [ :unknown_key_detected, { unix_user: "root" } ] => "Clé inconnue « sans nom » trouvée sur « Web » (compte root)",
+      [ :key_disappeared, { unix_user: "root", key_name: "bob" } ] => "Clé « bob » disparue de « Web » (compte root)",
       [ :ssh_access_lost, {} ] => "« Web » refuse la clé d'Elio",
       [ :servers_imported, { count: 12, format: "CSV", names: %w[A B] } ] => "12 serveurs importés (CSV) : A, B…",
       [ :server_group_created, { group_name: "Prod", servers: 2 } ] => "Groupe « Prod » créé (2 serveurs)",

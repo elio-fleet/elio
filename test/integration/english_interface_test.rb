@@ -8,7 +8,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
 
   # Accented letters of French, French punctuation, and common French words.
-  FRENCH = /[àâçéèêëîïôûùüÿœ«»]|\b(?:le|la|les|des|du|une|est|sont|aucun|aucune|pour|avec|sans|dans|sur|serveurs?|clés?|tâches?|paramètres|groupes?|mise|jour|activité|vue|ensemble|voir|tout|rien|nouveaux?|nouvelles?|ajouter|supprimer|modifier|enregistrer|lancer|retour|fermer|oui|non|parc|inventaire|sondes?|disponible|corrige|empreinte|statut|nom|commande|fichier|ligne|taille|noyau|horloge|quand|couleur|registre|alertes|adresses?|cible|offre|projet|trousseau|conteneurs?|processus|correctif|note)\b/i
+  FRENCH = /[àâçéèêëîïôûùüÿœ«»]|\b(?:le|la|les|des|du|une|est|sont|aucun|aucune|pour|avec|sans|dans|sur|serveurs?|clés?|tâches?|paramètres|groupes?|mise|jour|activité|vue|ensemble|voir|tout|rien|nouveaux?|nouvelles?|ajouter|supprimer|modifier|enregistrer|lancer|retour|fermer|oui|non|parc|inventaire|sondes?|disponible|corrige|empreinte|statut|nom|commande|fichier|ligne|taille|noyau|horloge|quand|couleur|registre|alertes|adresses?|cible|offre|projet|trousseau|conteneurs?|processus|correctif|inattendu|corrigeable|automatique|ressources|permanente)\b/i
 
   # Texts and attributes a user reads, but those of `except` (data).
   def self.french_texts(html, scope: nil, except: [])
@@ -94,6 +94,8 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english new_public_key_path, except: data
     assert_english edit_public_key_path(public_keys(:alice)), except: data
     assert_english server_path(servers(:web), tab: "keys"), except: data
+    servers(:web).notes.create!(body: "Front **nginx**", user: users(:one))
+    assert_english server_path(servers(:web), tab: "notes"), except: data + [ ".note-body" ]
     assert_english settings_path, except: data
   end
 
@@ -120,14 +122,42 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english server_path(servers(:web), tab: "vulnerabilities"), except: data
     assert_english server_path(servers(:web), tab: "docker"), except: data
     assert_english docker_path, except: data
+    assert_english docker_path(tab: "cves"), except: data
     assert_english settings_vulnerabilities_path, except: data
     assert_english settings_docker_path, except: data
     assert_english new_settings_score_provider_path, except: data
   end
 
+  test "vulnerabilities of a server and of its images, with the commands to fix them" do
+    data = [ ".sidebar-groups", ".account-link", "pre", "code", ".font-mono", ".package-name", "[data-cve]" ]
+    { nil => "3.0.15-1~deb12u1", "nginx:1.27" => "3.0.15-1~deb12u1", "redis:7" => nil }.each do |image, fixed|
+      servers(:web).server_vulnerabilities.create!(origin: image ? "image" : "host", source: "debian", image: image, cve: "CVE-2024-9143", source_package: "openssl",
+                                                   packages: [ "libssl3" ], installed_version: "3.0.14-1~deb12u1", fixed_version: fixed, severity: "high")
+    end
+    assert_english server_path(servers(:web), tab: "vulnerabilities"), except: data
+    assert_english server_path(servers(:web), tab: "vulnerabilities", containers: "1", view: "cves"), except: data
+    assert_english vulnerability_path("CVE-2024-9143", server_id: servers(:web).id), except: data
+    assert_english vulnerability_path("CVE-2024-9143"), except: data
+    assert_english docker_path(tab: "cves"), except: data
+  end
+
   test "the extensions pages" do
     data = [ ".sidebar-groups", ".account-link", "pre", "code", ".font-mono" ]
     assert_english settings_integrations_path, except: data
+    Integration.find_or_initialize_by(kind: "uptime_kuma").update!(enabled: true, settings: { "url" => "https://u.test" }, secrets: { "api_key" => "k" })
+    Integration.find_or_initialize_by(kind: "ovh").update!(enabled: true, settings: { "application_key" => "a" }, secrets: { "application_secret" => "s", "consumer_key" => "c" })
+    # The prompts for an AI are written in the reader's language too.
+    assert_english server_path(servers(:web), tab: "monitors"), except: data
+    OvhResource.create!(kind: "ip", external_id: "203.0.113.10/32", name: "203.0.113.10/32", server: servers(:web),
+                        data: { "mitigation" => { "203.0.113.10" => { "permanent" => false, "state" => "ok" } } })
+    assert_english server_path(servers(:web), tab: "ovh"), except: data
+    assert_english edit_settings_integration_path("ovh"), except: data
+    assert_english edit_settings_integration_path("uptime_kuma"), except: data
+    Integration.find_or_initialize_by(kind: "technitium").update!(enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
+    DnsRecord.create!(source: "technitium", source_id: "old.example.test", zone: "example.test", name: "old.example.test", record_type: "A", value: "198.51.100.99")
+    assert_english dns_records_path, except: data
+    assert_english server_path(servers(:web), tab: "dns"), except: data
+    assert_english edit_settings_integration_path("technitium"), except: data
   end
 
   test "the check finds French" do

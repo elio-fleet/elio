@@ -68,7 +68,7 @@ class ServerShowTest < ApplicationSystemTestCase
   end
 
   test "opening and closing the details of a key" do
-    stub_method_until_teardown(Keys::AuthorizedKeysReader, :call, Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse(public_keys(:alice).content), error_title: nil, error_details: nil))
+    stub_method_until_teardown(Keys::AuthorizedKeysReader, :call_all, keys_read(Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse(public_keys(:alice).content), error_title: nil, error_details: nil)))
     visit server_path(servers(:web), tab: "keys")
 
     within("#server-authorized-keys") do

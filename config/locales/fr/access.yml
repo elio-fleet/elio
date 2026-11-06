@@ -9,6 +9,7 @@ fr:
       access: Accès
       servers_where_key_installed: Serveurs où cette clé est installée, d'après la dernière lecture des clés.
       known_access_add_below: Aucun accès connu. Ajoutez-la ci-dessous, ou lancez un scan si des clés ont été ajoutées à la main.
+      seen_html: Vu %{time}
     bulk_form:
       duration: Durée
       permanent: Permanent
@@ -57,6 +58,12 @@ fr:
       edit: Modifier
       ssh_key: Clé SSH
       public_key: Clé publique
+    outside:
+      title: Hors trousseau
+      intro: 'Les clés trouvées sur les serveurs qui ne correspondent à aucune clé du trousseau : ajoutez celles que vous connaissez, retirez les autres de leurs serveurs.'
+      'on': 'Sur :'
+      none: Toutes les clés trouvées sur les serveurs sont dans le trousseau.
+      not_scanned: 'Aucune clé lue pour l''instant : scannez les clés du parc (Parc → Actions).'
   server_authorized_keys:
     frame:
       reading_authorized_keys: Lecture des clés autorisées…
@@ -85,6 +92,15 @@ fr:
         one: Si vous la reconnaissez, ajoutez-la avec le bouton « Ajouter au trousseau » ; sinon supprimez-la.
         other: Si vous les reconnaissez, ajoutez-les avec le bouton « Ajouter au trousseau » ; sinon supprimez-les.
       details_of: Détails de la clé %{name}
+      accounts:
+        one: "%{count} compte"
+        other: "%{count} comptes"
+      root_needed: 'Seules les clés de %{login} sont affichées : Elio a besoin de root (ou de sudo sans mot de passe) pour lire les autres comptes.'
+    account:
+      login: connexion d'Elio
+      unreadable: Son fichier authorized_keys n'a pas pu être lu, même en root.
+      no_key: Aucune clé dans ce fichier.
+      key_will_be_removed_from: La clé « %{nom} » sera supprimée du compte %{account} de « %{server_name} ». Elle ne pourra plus se connecter à ce compte.
   servers:
     add_key_dialog:
       keyring: Depuis le trousseau
@@ -130,6 +146,8 @@ fr:
       invalid_details: La clé à supprimer n'est pas une clé publique valide.
       forbidden_title: Suppression interdite
       forbidden_details: 'La clé Elio ne peut pas être supprimée : l''application perdrait l''accès au serveur.'
+      root_needed_title: Root nécessaire
+      root_needed_details: Elio a besoin de root (ou de sudo sans mot de passe) pour modifier les clés du compte %{account}.
     bulk_access:
       added_for: ajoutée pendant %{label_for}
       added: ajoutée
@@ -181,6 +199,7 @@ fr:
     deleted: La clé « %{name} » a été supprimée de %{target}.
     absent: La clé « %{name} » n'était plus présente sur %{target}.
     failed: 'Impossible de supprimer la clé « %{name} » de %{target} : %{error_title} — %{error_details}'
+    target_account: "« %{server_name} » (compte %{account})"
   ssh_keys_controller:
     regenerated: Nouvelle clé SSH générée. Remplacez l'ancienne clé publique sur vos serveurs.
     generated: Clé SSH générée. Ajoutez la clé publique sur vos serveurs.

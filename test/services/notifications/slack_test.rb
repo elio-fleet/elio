@@ -5,14 +5,14 @@ class Notifications::SlackTest < ActiveSupport::TestCase
   include StubHelpers
 
   setup do
-    @activity = Activity.record!(:unknown_key_detected, server: servers(:web), unix_user: "root", key_name: "bob@desktop")
+    @activity = Activity.record!(:unknown_key_detected, server: servers(:web), unix_user: "deploy", key_name: "bob@desktop")
   end
 
   test "builds a message with the severity, the label, the summary and the context" do
     payload = Notifications::Slack.activity_payload(@activity)
 
     assert_equal ":warning: *Clé inconnue détectée*\nClé inconnue « bob@desktop » trouvée sur « Web »", payload[:text]
-    assert_equal "Par Système · Serveur : Web · Compte : root", payload[:blocks].last[:elements].first[:text]
+    assert_equal "Par Système · Serveur : Web · Compte : deploy", payload[:blocks].last[:elements].first[:text]
   end
 
   test "mentions @channel when asked" do

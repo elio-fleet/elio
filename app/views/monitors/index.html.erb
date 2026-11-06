@@ -28,7 +28,7 @@
     <% end %>
   </nav>
   <% unless @filter == "without" %>
-    <%= form_with url: monitors_path, method: :get, data: { controller: "auto-submit", turbo_action: "advance" }, class: "ml-auto" do |f| %>
+    <%= form_with url: monitors_path, method: :get, data: search_form_data, class: "ml-auto" do |f| %>
       <%= hidden_field_tag :filter, @filter if @filter %>
       <%= f.search_field :q, value: @q, placeholder: t(".name_host_url"), aria: { label: t(".search_monitor") },
             data: { action: "input->auto-submit#submitLater" }, class: "input w-48 py-1 text-xs" %>
@@ -36,6 +36,7 @@
   <% end %>
 </div>
 
+<%= search_results_frame do %>
 <% if @filter == "without" %>
   <% if @pager.records.any? %>
     <div class="card mt-3 overflow-x-auto">
@@ -66,4 +67,5 @@
   <%= render "shared/pagination", pager: @pager, noun: t("nouns.monitors") %>
 <% else %>
   <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @integration.last_synced_at ? t(".monitor_matches") : t(".not_synchronized_uptime_kuma") %></p>
+<% end %>
 <% end %>

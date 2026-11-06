@@ -1,0 +1,18 @@
+<%# New note, or a note edited in its frame. Preview: the same form posted to #preview, shown in a frame. %>
+<% preview_id = "note-preview-#{note.persisted? ? note.id : "new"}" %>
+<%= form_with model: note, url: (note.persisted? ? server_note_path(server, note) : server_notes_path(server)),
+      class: "note-form space-y-2" do |f| %>
+  <%= f.label :body, t("server_notes.form.label"), class: "sr-only" %>
+  <%= f.text_area :body, rows: (note.persisted? ? 6 : 3), maxlength: ServerNote::MAX_LENGTH, required: true,
+        placeholder: t("server_notes.form.placeholder"), class: "input font-mono text-sm" %>
+  <% if note.errors.any? %><p class="text-xs text-crit-ink"><%= note.errors.full_messages.to_sentence %></p><% end %>
+  <div class="flex flex-wrap items-center gap-2">
+    <%= f.button (note.persisted? ? t("server_notes.form.save") : t("server_notes.form.add")), class: "btn btn-primary" %>
+    <%= f.button t("server_notes.form.preview"), type: "submit", formaction: preview_server_notes_path(server), formmethod: "post", formnovalidate: true,
+          name: nil, data: { turbo_frame: preview_id }, class: "note-preview-button btn btn-secondary" %>
+    <% if note.persisted? %>
+      <%= link_to t("server_notes.form.cancel"), server_path(server, tab: "notes"), data: { turbo_frame: "_top" }, class: "btn btn-ghost" %>
+    <% end %>
+  </div>
+  <%= turbo_frame_tag preview_id, class: "block" %>
+<% end %>

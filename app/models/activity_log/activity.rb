@@ -43,6 +43,7 @@ class Activity < ApplicationRecord
     Kind.new(:port_closed, :security, :info),
     Kind.new(:ip_address_added, :servers, :info),
     Kind.new(:ip_address_removed, :servers, :info),
+    Kind.new(:server_note_added, :servers, :info),
     Kind.new(:security_updates_available, :security, :warning),
     Kind.new(:server_created, :servers, :info),
     Kind.new(:server_updated, :servers, :info),
@@ -72,6 +73,7 @@ class Activity < ApplicationRecord
     Kind.new(:server_without_monitor, :servers, :warning),
     Kind.new(:ovh_service_expiring, :servers, :warning),
     Kind.new(:dns_record_outside_fleet, :security, :warning),
+    Kind.new(:dns_record_conflict, :configuration, :info),
     Kind.new(:ovh_service_unmanaged, :servers, :info),
     Kind.new(:integration_enabled, :configuration, :info),
     Kind.new(:integration_disabled, :configuration, :info),
@@ -111,7 +113,13 @@ class Activity < ApplicationRecord
 
   def key_name = data["key_name"] || I18n.t("activity.unnamed")
 
-  def target = server_name && I18n.t("activity.target", server_name: server_name)
+  # « web », or « web » (account root) for an account other than the login one.
+  def target
+    return unless server_name
+    return I18n.t("activity.target", server_name: server_name) if unix_user.blank? || unix_user == (server&.username || unix_user)
+
+    I18n.t("activity.target_account", server_name: server_name, account: unix_user)
+  end
 
   # One-line description of what happened, in the reader's language (Activity::Summaries).
   def summary = instance_exec(&Summaries::BY_KIND.fetch(kind.to_sym))

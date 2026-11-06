@@ -12,7 +12,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
   setup do
     # Nothing may reach a real server or Slack.
     ok_keys = Keys::AuthorizedKeysReader::Result.new(keys: [], error_title: nil, error_details: nil)
-    stub_method_until_teardown(Keys::AuthorizedKeysReader, :call, ok_keys)
+    stub_method_until_teardown(Keys::AuthorizedKeysReader, :call_all, keys_read(ok_keys))
     stub_method_until_teardown(Ssh::Check, :call, Ssh::Check::Result.new(success: true, message: "ok", details: "ok"))
     stub_method_until_teardown(Servers::Ping, :reachable?, true)
     stub_method_until_teardown(Keys::AccessGrant, :call, Keys::PublicKeyAuthorization::Result.new(status: :added, error_title: nil, error_details: nil))
@@ -39,6 +39,9 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "vulnerability detail" => -> { Vulnerability.create!(source: "debian", release: "bookworm", package: "x", cve: "CVE-2024-1", severity: "low") && get(vulnerability_path("CVE-2024-1")) },
       "server docker" => -> { get server_path(servers(:web), tab: "docker") },
       "server vulnerabilities" => -> { get server_path(servers(:web), tab: "vulnerabilities") },
+      "server notes" => -> { get server_path(servers(:web), tab: "notes") },
+      "add a note" => -> { post server_notes_path(servers(:web)), params: { server_note: { body: "Hello" } } },
+      "preview a note" => -> { post preview_server_notes_path(servers(:web)), params: { server_note: { body: "**x**" } } },
       "ping one server" => -> { post server_ping_path(servers(:web)) },
       "ping all servers" => -> { post server_pings_path },
       "public_keys index" => -> { get public_keys_path },
@@ -48,11 +51,16 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "tasks" => -> { get tasks_path },
       "ovh" => -> { Integration.create!(kind: "ovh", enabled: true, settings: { "application_key" => "a" }, secrets: { "application_secret" => "s", "consumer_key" => "c" }) && get(ovh_path) },
       "monitors" => -> { Integration.create!(kind: "uptime_kuma", enabled: true, settings: { "url" => "https://u.test" }, secrets: { "api_key" => "k" }) && get(monitors_path) },
+      "dns records" => -> { Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" }) && get(dns_records_path) },
       "task page" => -> { get task_path(BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: [], user: nil)) },
       "own account" => -> { get account_path },
       "set up 2FA" => -> { get new_two_factor_path }
     },
     operate: {
+      "attach a DNS name" => -> {
+        Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
+        post dns_record_link_path(DnsRecord.create!(source: "technitium", source_id: "x.a.test", zone: "a.test", name: "x.a.test", record_type: "A", value: "203.0.113.1")), params: { server_id: servers(:web).id }
+      },
       "new server" => -> { get new_server_path },
       "create server" => -> { post servers_path, params: { server: { name: "New", host: "10.0.0.1", port: 22, username: "root" } } },
       "edit server" => -> { get edit_server_path(servers(:web)) },
@@ -80,6 +88,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "revoke a public_key access" => -> { delete public_key_access_path(public_keys(:alice)), params: { server_id: servers(:web).id } }
     },
     administer: {
+      "DNS alerts" => -> { patch settings_dns_alerts_path, params: { dns_alerts: { outside: "1" } } },
       "general settings" => -> { get settings_path },
       "generate the Elio key" => -> { post ssh_key_path },
       "trust a new host key" => -> { post server_host_key_path(servers(:web)), params: { fingerprint: "SHA256:new" } },

@@ -1,0 +1,136 @@
+{
+    "response": {
+        "zone": {
+            "name": "example.test",
+            "type": "Primary",
+            "lastModified": "2026-11-05T18:55:08.3347877Z",
+            "disabled": false,
+            "soaSerial": 6,
+            "catalog": null,
+            "dnssecStatus": "Unsigned",
+            "hasDnssecPrivateKeys": false,
+            "notifyFailed": false,
+            "notifyFailedFor": []
+        },
+        "records": [
+            {
+                "name": "example.test",
+                "type": "NS",
+                "ttl": 14400,
+                "ttlString": "4h",
+                "disabled": false,
+                "rData": {
+                    "nameServer": "dns.test.local"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.2333657Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "example.test",
+                "type": "SOA",
+                "ttl": 900,
+                "ttlString": "15m",
+                "disabled": false,
+                "rData": {
+                    "primaryNameServer": "dns.test.local",
+                    "responsiblePerson": "hostadmin@example.test",
+                    "serial": 6,
+                    "refresh": 900,
+                    "retry": 300,
+                    "expire": 604800,
+                    "minimum": 900,
+                    "refreshString": "15m",
+                    "retryString": "5m",
+                    "expireString": "1w",
+                    "minimumString": "15m",
+                    "useSerialDateScheme": false
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.2333321Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "old.example.test",
+                "type": "A",
+                "ttl": 3600,
+                "ttlString": "1h",
+                "disabled": false,
+                "rData": {
+                    "ipAddress": "198.51.100.99"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.314474Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "shop.example.test",
+                "type": "CNAME",
+                "ttl": 3600,
+                "ttlString": "1h",
+                "disabled": false,
+                "rData": {
+                    "cname": "cdn.provider.example"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.3347789Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "web.example.test",
+                "type": "A",
+                "ttl": 3600,
+                "ttlString": "1h",
+                "disabled": false,
+                "rData": {
+                    "ipAddress": "203.0.113.10"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.2594898Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "web.example.test",
+                "type": "AAAA",
+                "ttl": 3600,
+                "ttlString": "1h",
+                "disabled": false,
+                "rData": {
+                    "ipAddress": "2001:db8::10"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.3035523Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            },
+            {
+                "name": "www.example.test",
+                "type": "CNAME",
+                "ttl": 3600,
+                "ttlString": "1h",
+                "disabled": false,
+                "rData": {
+                    "cname": "web.example.test"
+                },
+                "dnssecStatus": "Unknown",
+                "lastUsedOn": "0001-01-01T00:00:00",
+                "lastModified": "2026-11-05T18:55:08.2801505Z",
+                "expiryTtl": 0,
+                "expiryTtlString": "0s"
+            }
+        ]
+    },
+    "server": "dns.test.local",
+    "status": "ok"
+}

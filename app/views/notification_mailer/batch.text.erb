@@ -1,0 +1,9 @@
+<%= @group.title %>
+
+<% @group.lines.each do |line| %>
+- <%= line %>
+<% end %>
+<% if @group.url %>
+
+<%= t(".see_all") %> <%= @group.url %>
+<% end %>

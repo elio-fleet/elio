@@ -10,6 +10,10 @@ fr:
       ports: Ports
       keys: Clés SSH
       history: Historique
+      server_sections: Sections du serveur
+      section: Section
+      more: Plus
+      notes: Notes
     index:
       check_every_server_answers: Vérifier que chaque serveur répond
       read_again_system_health: Relire le système, la santé et les services de tous les serveurs
@@ -49,6 +53,9 @@ fr:
         one: sur %{count} serveur
         other: sur %{count} serveurs
       updates: Mises à jour
+      inventory_whole_fleet: Inventorier tout le parc
+      scan_keys_whole_fleet: Scanner les clés de tout le parc
+      import_servers: Importer des serveurs
     show:
       search_whole_fleet: Chercher sur tout le parc
       activities: activités
@@ -56,7 +63,7 @@ fr:
       edit: Modifier
       server_sections: Sections du serveur
       authorized_ssh_keys: Clés SSH autorisées
-      public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur avec le compte de connexion d'Elio.
+      public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur, sur chaque compte qu'Elio peut lire. Les clés s'ajoutent au compte de connexion d'Elio.
       activity_server_yet: Aucune activité sur ce serveur pour le moment.
     row:
       load_over_24_h: Charge sur 24 h (en % des processeurs)
@@ -285,6 +292,9 @@ fr:
     vulnerabilities:
       one: "%{count} vulnérabilité grave corrigeable"
       other: "%{count} vulnérabilités graves corrigeables"
+    image_vulnerabilities:
+      one: "%{count} vulnérabilité grave corrigeable dans des images Docker"
+      other: "%{count} vulnérabilités graves corrigeables dans des images Docker"
   ssh_keys:
     setup_hint:
       generate_key_settings: Générer la clé dans les paramètres
@@ -302,3 +312,26 @@ fr:
       indigo: Indigo
       violet: Violet
       pink: Rose
+  server_notes:
+    deleted_user: un utilisateur supprimé
+    tab:
+      title: Notes
+      intro: 'Ce que l''équipe doit savoir sur ce serveur : son rôle, une procédure, un incident. Le Markdown est accepté.'
+      none: Aucune note pour l'instant.
+    form:
+      placeholder: 'Écrire une note… (Markdown : **gras**, `code`, listes, liens, tableaux)'
+      label: Note
+      add: Ajouter la note
+      save: Enregistrer
+      cancel: Annuler
+      preview: Aperçu
+      preview_empty: Rien à afficher.
+    note:
+      edited: modifiée
+      edit: Modifier
+      delete: Supprimer
+      delete_confirm: Cette note sera supprimée.
+  server_notes_controller:
+    added: Note ajoutée.
+    updated: Note modifiée.
+    deleted: Note supprimée.

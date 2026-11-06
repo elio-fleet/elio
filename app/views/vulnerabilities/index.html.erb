@@ -22,15 +22,7 @@
 </div>
 
 <div class="mt-5 flex flex-wrap items-center gap-3">
-<div class="vulnerability-view-toggle flex rounded-lg border border-line bg-surface p-0.5 text-xs" role="group" aria-label="<%= t(".group_2") %>">
-  <% [ [ "packages", t(".package"), :cube ], [ "cves", t(".cve"), :list_bullet ] ].each do |view, label, icon_name| %>
-    <%= link_to vulnerabilities_path(request.query_parameters.except("page").merge("view" => view)), data: { view: view }, aria: { pressed: @view == view },
-          class: "inline-flex items-center gap-1 rounded-md px-2 py-1 #{@view == view ? "bg-subtle font-medium text-ink" : "text-ink-3 hover:text-ink"}" do %>
-      <%= icon icon_name, class: "h-4 w-4" %><%= label %>
-    <% end %>
-  <% end %>
-</div>
-<%= form_with url: vulnerabilities_path, method: :get, data: { controller: "auto-submit", turbo_action: "advance" }, class: "vulnerability-filters flex flex-wrap items-center gap-2" do |f| %>
+<%= form_with url: vulnerabilities_path, method: :get, data: search_form_data, class: "vulnerability-filters flex flex-wrap items-center gap-2" do |f| %>
   <%= hidden_field_tag :view, @view %>
   <%= f.search_field :q, value: @q, placeholder: t(".cve_package_e_g"), aria: { label: t(".search") },
         data: { action: "input->auto-submit#submitLater" }, class: "input w-60 py-1 text-xs" %>
@@ -43,6 +35,18 @@
   <label class="flex items-center gap-1.5 text-xs"><%= t(".fixable_only_html", submit: (check_box_tag :fixable, "1", @fixable_only, data: { action: "change->auto-submit#submit" })) %></label>
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
 <% end %>
+</div>
+
+<%= search_results_frame do %>
+<div class="mt-3 flex justify-end">
+<div class="vulnerability-view-toggle flex rounded-lg border border-line bg-surface p-0.5 text-xs" role="group" aria-label="<%= t(".group_2") %>">
+  <% [ [ "packages", t(".package"), :cube ], [ "cves", t(".cve"), :list_bullet ] ].each do |view, label, icon_name| %>
+    <%= link_to vulnerabilities_path(request.query_parameters.except("page").merge("view" => view)), data: { view: view }, aria: { pressed: @view == view },
+          class: "inline-flex items-center gap-1 rounded-md px-2 py-1 #{@view == view ? "bg-subtle font-medium text-ink" : "text-ink-3 hover:text-ink"}" do %>
+      <%= icon icon_name, class: "h-4 w-4" %><%= label %>
+    <% end %>
+  <% end %>
+</div>
 </div>
 
 <% if @view == "packages" %>
@@ -64,7 +68,7 @@
               <span class="font-medium"><%= row.servers.size %></span> ·
               <%= safe_join(row.servers.first(3).map { |server| link_to(server.name, server_path(server, tab: "vulnerabilities"), class: "hover:text-accent hover:underline") }, ", ") %><%= " …" if row.servers.size > 3 %>
             </td>
-            <td class="pr-4 text-xs"><%= row.fixable ? status_badge(:good, "corrigeable") : tag.span(t(".fix"), class: "text-ink-3") %></td>
+            <td class="pr-4 text-xs"><%= row.fixable ? status_badge(:good, t("words.fixable")) : tag.span(t(".fix"), class: "text-ink-3") %></td>
           </tr>
         <% end %>
       </tbody>
@@ -74,4 +78,5 @@
   <%= render "shared/pagination", pager: @pager, noun: t(".vulnerabilities_2") %>
 <% else %>
   <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @q.present? || @severity || @fixable_only || @origin || @group ? t(".vulnerability_matches") : t(".known_vulnerability_fleet") %></p>
+<% end %>
 <% end %>

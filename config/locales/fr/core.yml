@@ -156,6 +156,9 @@ fr:
     updates:
       one: "%{count} mise à jour"
       other: "%{count} mises à jour"
+    docker_images:
+      one: "%{count} image Docker"
+      other: "%{count} images Docker"
   duration:
     minutes:
       one: "%{count} minute"
@@ -194,6 +197,7 @@ fr:
     resources: ressources
     images: images
     packages: paquets
+    keys: clés
   words:
     none: aucun
     'yes': oui
@@ -272,3 +276,4 @@ fr:
     label_value: "%{label} : %{value}"
     fixable: corrigeable
     no_fix: pas de correctif
+    unexpected: inattendu

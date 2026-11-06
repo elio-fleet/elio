@@ -30,6 +30,33 @@
     </section>
   <% end %>
 </div>
+<% if Dns.enabled? && can?(:administer) %>
+  <% settings = app_settings %>
+  <section id="dns-alerts" class="card mt-5 p-5">
+    <h2 class="flex items-center gap-2 font-semibold"><%= icon :globe, class: "h-5 w-5 text-ink-3" %><%= t("settings.dns_alerts.title") %></h2>
+    <p class="mt-1 text-sm text-ink-2"><%= t("settings.dns_alerts.intro", sources: Dns.source_integrations.map { |integration| integration.definition.label }.to_sentence) %></p>
+    <%= form_with url: settings_dns_alerts_path, method: :patch, scope: :dns_alerts, class: "mt-4 space-y-3 text-sm" do |f| %>
+      <% [ [ :outside, settings.dns_alert_outside ], [ :without_name, settings.dns_alert_without_name ], [ :conflict, settings.dns_alert_conflict ] ].each do |key, checked| %>
+        <label class="flex cursor-pointer items-start gap-2 text-ink-2">
+          <%= f.check_box key, { checked: checked, class: "mt-0.5 h-4 w-4 rounded border-line text-accent" }, "1", "0" %>
+          <span><%= t("settings.dns_alerts.#{key}") %> <span class="block text-xs text-ink-3"><%= t("settings.dns_alerts.#{key}_hint") %></span></span>
+        </label>
+      <% end %>
+      <% groups = ServerGroup.order(:name).to_a %>
+      <% if groups.any? %>
+        <fieldset class="pl-6">
+          <legend class="text-xs text-ink-3"><%= t("settings.dns_alerts.ignored_groups") %></legend>
+          <div class="mt-1 flex flex-wrap gap-3">
+            <% groups.each do |group| %>
+              <label class="flex items-center gap-1.5 text-xs text-ink-2"><%= check_box_tag "dns_alerts[ignored_group_ids][]", group.id, settings.dns_without_name_ignored_group_ids.include?(group.id), id: "dns-ignored-#{group.id}", class: "h-4 w-4 rounded border-line" %><%= group.name %></label>
+            <% end %>
+          </div>
+        </fieldset>
+      <% end %>
+      <%= f.submit t("settings.dns_alerts.save"), class: "btn btn-primary" %>
+    <% end %>
+  </section>
+<% end %>
 <% if @integrations.empty? %>
   <p class="card mt-5 px-4 py-6 text-sm text-ink-3"><%= t(".extension_available") %></p>
 <% end %>

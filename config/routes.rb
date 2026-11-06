@@ -27,6 +27,9 @@ Rails.application.routes.draw do
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
     resource :authorized_key, only: :destroy, controller: "server_authorized_keys"
     resources :authorizations, only: :create, controller: "server_authorizations"
+    resources :notes, only: %i[create edit update destroy], controller: "server_notes" do
+      post :preview, on: :collection
+    end
   end
   resource :server_pings, only: :create, path: "servers/pings"
   resource :server_scans, only: :create, path: "servers/scans"
@@ -38,6 +41,7 @@ Rails.application.routes.draw do
 
   resource :settings, only: :show
   namespace :settings do
+    resource :dns_alerts, only: :update, path: "extensions/dns"
     resources :users, only: %i[index update] do
       member do
         post :deactivate
@@ -97,6 +101,9 @@ Rails.application.routes.draw do
     resource :link, only: %i[create destroy], controller: "monitor_links"
   end
   # OVHcloud extension.
+  resources :dns_records, only: :index, path: "dns" do
+    resource :link, only: %i[create destroy], controller: "dns_links"
+  end
   get "ovh", to: "ovh#index", as: :ovh
   resources :ovh_resources, only: [], path: "ovh/resources" do
     resource :link, only: %i[create destroy], controller: "ovh_links"

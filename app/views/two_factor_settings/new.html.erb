@@ -8,7 +8,7 @@
     <ol class="space-y-6 text-sm text-ink-2">
       <li>
         <p class="font-medium"><%= t(".scan") %></p>
-        <div class="two-factor-qr mt-3 inline-block rounded-md border border-line bg-surface p-3">
+        <div class="two-factor-qr mt-3 inline-block rounded-md border border-line bg-white p-1">
           <%= image_tag "data:image/svg+xml;base64,#{Base64.strict_encode64(@qr_code)}", alt: t(".qr_alt"), class: "h-48 w-48" %>
         </div>
         <p class="mt-2 text-xs text-ink-3"><%= t(".manual") %> <code class="two-factor-secret select-all font-mono text-ink-2"><%= @secret.scan(/.{4}/).join(" ") %></code></p>

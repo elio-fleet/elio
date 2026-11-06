@@ -28,6 +28,9 @@
               <% if channel.mention_channel && channel.mentions? %>
                 <span class="channel-mention rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn-ink ring-1 ring-inset ring-warn/20"><%= channel.kind == "discord" ? "@everyone" : "@channel" %></span>
               <% end %>
+              <% if channel.groups? %>
+                <span class="channel-group rounded-full bg-subtle px-2 py-0.5 text-xs font-medium text-ink-2"><%= t("notification_channel.group", count: channel.group_minutes) %></span>
+              <% end %>
               <% if channel.daily_digest %>
                 <span class="channel-digest rounded-full bg-subtle px-2 py-0.5 text-xs font-medium text-ink-2"><%= t(".daily_digest") %></span>
               <% end %>

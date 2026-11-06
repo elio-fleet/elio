@@ -3,8 +3,10 @@
 <turbo-frame id="<%= dom_id(@server, :authorized_keys) %>" class="group block">
   <div class="flex items-center justify-between gap-4">
     <p class="text-sm text-ink-3">
-      <code class="rounded bg-subtle px-1 font-mono text-xs"><%= @account.path %></code>
-      <% if @result.success? %>
+      <% if @result.success? && @result.privileged %>
+        <%= t(".accounts", count: @result.accounts.size) %> · <%= t("count.keys", count: @result.keys.size) %>
+      <% elsif @result.success? %>
+        <code class="rounded bg-subtle px-1 font-mono text-xs"><%= @result.login.account.path %></code>
         · <%= t("count.keys", count: @result.keys.size) %>
       <% end %>
     </p>
@@ -16,7 +18,7 @@
   </div>
 
 
-  <div class="mt-4 group-aria-busy:opacity-50">
+  <div class="mt-4 space-y-6 group-aria-busy:opacity-50">
     <% if !@result.success? %>
       <div class="authorized-keys-error flex gap-3 rounded-md border border-crit/40 bg-crit-soft px-4 py-3 text-sm text-crit-ink">
         <%= icon :x_mark, class: "mt-0.5 h-4 w-4 shrink-0" %>
@@ -30,85 +32,13 @@
       <% end %>
       <%= link_to t(".try_again"), server_authorized_keys_path(@server),
             class: "btn btn-secondary retry-authorized-keys mt-3" %>
-    <% elsif @result.keys.empty? %>
-      <p class="rounded-md border border-dashed border-line px-4 py-6 text-center text-sm text-ink-3"><%= t(".authorized_key_server") %></p>
     <% else %>
-      <% if @orphan_keys.any? %>
-        <% one = @orphan_keys.one? %>
-        <div class="orphan-warning mb-3 flex gap-3 rounded-md border border-warn/40 bg-warn-soft px-4 py-3 text-sm text-warn-ink">
-          <span class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-warn"></span>
-          <p>
-            <strong><%= t(".keyring_html", t: (t("count.keys_are_not", count: @orphan_keys.size))) %></strong>
-            <%= t(".recognize", count: @orphan_keys.size) %>
-          </p>
-        </div>
+      <% @result.accounts.each do |entry| %>
+        <%= render "server_authorized_keys/account", entry: entry, show_header: @result.privileged %>
       <% end %>
-      <ul class="authorized-keys divide-y divide-line rounded-md border border-line">
-        <% @result.keys.each do |key| %>
-          <% orphan = @orphan_keys.include?(key) %>
-          <% public_key = @public_keys_by_fingerprint[key.fingerprint] %>
-          <li class="authorized-key flex items-center gap-3 px-4 py-3 <%= "is-orphan border-l-4 border-l-warn bg-warn-soft/40" if orphan %>">
-            <%= icon :key, class: "h-4 w-4 shrink-0 text-ink-3" %>
-            <div class="min-w-0 flex-1">
-              <div class="flex flex-wrap items-center gap-2">
-                <% if public_key %>
-                  <%= link_to public_key.name, public_key_path(public_key), data: { turbo_frame: "_top" },
-                        class: "key-name key-keyring truncate text-sm font-medium text-ink hover:text-accent hover:underline" %>
-                  <span class="key-kind rounded-full bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent ring-1 ring-inset ring-accent/20"><%= public_key.kind_label %></span>
-                  <% if key.named? && key.name != public_key.name %>
-                    <span class="key-comment truncate text-xs text-ink-3"><%= key.name %></span>
-                  <% end %>
-                <% else %>
-                  <span class="key-name truncate text-sm font-medium <%= key.named? ? "text-ink" : "italic text-ink-3" %>">
-                    <%= key.named? ? key.name : t(".unnamed") %>
-                  </span>
-                  <% if orphan %>
-                    <span class="key-badge key-unknown rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn-ink ring-1 ring-inset ring-warn/20"><%= t(".outside_keyring") %></span>
-                  <% end %>
-                <% end %>
-                <% if (access = @temporary_accesses[key.fingerprint]) %>
-                  <%= relative_time_tag access.expires_at, prefix: t("public_keys.accesses.expires"), expired: t("public_keys.accesses.expired"),
-                        class: "key-expiry inline-flex items-center rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn-ink ring-1 ring-inset ring-warn/20" %>
-                <% end %>
-                <% if key.matches?(@app_key) %>
-                  <span class="key-badge key-master rounded-full bg-accent-fill px-2 py-0.5 text-xs font-semibold text-white" title="<%= t(".ssh_key_elio_application") %>"><%= t("words.master") %></span>
-                <% end %>
-              </div>
-            </div>
-            <div data-controller="modal" class="shrink-0">
-              <button type="button" data-action="modal#open" title="<%= t(".key_details") %>" aria-label="<%= t(".details_of", name: key.name || t(".unnamed_2")) %>"
-                      class="key-details-button cursor-pointer rounded-md p-1.5 text-ink-3 hover:bg-subtle hover:text-ink-2">
-                <%= icon :information_circle %>
-              </button>
-              <%= render "server_authorized_keys/key_details", key: key, account: @account, public_key: public_key,
-                                                               dialog_id: "key-#{key.fingerprint.delete_prefix("SHA256:").gsub(/[^A-Za-z0-9]/, "")[0, 16]}" %>
-            </div>
-            <% if orphan %>
-              <% if can?(:operate) %>
-                <%= link_to new_public_key_path(content: [ key.type, key.key, key.comment ].compact.join(" "), name: suggested_public_key_name(key),
-                                             return_to: server_path(@server, tab: "keys")),
-                      data: { turbo_frame: "_top" },
-                      class: "add-to-keyring inline-flex shrink-0 items-center gap-1.5 rounded-md border border-accent/40 bg-surface px-2.5 py-1 text-xs font-medium text-accent shadow-sm hover:bg-accent-soft" do %>
-                  <%= icon :user_plus, class: "h-4 w-4" %> <%= t(".add_keyring") %>
-                <% end %>
-              <% end %>
-            <% end %>
-            <% unless key.matches?(@app_key) %>
-              <% if can?(:operate) %>
-                <%= button_to server_authorized_key_path(@server), method: :delete,
-                      params: { key: key.key, name: key.name },
-                      title: t(".delete_key"), aria: { label: t(".delete_key_2", nom: (key.name || "sans nom")) },
-                      form: { class: "shrink-0", data: { controller: "quiet-submit", turbo_frame: "_top",
-                                                         turbo_confirm: t(".key_will_deleted_will", nom: (key.name || "sans nom"), server_name: @server.name),
-                                                         confirm_label: t(".delete_key"), confirm_variant: "danger" } },
-                      class: "cursor-pointer rounded-md p-1.5 text-ink-3 hover:bg-crit-soft hover:text-crit-ink disabled:cursor-wait disabled:opacity-50" do %>
-                  <%= icon :trash %>
-                <% end %>
-              <% end %>
-            <% end %>
-          </li>
-        <% end %>
-      </ul>
+      <% unless @result.privileged || @server.username == "root" %>
+        <p class="accounts-root-needed text-xs text-ink-3"><%= t(".root_needed", login: @server.username) %></p>
+      <% end %>
     <% end %>
   </div>
 </turbo-frame>

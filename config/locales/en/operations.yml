@@ -37,6 +37,9 @@ en:
       ovh_sync:
         label: OVHcloud sync
         description: Reads again the OVHcloud resources (IPs, firewall, DNS, services), attaches them to the servers and raises the chosen alerts.
+      technitium_sync:
+        label: Technitium DNS sync
+        description: Reads again the Technitium DNS records, attaches them to the servers and raises the alerts chosen in the extension.
     intervals:
       i5: Every 5 minutes
       i15: Every 15 minutes
@@ -56,6 +59,7 @@ en:
       activity_yet: No activity yet.
       history: History of what happened
       history_on: History of what happened on “%{server_name}”
+      remove_kind_filter: Remove the filter
   tasks:
     progress:
       progress: Progress

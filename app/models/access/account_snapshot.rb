@@ -19,12 +19,22 @@ class AccountSnapshot < ApplicationRecord
     snapshot
   end
 
+  # Records every account of a read (Keys::AuthorizedKeysReader.call_all).
+  # With root, the accounts that no longer have a file (or a login shell)
+  # are dropped; without, they are kept (they could not be read).
+  def self.record_all!(server, read)
+    read.accounts.each { |entry| record!(server, entry.account, entry.keys) unless entry.unreadable }
+    where(server: server).where.not(unix_user: read.accounts.map { |entry| entry.account.unix_user }).delete_all if read.privileged
+  end
+
   # Snapshots holding the key with this fingerprint.
   def self.with_fingerprint(fingerprint)
     includes(:server).select { |snapshot| snapshot.fingerprints.include?(fingerprint) }
   end
 
-  def account = AuthorizedKeysAccount.login(server)
+  def account = AuthorizedKeysAccount.new(server, unix_user)
+
+  def login? = unix_user == server.username
 
   def keys
     @keys ||= AuthorizedKey.parse(content)

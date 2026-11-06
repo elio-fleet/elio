@@ -51,6 +51,7 @@ module Activity::Summaries
     ip_address_removed: proc { Activity::Summaries.t(:ip_address_removed, address: data["address"], server: server_name) },
     security_updates_available: proc { Activity::Summaries.t(:security_updates_available, count: data["count"].to_i, server: server_name) },
     server_created: proc { Activity::Summaries.t(:server_created, server: server_name) },
+    server_note_added: proc { Activity::Summaries.t(:server_note_added, server: server_name, author: author_name, excerpt: data["excerpt"]) },
     server_updated: proc { Activity::Summaries.t(:server_updated, server: server_name) },
     servers_imported: proc do
       names = data["names"].to_a
@@ -85,6 +86,7 @@ module Activity::Summaries
     server_without_monitor: proc { Activity::Summaries.t(:server_without_monitor, server: server_name) },
     ovh_service_expiring: proc { Activity::Summaries.t(:ovh_service_expiring, service: data["service"], count: data["days"].to_i) },
     dns_record_outside_fleet: proc { Activity::Summaries.t(:dns_record_outside_fleet, record: data["record"], target: data["target"]) },
+    dns_record_conflict: proc { Activity::Summaries.t(:dns_record_conflict, record: data["record"], sources: Array(data["sources"]).join(", ")) },
     ovh_service_unmanaged: proc { Activity::Summaries.t(:ovh_service_unmanaged, kind: data["kind_label"], service: data["service"]) },
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },

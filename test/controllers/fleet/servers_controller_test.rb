@@ -309,7 +309,7 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:viewer)
 
     get server_path(servers(:web))
-    assert_select "nav.server-tabs a", 8
+    assert_select "nav.server-tabs .server-tabs-bar > a", 9
     assert_select "nav.server-tabs a[aria-current=page][data-tab=overview][href=?]", server_path(servers(:web))
     assert_select "nav.server-tabs a[data-tab=packages][href=?]", server_path(servers(:web), tab: "packages"), text: /Paquets\s*412/
     assert_select "#server-health-details"
