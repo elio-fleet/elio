@@ -1,5 +1,6 @@
 module DnsHelper
-  SOURCE_CLASSES = { "ovh" => "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200", "technitium" => "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200" }.freeze
+  SOURCE_CLASSES = { "ovh" => "bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-200", "technitium" => "bg-violet-100 text-violet-800 dark:bg-violet-950 dark:text-violet-200",
+                     "gandi" => "bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-200" }.freeze
 
   # Badge of the extension a DNS record comes from.
   def dns_source_badge(source)

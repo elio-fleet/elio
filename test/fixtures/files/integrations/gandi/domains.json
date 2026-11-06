@@ -1,0 +1,5 @@
+[
+  { "fqdn": "example.com", "tld": "com", "status": [], "autorenew": false, "dates": { "registry_created_at": "2019-02-13T11:04:18Z", "updated_at": "2026-02-13T11:04:18Z", "registry_ends_at": "REPLACE_SOON" }, "nameserver": { "current": "livedns" }, "id": "ba1167be-0000-11e9-0000-00163ec4cb00", "href": "https://api.gandi.net/v5/domain/domains/example.com" },
+  { "fqdn": "example.org", "tld": "org", "status": [], "autorenew": true, "dates": { "registry_created_at": "2019-02-13T11:04:18Z", "updated_at": "2026-02-13T11:04:18Z", "registry_ends_at": "REPLACE_SOON" }, "nameserver": { "current": "livedns" }, "id": "ba1167be-0001-11e9-0000-00163ec4cb00", "href": "https://api.gandi.net/v5/domain/domains/example.org" },
+  { "fqdn": "example.net", "tld": "net", "status": [], "autorenew": false, "dates": { "registry_created_at": "2019-02-13T11:04:18Z", "updated_at": "2026-02-13T11:04:18Z", "registry_ends_at": "REPLACE_LATER" }, "nameserver": { "current": "other" }, "id": "ba1167be-0002-11e9-0000-00163ec4cb00", "href": "https://api.gandi.net/v5/domain/domains/example.net" }
+]

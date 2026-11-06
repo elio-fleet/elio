@@ -197,6 +197,47 @@ fr:
     sync_job:
       turned_off: 'Extension désactivée : rien à faire'
       internal_error: Erreur interne (%{class})
+    gandi:
+      description: Les enregistrements A, AAAA et CNAME de vos domaines servis par Gandi LiveDNS, rattachés aux serveurs vers lesquels ils pointent, et vos domaines avec leur date d'expiration (alerte en option).
+      api_token: Jeton d'accès personnel
+      api_token_hint: Un jeton avec des droits de lecture seulement (voir ci-dessous). Les jetons Gandi expirent, renouvelez-le à temps.
+      organization: Organisation (ID de partage)
+      organization_hint: "Facultatif : l'ID de l'organisation Gandi propriétaire des domaines. Vide : seulement les domaines de votre organisation personnelle."
+      domains: Domaines à lire
+      domains_hint: "Séparés par des virgules. Vide : tous les domaines que le jeton voit."
+      alert_expiring: Alerter quand un domaine expire bientôt
+      expiring_days: Seuil d'expiration (jours)
+      expiring_ignore_auto_renew: Ignorer les domaines renouvelés automatiquement
+      connected:
+        one: "Connecté à Gandi : %{count} domaine lisible, %{livedns} sur LiveDNS"
+        other: "Connecté à Gandi : %{count} domaines lisibles, %{livedns} sur LiveDNS"
+      read_only_reminder: ". Elio ne fait que lire : ne donnez au jeton que des droits de lecture."
+      unexpected: "Réponse inattendue de Gandi : le jeton est-il valide, avec les droits de lecture ?"
+      sync:
+        summary: "%{domains}, %{records}, %{unattached}"
+        domains:
+          one: "%{count} domaine LiveDNS"
+          other: "%{count} domaines LiveDNS"
+        records:
+          one: "%{count} enregistrement"
+          other: "%{count} enregistrements"
+        unattached:
+          one: "%{count} rattaché à aucun serveur"
+          other: "%{count} rattachés à aucun serveur"
+      help:
+        title: Créer un jeton d'accès personnel en lecture seule chez Gandi
+        step1_html: "Dans l'<strong>admin Gandi</strong> (admin.gandi.net), ouvrez <strong>Organisations</strong>, puis <strong>Jetons d'accès personnels</strong> (ou les réglages de votre compte), et créez un jeton."
+        step2_html: "Choisissez l'<strong>organisation</strong> propriétaire des domaines, et une <strong>expiration</strong> courte que vous renouvellerez."
+        step3_html: "Donnez-lui <strong>seulement les droits de voir les domaines et leurs enregistrements DNS (LiveDNS)</strong> : aucun droit de modifier, renouveler, transférer ou acheter."
+        step4_html: "Collez le jeton ici ; si les domaines appartiennent à une autre organisation que votre organisation personnelle, collez son ID dans <strong>Organisation</strong>."
+        reads_html: "Elio ne fait que lire, avec le jeton dans un en-tête <code>Authorization: Bearer</code> : <code>GET /v5/livedns/domains</code>, <code>GET /v5/livedns/domains/{domaine}/records</code> et <code>GET /v5/domain/domains</code>. Pas encore essayé sur un vrai compte Gandi."
+        domains: Domaines
+        domains_count:
+          one: "%{count} domaine à la dernière synchronisation"
+          other: "%{count} domaines à la dernière synchronisation"
+        domain: Domaine
+        autorenew: Renouvellement auto
+        other_dns: autre DNS
     technitium:
       description: Les enregistrements A, AAAA et CNAME de vos zones Technitium DNS Server, rattachés aux serveurs vers lesquels ils pointent ; alertes pour les enregistrements hors du parc et les serveurs sans nom DNS.
       url: Adresse de la console web

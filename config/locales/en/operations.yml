@@ -40,6 +40,9 @@ en:
       technitium_sync:
         label: Technitium DNS sync
         description: Reads again the Technitium DNS records, attaches them to the servers and raises the alerts chosen in the extension.
+      gandi_sync:
+        label: Gandi sync
+        description: Reads again the Gandi domains and their LiveDNS records, attaches them to the servers and raises the alerts chosen in the extension.
     intervals:
       i5: Every 5 minutes
       i15: Every 15 minutes
