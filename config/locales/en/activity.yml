@@ -175,9 +175,12 @@ en:
       ovh_service_expiring:
         label: OVH service expiring soon
         description: An OVHcloud service (dedicated, VPS) is about to expire.
+      gandi_domain_expiring:
+        label: Gandi domain expiring soon
+        description: A domain registered at Gandi is about to expire.
       dns_record_outside_fleet:
         label: DNS to an IP outside the fleet
-        description: A DNS record (OVHcloud or Technitium) points to an IP that belongs to no server of the fleet.
+        description: A DNS record (OVHcloud, Technitium, Gandi) points to an IP that belongs to no server of the fleet.
       ovh_service_unmanaged:
         label: OVH service not followed
         description: An OVHcloud service is attached to no server of the fleet.
@@ -299,6 +302,9 @@ en:
       ovh_service_expiring:
         one: 'OVH service “%{service}”: expires in %{count} day'
         other: 'OVH service “%{service}”: expires in %{count} days'
+      gandi_domain_expiring:
+        one: "Gandi domain %{domain}: expires in %{count} day"
+        other: "Gandi domain %{domain}: expires in %{count} days"
       dns_record_outside_fleet: "%{record} points to %{target}, outside the fleet"
       ovh_service_unmanaged: OVH %{kind} “%{service}” attached to no server
       integration_enabled: Extension %{integration} turned on

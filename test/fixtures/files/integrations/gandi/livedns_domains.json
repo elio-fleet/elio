@@ -1,0 +1,4 @@
+[
+  { "fqdn": "example.com", "domain_href": "https://api.gandi.net/v5/livedns/domains/example.com", "domain_records_href": "https://api.gandi.net/v5/livedns/domains/example.com/records" },
+  { "fqdn": "example.org", "domain_href": "https://api.gandi.net/v5/livedns/domains/example.org", "domain_records_href": "https://api.gandi.net/v5/livedns/domains/example.org/records" }
+]

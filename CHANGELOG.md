@@ -19,6 +19,7 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 ### Fixed
 
 - **Faster vulnerability pages** on a big fleet: the vulnerabilities are aggregated in the database instead of being loaded one by one (by package: 1.4 s → 0.5 s on 69,000 rows; by CVE: 0.26 s → 0.16 s), and the *CVE* tab of the Docker page loads the packages of an image when it is unfolded (1.5 s and 18 MB of HTML → 0.1 s and 72 KB).
+- **Gandi extension** (DNS source): the A, AAAA and CNAME records of the domains served by Gandi LiveDNS go into the DNS of the fleet (attached to the servers, common DNS alerts, DNS page and tab), with a personal access token that has read rights only (`GET` only, `Authorization: Bearer`). The domains are listed with their expiry date and auto renewal, with an optional alert when one expires soon. Tested against a fake API built on the examples of the Gandi documentation only (no real account yet).
 
 ## [0.1.0-beta.3.1] — 2026-11-06
 
