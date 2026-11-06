@@ -22,6 +22,7 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ### Fixed
 
+- Signed packages (Secure Boot) were compared with the fixed versions under their own version: `grub-efi-amd64-signed` 1+2.12+9+deb13u2 looked older than grub2's fix 2.12-6, so fixed vulnerabilities were reported, and “not in the repositories yet”. The inventory now reads `Built-Using` and compares the code they sign (grub2, shim, linux, and fwupd-efi — `fwupd-amd64-signed` was wrongly matched with fwupd). Older inventories and the versions offered by apt are converted too.
 - Instant searches (Fleet, Packages, Ports, Scheduled tasks, Vulnerabilities, Docker, Probes, OVHcloud, a server's packages and vulnerabilities) no longer lose the characters typed while the results load: only the results are reloaded, the search field keeps its focus.
 - The two-factor QR code is black on white with a quiet zone in the dark theme too, so that phones can read it.
 

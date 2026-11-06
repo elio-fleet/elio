@@ -71,13 +71,17 @@ class Inventory::Collectors::Packages < Inventory::Collector
     [ { kind: :security_updates_available, data: { count: data["security"] } } ]
   end
 
-  # "ii \tlibssl3\t3.0.14-1~deb12u1\tamd64\topenssl\t3.0.14-1~deb12u1" (installed or on hold only).
-  # The source package (what the CVE feeds list) is only kept when it differs.
+  # "ii \tlibssl3\t3.0.14-1~deb12u1\tamd64\topenssl\t3.0.14-1~deb12u1\t" (installed or on hold only).
+  # The source package (what the CVE feeds list) is only kept when it differs;
+  # for a signed package, the one it signs (Built-Using, see Vulnerabilities::Matcher).
   def self.parse_dpkg(text, upgradable)
     return [] if text.strip == "unsupported"
 
     text.lines.filter_map do |line|
-      status, name, version, arch, source, source_version = line.chomp.split("\t")
+      status, name, version, arch, source, source_version, built_using = line.chomp.split("\t")
+      if (signed = Vulnerabilities::Matcher.signed_source(source.presence || name.to_s, version.to_s, built_using))
+        source, source_version = signed
+      end
       next unless name && status.to_s.match?(/\A[ih]i/)
 
       update = upgradable[name]

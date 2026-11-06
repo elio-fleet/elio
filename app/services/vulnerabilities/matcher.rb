@@ -7,18 +7,58 @@
 module Vulnerabilities::Matcher
   Package = Data.define(:name, :source, :version)
 
-  # Signed packages are built from another source package, under which the
-  # feeds list the CVEs (linux-image-* come from linux-signed-amd64, its
-  # version "6.12.107+1" being that of the signing: the binary one counts).
-  SIGNED_SOURCES = [ [ /\Alinux-signed(-.+)?\z/, "linux" ], [ /\Agrub-efi-.+-signed\z/, "grub2" ], [ /\Ashim-signed\z/, "shim" ],
-                     [ /\Afwupd-.+-signed\z/, "fwupd" ] ].freeze
+  # Signed packages (Secure Boot) are built from a source package of their
+  # own, whose version is not the one of the signed code: grub-efi-amd64-signed
+  # 1+2.12+9+deb13u2 signs grub2 2.12-9+deb13u2, shim-signed
+  # 1.51~1+deb13u1+16.1-2~deb13u1 signs shim 16.1-2~deb13u1, fwupd-amd64-signed
+  # 1:1.7+1 signs fwupd-efi 1:1.7-1, linux-image-* (from linux-signed-amd64
+  # 6.12.107+1) are linux 6.12.107-1. The feeds list the CVEs under the signed
+  # code: compared as such, "1+2.12…" looked older than grub2's fix 2.12-6.
+  #
+  # dpkg's Built-Using field names it ("grub2 (= 2.12-9+deb13u2)"); without
+  # it (an older inventory, a version offered by apt) the version is deduced
+  # from the signed one.
+  SIGNED_SOURCES = [
+    [ /\Alinux-signed(-.+)?\z/, "linux", ->(version) { version } ], # the binary version is linux's
+    [ /\Agrub-efi-.+-signed\z/, "grub2", ->(version) { version.sub(/\A\d+\+/, "").sub("+", "-") } ],
+    [ /\Ashim-signed\z/, "shim", ->(version) { version[/\+([^+]*-[^+]*)\z/, 1] || version } ],
+    [ /\Afwupd-.+-signed\z/, "fwupd-efi", ->(version) { version.sub(/\+(\d+)\z/, '-\\1') } ]
+  ].freeze
 
   # A dpkg package for the feeds: its source package and source version
-  # (the binary ones when absent, and for the signed packages).
-  def self.package(name, version, source: nil, source_version: nil)
+  # (the binary ones when absent; the signed code for a signed package).
+  def self.package(name, version, source: nil, source_version: nil, built_using: nil)
     source ||= name
-    _, unsigned = SIGNED_SOURCES.find { |pattern, _| pattern.match?(source) }
-    unsigned ? Package.new(name, unsigned, version) : Package.new(name, source, source_version || version)
+    if (signed = signed_source(source, version, built_using))
+      return Package.new(name, *signed)
+    end
+
+    Package.new(name, source, source_version || version)
+  end
+
+  # [source, version] of the code a signed package signs, nil for any other.
+  def self.signed_source(source, version, built_using = nil)
+    return unless source.end_with?("-signed") || SIGNED_SOURCES.any? { |pattern, _, _| pattern.match?(source) }
+
+    _, unsigned, deduce = SIGNED_SOURCES.find { |pattern, _, _| pattern.match?(source) }
+    built = parse_built_using(built_using)
+    match = built.find { |name, _| name == unsigned } || (built.first if built.one?)
+    return match if match
+    return [ unsigned, deduce.call(version) ] if unsigned
+
+    nil
+  end
+
+  # The version of the signed code for a version of a signed binary package
+  # (an update offered by apt: no Built-Using for it).
+  def self.unsigned_version(name, version)
+    _, _, deduce = SIGNED_SOURCES.find { |pattern, _, _| pattern.match?(name) }
+    deduce ? deduce.call(version) : version
+  end
+
+  # "grub2 (= 2.12-9+deb13u2), lzo2 (= 2.10-3)" → [["grub2", "2.12-9+deb13u2"], ["lzo2", "2.10-3"]]
+  def self.parse_built_using(text)
+    text.to_s.split(",").filter_map { |entry| entry.strip.match(/\A(\S+)\s*\(=\s*([^)\s]+)\s*\)\z/)&.captures }
   end
 
   def self.call_all
