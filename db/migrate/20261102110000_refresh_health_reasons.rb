@@ -3,15 +3,10 @@
 # the reader's language. Computes them again from the inventory already
 # stored (no SSH): the state does not change, only how reasons are stored.
 class RefreshHealthReasons < ActiveRecord::Migration[8.1]
+  # Moved to RefreshHealthReasonsAfterUpgrade: computing the health here runs
+  # the code of the release before the migrations that follow (columns read by
+  # the DNS health did not exist yet, every server failed).
   def up
-    Server.reset_column_information
-    say_with_time "health reasons of #{Server.count} servers" do
-      Server.find_each do |server|
-        server.refresh_health!
-      rescue StandardError => e
-        say "#{server.name}: #{e.class}", true
-      end
-    end
   end
 
   def down
