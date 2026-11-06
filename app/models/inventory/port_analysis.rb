@@ -58,8 +58,7 @@ class Inventory::PortAnalysis
   def suggested_ufw_rules
     ssh_port = server.port
     lines = [ I18n.t("inventory.port_analysis.header", server_name: server.name),
-              "sudo ufw default deny incoming", "sudo ufw default allow outgoing",
-              "sudo ufw allow #{ssh_port}/tcp comment 'ssh (Elio)'" ]
+              "sudo ufw default deny incoming", "sudo ufw default allow outgoing", *ssh_rules(ssh_port) ]
     public_ports.reject { |entry| entry.port == ssh_port && entry.proto == "tcp" }.each do |entry|
       label = comment_for(entry)
       lines << if entry.container
@@ -126,6 +125,17 @@ class Inventory::PortAnalysis
         port.between?(from, to || from)
       end
     end
+  end
+
+  # SSH first: open to everyone, or only from the SSH sources of the server
+  # (with a reminder that Elio's own address must be among them).
+  def ssh_rules(ssh_port)
+    sources = server.ssh_sources
+    return [ "sudo ufw allow #{ssh_port}/tcp comment 'ssh (Elio)'" ] if sources.empty?
+
+    [ I18n.t("inventory.port_analysis.ssh_sources", names: sources.map(&:name).join(", ")),
+      I18n.t("inventory.port_analysis.ssh_sources_elio"),
+      *sources.map { |source| "sudo ufw allow from #{source.cidr} to any port #{ssh_port} proto tcp comment 'ssh (#{source.comment_name})'" } ]
   end
 
   # Process or unit name, limited to safe characters for a ufw comment.

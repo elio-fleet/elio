@@ -133,7 +133,17 @@
       <div class="ufw-rules px-4 py-3">
         <textarea readonly rows="<%= analysis.suggested_ufw_rules.lines.size + 2 %>" data-clipboard-target="source" aria-label="<%= t("servers.ports_card.suggested_ufw_rules") %>"
                   class="block w-full resize-none rounded-lg border border-line bg-subtle px-3 py-2 font-mono text-xs text-ink-2"><%= analysis.suggested_ufw_rules %></textarea>
-        <p class="mt-2 text-xs text-ink-3"><%= t("servers.ports_card.elio_never_changes_firewall") %></p>
+        <% sources = server.ssh_sources %>
+        <p class="ssh-sources-summary mt-2 text-xs text-ink-2">
+          <% if sources.any? %>
+            <%= t(".ssh_limited", names: sources.map(&:name).join(", ")) %>
+            <% if (groups = server.ssh_source_groups).any? %><span class="text-ink-3"><%= t(".ssh_limited_by", groups: groups.map(&:name).join(", ")) %></span><% end %>
+          <% else %>
+            <%= t(".ssh_open") %>
+          <% end %>
+          <% if can?(:administer) %><%= link_to t(".ssh_sources_settings"), settings_path(anchor: "firewall-settings"), class: "font-medium text-accent hover:underline" %><% end %>
+        </p>
+        <p class="mt-1 text-xs text-ink-3"><%= t("servers.ports_card.elio_never_changes_firewall") %></p>
       </div>
     </section>
   <% end %>

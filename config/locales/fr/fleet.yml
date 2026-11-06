@@ -198,6 +198,8 @@ fr:
       expected_ports: Ports attendus
       optional: "(facultatif)"
       ports_servers_group_may: 'Ports que les serveurs du groupe peuvent exposer publiquement. Tout autre port public est signalé comme inattendu. Vide : pas de vérification.'
+      ssh_sources: Sources autorisées pour le SSH
+      ssh_sources_hint: 'Les règles de firewall proposées pour ses serveurs n''ouvrent le SSH qu''à ces sources. Aucune cochée : pas de restriction venant de ce groupe.'
       servers: Serveurs
       check_uncheck_all: Tout cocher / décocher
       server_yet_you_can: 'Aucun serveur pour le moment : vous pourrez en ajouter au groupe plus tard.'

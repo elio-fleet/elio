@@ -27,7 +27,7 @@ class ServerPrompt
     ovh = overview.ovh_blocks.any?
     document(:firewall, [
       server_section, addresses_section, dns_names_section, ports_section(public_only: true), local_firewall_section,
-      (ovh_firewall_section(overview) if ovh)
+      (ovh_firewall_section(overview) if ovh), ssh_sources_section
     ], variant: (ovh ? "ovh" : "local"))
   end
 
@@ -114,6 +114,14 @@ class ServerPrompt
     lines = [ analysis.firewall_label ]
     lines += Array(firewall["allowed"]).map { |rule| t("allowed_rule", rule: rule["rule"], from: rule["from"] || t("anywhere")) }
     section(:local_firewall, lines)
+  end
+
+  # Where SSH must be reachable from (SshSource), when the list is not empty.
+  def ssh_sources_section
+    sources = @server.ssh_sources
+    return if sources.empty?
+
+    section(:ssh_sources, [ t("ssh_sources_rule", port: @server.port), *sources.map(&:label) ])
   end
 
   def ovh_firewall_section(overview)

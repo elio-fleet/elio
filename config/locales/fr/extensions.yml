@@ -375,6 +375,7 @@ fr:
   server_prompt:
     task: Ce que je demande
     instructions: Consignes supplémentaires
+    ssh_sources_rule: 'N''autorise le port SSH %{port} que depuis ces sources, dans les deux firewalls :'
     none: "(rien)"
     no_ports_inventory: "(pas encore d'inventaire des ports)"
     sections:
@@ -387,6 +388,7 @@ fr:
       existing_monitors: Sondes Uptime Kuma déjà rattachées à ce serveur
       local_firewall: Firewall de la machine
       ovh_firewall: Firewall réseau OVHcloud (par IP)
+      ssh_sources: Sources autorisées pour le SSH
       dns_names: Noms DNS qui pointent vers lui
     fields:
       name: 'Nom dans Elio : %{value}'

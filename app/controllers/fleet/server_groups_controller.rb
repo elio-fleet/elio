@@ -48,6 +48,6 @@ class ServerGroupsController < ApplicationController
   end
 
   def group_params
-    params.expect(server_group: [ :name, :color, :expected_ports, server_ids: [] ])
+    params.expect(server_group: [ :name, :color, :expected_ports, server_ids: [], ssh_source_ids: [] ])
   end
 end

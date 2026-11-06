@@ -53,6 +53,9 @@ Rails.application.routes.draw do
     resource :security, only: :update
     resource :health_thresholds, only: :update
     resource :prompt_instructions, only: :update
+    resources :ssh_sources, only: %i[create destroy] do
+      patch :move, on: :member
+    end
     resource :language, only: :update
     resource :docker, only: %i[show update], controller: "docker" do
       post :check

@@ -117,6 +117,10 @@ fr:
       ovh_tab: Onglet OVH
       ovh_not_read: Le firewall de %{block} n'a pas été lu (droit manquant sur la clé API OVH).
       no_ovh_rule: Aucune règle.
+      ssh_limited: 'SSH limité à : %{names}'
+      ssh_limited_by: "(choix de %{groups})"
+      ssh_open: SSH ouvert à tous dans les règles proposées.
+      ssh_sources_settings: Sources
     ports_card:
       firewall_tab_hint: Le firewall du serveur, celui d'OVH et les règles à copier sont dans l'onglet Firewall.
       see_firewall_tab: Onglet Firewall →
@@ -282,6 +286,8 @@ fr:
       no_firewall: aucun firewall actif
       unknown_firewall: firewall inconnu (accès root requis)
       header: "# Règles ufw suggérées pour %{server_name} (à relire avant de les appliquer)"
+      ssh_sources: "# SSH seulement depuis : %{names} (Paramètres → Général → Règles de firewall proposées)"
+      ssh_sources_elio: "# L'adresse d'Elio doit en faire partie, sinon Elio perd son accès SSH."
       docker: "# %{key} publié par Docker (%{container}) : ufw ne le filtre pas. Publiez-le sur 127.0.0.1 ou filtrez-le dans la chaîne DOCKER-USER."
       unexpected: "# %{key} (%{label}) : port inattendu, à fermer ou à ajouter aux ports attendus du groupe"
       private: "# %{key} (%{comment_for}) écoute sur le réseau privé (%{addresses_join}) : à autoriser depuis ce réseau si besoin"

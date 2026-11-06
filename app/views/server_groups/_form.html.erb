@@ -29,6 +29,23 @@
     <p class="mt-1 text-xs text-ink-3"><%= t(".ports_servers_group_may") %></p>
   </div>
 
+  <% ssh_sources = SshSource.ordered.to_a %>
+  <% if ssh_sources.any? %>
+    <fieldset class="group-ssh-sources">
+      <legend class="<%= label_class %>"><%= t(".ssh_sources") %> <span class="font-normal text-ink-3"><%= t(".optional") %></span></legend>
+      <%= hidden_field_tag "server_group[ssh_source_ids][]", "", id: nil %>
+      <div class="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+        <% ssh_sources.each do |source| %>
+          <label class="inline-flex items-center gap-2 text-sm">
+            <%= check_box_tag "server_group[ssh_source_ids][]", source.id, group.ssh_source_ids.include?(source.id), id: "server_group_ssh_source_#{source.id}", class: "rounded border-line" %>
+            <%= source.name %> <span class="font-mono text-xs text-ink-3"><%= source.cidr %></span>
+          </label>
+        <% end %>
+      </div>
+      <p class="mt-1 text-xs text-ink-3"><%= t(".ssh_sources_hint") %></p>
+    </fieldset>
+  <% end %>
+
   <fieldset data-controller="check-all">
     <div class="flex items-center justify-between">
       <legend class="<%= label_class %>"><%= t(".servers") %></legend>
