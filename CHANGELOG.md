@@ -4,6 +4,10 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Changed
+
+- **The Docker image is built on Debian 13 (trixie) with Ruby 3.4.12, and takes the Debian security updates at every build.** The previous image (Debian 12.10, never updated) carried 89 CVEs that Debian had fixed (openssl, gnutls28, glibc, pcre2, systemd, pam, libcap2, apt, gnupg2, libgcrypt20…): none is left. The CI fails when a security update is pending in the image, and Dependabot proposes the new base images.
+
 ## [0.1.0-beta.3.1] — 2026-11-06
 
 A fix for upgrades to 0.1.0-beta.3.
@@ -42,7 +46,6 @@ Change the image tag to `0.1.0-beta.3.1` (or pull `beta`) and restart: a migrati
 
 ### Changed
 
-- **The Docker image is built on Debian 13 (trixie) with Ruby 3.4.12, and takes the Debian security updates at every build.** The previous image (Debian 12.10, never updated) carried 89 CVEs that Debian had fixed (openssl, gnutls28, glibc, pcre2, systemd, pam, libcap2, apt, gnupg2, libgcrypt20…): none is left. The CI fails when a security update is pending in the image, and Dependabot proposes the new base images.
 - Fleet page: the actions (refresh the statuses, inventory or scan the keys of the whole fleet, import servers) are in an **Actions** menu; “Add a server” stays a button.
 - Server page: the tabs that don't fit go into a **More** menu (the current tab always stays visible), a drop-down list on a phone, in a new order (Overview, Vulnerabilities, Packages, Services, Docker, Ports, Scheduled tasks, SSH keys, extensions, History).
 - The Vulnerabilities tab of a server shows the vulnerabilities of the server itself by default (“53 on the server · 12 in 3 Docker images”); a switch, remembered, adds those of its Docker images. Health, the to-do list, the notifications and the daily digest tell the two apart: serious vulnerabilities in images are a warning, fixed by updating the image.
