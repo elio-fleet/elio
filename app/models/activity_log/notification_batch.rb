@@ -18,7 +18,9 @@ class NotificationBatch < ApplicationRecord
   def self.add!(channel, activity)
     opened = false
     batch = channel.with_lock do
-      open.find_by(channel: channel, kind: activity.kind)&.tap { |found| found.update!(activity_ids: found.activity_ids | [ activity.id ]) } ||
+      # FOR UPDATE: if the delivery job is closing this batch, PostgreSQL waits for it and then
+      # sees it closed (closed_at is checked again): the activity opens a new batch, it is not lost.
+      open.lock.find_by(channel: channel, kind: activity.kind)&.tap { |found| found.update!(activity_ids: found.activity_ids | [ activity.id ]) } ||
         create!(channel: channel, kind: activity.kind, activity_ids: [ activity.id ], send_at: channel.group_minutes.minutes.from_now).tap { opened = true }
     end
     DeliverNotificationBatchJob.set(wait_until: batch.send_at).perform_later(batch) if opened

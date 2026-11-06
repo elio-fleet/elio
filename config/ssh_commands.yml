@@ -256,7 +256,7 @@ keys:
       echo removed
 
   read_accounts:
-    description: "Reads ~/.ssh/authorized_keys of every account that has a login shell and a home (root included), one section per account with a file. Needs root."
+    description: "Reads ~/.ssh/authorized_keys of every account that has a login shell and a home (root included), one section per account with a file. Needs root. Refuses a link or a file the account does not own."
     run_as: root
     shell: true
     default: |
@@ -264,11 +264,15 @@ keys:
         case "$shell" in */nologin|*/false|*/sync|"") continue ;; esac
         [ -n "$home" ] && [ -f "$home/.ssh/authorized_keys" ] || continue
         printf '@@elio account %s\n' "$user"
+        # Read as root: a link (to another account's file) or a file the user does not own is refused.
+        if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ] || [ "$(ls -ld "$home/.ssh/authorized_keys" 2>/dev/null | awk '{ print $3 }')" != "$user" ]; then
+          printf '@@elio unreadable\n'; continue
+        fi
         cat "$home/.ssh/authorized_keys" 2>/dev/null || printf '@@elio unreadable\n'
       done
 
   remove_from_account:
-    description: "Removes every line whose key is the given one from the authorized_keys of another account (keeps its owner and rights). Needs root. Prints absent or removed."
+    description: "Removes every line whose key is the given one from the authorized_keys of another account (keeps its owner and rights). Needs root; refuses a link or a file the account does not own. Prints absent or removed."
     writes: true
     run_as: root
     shell: true
@@ -278,6 +282,8 @@ keys:
       if [ -z "$home" ]; then echo "unknown user" >&2; exit 3; fi
       file="$home/.ssh/authorized_keys"
       if [ ! -f "$file" ]; then echo absent; exit 0; fi
+      # Written as root: never through a link, nor in a file the user does not own.
+      if [ -L "$home/.ssh" ] || [ -L "$file" ] || [ "$(ls -ld "$file" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
       matches=$(awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
       if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
       tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")

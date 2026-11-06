@@ -24,7 +24,7 @@
     <p class="vulnerabilities-summary border-b border-line px-4 py-2.5 text-xs text-ink-2">
       <%= t(".summary_html", total: tag.strong(counts[:total], class: "text-ink"), fixable: tag.strong(t(".fixable", count: counts[:fixable]), class: counts[:fixable].positive? ? "text-crit-ink" : "text-ink")) %>
       <% Vulnerability::SEVERITIES.each_key do |severity| %>
-        <% if (count = counts[:by_severity][severity].to_i).positive? %>· <%= count %> <%= Vulnerability.severity_label(severity).downcase %><%= "s" if count > 1 && severity != "unknown" %><% end %>
+        <% if (count = counts[:by_severity][severity].to_i).positive? %>· <%= t("servers.vulnerabilities_card.by_severity.#{severity}", count: count) %><% end %>
       <% end %>
     </p>
     <% if counts[:images].positive? || @include_images %>

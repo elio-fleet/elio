@@ -41,8 +41,8 @@ class Vulnerabilities::FixCommands
     commands = []
     commands << root("apt-get update") if pending.any?
     commands << root("apt-get install --only-upgrade #{packages.shelljoin}") if packages.any?
+    # The reboot is a note, not a command: pasting the whole block must not reboot the server.
     reboot = groups.any?(&:reboot?)
-    commands << root("reboot") if reboot
     Plan.new(image: nil, state: pending.any? ? :pending : :available, commands: commands, packages: packages, reboot: reboot, containers: [])
   end
 

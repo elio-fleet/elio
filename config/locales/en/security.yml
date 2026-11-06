@@ -153,6 +153,22 @@ en:
         one: "%{count} Docker image"
         other: "%{count} Docker images"
       include_images: Include the Docker containers
+      by_severity:
+        critical:
+          one: "%{count} critical"
+          other: "%{count} critical"
+        high:
+          one: "%{count} high"
+          other: "%{count} high"
+        medium:
+          one: "%{count} medium"
+          other: "%{count} medium"
+        low:
+          one: "%{count} low"
+          other: "%{count} low"
+        unknown:
+          one: "%{count} not rated"
+          other: "%{count} not rated"
     vulnerability_packages:
       highest_score: Highest score
       repositories_server_already_offer: The repositories of the server already offer this version

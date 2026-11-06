@@ -15,7 +15,7 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     @bin = @root.join("bin").tap(&:mkpath)
     @alice_key = Ssh::KeyGenerator.generate(comment: "alice").public_key.strip
     @bob_key = Ssh::KeyGenerator.generate(comment: "bob").public_key.strip
-    { "root" => "/bin/bash", "bob" => "/bin/sh", "daemon" => "/usr/sbin/nologin", "carol" => "/bin/bash", "dave" => "/bin/bash" }.each_with_index do |(user, shell), uid|
+    { "root" => "/bin/bash", "bob" => "/bin/sh", "daemon" => "/usr/sbin/nologin", "carol" => "/bin/bash", "dave" => "/bin/bash", "mallory" => "/bin/bash", "eve" => "/bin/bash" }.each_with_index do |(user, shell), uid|
       @root.join(user).mkpath
       (@passwd ||= +"") << "#{user}:x:#{uid}:#{uid}::#{@root.join(user)}:#{shell}\n"
     end
@@ -23,6 +23,10 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     write_keys("bob", "# deploy\n#{@bob_key}\n#{@alice_key}")
     write_keys("daemon", @alice_key) # no login shell: skipped
     write_keys("carol", @alice_key).chmod(0o000) # unreadable
+    # mallory links her file to root's, eve's file belongs to root: both refused.
+    @root.join("mallory", ".ssh").mkpath
+    File.symlink(@root.join("root", ".ssh", "authorized_keys"), @root.join("mallory", ".ssh", "authorized_keys"))
+    write_keys("eve", @alice_key)
     # dave: no file, skipped
     @bin.join("getent").write(<<~SH)
       #!/bin/sh
@@ -30,6 +34,15 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
       if [ -n "$2" ]; then grep "^$2:" "#{@root.join("passwd")}" || exit 2; else cat "#{@root.join("passwd")}"; fi
     SH
     @bin.join("getent").chmod(0o755)
+    # Owner of a file = the account whose home holds it (the files belong to the test runner),
+    # except eve's file, which belongs to root.
+    @bin.join("ls").write(<<~SH)
+      #!/bin/sh
+      path="$2"; account=$(echo "$path" | sed "s#^#{@root}/##; s#/.*##")
+      [ "$account" = eve ] && account=root
+      echo "-rw------- 1 $account $account 0 Jan 1 00:00 $path"
+    SH
+    @bin.join("ls").chmod(0o755)
     @root.join("passwd").write(@passwd)
   end
 
@@ -65,10 +78,12 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     assert_equal 0, status
     accounts = Reader.parse_accounts(stdout)
 
-    assert_equal %w[root bob carol], accounts.keys
+    assert_equal %w[root bob carol mallory eve], accounts.keys
     assert_equal [ "alice" ], AuthorizedKey.parse(accounts["root"].first).map(&:name)
     assert_equal %w[bob alice], AuthorizedKey.parse(accounts["bob"].first).map(&:name)
     assert_equal [ "", true ], accounts["carol"]
+    assert_equal [ "", true ], accounts["mallory"], "a link to root's file is not read as root"
+    assert_equal [ "", true ], accounts["eve"], "a file the account does not own is not read"
   end
 
   test "call_all reads the login account, then the others through root" do
@@ -79,10 +94,10 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
 
     assert read.success?
     assert read.privileged
-    assert_equal %w[deploy root bob carol], read.accounts.map { |entry| entry.account.unix_user }
+    assert_equal %w[deploy root bob carol eve mallory], read.accounts.map { |entry| entry.account.unix_user }
     assert read.login.account.login?
     assert_equal [ "elio-fixture" ], read.login.keys.map(&:name)
-    assert read.accounts.last.unreadable
+    assert read.accounts.last(3).all?(&:unreadable)
     assert_equal 4, read.keys.size
   end
 
@@ -96,7 +111,7 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
 
   test "the login account is not listed twice when Elio logs in as root" do
     read = Reader.call_all(servers(:backup), transport: fake, known_hosts_file: @known_hosts)
-    assert_equal %w[root bob carol], read.accounts.map { |entry| entry.account.unix_user }
+    assert_equal %w[root bob carol eve mallory], read.accounts.map { |entry| entry.account.unix_user }
   end
 
   test "removing a key from another account keeps the other lines, the owner and the rights" do
@@ -130,6 +145,17 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     protected_key = Keys::AuthorizedKeyRemoval.call(servers(:web), ssh_keys(:main).public_key.split[1], account: bob, transport: fake, known_hosts_file: @known_hosts)
     assert_equal :error, protected_key.status
     assert_equal "Suppression interdite", protected_key.error_title
+  end
+
+  test "removal never writes through a link nor in a file the account does not own" do
+    root_file = @root.join("root", ".ssh", "authorized_keys")
+    root_file.write("#{@alice_key}\n#{@bob_key}\n")
+    before = root_file.read
+    [ "mallory", "eve" ].each do |user|
+      result = Keys::AuthorizedKeyRemoval.call(servers(:web), @alice_key.split[1], account: AuthorizedKeysAccount.new(servers(:web), user), transport: fake, known_hosts_file: @known_hosts)
+      assert_equal :error, result.status, user
+    end
+    assert_equal before, root_file.read, "root's file is untouched"
   end
 
   test "an account name from a request is checked" do

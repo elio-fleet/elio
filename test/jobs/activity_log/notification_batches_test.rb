@@ -153,6 +153,15 @@ class NotificationBatchesTest < ActiveJob::TestCase
     assert_not NotificationBatch.exists?(batch.id)
   end
 
+  test "an activity added while the batch is being closed opens a new batch" do
+    notify(:unknown_key_detected)
+    batch = NotificationBatch.sole
+    batch.update!(closed_at: Time.current) # the delivery job closed it meanwhile
+    late = notify(:unknown_key_detected, key_name: "late")
+    assert_equal [ late.id ], NotificationBatch.open.sole.activity_ids
+    assert_not_includes batch.reload.activity_ids, late.id
+  end
+
   def with_default_url_options(options)
     config = Rails.application.config.action_mailer
     previous = config.default_url_options

@@ -153,6 +153,22 @@ fr:
         one: "%{count} image Docker"
         other: "%{count} images Docker"
       include_images: Inclure celles des conteneurs Docker
+      by_severity:
+        critical:
+          one: "%{count} critique"
+          other: "%{count} critiques"
+        high:
+          one: "%{count} haute"
+          other: "%{count} hautes"
+        medium:
+          one: "%{count} moyenne"
+          other: "%{count} moyennes"
+        low:
+          one: "%{count} faible"
+          other: "%{count} faibles"
+        unknown:
+          one: "%{count} non évaluée"
+          other: "%{count} non évaluées"
     vulnerability_packages:
       highest_score: Note la plus haute
       repositories_server_already_offer: Les dépôts du serveur proposent déjà cette version

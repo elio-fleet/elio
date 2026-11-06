@@ -276,3 +276,4 @@ en:
     label_value: "%{label}: %{value}"
     fixable: fixable
     no_fix: no fix
+    unexpected: unexpected
