@@ -74,6 +74,22 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "#server-dns tr.dns-record[data-source=ovh]", 2
   end
 
+  test "the Firewall tab: the ports listening in IPv6 are not covered by the OVH firewall" do
+    record_ports(servers(:web))
+    get server_path(servers(:web), tab: "firewall")
+    assert_select "#server-firewall-ports th", text: "IPv6", count: 0
+    assert_select ".ipv6-warning", 0
+
+    servers(:web).update_columns(extra_addresses: [ "2001:db8::10" ])
+    get server_path(servers(:web), tab: "firewall")
+    assert_select "#server-firewall-ports th", text: "IPv6"
+    assert_select "tr.firewall-port[data-port='22/tcp'] .ipv6-not-covered", "Non couvert (IPv6)"
+    assert_select "tr.firewall-port[data-port='9100/tcp'] .ipv6-not-covered"
+    assert_select "tr.firewall-port[data-port='6432/tcp'] .ipv6-not-covered", 0
+    assert_select ".ipv6-warning", text: /22\/tcp, 9100\/tcp, sur 2001:db8::10/
+    assert_select ".server-prompt[data-kind=firewall] textarea", text: /IPv6 publique 2001:db8::10 : non couverte par le firewall réseau OVH/
+  end
+
   test "attach a service by hand, back to automatic through a sync" do
     vps = OvhResource.find_by!(kind: "vps")
     post ovh_resource_link_path(vps), params: { server_id: servers(:backup).id }

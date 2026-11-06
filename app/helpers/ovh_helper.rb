@@ -1,6 +1,6 @@
 # Display of the OVHcloud resources (OvhResource).
 module OvhHelper
-  FIREWALL_VERDICTS = { permit: :warn, deny: :good, restricted: :good }.freeze # labels: ovh_helper.verdicts.*
+  FIREWALL_VERDICTS = { permit: :warn, deny: :good, restricted: :good, not_covered: :warn }.freeze # labels: ovh_helper.verdicts.*
 
   def ovh_expiration(resource)
     return tag.span("—", class: "text-ink-3") unless resource.expires_at

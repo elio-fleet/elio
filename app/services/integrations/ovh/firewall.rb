@@ -2,8 +2,11 @@
 # the rules in sequence order, the first one that matches decides; no
 # matching rule lets the traffic through.
 module Integrations::Ovh::Firewall
-  # :permit, :deny or :restricted (allowed only from some sources); nil when the firewall is off.
-  def self.verdict(firewall, proto, port)
+  # :permit, :deny or :restricted (allowed only from some sources); nil when
+  # the firewall is off; :not_covered for an IPv6 address (the OVH network
+  # firewall filters only IPv4).
+  def self.verdict(firewall, proto, port, ip: nil)
+    return :not_covered if ip && ipv6?(ip)
     return unless firewall && firewall["enabled"]
 
     rule = Array(firewall["rules"]).sort_by { |candidate| candidate["sequence"].to_i }.find { |candidate| matches?(candidate, proto, port) }
@@ -11,6 +14,12 @@ module Integrations::Ovh::Firewall
     return :deny if rule["action"] == "deny"
 
     rule["source"].present? && !%w[0.0.0.0/0 any].include?(rule["source"]) ? :restricted : :permit
+  end
+
+  def self.ipv6?(ip)
+    IPAddr.new(ip.to_s.split("/").first).ipv6?
+  rescue IPAddr::Error
+    false
   end
 
   def self.matches?(rule, proto, port)

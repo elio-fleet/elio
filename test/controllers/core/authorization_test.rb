@@ -130,6 +130,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "require 2FA for admins" => -> { patch settings_security_path, params: { app_setting: { require_admin_two_factor: "0" } } },
       "health thresholds" => -> { patch settings_health_thresholds_path, params: { app_setting: { health_disk_warn: 80 } } },
       "prompt instructions" => -> { patch settings_prompt_instructions_path, params: { prompt_instructions: { firewall: "x" } } },
+      "firewall options" => -> { patch settings_firewall_options_path, params: { app_setting: { ufw_block_ipv6: "1" } } },
       "add an SSH source" => -> { post settings_ssh_sources_path, params: { ssh_source: { name: "Elio", cidr: "203.0.113.5" } } },
       "delete an SSH source" => -> { delete settings_ssh_source_path(SshSource.create!(name: "X#{SecureRandom.hex(3)}", cidr: "203.0.113.9")) },
       "move an SSH source" => -> { patch move_settings_ssh_source_path(SshSource.create!(name: "Y#{SecureRandom.hex(3)}", cidr: "203.0.113.8"), direction: "up") },

@@ -87,6 +87,7 @@ en:
           one: 'OVH service “%{name}”: expires in %{count} day'
           other: 'OVH service “%{name}”: expires in %{count} days'
         firewall_disabled: OVH network firewall disabled on %{ip}
+        ipv6_not_covered: 'Ports reachable in IPv6 without the OVH network firewall: %{ports}'
         no_reverse: No reverse DNS for %{ip}
         reverse_mismatch: Reverse DNS of %{ip} (%{reverse}) ≠ host name
       endpoint: Endpoint
@@ -362,6 +363,7 @@ en:
       permit: 'OVH: allowed'
       deny: 'OVH: blocked'
       restricted: 'OVH: limited sources'
+      not_covered: 'OVH: not covered (IPv6)'
     auto_renew: "(auto renewal)"
     permit: allow
     deny: deny
@@ -419,6 +421,7 @@ en:
     anywhere: anywhere
     ovh:
       not_read: "%{block}: firewall not read (product not chosen in the extension)"
+      ipv6_not_covered: 'Public IPv6 %{addresses}: not covered by the OVH network firewall (IPv4 only); ports listening in IPv6: %{ports}'
       none: "%{block}: no network firewall created"
       enabled:
         one: "%{ip}: enabled, %{count} rule"

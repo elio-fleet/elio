@@ -104,6 +104,17 @@
     <h2 class="font-semibold"><%= t(".firewall_settings") %></h2>
     <span class="text-xs text-ink-3"><%= t(".firewall_settings_hint") %></span>
   </div>
+  <%= form_with model: setting, url: settings_firewall_options_path, method: :patch, class: "firewall-options space-y-3 border-b border-line p-4" do |f| %>
+    <label class="flex items-start gap-2 text-sm">
+      <%= f.check_box :ufw_block_ipv6, class: "mt-0.5 rounded border-line" %>
+      <span><span class="font-medium"><%= t(".ufw_block_ipv6") %></span><span class="block text-xs text-ink-3"><%= t(".ufw_block_ipv6_hint") %></span></span>
+    </label>
+    <label class="flex items-start gap-2 text-sm">
+      <%= f.check_box :ovh_ipv6_health, class: "mt-0.5 rounded border-line" %>
+      <span><span class="font-medium"><%= t(".ovh_ipv6_health") %></span><span class="block text-xs text-ink-3"><%= t(".ovh_ipv6_health_hint") %></span></span>
+    </label>
+    <div class="flex justify-end"><%= f.submit t(".save_firewall_options"), class: "btn btn-secondary" %></div>
+  <% end %>
   <div class="p-4">
     <h3 class="text-sm font-medium"><%= t(".ssh_sources") %></h3>
     <p class="mt-1 text-xs text-ink-3"><%= t(".ssh_sources_hint") %></p>
