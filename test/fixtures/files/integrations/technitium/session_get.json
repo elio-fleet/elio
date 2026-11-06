@@ -1,0 +1,75 @@
+{
+    "username": "elio",
+    "tokenName": "elio-inventory",
+    "token": "REDACTED",
+    "info": {
+        "version": "15.6.2",
+        "uptimestamp": "2026-11-05T18:54:50.3177114Z",
+        "dnsServerDomain": "dns.test.local",
+        "defaultRecordTtl": 3600,
+        "defaultNsRecordTtl": 14400,
+        "defaultSoaRecordTtl": 900,
+        "useSoaSerialDateScheme": false,
+        "dnssecValidation": true,
+        "clusterInitialized": false,
+        "permissions": {
+            "Dashboard": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Zones": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Cache": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Allowed": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Blocked": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Apps": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "DnsClient": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Settings": {
+                "canView": false,
+                "canModify": false,
+                "canDelete": false
+            },
+            "DhcpServer": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Administration": {
+                "canView": false,
+                "canModify": false,
+                "canDelete": false
+            },
+            "Logs": {
+                "canView": true,
+                "canModify": false,
+                "canDelete": false
+            }
+        }
+    },
+    "server": "dns.test.local",
+    "status": "ok"
+}

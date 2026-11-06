@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_05_184759) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_185658) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -412,6 +412,22 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_184759) do
     t.string "state", default: "active", null: false
   end
 
+  create_table "technitium_records", force: :cascade do |t|
+    t.string "zone", null: false
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.string "value", null: false
+    t.integer "ttl"
+    t.boolean "disabled", default: false, null: false
+    t.bigint "server_id"
+    t.string "matched_by"
+    t.string "matched_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["server_id"], name: "index_technitium_records_on_server_id"
+    t.index ["zone", "name", "record_type", "value"], name: "index_technitium_records_uniqueness", unique: true
+  end
+
   create_table "temporary_accesses", force: :cascade do |t|
     t.bigint "server_id", null: false
     t.bigint "public_key_id"
@@ -531,6 +547,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_184759) do
   add_foreign_key "server_notes", "servers", on_delete: :cascade
   add_foreign_key "server_notes", "users", on_delete: :nullify
   add_foreign_key "server_vulnerabilities", "servers", on_delete: :cascade
+  add_foreign_key "technitium_records", "servers", on_delete: :nullify
   add_foreign_key "temporary_accesses", "public_keys", on_delete: :nullify
   add_foreign_key "temporary_accesses", "servers", on_delete: :cascade
   add_foreign_key "uptime_kuma_monitors", "servers", on_delete: :nullify

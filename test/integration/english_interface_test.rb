@@ -149,6 +149,11 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     # The prompts for an AI are written in the reader's language too.
     assert_english server_path(servers(:web), tab: "monitors"), except: data
     assert_english server_path(servers(:web), tab: "ovh"), except: data
+    Integration.find_or_initialize_by(kind: "technitium").update!(enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
+    TechnitiumRecord.create!(zone: "example.test", name: "old.example.test", record_type: "A", value: "198.51.100.99")
+    assert_english technitium_records_path, except: data
+    assert_english server_path(servers(:web), tab: "dns"), except: data
+    assert_english edit_settings_integration_path("technitium"), except: data
   end
 
   test "the check finds French" do

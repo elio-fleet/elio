@@ -191,6 +191,61 @@ fr:
     sync_job:
       turned_off: 'Extension désactivée : rien à faire'
       internal_error: Erreur interne (%{class})
+    technitium:
+      description: Les enregistrements A, AAAA et CNAME de vos zones Technitium DNS Server, rattachés aux serveurs vers lesquels ils pointent ; alertes pour les enregistrements hors du parc et les serveurs sans nom DNS.
+      tab: DNS
+      url: Adresse de la console web
+      url_hint: L'adresse de sa console web et de son API (port 5380 en HTTP, 53443 en HTTPS par défaut).
+      api_token: Jeton d'API
+      api_token_hint: Le jeton d'un utilisateur qui peut seulement voir les zones (voir ci-dessous).
+      self_signed: Accepter un certificat auto-signé
+      zones: Zones à lire
+      zones_hint: 'Séparées par des virgules. Vide : toutes les zones que le jeton peut voir.'
+      section_alerts: Alertes
+      alert_outside: Un enregistrement pointe vers une IP hors du parc
+      alert_server_without_dns: Serveur sans nom DNS
+      alert_server_without_dns_hint: Un avertissement sur les serveurs vers lesquels aucun enregistrement ne pointe.
+      connected:
+        one: 'Connecté à Technitium DNS Server %{version} : %{count} zone lisible'
+        other: 'Connecté à Technitium DNS Server %{version} : %{count} zones lisibles'
+      writable: ". Attention : ce jeton peut aussi modifier ou supprimer des zones ; Elio n'a besoin que de les voir."
+      http_warning: ". L'adresse est en HTTP : le jeton circule en clair."
+      invalid_token: 'Jeton invalide ou expiré : créez-en un nouveau dans Technitium.'
+      api_error: 'Technitium a refusé la requête : %{message}'
+      not_json: 'Réponse inattendue : est-ce bien l''adresse d''un Technitium DNS Server ?'
+      sync:
+        summary: "%{zones}, %{records}, %{unattached}"
+        zones:
+          one: "%{count} zone"
+          other: "%{count} zones"
+        records:
+          one: "%{count} enregistrement"
+          other: "%{count} enregistrements"
+        unattached:
+          one: "%{count} rattaché à aucun serveur"
+          other: "%{count} rattachés à aucun serveur"
+      health:
+        no_dns: Aucun nom DNS dans Technitium
+      link:
+        server: "— aucun serveur —"
+        server_of: Serveur de %{name}
+        attach: Rattacher
+        automatic: Revenir au rattachement automatique
+      server_tab:
+        title: Noms DNS (Technitium)
+        all_records: Tous les enregistrements
+        matched: Rattachement
+        none: Aucun enregistrement Technitium ne pointe vers ce serveur.
+        not_synchronized: " (Technitium n'a pas encore été synchronisé)"
+        see_unattached: Voir les enregistrements rattachés à aucun serveur
+        synchronized_html: synchronisé %{time}
+      help:
+        title: Créer un jeton d'API en lecture seule dans Technitium
+        step1_html: "<strong>Administration → Groups</strong> : ajoutez un groupe (par exemple <code>Elio read-only</code>), puis dans <strong>Administration → Permissions</strong> donnez-lui seulement <strong>View</strong> sur <strong>Zones</strong>."
+        step2_html: "<strong>Administration → Users</strong> : ajoutez un utilisateur (par exemple <code>elio</code>) membre de ce groupe seulement."
+        step3_html: 'Technitium a aussi des <strong>droits par zone</strong> : sur chaque zone à lire (<strong>Zones</strong>, la zone, <strong>Permissions</strong>), donnez <strong>View</strong> au groupe. Sans cela, le jeton ne voit aucune zone.'
+        step4_html: Connectez-vous avec cet utilisateur, puis <strong>Create API Token</strong> (menu de l'utilisateur, en haut à droite), et collez-le ici.
+        reads_html: 'Elio ne fait que lire : <code>/api/user/session/get</code>, <code>/api/zones/list</code> et <code>/api/zones/records/get</code>, avec le jeton dans un en-tête <code>Authorization: Bearer</code> (testé avec Technitium DNS Server 15.6).'
   integration:
     sync_label: Synchronisation %{label}
     required: "%{label} : obligatoire pour activer l'extension"
@@ -201,6 +256,7 @@ fr:
       dns: par résolution DNS
       name: par son nom
       manual: à la main
+      technitium: par un nom DNS Technitium
   ovh_resource:
     matches:
       address: par son adresse IP
@@ -339,6 +395,7 @@ fr:
       existing_monitors: Sondes Uptime Kuma déjà rattachées à ce serveur
       local_firewall: Firewall de la machine
       ovh_firewall: Firewall réseau OVHcloud (par IP)
+      dns_names: Noms DNS qui pointent vers lui (Technitium)
     fields:
       name: 'Nom dans Elio : %{value}'
       hostname: 'Nom d''hôte : %{value}'
@@ -392,3 +449,37 @@ fr:
     ovh_firewall:
       button: Prompt pour proposer des règles de firewall
       title: 'Prompt pour une IA : firewall réseau OVHcloud'
+  technitium_record:
+    matches:
+      manual: rattaché à la main
+      address: par son IP %{address}
+      cname: CNAME vers un de ses noms
+  technitium_links_controller:
+    attached: "%{name} est rattaché à « %{server_name} »."
+    detached: "%{name} n'est rattaché à aucun serveur."
+    automatic: "%{name} revient au rattachement automatique (synchronisation lancée)."
+  technitium_records:
+    index:
+      title: Enregistrements DNS
+      intro: Les enregistrements A, AAAA et CNAME de Technitium DNS Server, rattachés aux serveurs vers lesquels ils pointent
+      synchronized_html: "· synchronisé %{time}"
+      last_sync_failed: " Dernière synchronisation en échec : %{error}"
+      extension: Extension
+      records: Enregistrements
+      outside: Hors du parc
+      outside_caption: A / AAAA vers une IP inconnue
+      unattached: Non rattachés
+      servers_without: Serveurs sans nom
+      filters: Filtres
+      all: Tous
+      all_zones: Toutes les zones
+      zone: Zone
+      search: Nom ou valeur
+      name: Nom
+      value: Valeur
+      server: Serveur
+      attach: Rattacher
+      disabled: désactivé
+      outside_fleet: hors du parc
+      none: Aucun enregistrement ne correspond.
+      not_synchronized: Technitium n'a pas encore été synchronisé.

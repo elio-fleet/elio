@@ -13,7 +13,7 @@ class ServerPrompt
 
   def monitors
     document(:monitors, [
-      server_section, addresses_section, services_section, containers_section, ports_section,
+      server_section, addresses_section, dns_names_section, services_section, containers_section, ports_section,
       section(:existing_monitors, @server.uptime_kuma_monitors.order(:name).map { |monitor| monitor_line(monitor) })
     ])
   end
@@ -59,6 +59,13 @@ class ServerPrompt
     end
     lines += Array(@server.extra_addresses).map { |address| "#{address} (#{t("manual_address")})" }
     section(:addresses, lines)
+  end
+
+  # With the Technitium DNS extension: the names that point to the server.
+  def dns_names_section
+    return unless Integration.enabled?("technitium")
+
+    section(:dns_names, @server.technitium_records.order(:name, :record_type).map { |record| "#{record.name} (#{record.record_type} #{record.value})" })
   end
 
   def services = @server.inventory("services")&.data || {}

@@ -43,7 +43,7 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | **SSH keys** | A shared keyring (people and machines), keys added to or removed from a server in one click, **temporary access** that expires on its own, unknown keys flagged, rotation of Elio's own key without downtime. |
 | **Alerts** | What needs attention, by severity, on the overview; activity log; notifications to Slack, Discord, email or a signed webhook, grouped by type (critical ones right away); daily digest. |
 | **Automation** | Every collection runs on schedule, on the whole fleet or per group, followed live in the *Tasks* page. |
-| **Extensions** | **Uptime Kuma** (monitors attached to each server) and **OVHcloud** (IPs, network firewall, DNS records, services), read-only. |
+| **Extensions** | **Uptime Kuma** (monitors attached to each server), **OVHcloud** (IPs, network firewall, DNS records, services) and **Technitium DNS** (zones and records), read-only. |
 | **Team** | Roles (admin, operator, read-only), invitations, mandatory two-factor authentication, ⌘K search everywhere, light and dark themes. |
 
 | | |
@@ -146,18 +146,26 @@ Elio can read what your other tools know and show it next to each server. Enable
 
 The OVH client of Elio only knows the GET method: it cannot write, whatever the key allows.
 
+### Technitium DNS
+
+- **Setup**: the address of the web console (port 5380 or 53443) and the API token of a user that can only **view** the zones. Technitium also has **permissions per zone**: give that user's group *View* on each zone to read, or the token sees none. *Tester la connexion* gives the version and the zones readable, and warns if the token could change them.
+- Every hour, Elio reads the **A, AAAA and CNAME** records of the zones (all, or those you list) and attaches each one to its server: by the IP of an A / AAAA record, and for a CNAME by the record or the host it points to. A name can be attached by hand, and the attachment is kept.
+- A **DNS** tab on each server (the names pointing to it) and a **DNS** page: every record, filters *outside the fleet* and *not attached*. Uptime Kuma monitors are also attached through these names, and the prompt that proposes monitors lists them.
+- Optional alerts: record pointing to an IP outside the fleet, server without a DNS name.
+- The token travels in an `Authorization: Bearer` header (never in the URL). Tested with Technitium DNS Server 15.6.
+
 ## Security
 
 - Elio's SSH key, API keys, webhooks and 2FA secrets are **encrypted in the database** and never sent back to the browser.
 - Two-factor authentication (TOTP and backup codes), mandatory by default for administrators and operators; roles; invitations only (no public sign-up); rate-limited sign-in and lockout; strict Content Security Policy.
 - Servers' host keys are pinned on first connection; a change blocks the connection until an administrator accepts it.
-- **Outbound connections** of Elio: the vulnerability feeds and score providers (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — only the releases and CVEs of your fleet), the Docker registries (manifest `HEAD` requests), and the extensions you enable (your Uptime Kuma instance, the OVH API — read-only, see [Extensions](#extensions)). Nothing else, no telemetry. In a closed network, the feeds can be imported by hand.
+- **Outbound connections** of Elio: the vulnerability feeds and score providers (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — only the releases and CVEs of your fleet), the Docker registries (manifest `HEAD` requests), and the extensions you enable (your Uptime Kuma instance, the OVH API, your Technitium DNS Server — read-only, see [Extensions](#extensions)). Nothing else, no telemetry. In a closed network, the feeds can be imported by hand.
 - Found a vulnerability? Please report it privately: see [SECURITY.md](SECURITY.md).
 
 ## Known limits
 
 - Full inventory for **Debian and Ubuntu** only. Ubuntu has not been tried on a real server yet.
-- The Uptime Kuma and OVHcloud extensions were built on recorded API answers, not tried on a real account yet.
+- The Uptime Kuma and OVHcloud extensions were built on recorded API answers, not tried on a real account yet (Technitium DNS was tried on a real instance).
 - Container image CVEs without Trivy or Grype: Debian and Ubuntu based images only (not Alpine).
 - Debian rates few of its CVEs: the scores come from the providers you enable (NVD, Red Hat, CVE.org by default).
 

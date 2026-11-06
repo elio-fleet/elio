@@ -100,6 +100,9 @@ Rails.application.routes.draw do
     resource :link, only: %i[create destroy], controller: "monitor_links"
   end
   # OVHcloud extension.
+  resources :technitium_records, only: :index, path: "dns" do
+    resource :link, only: %i[create destroy], controller: "technitium_links"
+  end
   get "ovh", to: "ovh#index", as: :ovh
   resources :ovh_resources, only: [], path: "ovh/resources" do
     resource :link, only: %i[create destroy], controller: "ovh_links"

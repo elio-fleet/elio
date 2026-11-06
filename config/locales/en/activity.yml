@@ -177,7 +177,7 @@ en:
         description: An OVHcloud service (dedicated, VPS) is about to expire.
       dns_record_outside_fleet:
         label: DNS to an IP outside the fleet
-        description: An OVH DNS record points to an IP that belongs to no server of the fleet.
+        description: A DNS record (OVHcloud or Technitium) points to an IP that belongs to no server of the fleet.
       ovh_service_unmanaged:
         label: OVH service not followed
         description: An OVHcloud service is attached to no server of the fleet.
