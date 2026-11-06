@@ -148,6 +148,9 @@ en:
         anti_ddos: Anti-DDoS of
         dns_records_server: DNS records to this server
         dns_record_zones_read: No DNS record of the zones read points to this server.
+        dns_names:
+          one: "%{count} DNS name → DNS tab"
+          other: "%{count} DNS names → DNS tab"
       client:
         unknown_endpoint: 'Unknown OVH endpoint: %{endpoint}'
         unreadable: Unreadable OVHcloud answer for %{path}
@@ -193,7 +196,6 @@ en:
       internal_error: Internal error (%{class})
     technitium:
       description: The A, AAAA and CNAME records of your Technitium DNS Server zones, attached to the servers they point to; alerts for records pointing outside the fleet and servers without a DNS name.
-      tab: DNS
       url: Address of the web console
       url_hint: The address of its web console and API (port 5380 in HTTP, 53443 in HTTPS by default).
       api_token: API token
@@ -226,19 +228,6 @@ en:
           other: "%{count} attached to no server"
       health:
         no_dns: No DNS name in Technitium
-      link:
-        server: "— no server —"
-        server_of: Server of %{name}
-        attach: Attach
-        automatic: Back to the automatic attachment
-      server_tab:
-        title: DNS names (Technitium)
-        all_records: All the records
-        matched: Attached
-        none: No Technitium record points to this server.
-        not_synchronized: " (Technitium has not been synchronized yet)"
-        see_unattached: See the records attached to no server
-        synchronized_html: synchronized %{time}
       help:
         title: Create a read-only API token in Technitium
         step1_html: "<strong>Administration → Groups</strong>: add a group (e.g. <code>Elio read-only</code>), and in <strong>Administration → Permissions</strong> give it <strong>View</strong> only on <strong>Zones</strong>."
@@ -257,6 +246,7 @@ en:
       name: by its name
       manual: by hand
       technitium: by a Technitium DNS name
+      dns_record: by a DNS name
   ovh_resource:
     matches:
       address: by its IP address
@@ -321,6 +311,8 @@ en:
       ovh_service: OVH service
       server: Server
       attach: Attach to
+      dns_names: DNS names
+      dns_names_caption: on the DNS page
   settings:
     integrations:
       field:
@@ -395,7 +387,7 @@ en:
       existing_monitors: Uptime Kuma monitors already attached to this server
       local_firewall: Firewall of the machine
       ovh_firewall: OVHcloud network firewall (per IP)
-      dns_names: DNS names pointing to it (Technitium)
+      dns_names: DNS names pointing to it
     fields:
       name: 'Name in Elio: %{value}'
       hostname: 'Hostname: %{value}'
@@ -449,22 +441,8 @@ en:
     ovh_firewall:
       button: Prompt to propose firewall rules
       title: 'Prompt for an AI: OVHcloud network firewall'
-  technitium_record:
-    matches:
-      manual: attached by hand
-      address: by its IP %{address}
-      cname: CNAME to one of its names
-  technitium_links_controller:
-    attached: "%{name} is attached to “%{server_name}”."
-    detached: "%{name} is attached to no server."
-    automatic: "%{name} goes back to the automatic attachment (synchronization started)."
-  technitium_records:
+  dns_records:
     index:
-      title: DNS records
-      intro: The A, AAAA and CNAME records of Technitium DNS Server, attached to the servers they point to
-      synchronized_html: "· synchronized %{time}"
-      last_sync_failed: " Last sync failed: %{error}"
-      extension: Extension
       records: Records
       outside: Outside the fleet
       outside_caption: A / AAAA to an unknown IP
@@ -482,4 +460,33 @@ en:
       disabled: disabled
       outside_fleet: outside the fleet
       none: No record matches.
-      not_synchronized: Technitium has not been synchronized yet.
+      title: DNS records
+      intro: The A, AAAA and CNAME records read by the extensions, attached to the servers they point to.
+      not_synchronized_yet: not synchronized yet
+      settings: settings
+      source: Source
+      all_sources: All the sources
+      no_record_yet: 'No DNS record yet: the sources have not been synchronized.'
+      synchronized_html: synchronized %{time}
+      last_sync_failed: "· last sync failed: %{error}"
+    link:
+      server: "— no server —"
+      server_of: Server of %{name}
+      attach: Attach
+      automatic: Back to the automatic attachment
+    server_tab:
+      all_records: All the records
+      matched: Attached
+      see_unattached: See the records attached to no server
+      title: DNS names
+      none: No DNS record points to this server.
+    tab: DNS
+  dns_record:
+    matches:
+      manual: attached by hand
+      address: by its IP %{address}
+      cname: CNAME to one of its names
+  dns_links_controller:
+    attached: "%{name} is attached to “%{server_name}”."
+    detached: "%{name} is attached to no server."
+    automatic: "%{name} goes back to the automatic attachment."

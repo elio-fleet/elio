@@ -36,5 +36,8 @@ class Integrations::Base
 
     # Help shown on the settings page (partial "integrations/<key>/help"), or nil.
     def help_partial = nil
+
+    # Does this extension feed the DNS of the fleet (DnsRecord, Dns)?
+    def dns_source?(_integration) = false
   end
 end

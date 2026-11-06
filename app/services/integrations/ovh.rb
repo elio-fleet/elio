@@ -65,6 +65,9 @@ class Integrations::Ovh < Integrations::Base
 
     def products(integration) = Array(integration.value(:products))
 
+    # With the DNS product, its records are in the DNS of the fleet.
+    def dns_source?(integration) = products(integration).include?("dns")
+
     # Rights to give to the API key, and the prefilled token creation page.
     def rights(integration) = Integrations::Ovh::Fetch.rights(products(integration))
 
@@ -85,13 +88,15 @@ class Integrations::Ovh < Integrations::Base
     end
 
     # A/AAAA records whose IP belongs to no server of the fleet.
-    def records_outside_fleet = OvhResource.of_kind("dns_record").unattached.where("ovh_resources.data->>'type' IN ('A', 'AAAA')")
+    def records_outside_fleet = DnsRecord.of_source("ovh").outside_fleet
 
     def health_reasons(integration, server)
       return [] unless integration.last_synced_at
 
       resources = server.ovh_resources.to_a
       return [] if resources.empty?
+
+      dns_names = server.dns_records.of_source("ovh").exists?
 
       reasons = []
       if integration.value(:alert_expiring)
@@ -113,7 +118,7 @@ class Integrations::Ovh < Integrations::Base
           end
         end
       end
-      if integration.value(:alert_server_without_dns) && ip_blocks.any? && resources.none? { |resource| resource.kind == "dns_record" }
+      if integration.value(:alert_server_without_dns) && ip_blocks.any? && !dns_names
         reasons << reason("warn", :no_dns)
       end
       reasons

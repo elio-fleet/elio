@@ -17,11 +17,11 @@
   <%= stat_tile t(".services"), @counts.slice(*OvhResource::SERVICE_KINDS).values.sum, t(".dedicated_vps_instances"), icon: :server_stack, id: "stat-ovh-services" %>
   <%= stat_tile t(".not_attached"), @unattached_services, t(".services_outside_fleet"), tone: (@unattached_services.positive? ? :warn : nil), icon: :exclamation_triangle, id: "stat-ovh-unattached" %>
   <%= stat_tile t(".expiring_soon"), @expiring, nil, tone: (@expiring.positive? ? :warn : nil), icon: :clock, id: "stat-ovh-expiring" %>
-  <%= stat_tile t(".dns_outside_fleet"), @outside_records, t("words.a_records"), tone: (@outside_records.positive? ? :warn : nil), icon: :list_bullet, id: "stat-ovh-dns-outside" %>
+  <%= link_to dns_records_path(source: "ovh"), class: "block" do %><%= stat_tile t(".dns_names"), @dns_count, t(".dns_names_caption"), icon: :list_bullet, id: "stat-ovh-dns" %><% end %>
 </div>
 
 <nav class="ovh-tabs mt-6 flex gap-5 border-b border-line text-sm" aria-label="<%= t(".resources") %>">
-  <% [ [ "services", t(".services"), @counts.slice(*OvhResource::SERVICE_KINDS).values.sum ], [ "ips", t(".ip_addresses"), @counts["ip"].to_i ], [ "dns", t(".dns"), @counts["dns_record"].to_i ] ].each do |tab, label, count| %>
+  <% [ [ "services", t(".services"), @counts.slice(*OvhResource::SERVICE_KINDS).values.sum ], [ "ips", t(".ip_addresses"), @counts["ip"].to_i ] ].each do |tab, label, count| %>
     <%= link_to ovh_path(tab: tab), aria: { current: (@tab == tab ? "page" : nil) }, data: { tab: tab },
           class: "flex items-center gap-1.5 border-b-2 px-1 pb-2.5 #{@tab == tab ? "border-accent font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink"}" do %>
       <%= label %> <span class="rounded-full bg-subtle px-1.5 text-[11px] text-ink-2"><%= count %></span>
@@ -34,7 +34,7 @@
   <%= f.search_field :q, value: @q, placeholder: t(".name_ip_target"), aria: { label: t(".search") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1 text-xs" %>
   <label class="flex items-center gap-1.5 text-xs text-ink-2">
     <%= check_box_tag :unattached, "1", params[:unattached] == "1", data: { action: "change->auto-submit#submit" }, class: "h-4 w-4 rounded border-line text-accent" %>
-    <%= @tab == "dns" ? t(".outside_fleet_only") : t(".not_attached_only") %>
+    <%= t(".not_attached_only") %>
   </label>
 <% end %>
 
@@ -45,11 +45,10 @@
       <thead>
         <tr>
           <% if @tab == "services" %><th class="pl-4"><%= t("words.service") %></th><th>Type</th><th><%= t("words.offer") %></th><th>Datacenter</th><th><%= t("words.expiry") %></th>
-          <% elsif @tab == "ips" %><th class="pl-4"><%= t(".ip_block") %></th><th>Type</th><th><%= t(".ovh_service") %></th><th><%= t("words.firewall") %></th>
-          <% else %><th class="pl-4"><%= t("words.name") %></th><th>Type</th><th><%= t("words.target") %></th>
+          <% else %><th class="pl-4"><%= t(".ip_block") %></th><th>Type</th><th><%= t(".ovh_service") %></th><th><%= t("words.firewall") %></th>
           <% end %>
           <th><%= t(".server") %></th>
-          <% if can?(:operate) && @tab != "dns" %><th class="pr-4 text-right"><%= t(".attach") %></th><% end %>
+          <% if can?(:operate) %><th class="pr-4 text-right"><%= t(".attach") %></th><% end %>
         </tr>
       </thead>
       <tbody>
@@ -61,7 +60,7 @@
               <td class="text-xs"><%= resource.data["offer"] || "—" %></td>
               <td class="text-xs"><%= resource.data["datacenter"] || resource.data["region"] || "—" %></td>
               <td class="whitespace-nowrap text-xs"><%= ovh_expiration(resource) %></td>
-            <% elsif @tab == "ips" %>
+            <% else %>
               <td class="pl-4 font-mono text-xs"><%= resource.name %></td>
               <td class="text-xs"><%= resource.data["type"] %></td>
               <td class="font-mono text-xs"><%= resource.data["service"] || "—" %></td>
@@ -69,20 +68,16 @@
                 <% firewalls = Array(resource.data["firewall"]).map(&:last) %>
                 <%= resource.data.key?("firewall") ? (firewalls.any? { _1["enabled"] } ? t(".text") : t(".off")) : "—" %>
               </td>
-            <% else %>
-              <td class="pl-4 font-mono text-xs"><%= resource.name %></td>
-              <td class="text-xs"><%= resource.data["type"] %></td>
-              <td class="font-mono text-xs"><%= resource.data["target"] %></td>
             <% end %>
             <td class="ovh-server whitespace-nowrap text-xs">
               <% if resource.server %>
                 <%= link_to resource.server.name, server_path(resource.server, tab: "ovh"), class: "hover:text-accent hover:underline" %>
                 <span class="block text-[11px] text-ink-3"><%= ovh_match_label(resource) %></span>
               <% else %>
-                <span class="<%= resource.kind == "dns_record" && resource.data["type"] != "CNAME" ? "text-warn-ink" : "text-ink-3" %>"><%= resource.kind == "dns_record" ? t(".outside_fleet") : t(".not_attached_2") %></span>
+                <span class="text-ink-3"><%= t(".not_attached_2") %></span>
               <% end %>
             </td>
-            <% if can?(:operate) && @tab != "dns" %>
+            <% if can?(:operate) %>
               <td class="pr-4 text-right"><%= render "integrations/ovh/link_form", resource: resource %></td>
             <% end %>
           </tr>

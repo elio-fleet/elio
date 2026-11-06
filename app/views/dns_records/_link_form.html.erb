@@ -1,0 +1,12 @@
+<%# Manual attachment of a DNS name (operators): every record of the name follows, whatever its source. %>
+<div class="flex items-center justify-end gap-1">
+  <%= form_with url: dns_record_link_path(record), method: :post, class: "dns-link-form", data: { controller: "auto-submit", turbo_frame: "_top" } do |f| %>
+    <%= f.select :server_id, [ [ t("dns_records.link.server"), "" ], *server_options ], { selected: record.server_id },
+          aria: { label: t("dns_records.link.server_of", name: record.name) }, data: { action: "change->auto-submit#submit" }, class: "input w-auto max-w-40 py-1 text-xs" %>
+    <noscript><%= f.submit t("dns_records.link.attach"), class: "btn btn-secondary" %></noscript>
+  <% end %>
+  <% if record.manual? %>
+    <%= button_to dns_record_link_path(record), method: :delete, title: t("dns_records.link.automatic"), aria: { label: t("dns_records.link.automatic") },
+          form: { data: { turbo_frame: "_top" } }, class: "btn btn-ghost btn-icon" do %><%= icon :arrow_path, class: "h-4 w-4" %><% end %>
+  <% end %>
+</div>

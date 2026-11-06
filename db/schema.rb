@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_05_185658) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_05_194024) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -130,6 +130,36 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_185658) do
     t.datetime "fetched_at", null: false
     t.index ["cve", "provider_key"], name: "index_cve_scores_on_cve_and_provider_key", unique: true
     t.index ["provider_key"], name: "index_cve_scores_on_provider_key"
+  end
+
+  create_table "dns_links", force: :cascade do |t|
+    t.string "name", null: false
+    t.bigint "server_id"
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_dns_links_on_name", unique: true
+    t.index ["server_id"], name: "index_dns_links_on_server_id"
+    t.index ["user_id"], name: "index_dns_links_on_user_id"
+  end
+
+  create_table "dns_records", force: :cascade do |t|
+    t.string "source", null: false
+    t.string "source_id", null: false
+    t.string "zone", null: false
+    t.string "name", null: false
+    t.string "record_type", null: false
+    t.string "value", null: false
+    t.integer "ttl"
+    t.boolean "disabled", default: false, null: false
+    t.bigint "server_id"
+    t.string "matched_by"
+    t.string "matched_address"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["name"], name: "index_dns_records_on_name"
+    t.index ["server_id"], name: "index_dns_records_on_server_id"
+    t.index ["source", "source_id"], name: "index_dns_records_on_source_and_source_id", unique: true
   end
 
   create_table "image_updates", force: :cascade do |t|
@@ -412,22 +442,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_185658) do
     t.string "state", default: "active", null: false
   end
 
-  create_table "technitium_records", force: :cascade do |t|
-    t.string "zone", null: false
-    t.string "name", null: false
-    t.string "record_type", null: false
-    t.string "value", null: false
-    t.integer "ttl"
-    t.boolean "disabled", default: false, null: false
-    t.bigint "server_id"
-    t.string "matched_by"
-    t.string "matched_address"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["server_id"], name: "index_technitium_records_on_server_id"
-    t.index ["zone", "name", "record_type", "value"], name: "index_technitium_records_uniqueness", unique: true
-  end
-
   create_table "temporary_accesses", force: :cascade do |t|
     t.bigint "server_id", null: false
     t.bigint "public_key_id"
@@ -527,6 +541,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_185658) do
   add_foreign_key "background_task_items", "servers", on_delete: :nullify
   add_foreign_key "background_tasks", "automations", on_delete: :nullify
   add_foreign_key "background_tasks", "users", on_delete: :nullify
+  add_foreign_key "dns_links", "servers", on_delete: :cascade
+  add_foreign_key "dns_links", "users", on_delete: :nullify
+  add_foreign_key "dns_records", "servers", on_delete: :nullify
   add_foreign_key "integration_links", "integrations", on_delete: :cascade
   add_foreign_key "integration_links", "servers", on_delete: :cascade
   add_foreign_key "integration_links", "users", on_delete: :nullify
@@ -547,7 +564,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_05_185658) do
   add_foreign_key "server_notes", "servers", on_delete: :cascade
   add_foreign_key "server_notes", "users", on_delete: :nullify
   add_foreign_key "server_vulnerabilities", "servers", on_delete: :cascade
-  add_foreign_key "technitium_records", "servers", on_delete: :nullify
   add_foreign_key "temporary_accesses", "public_keys", on_delete: :nullify
   add_foreign_key "temporary_accesses", "servers", on_delete: :cascade
   add_foreign_key "uptime_kuma_monitors", "servers", on_delete: :nullify

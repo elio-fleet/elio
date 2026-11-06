@@ -1,6 +1,6 @@
 require "test_helper"
 
-class TechnitiumRecordsControllerTest < ActionDispatch::IntegrationTest
+class DnsRecordsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include StubHelpers
   include TechnitiumHelpers
@@ -15,7 +15,7 @@ class TechnitiumRecordsControllerTest < ActionDispatch::IntegrationTest
   test "404 while disabled, and no trace" do
     @integration.update!(enabled: false)
     sign_in users(:one)
-    get technitium_records_path
+    get dns_records_path
     assert_response :not_found
     sign_in users(:one)
     get server_path(servers(:web))
@@ -24,18 +24,20 @@ class TechnitiumRecordsControllerTest < ActionDispatch::IntegrationTest
 
   test "the DNS page lists the records, filters, and the server tab, for every role" do
     sign_in users(:viewer)
-    get technitium_records_path
+    get dns_records_path
     assert_response :success
     assert_select "nav.main-nav a[data-integration-link][aria-current=page]", "DNS"
+    assert_select ".dns-sources li[data-source=technitium]"
+    assert_select "tr.dns-record[data-source=technitium] .dns-source", "Technitium"
     assert_select "#stat-dns-records .stat-value", "7"
     assert_select "#stat-dns-outside .stat-value", "4"
     assert_select "tr.dns-record[data-name='web.example.test'][data-type=A]", text: /Web.*par son IP 203\.0\.113\.10/m
     assert_select "tr.dns-record[data-name='old.example.test'] .dns-outside", "hors du parc"
     assert_select "form.technitium-link-form", 0
 
-    get technitium_records_path(filter: "outside")
+    get dns_records_path(filter: "outside")
     assert_select "tr.dns-record", 4
-    get technitium_records_path(zone: "internal.test", q: "vpn")
+    get dns_records_path(zone: "internal.test", q: "vpn")
     assert_select "tr.dns-record", 1
 
     get server_path(servers(:web), tab: "dns")
@@ -45,17 +47,18 @@ class TechnitiumRecordsControllerTest < ActionDispatch::IntegrationTest
 
   test "an operator attaches a name by hand, then goes back to automatic" do
     sign_in users(:operator)
-    record = TechnitiumRecord.find_by!(name: "old.example.test")
-    post technitium_record_link_path(record), params: { server_id: servers(:backup).id }
+    record = DnsRecord.find_by!(name: "old.example.test")
+    post dns_record_link_path(record), params: { server_id: servers(:backup).id }
     assert_equal servers(:backup), record.reload.server
     assert_equal "manual", record.matched_by
-    assert_equal servers(:backup).id, @integration.links.find_by!(external_id: "old.example.test").server_id
+    assert_equal servers(:backup).id, DnsLink.find_by!(name: "old.example.test").server_id
 
-    delete technitium_record_link_path(record)
-    assert_not @integration.links.exists?(external_id: "old.example.test")
+    delete dns_record_link_path(record)
+    assert_not DnsLink.exists?(name: "old.example.test")
+    assert_nil record.reload.server, "back to automatic: its IP is outside the fleet"
 
     sign_in users(:viewer)
-    post technitium_record_link_path(record), params: { server_id: servers(:web).id }
+    post dns_record_link_path(record), params: { server_id: servers(:web).id }
     assert_response :forbidden
   end
 

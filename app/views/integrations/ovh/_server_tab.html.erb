@@ -1,8 +1,7 @@
-<%# "OVH" tab of a server: its OVH service, IP blocks (reverse, network firewall vs. its public ports, anti-DDoS) and DNS records. %>
+<%# "OVH" tab of a server: its OVH service, IP blocks (reverse, network firewall vs. its public ports, anti-DDoS). Its DNS names are in the DNS tab. %>
 <% resources = server.ovh_resources.order(:kind, :name).to_a %>
 <% services = resources.select(&:service?) %>
 <% blocks = resources.select { |resource| resource.kind == "ip" } %>
-<% records = resources.select { |resource| resource.kind == "dns_record" } %>
 <% public_ports = Inventory::PortAnalysis.new(server).public_ports %>
 <div id="server-ovh">
   <div class="mt-6 flex justify-end"><%= render "server_prompts/dialog", server: server, kind: :ovh_firewall %></div>
@@ -78,22 +77,9 @@
     </section>
   <% end %>
 
-  <% if records.any? || resources.any? %>
-    <section id="server-ovh-dns" class="card mt-6">
-      <div class="card-header"><h2 class="flex items-center gap-2 font-semibold"><%= icon :list_bullet, class: "h-4 w-4 text-ink-3" %> <%= t(".dns_records_server") %></h2></div>
-      <% if records.any? %>
-        <table class="table-dense">
-          <thead><tr><th class="pl-4"><%= t("words.name") %></th><th>Type</th><th><%= t("words.target") %></th><th class="pr-4"><%= t("words.ttl") %></th></tr></thead>
-          <tbody>
-            <% records.each do |record| %>
-              <tr class="ovh-dns-record"><td class="pl-4 font-mono text-xs"><%= record.name %></td><td class="text-xs"><%= record.data["type"] %></td>
-                <td class="font-mono text-xs"><%= record.data["target"] %></td><td class="pr-4 text-xs text-ink-3"><%= record.data["ttl"] %></td></tr>
-            <% end %>
-          </tbody>
-        </table>
-      <% else %>
-        <p class="px-4 py-4 text-sm text-ink-3"><%= t(".dns_record_zones_read") %></p>
-      <% end %>
-    </section>
+  <% if Dns.enabled? %>
+    <p class="ovh-dns-link mt-4 text-sm text-ink-3">
+      <%= link_to t("integrations.ovh.server_tab.dns_names", count: server.dns_records.count), server_path(server, tab: "dns"), class: "font-medium text-accent hover:underline" %>
+    </p>
   <% end %>
 </div>

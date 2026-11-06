@@ -148,6 +148,9 @@ fr:
         anti_ddos: Anti-DDoS de
         dns_records_server: Enregistrements DNS vers ce serveur
         dns_record_zones_read: Aucun enregistrement DNS des zones lues ne pointe vers ce serveur.
+        dns_names:
+          one: "%{count} nom DNS → onglet DNS"
+          other: "%{count} noms DNS → onglet DNS"
       client:
         unknown_endpoint: 'Point d''accès OVH inconnu : %{endpoint}'
         unreadable: Réponse d'OVHcloud illisible pour %{path}
@@ -193,7 +196,6 @@ fr:
       internal_error: Erreur interne (%{class})
     technitium:
       description: Les enregistrements A, AAAA et CNAME de vos zones Technitium DNS Server, rattachés aux serveurs vers lesquels ils pointent ; alertes pour les enregistrements hors du parc et les serveurs sans nom DNS.
-      tab: DNS
       url: Adresse de la console web
       url_hint: L'adresse de sa console web et de son API (port 5380 en HTTP, 53443 en HTTPS par défaut).
       api_token: Jeton d'API
@@ -226,19 +228,6 @@ fr:
           other: "%{count} rattachés à aucun serveur"
       health:
         no_dns: Aucun nom DNS dans Technitium
-      link:
-        server: "— aucun serveur —"
-        server_of: Serveur de %{name}
-        attach: Rattacher
-        automatic: Revenir au rattachement automatique
-      server_tab:
-        title: Noms DNS (Technitium)
-        all_records: Tous les enregistrements
-        matched: Rattachement
-        none: Aucun enregistrement Technitium ne pointe vers ce serveur.
-        not_synchronized: " (Technitium n'a pas encore été synchronisé)"
-        see_unattached: Voir les enregistrements rattachés à aucun serveur
-        synchronized_html: synchronisé %{time}
       help:
         title: Créer un jeton d'API en lecture seule dans Technitium
         step1_html: "<strong>Administration → Groups</strong> : ajoutez un groupe (par exemple <code>Elio read-only</code>), puis dans <strong>Administration → Permissions</strong> donnez-lui seulement <strong>View</strong> sur <strong>Zones</strong>."
@@ -257,6 +246,7 @@ fr:
       name: par son nom
       manual: à la main
       technitium: par un nom DNS Technitium
+      dns_record: par un nom DNS
   ovh_resource:
     matches:
       address: par son adresse IP
@@ -321,6 +311,8 @@ fr:
       ovh_service: Service OVH
       server: Serveur
       attach: Rattacher à
+      dns_names: Noms DNS
+      dns_names_caption: sur la page DNS
   settings:
     integrations:
       field:
@@ -395,7 +387,7 @@ fr:
       existing_monitors: Sondes Uptime Kuma déjà rattachées à ce serveur
       local_firewall: Firewall de la machine
       ovh_firewall: Firewall réseau OVHcloud (par IP)
-      dns_names: Noms DNS qui pointent vers lui (Technitium)
+      dns_names: Noms DNS qui pointent vers lui
     fields:
       name: 'Nom dans Elio : %{value}'
       hostname: 'Nom d''hôte : %{value}'
@@ -449,22 +441,8 @@ fr:
     ovh_firewall:
       button: Prompt pour proposer des règles de firewall
       title: 'Prompt pour une IA : firewall réseau OVHcloud'
-  technitium_record:
-    matches:
-      manual: rattaché à la main
-      address: par son IP %{address}
-      cname: CNAME vers un de ses noms
-  technitium_links_controller:
-    attached: "%{name} est rattaché à « %{server_name} »."
-    detached: "%{name} n'est rattaché à aucun serveur."
-    automatic: "%{name} revient au rattachement automatique (synchronisation lancée)."
-  technitium_records:
+  dns_records:
     index:
-      title: Enregistrements DNS
-      intro: Les enregistrements A, AAAA et CNAME de Technitium DNS Server, rattachés aux serveurs vers lesquels ils pointent
-      synchronized_html: "· synchronisé %{time}"
-      last_sync_failed: " Dernière synchronisation en échec : %{error}"
-      extension: Extension
       records: Enregistrements
       outside: Hors du parc
       outside_caption: A / AAAA vers une IP inconnue
@@ -482,4 +460,33 @@ fr:
       disabled: désactivé
       outside_fleet: hors du parc
       none: Aucun enregistrement ne correspond.
-      not_synchronized: Technitium n'a pas encore été synchronisé.
+      title: Enregistrements DNS
+      intro: Les enregistrements A, AAAA et CNAME lus par les extensions, rattachés aux serveurs vers lesquels ils pointent.
+      not_synchronized_yet: pas encore synchronisé
+      settings: réglages
+      source: Source
+      all_sources: Toutes les sources
+      no_record_yet: 'Aucun enregistrement DNS pour l''instant : les sources n''ont pas encore été synchronisées.'
+      synchronized_html: synchronisé %{time}
+      last_sync_failed: "· dernière synchronisation en échec : %{error}"
+    link:
+      server: "— aucun serveur —"
+      server_of: Serveur de %{name}
+      attach: Rattacher
+      automatic: Revenir au rattachement automatique
+    server_tab:
+      all_records: Tous les enregistrements
+      matched: Rattachement
+      see_unattached: Voir les enregistrements rattachés à aucun serveur
+      title: Noms DNS
+      none: Aucun enregistrement DNS ne pointe vers ce serveur.
+    tab: DNS
+  dns_record:
+    matches:
+      manual: rattaché à la main
+      address: par son IP %{address}
+      cname: CNAME vers un de ses noms
+  dns_links_controller:
+    attached: "%{name} est rattaché à « %{server_name} »."
+    detached: "%{name} n'est rattaché à aucun serveur."
+    automatic: "%{name} revient au rattachement automatique."
