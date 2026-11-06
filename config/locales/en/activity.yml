@@ -342,6 +342,7 @@ en:
       one: "%{count} event"
       other: "%{count} events"
     vulnerabilities: 'Vulnerabilities: %{cves} known, %{fixable} fixable including %{serious} serious, on %{servers}.'
+    image_vulnerabilities: 'In the Docker images (%{images}): known CVEs %{cves}, fixable %{fixable}, serious and fixable %{serious}.'
   notifications:
     discord:
       by: By %{author_name}

@@ -104,10 +104,15 @@ class ServersController < ApplicationController
   end
 
   # Vulnerabilities tab: fixable first, most serious first (?fixable=1, ?severity=, ?origin=).
+  # Only the server's own packages by default; ?containers=1 adds the Docker
+  # images (remembered in a cookie).
   def show_vulnerabilities
-    scope = @server.server_vulnerabilities
+    all = @server.server_vulnerabilities
+    @include_images = include_image_vulnerabilities?
+    scope = @include_images ? all : all.host
     @vulnerability_counts = { total: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve),
-                              by_severity: scope.group(:severity).distinct.count(:cve) }
+                              by_severity: scope.group(:severity).distinct.count(:cve),
+                              host: all.host.distinct.count(:cve), images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
     @fixable_only = params[:fixable] == "1"
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     scope = scope.fixable if @fixable_only
@@ -127,6 +132,15 @@ class ServersController < ApplicationController
       @pager = paginate(scope, per_page: VULNERABILITIES_PER_PAGE)
       @vulnerabilities = @pager.records
     end
+  end
+
+  def include_image_vulnerabilities?
+    if params.key?(:containers)
+      value = params[:containers] == "1"
+      cookies.permanent[:elio_vulnerability_containers] = { value: value ? "1" : "0", same_site: :lax, httponly: true }
+      return value
+    end
+    cookies[:elio_vulnerability_containers] == "1"
   end
 
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.

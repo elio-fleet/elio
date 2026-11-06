@@ -8,12 +8,16 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 - The interface in **English and French**, and any other language by adding a folder of translations (`config/locales/<language>/`). Each user picks a language in My account; otherwise Elio follows the browser, then the default language of the installation (Settings → General: English on a new installation, French on an existing one). Notification channels have their own language, and an invitation is sent in the language chosen for it.
 
+- **Commands to fix a vulnerability**, in the window of a CVE: the `apt-get` command for the installed packages (after `apt-get update` when the server had not seen the fixed version yet, then a reboot for the kernel), or for an image `docker pull` and the `docker compose pull` / `up -d` of the Compose services that use it; “no fix for now” otherwise. From the fleet page, the commands of each server. Elio never runs them.
+- Docker page: a **CVE** tab with the vulnerabilities of the images of the fleet, by image then by package, with the servers and containers that run each image.
+
 - Tasks left “queued” or “running” for more than 3 hours by a job that no longer exists (a killed worker, a reset queue) are finished every 15 minutes: their items fail with “Interrupted: the job no longer exists”. A task whose job still waits or runs is never touched.
 
 ### Changed
 
 - Fleet page: the actions (refresh the statuses, inventory or scan the keys of the whole fleet, import servers) are in an **Actions** menu; “Add a server” stays a button.
 - Server page: the tabs that don't fit go into a **More** menu (the current tab always stays visible), a drop-down list on a phone, in a new order (Overview, Vulnerabilities, Packages, Services, Docker, Ports, Scheduled tasks, SSH keys, extensions, History).
+- The Vulnerabilities tab of a server shows the vulnerabilities of the server itself by default (“53 on the server · 12 in 3 Docker images”); a switch, remembered, adds those of its Docker images. Health, the to-do list, the notifications and the daily digest tell the two apart: serious vulnerabilities in images are a warning, fixed by updating the image.
 - Health reasons are stored as translation keys and written in the reader's language; the reasons of an existing installation are computed again at the upgrade.
 
 ### Fixed

@@ -41,6 +41,9 @@ fr:
     ports_unexpected:
       one: "%{count} port inattendu (%{ports})"
       other: "%{count} ports inattendus (%{ports})"
+    image_vulnerabilities:
+      one: "%{count} vulnérabilité grave corrigeable dans les images Docker"
+      other: "%{count} vulnérabilités graves corrigeables dans les images Docker"
   servers:
     system_card:
       system: Système

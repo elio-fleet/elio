@@ -33,6 +33,11 @@ class VulnerabilitiesController < ApplicationController
     @description = @feed_entries.filter_map(&:description).first || @rows.filter_map(&:description).first ||
                    @scores.filter_map { |score| score.data["description"] }.first
     @servers = @rows.group_by(&:server).sort_by { |server, _| server.name }
+    # The commands to fix it: on the server the modal was opened from, or on each server.
+    @fix_plans = (@server ? [ [ @server, @server_rows ] ] : @servers).filter_map do |server, rows|
+      plans = Vulnerabilities::FixCommands.new(server, rows).plans
+      [ server, plans ] if plans.any?
+    end
     render layout: !turbo_frame_request?
   end
 

@@ -291,6 +291,9 @@ fr:
     vulnerabilities:
       one: "%{count} vulnérabilité grave corrigeable"
       other: "%{count} vulnérabilités graves corrigeables"
+    image_vulnerabilities:
+      one: "%{count} vulnérabilité grave corrigeable dans des images Docker"
+      other: "%{count} vulnérabilités graves corrigeables dans des images Docker"
   ssh_keys:
     setup_hint:
       generate_key_settings: Générer la clé dans les paramètres

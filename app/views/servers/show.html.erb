@@ -44,7 +44,7 @@
   <%= render "servers/health_bar", server: @server %>
 
   <% tabs = [ [ "overview", t("servers.tabs.overview"), nil ],
-              [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.fixable.distinct.count(:cve).nonzero? ],
+              [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.host.fixable.distinct.count(:cve).nonzero? ],
               [ "packages", t("servers.tabs.packages"), packages["total"] ],
               [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "active" } if services["units"]) ],
               *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),

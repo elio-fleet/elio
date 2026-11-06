@@ -291,6 +291,9 @@ en:
     vulnerabilities:
       one: "%{count} serious fixable vulnerability"
       other: "%{count} serious fixable vulnerabilities"
+    image_vulnerabilities:
+      one: "%{count} serious fixable vulnerability in Docker images"
+      other: "%{count} serious fixable vulnerabilities in Docker images"
   ssh_keys:
     setup_hint:
       generate_key_settings: Generate the key in the settings

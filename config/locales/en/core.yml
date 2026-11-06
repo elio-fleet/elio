@@ -156,6 +156,9 @@ en:
     updates:
       one: "%{count} update"
       other: "%{count} updates"
+    docker_images:
+      one: "%{count} Docker image"
+      other: "%{count} Docker images"
   duration:
     minutes:
       one: "%{count} minute"
