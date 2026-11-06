@@ -87,6 +87,7 @@ fr:
           one: 'Service OVH « %{name} » : expire dans %{count} j'
           other: 'Service OVH « %{name} » : expire dans %{count} j'
         firewall_disabled: Firewall réseau OVH désactivé sur %{ip}
+        ipv6_not_covered: 'Ports joignables en IPv6 sans le firewall réseau OVH : %{ports}'
         no_reverse: Pas de reverse DNS pour %{ip}
         reverse_mismatch: Reverse DNS de %{ip} (%{reverse}) ≠ hostname
       endpoint: Point d'accès
@@ -138,10 +139,13 @@ fr:
         attached_html: rattaché %{ovh_match_label}
         state: État
         ovh_service: Service OVH
-        ovh_ips_reverse_network: IP OVH, reverse et firewall réseau
+        ovh_ips_reverse: IP OVH et reverse
         reverse: Reverse de
         ovh_network_firewall_not: Firewall réseau OVH non configuré.
-        firewall: Firewall de
+        firewalls:
+          one: "Firewall réseau : %{count} IP, %{enabled} actif."
+          other: "Firewall réseau : %{count} IP, %{enabled} actifs."
+        see_firewall_tab: Onglet Firewall →
         anti_ddos: Anti-DDoS de
         dns_records_server: Enregistrements DNS vers ce serveur
         dns_record_zones_read: Aucun enregistrement DNS des zones lues ne pointe vers ce serveur.
@@ -400,6 +404,7 @@ fr:
       permit: 'OVH : autorisé'
       deny: 'OVH : bloqué'
       restricted: 'OVH : sources limitées'
+      not_covered: 'OVH : non couvert (IPv6)'
     auto_renew: "(renouvellement auto)"
     permit: autoriser
     deny: refuser
@@ -412,6 +417,8 @@ fr:
       unknown: Inconnu
   server_prompt:
     task: Ce que je demande
+    instructions: Consignes supplémentaires
+    ssh_sources_rule: 'N''autorise le port SSH %{port} que depuis ces sources, dans les deux firewalls :'
     none: "(rien)"
     no_ports_inventory: "(pas encore d'inventaire des ports)"
     sections:
@@ -424,6 +431,7 @@ fr:
       existing_monitors: Sondes Uptime Kuma déjà rattachées à ce serveur
       local_firewall: Firewall de la machine
       ovh_firewall: Firewall réseau OVHcloud (par IP)
+      ssh_sources: Sources autorisées pour le SSH
       dns_names: Noms DNS qui pointent vers lui
     fields:
       name: 'Nom dans Elio : %{value}'
@@ -454,6 +462,7 @@ fr:
     anywhere: partout
     ovh:
       not_read: "%{block} : firewall non lu (produit non choisi dans l'extension)"
+      ipv6_not_covered: 'IPv6 publique %{addresses} : non couverte par le firewall réseau OVH (IPv4 seulement) ; ports en écoute en IPv6 : %{ports}'
       none: "%{block} : aucun firewall réseau créé"
       enabled:
         one: "%{ip} : activé, %{count} règle"
@@ -465,9 +474,13 @@ fr:
     monitors:
       intro: Je surveille mes serveurs Linux avec Uptime Kuma. Voici ce qu'Elio (un outil d'inventaire) sait de l'un d'eux. Propose les sondes Uptime Kuma à créer pour lui.
       task: 'Propose la liste des sondes à créer, sous forme de tableau : type (HTTP(s), HTTP(s) mot-clé, port TCP, ping, DNS, conteneur Docker…), cible (URL, hôte:port), intervalle de vérification, et pourquoi. Ne reprends pas les sondes qui existent déjà. Privilégie ce que les utilisateurs atteignent vraiment (adresses publiques, noms de domaine) ; une sonde sur une adresse privée ou VPN demande une instance Uptime Kuma sur ce réseau : précise-le. Ajoute une vérification de l''expiration du certificat pour les services HTTPS. Demande-moi ce qui manque (noms de domaine, URL à vérifier).'
-    ovh_firewall:
-      intro: Mon serveur Linux est hébergé chez OVHcloud. Voici ce qu'Elio (un outil d'inventaire) en sait. Propose les règles du firewall réseau OVHcloud (Edge Network Firewall) de ses adresses IP publiques.
-      task: 'Propose les règles du firewall réseau OVHcloud pour chaque IP publique, sous forme de tableau : séquence (0 à 19, la première règle qui correspond s''applique), action (permit / deny), protocole, port de destination, source, option TCP. Garde l''accès SSH d''Elio ouvert sur le port %{ssh_port} (ne restreins sa source que si je te donne l''adresse d''Elio). N''autorise que les ports publics qui doivent être joignables, et explique ceux que tu fermerais ou restreindrais. Ce firewall est sans état : prévois ce qui laisse revenir les réponses aux connexions sortantes du serveur (par exemple l''option TCP established), et termine par une règle qui refuse le reste. Signale les ports exposés par Docker et les différences avec le firewall de la machine.'
+    firewall:
+      local:
+        intro: Voici ce qu'Elio (un outil d'inventaire) sait de mon serveur Linux. Propose les règles de son firewall.
+        task: 'Propose les règles du firewall de la machine, sous forme de commandes ufw à lancer dans l''ordre. Garde l''accès SSH d''Elio ouvert sur le port %{ssh_port} (ne restreins sa source que si je te donne l''adresse d''Elio). N''autorise que les ports publics qui doivent être joignables, et explique ceux que tu fermerais ou restreindrais. Signale les ports exposés par Docker (ils contournent ufw) et ce qui couperait les connexions en cours.'
+      ovh:
+        intro: Mon serveur Linux est hébergé chez OVHcloud. Voici ce qu'Elio (un outil d'inventaire) en sait. Propose les règles de ses firewalls, celui de la machine et le firewall réseau OVHcloud (Edge Network Firewall) de ses adresses IP publiques.
+        task: 'Propose d''abord les règles du firewall réseau OVHcloud pour chaque IP publique, sous forme de tableau : séquence (0 à 19, la première règle qui correspond s''applique), action (permit / deny), protocole, port de destination, source, option TCP. Ce firewall est sans état : prévois ce qui laisse revenir les réponses aux connexions sortantes du serveur (par exemple l''option TCP established), et termine par une règle qui refuse le reste. Il ne filtre que l''IPv4. Puis les règles du firewall de la machine, en commandes ufw. Garde l''accès SSH d''Elio ouvert sur le port %{ssh_port} (ne restreins sa source que si je te donne l''adresse d''Elio). N''autorise que les ports publics qui doivent être joignables, et explique ceux que tu fermerais ou restreindrais. Signale les ports exposés par Docker et les différences entre les deux firewalls.'
   server_prompts:
     dialog:
       copy_hint: Généré depuis le dernier inventaire. Aucune clé, aucun jeton ni mot de passe n'y figure.
@@ -475,9 +488,12 @@ fr:
     monitors:
       button: Prompt pour proposer des sondes
       title: 'Prompt pour une IA : sondes à créer'
-    ovh_firewall:
+    firewall:
       button: Prompt pour proposer des règles de firewall
-      title: 'Prompt pour une IA : firewall réseau OVHcloud'
+      title: 'Prompt pour une IA : règles de firewall'
+    custom:
+      included: Vos consignes sont incluses.
+      edit: Modifier les consignes
   dns_records:
     index:
       records: Enregistrements

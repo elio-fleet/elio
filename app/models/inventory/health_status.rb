@@ -40,6 +40,23 @@ class Inventory::HealthStatus
 
   def self.evaluate(server, settings: AppSetting.current) = new(server, settings).evaluate
 
+  # Version of the rules that compute the reasons: raise it when a reason is
+  # added, removed or stored differently. After an upgrade, the first tick of
+  # RunDueAutomationsJob computes the health of every server again (with the
+  # whole schema of the release, unlike a migration that runs before the
+  # following ones).
+  VERSION = 1
+
+  def self.refresh_outdated!
+    setting = AppSetting.current
+    return if setting.health_version >= VERSION
+
+    AdvisoryLock.try("health_version") do
+      Server.find_each(&:refresh_health!)
+      setting.update_columns(health_version: VERSION)
+    end
+  end
+
   def initialize(server, settings)
     @server = server
     @settings = settings

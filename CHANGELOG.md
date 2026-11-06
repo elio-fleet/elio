@@ -7,6 +7,15 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 ### Added
 
 - **Gandi extension** (DNS source): the A, AAAA and CNAME records of the domains served by Gandi LiveDNS go into the DNS of the fleet (attached to the servers, common DNS alerts, DNS page and tab), with a personal access token that has read rights only (`GET` only, `Authorization: Bearer`). The domains are listed with their expiry date and auto renewal, with an optional alert when one expires soon. Tested against a fake API built on the examples of the Gandi documentation only (no real account yet).
+- **Firewall tab** on the server page: the server's own firewall (ufw, nftables or iptables, with its rules), the OVHcloud network firewall of its OVH IPs (rules, anti-DDoS), the public ports with the verdict of each firewall side by side, the ufw rules to copy and the prompt for an AI. The Ports and OVH tabs link to it.
+- **SSH open only to some addresses** in the suggested firewall rules: a named list of sources (*Settings → General → Suggested firewall rules*, e.g. "Elio → 203.0.113.5", "Coolify → …"), and each group of servers can choose some of them. The ufw rules then allow SSH only from them (with a reminder that Elio's own address must be among them), the firewall prompt asks to restrict SSH to them, and the Firewall tab says where SSH is open from. Without any source, nothing changes.
+- **IPv6 and the OVHcloud network firewall**: it filters only IPv4, so the Firewall tab shows the public ports listening in IPv6 as "Not covered (IPv6)", with a warning, and the prompt says so. Optional health reason (*Settings → General → Suggested firewall rules*, off by default).
+- **Block all the incoming IPv6** in the suggested ufw rules (option, off by default): the ports are allowed from IPv4 only, so the default policy denies every incoming IPv6 connection.
+- **Instructions for the prompts** (*Settings → General → Prompts for an AI*): your own text, added at the end of the prompt, e.g. "For the SSH port, always put the rules last". The firewall prompt now covers the server's firewall, and the OVHcloud one when the extension is on.
+
+### Changed
+
+- After an upgrade, the health of every server is computed again by the first background tick when its rules changed (instead of a migration that could run before the columns it needs).
 
 ## [0.1.0-beta.3.1] — 2026-11-06
 
