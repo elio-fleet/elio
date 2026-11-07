@@ -143,16 +143,13 @@ fr:
       fixable:
         one: "%{count} corrigeable"
         other: "%{count} corrigeables"
-      on_server:
-        one: "%{count} sur le serveur"
-        other: "%{count} sur le serveur"
-      in_images:
-        one: "%{count} dans %{images}"
-        other: "%{count} dans %{images}"
       images:
         one: "%{count} image Docker"
         other: "%{count} images Docker"
-      include_images: Inclure celles des conteneurs Docker
+      images_apart_html:
+        one: "Paquets du système seulement. L'image Docker de ce serveur a aussi %{cves} CVE :"
+        other: "Paquets du système seulement. Les %{images} de ce serveur ont aussi %{cves} CVE :"
+      docker_tab: Onglet Docker
       by_severity:
         critical:
           one: "%{count} critique"
@@ -199,6 +196,9 @@ fr:
       pending_html: 'Le serveur ne propose pas encore cette version : lancez %{command}, ou vérifiez que le dépôt de sécurité est configuré.'
       in_image_html: 'Ces paquets sont dans l''image %{image} : téléchargez une version plus récente de l''image (ou reconstruisez-la), puis recréez ses conteneurs.'
     docker_card:
+      sections: Sections Docker
+      no_image_vulnerability: Aucune vulnérabilité connue dans les images de ce serveur.
+      fixed_by_image: "Corrigées en mettant à jour l'image (une version plus récente publiée par son registre), pas les paquets du serveur."
       images_fleet: Images du parc
       elio_neither_trivy_nor: Elio (ni Trivy ni Grype sur le serveur)
       tag: sans tag

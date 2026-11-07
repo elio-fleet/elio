@@ -46,6 +46,7 @@ class ServersController < ApplicationController
   VULNERABILITIES_PER_PAGE = 100
   VULNERABILITY_PACKAGES_PER_PAGE = 50
   VULNERABILITY_VIEWS = %w[packages cves].freeze
+  DOCKER_SECTIONS = %w[containers images vulnerabilities].freeze
 
   # Tabbed page (?tab=), only the requested tab is rendered.
   def show
@@ -60,6 +61,7 @@ class ServersController < ApplicationController
       @activities = @pager.records
     end
     show_vulnerabilities if @tab == "vulnerabilities"
+    show_docker if @tab == "docker"
     @health_history = @server.health_samples.since(24.hours.ago).pluck(:collected_at, :load_percent, :memory_percent, :disk_percent) if @tab == "overview"
   end
 
@@ -114,16 +116,15 @@ class ServersController < ApplicationController
     view || cookies[:elio_vulnerability_view].presence_in(VULNERABILITY_VIEWS) || "packages"
   end
 
-  # Vulnerabilities tab: fixable first, most serious first (?fixable=1, ?severity=, ?origin=).
-  # Only the server's own packages by default; ?containers=1 adds the Docker
-  # images (remembered in a cookie).
+  # Vulnerabilities tab: the server's own packages (those of its Docker
+  # images are in the Docker tab), fixable first, most serious first
+  # (?fixable=1, ?severity=, ?q=, ?package=).
   def show_vulnerabilities
     all = @server.server_vulnerabilities
-    @include_images = include_image_vulnerabilities?
-    scope = @include_images ? all : all.host
+    scope = all.host
     @vulnerability_counts = { total: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve),
                               by_severity: scope.group(:severity).distinct.count(:cve),
-                              host: all.host.distinct.count(:cve), images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
+                              images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
     @fixable_only = params[:fixable] == "1"
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     scope = scope.fixable if @fixable_only
@@ -145,13 +146,17 @@ class ServersController < ApplicationController
     end
   end
 
-  def include_image_vulnerabilities?
-    if params.key?(:containers)
-      value = params[:containers] == "1"
-      cookies.permanent[:elio_vulnerability_containers] = { value: value ? "1" : "0", same_site: :lax, httponly: true }
-      return value
-    end
-    cookies[:elio_vulnerability_containers] == "1"
+  # Docker tab in sections (?section=): containers, images, or the
+  # vulnerabilities of the images by image then package.
+  def show_docker
+    @docker_section = params[:section].presence_in(DOCKER_SECTIONS) || "containers"
+    images = @server.server_vulnerabilities.images
+    @image_vulnerability_count = images.distinct.count(:cve)
+    @image_fixable_count = images.fixable.distinct.count(:cve)
+    return unless @docker_section == "vulnerabilities"
+
+    @pager = paginate(PackageVulnerabilities.new(images, server: @server).groups, per_page: VULNERABILITY_PACKAGES_PER_PAGE)
+    @package_groups = @pager.records
   end
 
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.
