@@ -43,6 +43,15 @@ fr:
       health_recovered:
         label: Serveur de nouveau sain
         description: Un serveur à surveiller ou critique est revenu à la normale.
+      docker_warning:
+        label: Docker à surveiller
+        description: "Docker d'un serveur demande de l'attention : vulnérabilités graves dans les images, images à mettre à jour."
+      docker_critical:
+        label: Docker en état critique
+        description: Des conteneurs d'un serveur sont en mauvaise santé ou redémarrent en boucle.
+      docker_recovered:
+        label: Docker de nouveau sain
+        description: Docker d'un serveur, à surveiller ou critique, est revenu à la normale.
       packages_changed:
         label: Paquets modifiés
         description: Des paquets ont été installés, mis à jour ou supprimés sur un serveur (inventaire).
@@ -223,6 +232,9 @@ fr:
       health_warning: "« %{server} » est à surveiller : %{reasons}"
       health_critical: "« %{server} » est en état critique : %{reasons}"
       health_recovered: "« %{server} » est de nouveau sain"
+      docker_warning: "Docker de « %{server} » est à surveiller : %{reasons}"
+      docker_critical: "Docker de « %{server} » est en état critique : %{reasons}"
+      docker_recovered: "Docker de « %{server} » est de nouveau sain"
       packages_changed: 'Paquets de « %{server} » : %{counts}'
       packages:
         installed:
