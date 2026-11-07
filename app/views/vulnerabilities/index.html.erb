@@ -3,7 +3,7 @@
 <div class="flex flex-wrap items-end justify-between gap-3">
   <div>
     <h1 class="text-xl font-semibold"><%= t("nav.vulnerabilities") %></h1>
-    <p class="text-xs text-ink-3"><%= t(".cves_packages_fleet_docker") %></p>
+    <p class="text-xs text-ink-3"><%= t(@origin == "image" ? ".cves_images" : ".cves_packages_fleet") %></p>
   </div>
   <p class="vulnerability-feeds-state text-xs text-ink-3">
     <% if @feeds.any? %>
@@ -21,17 +21,26 @@
   <%= stat_tile t(".servers_affected"), @summary[:servers], nil, icon: :server_stack, id: "stat-affected" %>
 </div>
 
-<div class="mt-5 flex flex-wrap items-center gap-3">
+<nav class="vulnerability-origin-tabs mt-6 flex gap-5 border-b border-line text-sm" aria-label="<%= t(".origins") %>">
+  <% [ [ "host", t(".systems"), :server_stack ], [ "image", t(".docker_images"), :docker ] ].each do |origin, label, icon_name| %>
+    <%= link_to vulnerabilities_path(request.query_parameters.except("page", "origin").merge("origin" => (origin unless origin == "host")).compact), data: { origin: origin },
+          aria: { current: (@origin == origin ? "page" : nil) },
+          class: "flex items-center gap-1.5 border-b-2 px-1 pb-2.5 #{@origin == origin ? "border-accent font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink"}" do %>
+      <%= icon icon_name, class: "h-4 w-4" %><%= label %><span class="rounded-full bg-subtle px-1.5 text-[11px] text-ink-2"><%= @origin_counts[origin] %></span>
+    <% end %>
+  <% end %>
+</nav>
+
+<div class="mt-3 flex flex-wrap items-center gap-3">
 <%= form_with url: vulnerabilities_path, method: :get, data: search_form_data, class: "vulnerability-filters flex flex-wrap items-center gap-2" do |f| %>
   <%= hidden_field_tag :view, @view %>
+  <%= hidden_field_tag :origin, @origin %>
   <%= f.search_field :q, value: @q, placeholder: t(".cve_package_e_g"), aria: { label: t(".search") },
         data: { action: "input->auto-submit#submitLater" }, class: "input w-60 py-1 text-xs" %>
   <%= f.select :severity, [ [ t(".all_severities"), "" ], *Vulnerability::SEVERITIES.keys.excluding("unknown").map { |key| [ key == "critical" ? Vulnerability.severity_label(key) : t("vulnerability.at_least", severity: Vulnerability.severity_label(key)), key ] } ],
         { selected: @severity }, aria: { label: t(".minimum_severity") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
   <%= f.select :group, [ [ t(".all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
         aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
-  <%= f.select :origin, [ [ t(".systems_images"), "" ], *ServerVulnerability::ORIGINS.keys.map { |key| [ ServerVulnerability.origin_label(key), key ] } ], { selected: @origin },
-        aria: { label: t(".origin") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
   <label class="flex items-center gap-1.5 text-xs"><%= t(".fixable_only_html", submit: (check_box_tag :fixable, "1", @fixable_only, data: { action: "change->auto-submit#submit" })) %></label>
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
 <% end %>
@@ -77,6 +86,6 @@
   </div>
   <%= render "shared/pagination", pager: @pager, noun: t(".vulnerabilities_2") %>
 <% else %>
-  <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @q.present? || @severity || @fixable_only || @origin || @group ? t(".vulnerability_matches") : t(".known_vulnerability_fleet") %></p>
+  <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @q.present? || @severity || @fixable_only || @group ? t(".vulnerability_matches") : t(".known_vulnerability_fleet") %></p>
 <% end %>
 <% end %>

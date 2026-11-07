@@ -118,6 +118,12 @@ module InventoryHelper
 
   SEVERITY_TONES = { "critical" => :crit, "high" => :crit, "medium" => :warn, "low" => :neutral, "unknown" => :neutral }.freeze
 
+  # Name of a Docker image for a line of text: an image without tag is known by
+  # its digest, shortened like the docker CLI does ("sha256:" + 12 characters).
+  def image_label(image)
+    image.to_s.start_with?("sha256:") ? image.to_s.first(19) : image.to_s
+  end
+
   def severity_badge(severity)
     status_badge(SEVERITY_TONES.fetch(severity.to_s, :neutral), Vulnerability.severity_label(severity), class: "severity", data: { severity: severity })
   end

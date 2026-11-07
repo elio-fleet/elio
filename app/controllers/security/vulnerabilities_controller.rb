@@ -1,6 +1,7 @@
-# Vulnerabilities of the whole fleet, by CVE: the servers (and images) it
-# touches, whether a fix exists. Filters: ?q= (CVE or package), ?severity=
-# (minimum), ?group=, ?fixable=1, ?origin=host|image. Fixable and most
+# Vulnerabilities of the whole fleet, in two tabs (?origin=): the packages of
+# the servers (host, by default) or those of their Docker images (image),
+# each by package or by CVE, whether a fix exists. Filters: ?q= (CVE or
+# package), ?severity= (minimum), ?group=, ?fixable=1. Fixable and most
 # serious first.
 class VulnerabilitiesController < ApplicationController
   PER_PAGE = 100
@@ -47,14 +48,15 @@ class VulnerabilitiesController < ApplicationController
     @q = params[:q].to_s.strip.first(100)
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     @fixable_only = params[:fixable] == "1"
-    @origin = params[:origin].presence_in(ServerVulnerability::ORIGINS.keys)
+    @origin = params[:origin].presence_in(ServerVulnerability::ORIGINS.keys) || "host"
     @feeds = VulnerabilityFeed.where.not(refreshed_at: nil).order(:source).to_a
 
     scope = ServerVulnerability.all
     scope = scope.where(server_id: Server.in_group(@group).select(:id)) if @group
+    @origin_counts = { "host" => scope.host.distinct.count(:cve), "image" => scope.images.distinct.count(:cve) }
     scope = scope.at_least(@severity) if @severity
     scope = scope.fixable if @fixable_only
-    scope = scope.where(origin: @origin) if @origin
+    scope = scope.where(origin: @origin)
     scope = scope.where("server_vulnerabilities.cve ILIKE :q OR server_vulnerabilities.source_package ILIKE :q", q: "%#{ServerVulnerability.sanitize_sql_like(@q)}%") if @q.present?
 
     @view = params[:view].presence_in(%w[packages cves]) || ("cves" if @q.present? && @q.match?(/\ACVE-/i))

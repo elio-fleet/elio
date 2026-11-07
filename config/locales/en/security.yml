@@ -21,14 +21,16 @@ en:
       minimum_severity: Minimum severity
       all_groups: All groups
       group: Group
-      systems_images: Systems and images
-      origin: Origin
       filter: Filter
       fix: no fix
       vulnerabilities_2: vulnerabilities
       vulnerability_matches: No vulnerability matches.
       known_vulnerability_fleet: No known vulnerability on the fleet.
-      cves_packages_fleet_docker: CVEs of the packages of the fleet and of the Docker images, from the Debian and Ubuntu feeds. The fixable and most serious first.
+      cves_packages_fleet: CVEs of the packages of the servers, from the Debian and Ubuntu feeds. The fixable and most serious first.
+      cves_images: "CVEs of the packages of the Docker images of the fleet: they are fixed by updating the image. The fixable and most serious first."
+      origins: Origin of the vulnerabilities
+      systems: Systems
+      docker_images: Docker images
       feeds_not_downloaded_yet: Feeds not downloaded yet
       group_2: Group by
       fixable_only_html: "%{submit} Fixable only"
