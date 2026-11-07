@@ -255,7 +255,7 @@ en:
       versions_fleet_html: "%{count} versions on the fleet"
       container: no container
     tabs:
-      images: Containers and images
+      images: Images
       cves: Vulnerabilities of the images
     cves:
       loading: Loading…

@@ -204,6 +204,8 @@ fr:
       package_matches: Aucun paquet ne correspond.
   packages:
     index:
+      search_placeholder: Chercher un paquet installé (openssl, nginx, postgres…)
+      search: Rechercher
       package_name: Nom du paquet
       which_servers_have_package: Quels serveurs ont un paquet, et en quelle version ? D'après le dernier inventaire de chaque serveur.
       packages_inventory_yet_html: "%{t} pas encore d'inventaire des paquets."

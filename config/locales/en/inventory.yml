@@ -204,6 +204,8 @@ en:
       package_matches: No package matches.
   packages:
     index:
+      search_placeholder: Search an installed package (openssl, nginx, postgres…)
+      search: Search
       package_name: Package name
       which_servers_have_package: Which servers have a package, and in which version? From the last inventory of each server.
       packages_inventory_yet_html: "%{t} no packages inventory yet."

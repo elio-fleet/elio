@@ -255,7 +255,7 @@ fr:
       versions_fleet_html: "%{count} versions sur le parc"
       container: aucun conteneur
     tabs:
-      images: Conteneurs et images
+      images: Images
       cves: Vulnérabilités des images
     cves:
       loading: Chargement…
