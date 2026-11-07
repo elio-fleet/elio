@@ -73,8 +73,9 @@ class FakeSsh
       yield self, true
       return if response.hang
 
-      @callbacks[:data]&.call(self, response.stdout) unless response.stdout.to_s.empty?
-      @callbacks[:extended_data]&.call(self, 1, response.stderr) unless response.stderr.to_s.empty?
+      # Like net-ssh: BINARY chunks, possibly cut inside a character.
+      response.stdout.to_s.b.each_char.each_slice(7) { |chunk| @callbacks[:data]&.call(self, chunk.join.b) }
+      @callbacks[:extended_data]&.call(self, 1, response.stderr.to_s.b) unless response.stderr.to_s.empty?
       @callbacks[:exit_status]&.call(self, ExitStatus.new(response.exit_status))
       @active = false
     end
