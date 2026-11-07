@@ -20,7 +20,18 @@ class Integrations::UptimeKuma::MetricsTest < ActiveSupport::TestCase
     assert_nil utils.cert_days_remaining
   end
 
-  test "Uptime Kuma 1.x: certificates, statuses, escaped labels, NaN" do
+  test "parses a real Uptime Kuma 1.23 page: no monitor_id, the name identifies the probe" do
+    result = Integrations::UptimeKuma::Metrics.parse(file_fixture("integrations/uptime_kuma/metrics_v1.txt").read)
+
+    assert_equal "1.23.16", result.version
+    assert_equal [ "bench-target", "bench-target web", "Old VPN gateway" ], result.monitors.map(&:name)
+    target, _web, vpn = result.monitors
+    assert_equal [ "name:bench-target", "port", "target", 22, 1, 2.0 ], [ target.id, target.monitor_type, target.hostname, target.port, target.status, target.response_time_ms ]
+    assert_equal [ "name:Old VPN gateway", 0, nil ], [ vpn.id, vpn.status, vpn.response_time_ms ], "-1 ms (no answer) is no response time"
+    assert_empty target.tags
+  end
+
+  test "certificates, statuses, escaped labels, NaN" do
     text = <<~METRICS
       # HELP monitor_status Monitor Status (1 = UP, 0= DOWN, 2= PENDING, 3= MAINTENANCE)
       monitor_cert_days_remaining{monitor_name="Site \\"public\\"",monitor_type="http",monitor_url="https://www.example.com/",monitor_hostname="null",monitor_port="null",monitor_id="3"} 12

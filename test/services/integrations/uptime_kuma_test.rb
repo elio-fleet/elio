@@ -50,6 +50,19 @@ class Integrations::UptimeKumaTest < ActiveSupport::TestCase
     assert_nil UptimeKumaMonitor.find_by!(monitor_id: "58").server
   end
 
+  test "Uptime Kuma 1.x (no monitor_id): the probes keep the same record from one sync to the next" do
+    servers(:web).update_columns(ip_addresses: [ "192.0.2.44" ])
+    uptime_kuma_metrics(file_fixture("integrations/uptime_kuma/metrics_v1.txt").read)
+    assert_equal "3 sondes, 2 rattachée(s) ; 2 serveurs sans sonde", @integration.sync!, "by IP, and « bench-target web » by the name Web"
+    vpn = UptimeKumaMonitor.find_by!(monitor_id: "name:Old VPN gateway")
+    assert_equal [ servers(:web), "ip" ], [ vpn.server, vpn.matched_by ]
+
+    assert_no_difference -> { UptimeKumaMonitor.count } do
+      @integration.sync!
+    end
+    assert_equal vpn.id, UptimeKumaMonitor.find_by!(monitor_id: "name:Old VPN gateway").id
+  end
+
   test "a probe gone from Uptime Kuma is removed; a manual link is kept across syncs" do
     uptime_kuma_metrics(metrics_page({ id: "1", name: "A", hostname: "10.8.0.100" }, { id: "2", name: "B" }))
     @integration.links.create!(external_id: "2", server: servers(:db))

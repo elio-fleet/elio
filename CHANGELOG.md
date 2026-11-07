@@ -4,6 +4,11 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Fixed
+
+- **Uptime Kuma 1.x**: the probes were not read at all (Uptime Kuma 1.x gives them no id in `/metrics`); they are now identified by their name. A probe without answer no longer shows a response time of -1 ms.
+- **Accents in server outputs**: the outputs of the commands are read as UTF-8 text (bytes that are not UTF-8 are replaced). An accent in a scheduled task, a file or a message could otherwise break the collection with the next version of the `json` gem, which refuses such text.
+
 ## [0.1.0-beta.4] — 2026-11-06
 
 ### Upgrading from 0.1.0-beta.3.1
