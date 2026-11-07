@@ -38,7 +38,7 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     stub_method(Servers::Ping, :reachable?, true) { get server_path(servers(:web)) }
 
-    assert_select ".server-groups a.server-group-badge[href=?]", servers_path(group: server_groups(:production).id), text: "Production"
+    assert_select ".server-groups a.group-tag[href=?]", servers_path(group: server_groups(:production).id), text: "Production"
   end
 
   test "new redirects to sign in when not authenticated" do
@@ -190,7 +190,7 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Web"
-    assert_select "p", text: "deploy@192.168.1.10:22"
+    assert_select ".page-subtitle .server-summary", text: /\Adeploy@192\.168\.1\.10:22/
     assert_select "a[href=?]", edit_server_path(server)
     assert_select "#server-health" do
       assert_select "turbo-frame##{dom_id(server, :reachability)}[loading=lazy][src=?]", server_ping_path(server) do

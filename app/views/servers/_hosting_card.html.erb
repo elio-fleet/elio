@@ -1,0 +1,10 @@
+<%# The hosting of a server on its overview: its OVHcloud service (offer, datacenter, expiry), when the extension is on. Locals: server. %>
+<% if Integration.enabled?(:ovh) && (services = server.ovh_resources.services.order(:name).to_a).any? %>
+  <%= panel t("nav.hosting"), header: source_tag("OVHcloud"), id: "server-hosting" do %>
+    <% services.each do |service| %>
+      <%= fact_list [ [ t("words.offer"), [ service.data["offer"], service.kind_label ].compact.join(" · ") ],
+                      [ service.kind == "instance" ? t("integrations.ovh.server_tab.region") : t("integrations.ovh.server_tab.datacenter"), service.data["datacenter"] || service.data["region"] || "—" ],
+                      [ t("words.expiry"), ovh_expiration(service) ] ], class: "border-b border-line last:border-b-0" %>
+    <% end %>
+  <% end %>
+<% end %>

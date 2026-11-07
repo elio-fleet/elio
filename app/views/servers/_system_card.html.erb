@@ -1,9 +1,9 @@
 <%# System of the server, from its last inventory (Inventory::Collectors::Os). %>
 <% snapshot = server.inventory("os") %>
 <% os = snapshot&.data || {} %>
-<section id="server-system" class="card mt-6">
+<section id="server-system" class="card">
   <div class="card-header">
-    <h2 class="flex items-center gap-2 font-semibold"><%= icon :server_stack, class: "h-4 w-4 text-ink-3" %> <%= t(".system") %></h2>
+    <h2 class="flex items-center gap-2 text-sm font-semibold"><%= icon :server_stack, class: "h-4 w-4 text-ink-3" %> <%= t(".machine") %></h2>
     <div class="flex items-center gap-2 text-xs text-ink-3">
       <%= inventory_status_badge(snapshot) %>
       <% if snapshot&.collected_at %>
@@ -13,19 +13,19 @@
   </div>
 
   <% if snapshot&.collected? %>
-    <dl class="system-details divide-y divide-line px-4 text-sm">
-      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-2">
+    <dl class="system-details divide-y divide-line px-4 text-[13px] [&_dt]:text-xs [&_dt]:leading-5">
+      <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 py-1.5">
         <dt class="text-ink-3"><%= t(".system") %></dt>
         <dd class="flex flex-wrap items-center justify-end gap-2 text-right">
           <span class="os-name font-medium"><%= os["name"] %></span>
           <%= end_of_life_badge(os["id"], os["version_id"]) %>
         </dd>
       </div>
-      <div class="flex justify-between gap-4 py-2">
+      <div class="flex justify-between gap-4 py-1.5">
         <dt class="text-ink-3"><%= t("words.kernel") %></dt>
         <dd class="font-mono text-xs"><%= os["kernel"] %> <span class="text-ink-3"><%= os["arch"] %></span></dd>
       </div>
-      <div class="flex justify-between gap-4 py-2">
+      <div class="flex justify-between gap-4 py-1.5">
         <dt class="text-ink-3"><%= t("words.machine") %></dt>
         <dd class="machine text-right">
           <%= virtualization_label(os["virtualization"]) %>
@@ -34,22 +34,22 @@
         </dd>
       </div>
       <% if os["booted_at"] %>
-        <div class="flex justify-between gap-4 py-2">
+        <div class="flex justify-between gap-4 py-1.5">
           <dt class="text-ink-3"><%= t(".started") %></dt>
           <dd><%= relative_time_tag Time.iso8601(os["booted_at"]) %></dd>
         </div>
       <% end %>
-      <div class="flex justify-between gap-4 py-2">
+      <div class="flex justify-between gap-4 py-1.5">
         <dt class="text-ink-3"><%= t(".host_name") %></dt>
         <dd class="font-mono text-xs"><%= os["hostname"] || "—" %></dd>
       </div>
       <% if os["timezone"] %>
-        <div class="flex justify-between gap-4 py-2">
+        <div class="flex justify-between gap-4 py-1.5">
           <dt class="text-ink-3"><%= t(".time_zone") %></dt>
           <dd><%= os["timezone"] %></dd>
         </div>
       <% end %>
-      <div class="flex justify-between gap-4 py-2">
+      <div class="flex justify-between gap-4 py-1.5">
         <dt class="text-ink-3"><%= t(".root_access") %></dt>
         <dd class="privilege <%= server.privilege == "none" ? "text-warn-ink" : "text-ink" %>"><%= privilege_label(server.privilege) %></dd>
       </div>

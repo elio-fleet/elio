@@ -20,7 +20,8 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
       root.css("[lang]:not([lang^=en])").each(&:remove) # written in another language on purpose
       texts = root.xpath(".//text()").map(&:text)
       texts += root.css("[title], [aria-label], [placeholder], [alt]").flat_map { |node| %w[title aria-label placeholder alt].filter_map { node[_1] } }
-      texts.map(&:squish).reject(&:empty?).select { |text| text.match?(FRENCH) }
+      # Key fingerprints are random base64: "…/dU/…" is not French.
+      texts.map(&:squish).reject(&:empty?).reject { |text| text.match?(/\ASHA256:\S+\z/) }.select { |text| text.match?(FRENCH) }
     end.uniq
   end
 

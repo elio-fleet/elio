@@ -1,7 +1,7 @@
 <%# Compact reachability + SSH status of a server, both checked when the page is displayed,
     then the state of its Docker (Inventory::DockerStatus) when it has one. %>
-<section id="server-health" class="mt-6 divide-y divide-line rounded-xl border border-line bg-surface shadow-sm">
-  <div class="px-5 py-3">
+<section id="server-health" class="status-line card mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2">
+  <div class="min-w-0">
     <%= turbo_frame_tag dom_id(server, :reachability), src: server_ping_path(server), loading: :lazy, class: "group block" do %>
       <%= render "servers/health_item", label: t(".port", port: server.port) do %>
         <%= render "servers/status", server: server %>
@@ -9,7 +9,7 @@
       <% end %>
     <% end %>
   </div>
-  <div class="px-5 py-3">
+  <div class="min-w-0">
     <%= turbo_frame_tag dom_id(server, :ssh_check), src: server_ssh_check_path(server), loading: :lazy, class: "group block" do %>
       <%= render "servers/health_item", label: t(".ssh") do %>
         <%= render "servers/ssh_status", server: server %>
@@ -20,10 +20,10 @@
   <% if server.docker_status.present? %>
     <% docker = server.inventory("docker")&.data || {} %>
     <% containers = Array(docker["containers"]) %>
-    <div id="server-docker-state" class="px-5 py-3" data-docker-status="<%= server.docker_status %>">
+    <div id="server-docker-state" class="min-w-0 flex-1" data-docker-status="<%= server.docker_status %>">
       <%= render "servers/health_item", label: t(".docker") do %>
         <%= status_badge({ "crit" => :crit, "warn" => :warn }.fetch(server.docker_status, :good), t("servers.health_bar.docker_#{server.docker_status}"), icon: :docker) %>
-        <span class="min-w-0 text-xs text-ink-2">
+        <span class="min-w-0 truncate text-xs text-ink-2" title="<%= server.docker_reason_texts.join(" · ") %>">
           <%= server.docker_reasons.any? ? server.docker_reason_texts.join(" · ") : t("servers.health_bar.docker_fine", running: containers.count { |container| container["state"] == "running" }, count: containers.size) %>
         </span>
         <%= link_to t("servers.health_bar.docker_tab"), server_path(server, tab: "docker"), class: "ml-auto text-xs font-medium text-accent hover:underline" %>
