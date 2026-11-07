@@ -18,7 +18,10 @@ LANGUAGES = %w[en fr].freeze
 PAGES = %w[index features install security faq].freeze
 
 # Heroicons paths of the application (app/helpers/icons_helper.rb), read as data.
-ICONS = File.read(File.join(ROOT, "app/helpers/icons_helper.rb")).scan(/^\s+(\w+): "([^"]+)",?$/).to_h
+ICONS_SOURCE = File.read(File.join(ROOT, "app/helpers/icons_helper.rb"))
+# Logos drawn with fill (IconsHelper::FILLED_ICONS), the others with stroke.
+FILLED_ICONS = ICONS_SOURCE[/FILLED_ICONS = \{(.*?)\}/m, 1].scan(/^\s+(\w+): "([^"]+)",?$/).to_h
+ICONS = ICONS_SOURCE.scan(/^\s+(\w+): "([^"]+)",?$/).to_h.except(*FILLED_ICONS.keys)
 
 COMMANDS = YAML.safe_load_file(File.join(ROOT, "config/ssh_commands.yml")).flat_map do |role, commands|
   commands.map do |name, spec|
@@ -63,6 +66,10 @@ class Page
   def png_size(path) = File.binread(path, 8, 16).unpack("NN")
 
   def icon(name, css = "h-5 w-5")
+    if (filled = FILLED_ICONS[name.to_s])
+      return %(<svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 24 24" class="#{css}" aria-hidden="true"><path d="#{filled}"/></svg>)
+    end
+
     path = ICONS.fetch(name.to_s)
     %(<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="#{css}" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="#{path}"/></svg>)
   end

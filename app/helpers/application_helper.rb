@@ -57,6 +57,15 @@ module ApplicationHelper
     "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '#{ssh_key.public_key}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
   end
 
+  # Docker tab of a server page: the number of containers, or the number of
+  # Docker problems coloured by the Docker state (Inventory::DockerStatus).
+  def docker_tab(server, docker)
+    problems = Array(server.docker_reasons).size
+    return [ "docker", t("servers.tabs.docker"), problems, server.docker_status ] if problems.positive?
+
+    [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ]
+  end
+
   # Tabs of a server page (but the overview) and their labels, for ⌘K.
   def server_tab_labels = (ServersController::TABS - [ "overview" ]).index_with { |tab| t("servers.tabs.#{tab}") }
 

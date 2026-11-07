@@ -7,7 +7,7 @@
 <% cves = server.server_vulnerabilities.images.group(:image).pluck(:image, Arel.sql("COUNT(DISTINCT cve)"), Arel.sql("COUNT(DISTINCT cve) FILTER (WHERE fixed_version IS NOT NULL)")).to_h { |image, total, fixable| [ image, [ total, fixable ] ] } %>
 <section id="server-docker" class="card mt-6">
   <div class="card-header">
-    <h2 class="flex items-center gap-2 font-semibold"><%= icon :container, class: "h-4 w-4 text-ink-3" %> Docker <% if data["version"] %><span class="text-xs font-normal text-ink-3"><%= data["version"] %></span><% end %></h2>
+    <h2 class="flex items-center gap-2 font-semibold"><%= icon :docker, class: "h-4 w-4 text-ink-3" %> Docker <% if data["version"] %><span class="text-xs font-normal text-ink-3"><%= data["version"] %></span><% end %></h2>
     <div class="flex items-center gap-3 text-xs text-ink-3">
       <%= inventory_status_badge(snapshot) %>
       <% if snapshot&.collected_at %><span><%= t(".read_html", collected_at: (relative_time_tag snapshot.collected_at)) %></span><% end %>

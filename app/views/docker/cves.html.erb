@@ -6,7 +6,7 @@
 </div>
 
 <div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <%= stat_tile t("docker.cves.images"), @summary[:images], nil, icon: :container, id: "stat-vulnerable-images" %>
+  <%= stat_tile t("docker.cves.images"), @summary[:images], nil, icon: :docker, id: "stat-vulnerable-images" %>
   <%= stat_tile t("docker.cves.cves"), @summary[:cves], nil, icon: :shield_exclamation, id: "stat-image-cves" %>
   <%= stat_tile t("docker.cves.fixable"), @summary[:fixable], t("docker.cves.by_updating"), tone: (:warn if @summary[:fixable].positive?), id: "stat-image-fixable" %>
   <%= stat_tile t("docker.cves.servers"), @summary[:servers], nil, icon: :server_stack, id: "stat-image-servers" %>

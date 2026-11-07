@@ -19,7 +19,7 @@
                      active: controller_name.start_with?("server") && controller_name != "server_groups" %>
     <%= sidebar_link t("nav.packages"), packages_path, icon: :cube, active: controller_name == "packages" %>
     <%= sidebar_link t("nav.vulnerabilities"), vulnerabilities_path, icon: :shield_exclamation, active: controller_name == "vulnerabilities" && !controller_path.start_with?("settings") %>
-    <%= sidebar_link t("nav.docker"), docker_path, icon: :container, active: controller_path == "docker" %>
+    <%= sidebar_link t("nav.docker"), docker_path, icon: :docker, active: controller_path == "docker" %>
     <%= sidebar_link t("nav.ports"), ports_path, icon: :globe, active: controller_name == "ports" %>
     <%= sidebar_link t("nav.scheduled_tasks"), scheduled_tasks_path, icon: :calendar, active: controller_name == "scheduled_tasks" %>
     <% Integration.sidebar_links.each do |link| %>
