@@ -129,4 +129,46 @@ class DockerTest < ActionDispatch::IntegrationTest
     assert_redirected_to task_path(task)
     assert_enqueued_with(job: RunAutomationJob, args: [ Automation.find_by!(kind: "docker_image_updates"), task ])
   end
+
+  test "the server page shows the Docker state apart from the health: pill, Docker row, coloured tab" do
+    servers(:web).refresh_health!
+    sign_in users(:viewer)
+    get server_path(servers(:web))
+    assert_select "h1 ~ a.docker-pill[data-docker-status=crit][href=?]", server_path(servers(:web), tab: "docker"), text: "2"
+    assert_select "#server-docker-state[data-docker-status=crit]" do
+      assert_select ".badge", "Critique"
+      assert_select "span", /Conteneur worker redémarre en boucle · Conteneur db en mauvaise santé/
+    end
+    assert_select ".server-tabs-bar a[data-tab=docker] span[data-tone=crit]", "2"
+    assert_select "#server-health-details", text: /Conteneur/, count: 0
+  end
+
+  test "Docker fine: a grey whale with a check; no pill nor Docker row without Docker" do
+    AppSetting.current.update!(docker_alert_unhealthy: false, docker_alert_restarts: false)
+    servers(:web).refresh_health!
+    sign_in users(:viewer)
+    get server_path(servers(:web))
+    assert_select "a.docker-pill[data-docker-status=ok][title='Docker : rien à signaler']"
+    assert_select "#server-docker-state", text: /Rien à signaler/
+    assert_select ".server-tabs-bar a[data-tab=docker] span[data-tone=crit]", 0
+
+    get server_path(servers(:db))
+    assert_select "a.docker-pill", 0
+    assert_select "#server-docker-state", 0
+  end
+
+  test "the fleet list shows the pill and filters on the Docker state" do
+    servers(:web).refresh_health!
+    sign_in users(:viewer)
+    get servers_path
+    assert_select "##{ActionView::RecordIdentifier.dom_id(servers(:web))} a.docker-pill[data-docker-status=crit]"
+    assert_select "##{ActionView::RecordIdentifier.dom_id(servers(:db))} a.docker-pill", 0
+
+    get servers_path(state: "docker_crit")
+    assert_select "#servers tbody tr", 1
+    get servers_path(state: "docker_warn")
+    assert_select "#servers tbody tr", 0
+    get servers_path(state: "docker_crit", view: "grid")
+    assert_select "a.docker-pill[data-docker-status=crit]", 1
+  end
 end

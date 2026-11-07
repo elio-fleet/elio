@@ -1,7 +1,7 @@
 <%# One server of the fleet table (servers/index). %>
 <% health = server.inventory("health")&.data || {} %>
 <tr id="<%= dom_id(server) %>" class="hover:bg-subtle/60">
-  <td class="pl-4"><%= render "servers/status", server: server, health: true %></td>
+  <td class="pl-4"><span class="inline-flex items-center gap-1.5 whitespace-nowrap"><%= render "servers/status", server: server, health: true %><%= render "servers/docker_pill", server: server %></span></td>
   <td>
     <div class="flex flex-wrap items-center gap-1.5">
       <%= link_to server.name, server_path(server), class: "font-medium hover:text-accent hover:underline" %>

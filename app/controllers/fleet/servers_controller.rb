@@ -9,19 +9,24 @@ class ServersController < ApplicationController
 
   before_action :set_server, only: %i[show edit update destroy]
 
+  # State filter on the Docker state (servers.docker_status) instead of the health.
+  DOCKER_FILTERS = { "docker_warn" => "warn", "docker_crit" => "crit" }.freeze
+
   def index
     @groups = ServerGroup.order(:name)
     @group = @groups.find { |group| group.id.to_s == params[:group].to_s } if params[:group].present?
     @os_names = Server.where.not(os_name: nil).distinct.order(:os_name).pluck(:os_name)
     @os = params[:os].presence_in(@os_names)
-    @state = params[:state].presence_in(Server::HEALTH_STATES + %w[off])
+    @state = params[:state].presence_in(Server::HEALTH_STATES + %w[off] + DOCKER_FILTERS.keys)
     @summary = FleetSummary.new(Server.includes(:inventory_snapshots))
     servers = (@group ? Server.in_group(@group) : Server.all).order(:name).includes(:server_groups, :inventory_snapshots)
     servers = servers.where(os_name: @os) if @os
+    servers = servers.where(docker_status: DOCKER_FILTERS[@state]) if DOCKER_FILTERS.key?(@state)
     @q = params[:q].to_s.strip.first(100)
     servers = servers.includes(:dns_records) if @q.present?
-    servers = servers.to_a if @state || @q.present?
-    servers = servers.select { |server| server.health_state == @state } if @state
+    health_state = @state unless DOCKER_FILTERS.key?(@state)
+    servers = servers.to_a if health_state || @q.present?
+    servers = servers.select { |server| server.health_state == health_state } if health_state
     servers = servers.select { |server| server.matches_search?(@q) } if @q.present?
     @view = fleet_view
     servers = servers.to_a.sort_by { |server| [ STATE_ORDER.fetch(server.health_state, 2), server.name.downcase ] } if @view == "grid"

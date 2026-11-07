@@ -19,6 +19,7 @@
       <div class="flex flex-wrap items-center gap-2">
         <h1 class="text-xl font-semibold"><%= @server.name %></h1>
         <%= render "servers/status", server: @server, health: true %>
+        <%= render "servers/docker_pill", server: @server %>
         <% if @server.server_groups.any? %>
           <span class="server-groups flex flex-wrap gap-1.5"><%= render partial: "server_groups/badge", collection: @server.server_groups, as: :group %></span>
         <% end %>
@@ -47,7 +48,7 @@
               [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.host.fixable.distinct.count(:cve).nonzero? ],
               [ "packages", t("servers.tabs.packages"), packages["total"] ],
               [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "active" } if services["units"]) ],
-              *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),
+              *([ docker_tab(@server, docker) ] if docker["docker"].in?(%w[ok unreadable])),
               [ "ports", t("servers.tabs.ports"), (Inventory::PortAnalysis.new(@server).public_ports.size if ports&.collected?) ],
               [ "firewall", t("servers.tabs.firewall"), nil ],
               [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],

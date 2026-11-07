@@ -66,7 +66,7 @@
         </span>
       <% end %>
       <span class="state-filter">
-        <%= f.select :state, [ [ t(".all_states"), "" ], [ t("dashboard.index.watch"), "warn" ], [ t("dashboard.index.critical"), "crit" ], [ t(".unreachable"), "off" ], [ t("dashboard.index.online"), "ok" ], [ t(".without_inventory"), "unknown" ] ],
+        <%= f.select :state, [ [ t(".all_states"), "" ], [ t("dashboard.index.watch"), "warn" ], [ t("dashboard.index.critical"), "crit" ], [ t(".unreachable"), "off" ], [ t("dashboard.index.online"), "ok" ], [ t(".without_inventory"), "unknown" ], [ t(".docker_watch"), "docker_warn" ], [ t(".docker_critical"), "docker_crit" ] ],
               { selected: @state }, aria: { label: t(".state") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
       </span>
       <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>

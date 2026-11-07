@@ -1,5 +1,10 @@
 fr:
   servers:
+    docker_pill:
+      fine: "Docker : rien à signaler"
+      problems:
+        one: "Docker, %{count} problème : %{reasons}"
+        other: "Docker, %{count} problèmes : %{reasons}"
     tabs:
       overview: Vue d'ensemble
       packages: Paquets
@@ -31,6 +36,8 @@ fr:
       all_states: Tous les états
       unreachable: Injoignables
       without_inventory: Sans inventaire
+      docker_watch: Docker à surveiller
+      docker_critical: Docker critique
       state: État
       filter: Filtrer
       list: Liste
@@ -129,6 +136,14 @@ fr:
     health_bar:
       port: Port %{port}
       ssh: SSH
+      docker: Docker
+      docker_ok: Rien à signaler
+      docker_warn: À surveiller
+      docker_crit: Critique
+      docker_fine:
+        one: "%{running}/%{count} conteneur en cours · aucun problème"
+        other: "%{running}/%{count} conteneurs en cours · aucun problème"
+      docker_tab: Onglet Docker
     health_checking:
       checking: Vérification…
     os:

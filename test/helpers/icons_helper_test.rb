@@ -16,6 +16,11 @@ class IconsHelperTest < ActionView::TestCase
     assert_select "svg.h-4", 0
   end
 
+  test "a filled icon (the Docker whale) is drawn with fill, not stroke" do
+    render html: icon(:docker, class: "h-3 w-3")
+    assert_select "svg[fill=currentColor][class='h-3 w-3'][aria-hidden=true]:not([stroke]) path[d^='M2.2,9.76']"
+  end
+
   test "raises on an unknown icon" do
     assert_raises(KeyError) { icon(:unknown) }
   end

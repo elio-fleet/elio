@@ -7,7 +7,7 @@
 
 <div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
   <%= stat_tile t(".docker_servers"), @summary[:servers], nil, icon: :server_stack, id: "stat-docker-servers" %>
-  <%= stat_tile t(".running_containers"), "#{@summary[:running]}/#{@summary[:containers]}", nil, icon: :container, id: "stat-containers" %>
+  <%= stat_tile t(".running_containers"), "#{@summary[:running]}/#{@summary[:containers]}", nil, icon: :docker, id: "stat-containers" %>
   <%= stat_tile t(".trouble"), @summary[:troubled], t(".loop_unhealthy"), tone: (:crit if @summary[:troubled].positive?), id: "stat-troubled" %>
   <%= stat_tile t(".new_versions"), @summary[:updates], t(".images_update"), tone: (:warn if @summary[:updates].positive?), id: "stat-updates" %>
 </div>

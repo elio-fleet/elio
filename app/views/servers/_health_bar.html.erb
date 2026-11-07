@@ -1,4 +1,5 @@
-<%# Compact reachability + SSH status of a server, both checked when the page is displayed. %>
+<%# Compact reachability + SSH status of a server, both checked when the page is displayed,
+    then the state of its Docker (Inventory::DockerStatus) when it has one. %>
 <section id="server-health" class="mt-6 divide-y divide-line rounded-xl border border-line bg-surface shadow-sm">
   <div class="px-5 py-3">
     <%= turbo_frame_tag dom_id(server, :reachability), src: server_ping_path(server), loading: :lazy, class: "group block" do %>
@@ -16,4 +17,17 @@
       <% end %>
     <% end %>
   </div>
+  <% if server.docker_status.present? %>
+    <% docker = server.inventory("docker")&.data || {} %>
+    <% containers = Array(docker["containers"]) %>
+    <div id="server-docker-state" class="px-5 py-3" data-docker-status="<%= server.docker_status %>">
+      <%= render "servers/health_item", label: t(".docker") do %>
+        <%= status_badge({ "crit" => :crit, "warn" => :warn }.fetch(server.docker_status, :good), t("servers.health_bar.docker_#{server.docker_status}"), icon: :docker) %>
+        <span class="min-w-0 text-xs text-ink-2">
+          <%= server.docker_reasons.any? ? server.docker_reason_texts.join(" · ") : t("servers.health_bar.docker_fine", running: containers.count { |container| container["state"] == "running" }, count: containers.size) %>
+        </span>
+        <%= link_to t("servers.health_bar.docker_tab"), server_path(server, tab: "docker"), class: "ml-auto text-xs font-medium text-accent hover:underline" %>
+      <% end %>
+    </div>
+  <% end %>
 </section>
