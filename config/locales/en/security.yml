@@ -143,16 +143,13 @@ en:
       fixable:
         one: "%{count} fixable"
         other: "%{count} fixable"
-      on_server:
-        one: "%{count} on the server"
-        other: "%{count} on the server"
-      in_images:
-        one: "%{count} in %{images}"
-        other: "%{count} in %{images}"
       images:
         one: "%{count} Docker image"
         other: "%{count} Docker images"
-      include_images: Include the Docker containers
+      images_apart_html:
+        one: "Packages of the system only. The Docker image of this server has %{cves} CVEs too:"
+        other: "Packages of the system only. The %{images} of this server have %{cves} CVEs too:"
+      docker_tab: Docker tab
       by_severity:
         critical:
           one: "%{count} critical"
@@ -199,6 +196,9 @@ en:
       pending_html: 'The server does not offer this version yet: run %{command}, or check that the security repository is configured.'
       in_image_html: 'These packages are in the image %{image}: download a newer version of the image (or rebuild it), then recreate its containers.'
     docker_card:
+      sections: Docker sections
+      no_image_vulnerability: No known vulnerability in the images of this server.
+      fixed_by_image: "Fixed by updating the image (a newer version published by its registry), not the packages of the server."
       images_fleet: Images of the fleet
       elio_neither_trivy_nor: Elio (neither Trivy nor Grype on the server)
       tag: no tag

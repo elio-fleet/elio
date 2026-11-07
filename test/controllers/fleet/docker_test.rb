@@ -39,11 +39,35 @@ class DockerTest < ActionDispatch::IntegrationTest
       assert_select "tr.docker-container-row[data-name=worker] .container-state", text: "redémarre en boucle"
       assert_select "tr.docker-container-row[data-name=backup-once]", text: /arrêté\s+backup-once.*arrêté il y a 31 jours/m
       assert_select "tr.docker-container-row[data-name=web]", text: /12,5 Mo/
+      assert_select "nav.docker-sections a[data-section=containers][aria-current=page]", text: /Conteneurs\s*4/
+      assert_select "nav.docker-sections a[data-section=vulnerabilities]", text: /Vulnérabilités\s*2/
+      assert_select "tr.docker-image", 0, "the images are in their section"
+    end
+
+    travel_to(NOW) { get server_path(servers(:web), tab: "docker", section: "images") }
+    assert_select "#server-docker" do
+      assert_select "tr.docker-container-row", 0
       assert_select "tr.docker-image[data-reference='nginx:1.27']", text: /nouvelle version.*2\s+dont 1 corrigeable/m
+      assert_select "tr.docker-image[data-reference='nginx:1.27'] a[href=?]", server_path(servers(:web), tab: "docker", section: "vulnerabilities")
       assert_select "tr.docker-image[data-reference='postgres:16'] .image-update", text: "à jour"
       assert_select "tr.docker-image[data-reference='postgres:16']", text: /pas encore téléchargée/
       assert_select "tr.docker-image[data-reference='redis:latest']", text: /latest.*non/m
     end
+  end
+
+  test "the vulnerabilities section lists the CVEs of the images by package, explains how they are fixed" do
+    sign_in users(:viewer)
+    get server_path(servers(:web), tab: "docker", section: "vulnerabilities")
+    assert_select "#server-docker" do
+      assert_select "nav.docker-sections a[data-section=vulnerabilities][aria-current=page] span.bg-warn-soft", "2"
+      assert_select "li.vulnerability-package[data-package='openssl@nginx:1.27'][data-state=image]"
+      assert_select "li.package-cve", 2
+      assert_select "p", /Corrigées en mettant à jour l'image/
+    end
+
+    servers(:web).server_vulnerabilities.delete_all
+    get server_path(servers(:web), tab: "docker", section: "vulnerabilities")
+    assert_select ".image-vulnerabilities-empty", /Aucune vulnérabilité connue/
   end
 
   test "an unreadable Docker is explained, no tab without Docker" do

@@ -76,7 +76,8 @@
   <% when "services" %>
     <%= render "servers/services_card", server: @server %>
   <% when "docker" %>
-    <%= render "servers/docker_card", server: @server %>
+    <%= render "servers/docker_card", server: @server, section: @docker_section, groups: @package_groups, pager: @pager,
+                                      image_cves: @image_vulnerability_count, image_fixable: @image_fixable_count %>
   <% when "schedules" %>
     <%= render "servers/scheduled_tasks_card", server: @server %>
   <% when "ports" %>

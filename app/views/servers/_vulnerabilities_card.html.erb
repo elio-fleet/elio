@@ -1,4 +1,4 @@
-<%# Vulnerabilities (CVE) of the server, see Vulnerabilities::Matcher: its packages and its Docker images. %>
+<%# Vulnerabilities (CVE) of the server's own packages, see Vulnerabilities::Matcher; those of its Docker images are in the Docker tab. %>
 <% target = Vulnerabilities.target(server.inventory("os")&.data) %>
 <% feed = target && VulnerabilityFeed.for(target.first) %>
 <section id="server-vulnerabilities" class="card mt-6">
@@ -27,16 +27,11 @@
         <% if (count = counts[:by_severity][severity].to_i).positive? %>· <%= t("servers.vulnerabilities_card.by_severity.#{severity}", count: count) %><% end %>
       <% end %>
     </p>
-    <% if counts[:images].positive? || @include_images %>
-      <p class="vulnerability-origins flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line px-4 py-2 text-xs text-ink-2">
-        <span><%= t(".on_server", count: counts[:host]) %></span><span class="text-ink-3">·</span>
-        <span><%= t(".in_images", count: counts[:images], images: t(".images", count: counts[:image_count])) %></span>
-        <%= link_to server_path(server, request.query_parameters.except("page", "package").merge("tab" => "vulnerabilities", "containers" => (@include_images ? "0" : "1"))),
-              role: "switch", aria: { checked: @include_images }, data: { turbo_action: "replace" },
-              class: "include-images ml-auto inline-flex items-center gap-1.5 font-medium text-accent hover:underline" do %>
-          <span class="inline-flex h-4 w-7 items-center rounded-full p-0.5 <%= @include_images ? "bg-accent-fill justify-end" : "bg-track justify-start" %>"><span class="h-3 w-3 rounded-full bg-white shadow"></span></span>
-          <%= t(".include_images") %>
-        <% end %>
+    <% if counts[:images].positive? %>
+      <p class="vulnerability-origins flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-line bg-subtle/60 px-4 py-2 text-xs text-ink-2">
+        <%= icon :docker, class: "h-4 w-4 text-ink-3" %>
+        <span><%= t(".images_apart_html", count: counts[:image_count], cves: tag.strong(counts[:images], class: "text-ink"), images: t(".images", count: counts[:image_count])) %></span>
+        <%= link_to t(".docker_tab"), server_path(server, tab: "docker", section: "vulnerabilities"), class: "image-vulnerabilities-link font-medium text-accent hover:underline" %>
       </p>
     <% end %>
 
