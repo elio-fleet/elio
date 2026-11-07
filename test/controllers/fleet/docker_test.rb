@@ -77,15 +77,22 @@ class DockerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the Docker alerts of the settings are health reasons" do
+  test "the Docker alerts of the settings make the Docker state, never the health of the server" do
+    servers(:web).server_vulnerabilities.where(cve: "CVE-2024-9143").update_all(severity: "high")
     servers(:web).refresh_health!
-    assert_equal [ "Conteneur db en mauvaise santé", "Conteneur worker redémarre en boucle" ], servers(:web).health_reason_texts.grep(/Conteneur/)
-    assert_empty servers(:web).health_reason_texts.grep(/image Docker/), "updates are off by default"
+    assert_equal "crit", servers(:web).docker_status
+    assert_equal [ "Conteneur worker redémarre en boucle", "Conteneur db en mauvaise santé", "1 vulnérabilité grave corrigeable dans les images Docker" ],
+                 servers(:web).docker_reason_texts
+    assert_empty servers(:web).health_reason_texts.grep(/Conteneur|image/), "Docker is no longer a health reason"
 
     AppSetting.current.update!(docker_alert_unhealthy: false, docker_alert_restarts: false, docker_alert_updates: true)
     servers(:web).refresh_health!
-    assert_empty servers(:web).health_reason_texts.grep(/Conteneur/)
-    assert_includes servers(:web).health_reason_texts, "1 image Docker à mettre à jour"
+    assert_equal "warn", servers(:web).docker_status, "images only: never critical"
+    assert_equal [ "1 vulnérabilité grave corrigeable dans les images Docker", "1 image Docker à mettre à jour" ], servers(:web).docker_reason_texts
+
+    AppSetting.current.update!(docker_alert_vulnerabilities: false, docker_alert_updates: false)
+    servers(:web).refresh_health!
+    assert_equal [ "ok", [] ], [ servers(:web).docker_status, servers(:web).docker_reasons ]
   end
 
   test "settings: alerts, registry credentials kept encrypted and never shown back, check now" do
@@ -96,10 +103,13 @@ class DockerTest < ActionDispatch::IntegrationTest
     assert_select ".registries-configured", "Aucun identifiant enregistré."
     assert_select "tr.image-check", 2
 
-    patch settings_docker_path, params: { app_setting: { docker_alert_updates: "1", docker_registry_credentials: "ghcr.io elio ghp_secret" } }
+    assert_select "input[type=checkbox][name='app_setting[docker_alert_vulnerabilities]'][checked]"
+
+    patch settings_docker_path, params: { app_setting: { docker_alert_updates: "1", docker_alert_vulnerabilities: "0", docker_registry_credentials: "ghcr.io elio ghp_secret" } }
     assert_redirected_to settings_docker_path
     setting = AppSetting.current.reload
     assert setting.docker_alert_updates
+    assert_not setting.docker_alert_vulnerabilities
     assert_equal "ghcr.io elio ghp_secret", setting.docker_registry_credentials
     assert_not_includes AppSetting.connection.select_value("SELECT docker_registry_credentials FROM app_settings"), "ghp_secret"
 

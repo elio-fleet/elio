@@ -12,6 +12,8 @@
         <span><%= t(".looping_html") %> <span class="block text-xs text-ink-3"><%= t(".restarting_state_least_restarts_html", _: (Inventory::Collectors::Docker::LOOP_RESTARTS), in_minutes_to_i: (Inventory::Collectors::Docker::LOOP_WINDOW.in_minutes.to_i)) %></span></span></label>
       <label class="flex items-start gap-2"><%= f.check_box :docker_alert_updates, class: "mt-0.5" %>
         <span><%= t(".updates_html") %> <span class="block text-xs text-ink-3"><%= t(".handy_latest_1_27") %></span></span></label>
+      <label class="flex items-start gap-2"><%= f.check_box :docker_alert_vulnerabilities, class: "mt-0.5" %>
+        <span><%= t(".vulnerabilities_html") %> <span class="block text-xs text-ink-3"><%= t(".vulnerabilities_hint") %></span></span></label>
     </div>
   </section>
 

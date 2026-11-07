@@ -5,7 +5,7 @@ module Settings
   class DockerController < ApplicationController
     require_permission :administer
 
-    ALERTS = %i[docker_alert_unhealthy docker_alert_restarts docker_alert_updates].freeze
+    ALERTS = %i[docker_alert_unhealthy docker_alert_restarts docker_alert_updates docker_alert_vulnerabilities].freeze
 
     def show
       @setting = AppSetting.current

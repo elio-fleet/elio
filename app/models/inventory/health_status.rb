@@ -45,7 +45,8 @@ class Inventory::HealthStatus
   # RunDueAutomationsJob computes the health of every server again (with the
   # whole schema of the release, unlike a migration that runs before the
   # following ones).
-  VERSION = 1
+  # 2: Docker (containers, images and their CVEs) moved to Inventory::DockerStatus.
+  VERSION = 2
 
   def self.refresh_outdated!
     setting = AppSetting.current
@@ -65,7 +66,7 @@ class Inventory::HealthStatus
   end
 
   def evaluate
-    reasons = [ *access_reasons, *disk_reasons, *memory_reasons, *load_reasons, *system_reasons, *scheduled_task_reasons, *vulnerability_reasons, *docker_reasons, *port_reasons, *Integration.health_reasons(@server) ]
+    reasons = [ *access_reasons, *disk_reasons, *memory_reasons, *load_reasons, *system_reasons, *scheduled_task_reasons, *vulnerability_reasons, *port_reasons, *Integration.health_reasons(@server) ]
     reasons = reasons.sort_by { |reason| reason.tone == "crit" ? 0 : 1 }
     state = if reasons.any? { |reason| reason.tone == "crit" } then "crit"
     elsif reasons.any? then "warn"
@@ -123,44 +124,16 @@ class Inventory::HealthStatus
     end
   end
 
-  # Docker alerts chosen in the settings: unhealthy and looping containers, images to update.
-  def docker_reasons
-    docker = @server.inventory("docker")
-    return [] unless docker&.collected? && docker.data["docker"] == "ok"
-
-    containers = Array(docker.data["containers"])
-    reasons = []
-    reasons << grouped_reason(containers.select { |container| container["health"] == "unhealthy" }, :unhealthy) if @settings.docker_alert_unhealthy
-    reasons << grouped_reason(containers.select { |container| container["looping"] }, :looping) if @settings.docker_alert_restarts
-    if @settings.docker_alert_updates
-      images = Array(docker.data["images"]).select { |image| image["used"] }
-      updates = ImageUpdate.for_images(images)
-      count = images.count { |image| ImageUpdate.state_for(image, updates) == :available }
-      reasons << self.class.reason("warn", :images_to_update, count: count) if count.positive?
-    end
-    reasons.compact
-  end
-
-  def grouped_reason(containers, state)
-    return if containers.empty?
-
-    containers.one? ? self.class.reason("warn", :"container_#{state}", name: containers.first["name"]) : self.class.reason("warn", :"containers_#{state}", count: containers.size)
-  end
-
-  # Fixable CVEs from the alert severity of the settings: critical on the
-  # server itself, a warning in its Docker images.
+  # Fixable CVEs of the server's own packages from the alert severity of the
+  # settings (those of its Docker images: Inventory::DockerStatus).
   def vulnerability_reasons
     minimum = @settings.vulnerability_alert_severity
     return [] if minimum == "none"
 
-    serious = @server.server_vulnerabilities.fixable.at_least(minimum)
-    cves = serious.host.distinct.pluck(:cve)
-    reasons = []
-    reasons << (cves.one? ? self.class.reason("crit", :vulnerability, cve: cves.first) : self.class.reason("crit", :vulnerabilities, count: cves.size)) if cves.any?
-    # In the Docker images: fixed by updating the image, not the server.
-    images = serious.images.distinct.count(:cve)
-    reasons << self.class.reason("warn", :image_vulnerabilities, count: images, images: serious.images.distinct.count(:image)) if images.positive?
-    reasons
+    cves = @server.server_vulnerabilities.host.fixable.at_least(minimum).distinct.pluck(:cve)
+    return [] if cves.empty?
+
+    [ cves.one? ? self.class.reason("crit", :vulnerability, cve: cves.first) : self.class.reason("crit", :vulnerabilities, count: cves.size) ]
   end
 
   def port_reasons

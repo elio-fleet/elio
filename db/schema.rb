@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_07_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -67,6 +67,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_110000) do
     t.boolean "ufw_block_ipv6", default: false, null: false
     t.boolean "ovh_ipv6_health", default: false, null: false
     t.integer "health_version", default: 0, null: false
+    t.boolean "docker_alert_vulnerabilities", default: true, null: false
   end
 
   create_table "automations", force: :cascade do |t|
@@ -439,6 +440,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_110000) do
     t.jsonb "ip_addresses", default: [], null: false
     t.jsonb "extra_addresses", default: [], null: false
     t.datetime "vulnerabilities_checked_at"
+    t.string "docker_status"
+    t.jsonb "docker_reasons", default: [], null: false
     t.index "lower((name)::text)", name: "index_servers_on_lower_name", unique: true
     t.index ["ip_addresses"], name: "index_servers_on_ip_addresses", using: :gin
   end

@@ -279,7 +279,7 @@ fr:
         registry_credentials: Identifiants des registres
         save: Enregistrer
         automation_off: désactivée
-        what_containers_images_report: 'Ce que les conteneurs et les images signalent : raison « à surveiller » sur le serveur et activité (notifiable).'
+        what_containers_images_report: 'Ce que les conteneurs et les images signalent : l''état Docker du serveur (à part de sa santé) et une activité (notifiable). Rouge pour les conteneurs, orange pour les images.'
         healthcheck_fails: Son healthcheck échoue.
         restarting_state_least_restarts_html: État « restarting », ou au moins %{_} redémarrages et relancé il y a moins de %{in_minutes_to_i} minutes.
         handy_latest_1_27: Pratique pour les tags « latest » ou « 1.27 » ; sans effet sur un tag figé.
@@ -295,6 +295,8 @@ fr:
         unhealthy_html: Conteneur en <strong>mauvaise santé</strong>
         looping_html: Conteneur qui <strong>redémarre en boucle</strong>
         updates_html: Image utilisée dont le registre publie une <strong>nouvelle version</strong> du même tag
+        vulnerabilities_html: Image avec des <strong>vulnérabilités graves corrigeables</strong>
+        vulnerabilities_hint: À partir de la gravité choisie dans Paramètres → Vulnérabilités ; corrigées en mettant à jour l'image, pas le serveur.
         registries_html: 'Elio demande aux registres l''empreinte de chaque tag utilisé (lecture seule, requêtes HEAD qui ne comptent pas dans les limites de Docker Hub). Les images publiques n''ont besoin de rien ; pour une image privée, un jeton <strong>en lecture seule</strong> par registre, une ligne chacun :'
         registries_example: |-
           ghcr.io mon-compte ghp_…

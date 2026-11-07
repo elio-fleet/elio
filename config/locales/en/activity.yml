@@ -43,6 +43,15 @@ en:
       health_recovered:
         label: Server healthy again
         description: A server to watch or critical is back to normal.
+      docker_warning:
+        label: Docker to watch
+        description: "Docker on a server needs attention: serious vulnerabilities in the images, images to update."
+      docker_critical:
+        label: Docker in critical state
+        description: Containers of a server are unhealthy or restart in a loop.
+      docker_recovered:
+        label: Docker healthy again
+        description: Docker on a server, to watch or critical, is back to normal.
       packages_changed:
         label: Packages changed
         description: Packages have been installed, updated or removed on a server (inventory).
@@ -223,6 +232,9 @@ en:
       health_warning: "“%{server}” is to watch: %{reasons}"
       health_critical: "“%{server}” is in a critical state: %{reasons}"
       health_recovered: "“%{server}” is healthy again"
+      docker_warning: "Docker on “%{server}” is to watch: %{reasons}"
+      docker_critical: "Docker on “%{server}” is in a critical state: %{reasons}"
+      docker_recovered: "Docker on “%{server}” is healthy again"
       packages_changed: 'Packages of “%{server}”: %{counts}'
       packages:
         installed:

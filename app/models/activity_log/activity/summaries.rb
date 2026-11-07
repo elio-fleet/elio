@@ -27,6 +27,9 @@ module Activity::Summaries
     health_warning: proc { Activity::Summaries.t(:health_warning, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
     health_critical: proc { Activity::Summaries.t(:health_critical, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
     health_recovered: proc { Activity::Summaries.t(:health_recovered, server: server_name) },
+    docker_warning: proc { Activity::Summaries.t(:docker_warning, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
+    docker_critical: proc { Activity::Summaries.t(:docker_critical, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
+    docker_recovered: proc { Activity::Summaries.t(:docker_recovered, server: server_name) },
     packages_changed: proc do
       counts = %w[installed upgraded removed].filter_map { |key| Activity::Summaries.t("packages.#{key}", count: data[key].to_i) if data[key].to_i.positive? }
       Activity::Summaries.t(:packages_changed, server: server_name, counts: counts.join(", ")) + Activity::Summaries.list(data["examples"])
