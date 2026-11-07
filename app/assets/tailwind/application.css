@@ -180,3 +180,8 @@
 html.hide-turbo-progress .turbo-progress-bar {
   display: none !important;
 }
+
+/* Settings pages: the spacing between blocks comes from the page (gap), not from each block. */
+.settings-page > * {
+  margin-top: 0;
+}

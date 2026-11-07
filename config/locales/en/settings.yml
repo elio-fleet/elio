@@ -1,4 +1,6 @@
 en:
+  settings_controller:
+    saved: Settings saved.
   settings:
     language:
       title: Language
@@ -11,6 +13,7 @@ en:
         invalid: This language is not available.
     nav:
       title: Settings
+      subtitle: Settings of the whole application, for administrators.
       general: General
       notifications: Notifications
       automations: Automations
@@ -21,6 +24,7 @@ en:
       extensions: Extensions
     users:
       index:
+        actions_of: Actions of %{email}
         title: Users
         invite: Invite a user
         invite_intro:

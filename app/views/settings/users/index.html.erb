@@ -1,8 +1,8 @@
 <% content_for :title, t("title", page: "#{t(".title")} · #{t("settings.nav.title")}") %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
-<section id="invite" class="mt-8 rounded-xl border border-line bg-surface p-6 shadow-sm">
-  <h2 class="text-base font-semibold"><%= t(".invite") %></h2>
+<section id="invite" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".invite") %></h2>
   <p class="mt-1 text-sm text-ink-3"><%= t(".invite_intro", count: Invitation::VALIDITY.in_days.to_i) %></p>
   <%= form_with model: @invitation, url: settings_invitations_path, class: "mt-4 flex flex-wrap items-end gap-3" do |f| %>
     <div class="min-w-60 flex-1">
@@ -45,8 +45,8 @@
   <% end %>
 </section>
 
-<section id="security" class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
-  <h2 class="text-base font-semibold"><%= t(".security") %></h2>
+<section id="security" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".security") %></h2>
   <%= form_with model: @setting, url: settings_security_path, method: :patch, class: "mt-3 flex flex-wrap items-center gap-3" do |f| %>
     <label class="flex cursor-pointer items-center gap-2 text-sm text-ink-2">
       <%= f.check_box :require_admin_two_factor, class: "h-4 w-4 rounded border-line text-accent" %>
@@ -60,9 +60,9 @@
   <% end %>
 </section>
 
-<section id="users" class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
-  <h2 class="text-base font-semibold"><%= t(".title") %></h2>
-  <p class="mt-1 text-sm text-ink-3"><%= t(".users_intro") %></p>
+<section id="users" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".title") %></h2>
+  <p class="mt-1 text-xs text-ink-3"><%= t(".users_intro") %></p>
   <% select_class = "input w-auto px-2 py-1.5" %>
   <ul class="mt-4 divide-y divide-line rounded-md border border-line">
     <% @users.each do |user| %>
@@ -80,25 +80,29 @@
             · <span class="user-two-factor"><%= user.two_factor_enabled? ? t(".two_factor_on") : t(".two_factor_off") %></span>
           </p>
         </div>
-        <%= form_with model: user, url: settings_user_path(user), class: "flex flex-wrap items-center gap-2" do |f| %>
-          <%= f.select :role, User.role_options, {}, aria: { label: t(".role_of", email: user.email) }, class: select_class %>
-          <%= f.submit t("words.save"), class: "btn btn-secondary" %>
-        <% end %>
-        <% if user.two_factor_enabled? && user != current_user %>
-          <%= button_to t(".reset_two_factor"), reset_two_factor_settings_user_path(user),
-                form: { data: { turbo_confirm: t(".reset_two_factor_confirm", email: user.email), confirm_label: t(".reset"), confirm_variant: "danger" } },
-                class: "btn btn-secondary" %>
+        <%= form_with model: user, url: settings_user_path(user), class: "flex flex-wrap items-center gap-2", data: { controller: "auto-submit" } do |f| %>
+          <%= f.select :role, User.role_options, {}, aria: { label: t(".role_of", email: user.email) }, class: select_class, data: { action: "change->auto-submit#submit" } %>
+          <noscript><%= f.submit t("words.save"), class: "btn btn-secondary" %></noscript>
         <% end %>
         <% if user.deactivated? %>
-          <%= button_to t(".reactivate"), reactivate_settings_user_path(user),
-                class: "cursor-pointer rounded-md border border-good/40 bg-surface px-3 py-1.5 text-sm font-medium text-good-ink shadow-sm hover:bg-good-soft" %>
-        <% elsif user != current_user %>
-          <%= button_to t(".deactivate"), deactivate_settings_user_path(user),
-                form: { data: { turbo_confirm: t(".deactivate_confirm", email: user.email), confirm_label: t(".deactivate"), confirm_variant: "danger" } },
-                class: "cursor-pointer rounded-md border border-crit/40 bg-surface px-3 py-1.5 text-sm font-medium text-crit-ink shadow-sm hover:bg-crit-soft" %>
+          <%= button_to t(".reactivate"), reactivate_settings_user_path(user), class: "btn btn-secondary" %>
+        <% elsif user != current_user || user.two_factor_enabled? %>
+          <% if user != current_user %>
+            <%= actions_menu label: t(".actions_of", email: user.email) do %>
+              <% if user.two_factor_enabled? %>
+                <%= menu_item t(".reset_two_factor"), reset_two_factor_settings_user_path(user), icon: :key, method: :post,
+                              confirm: t(".reset_two_factor_confirm", email: user.email), data: { confirm_label: t(".reset") } %>
+                <%= menu_separator %>
+              <% end %>
+              <%= menu_item t(".deactivate"), deactivate_settings_user_path(user), icon: :x_mark, method: :post, danger: true,
+                            confirm: t(".deactivate_confirm", email: user.email), data: { confirm_label: t(".deactivate") } %>
+            <% end %>
+          <% end %>
         <% end %>
       </li>
     <% end %>
   </ul>
   <%= render "shared/pagination", pager: @pager, noun: t(".users") %>
 </section>
+<% end %>
+<%= render "settings/frame", page: page %>

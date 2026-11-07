@@ -1,64 +1,70 @@
 <% content_for :title, t("title", page: t("nav.automations")) %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
-<p class="mt-6 text-sm text-ink-3">
+<p class="text-sm text-ink-3">
   <%= t(".intro_html", activity: link_to(t(".activity"), activities_path, class: "font-medium text-accent hover:underline"), tasks: link_to(t(".tasks"), tasks_path, class: "font-medium text-accent hover:underline")) %>
 </p>
 
-<div class="card mt-5 divide-y divide-line">
-  <% @automations.each do |automation| %>
-    <section id="<%= dom_id(automation) %>" class="automation px-4 py-4">
-      <div class="flex flex-wrap items-start justify-between gap-4">
-        <div class="min-w-0 max-w-2xl">
-          <h2 class="flex flex-wrap items-center gap-2 font-semibold">
-            <%= automation.label %>
-            <% if automation.enabled? %>
-              <%= status_badge :good, t(".text"), class: "automation-state" %>
-            <% else %>
-              <%= status_badge :neutral, t(".off"), class: "automation-state" %>
+<%# One form for the whole page (one Save); the "Run now" buttons submit small forms of their own, after it (form= attribute). %>
+<%= form_with url: settings_automations_update_path, method: :patch, id: "automations-form", data: { controller: "dirty-form" } do |f| %>
+  <div class="card overflow-x-auto">
+    <table id="automations" class="table-dense">
+      <thead>
+        <tr><th class="pl-4"><%= t(".active") %></th><th><%= t(".automation") %></th><th><%= t(".frequency") %></th><% if @groups.any? %><th><%= t(".on") %></th><% end %>
+            <th class="pr-4"><span class="sr-only"><%= t(".run_now") %></span></th></tr>
+      </thead>
+      <tbody>
+        <% @automations.each do |automation| %>
+          <% name = "automations[#{automation.id}]" %>
+          <tr id="<%= dom_id(automation) %>" class="automation" data-enabled="<%= automation.enabled? %>">
+            <td class="pl-4">
+              <%= hidden_field_tag "#{name}[enabled]", "0", id: nil %>
+              <%= check_box_tag "#{name}[enabled]", "1", automation.enabled?, id: "#{dom_id(automation)}_enabled", aria: { label: t(".enable", label: automation.label) },
+                    class: "automation-enabled h-4 w-4 rounded border-line text-accent" %>
+            </td>
+            <td class="max-w-sm">
+              <label for="<%= dom_id(automation) %>_enabled" class="font-medium"><%= automation.label %></label>
+              <span class="automation-state sr-only"><%= automation.enabled? ? t(".text") : t(".off") %></span>
+              <p class="truncate text-xs text-ink-3" title="<%= automation.description %>"><%= automation.description %></p>
+              <p class="text-[11px] text-ink-3">
+                <%= t(".last_run") %> <%= automation.last_run_at ? relative_time_tag(automation.last_run_at) : t(".never") %>
+                <% if (next_run = automation.next_run_at) %> · <%= t(".next") %> <%= relative_time_tag next_run, expired: t(".next_minute") %><% end %>
+                <% if automation.last_result %> · <span class="automation-result" title="<%= automation.last_result %>"><%= automation.last_result.truncate(60) %></span><% end %>
+              </p>
+            </td>
+            <td><%= select_tag "#{name}[interval_minutes]", options_for_select(Automation.interval_options, automation.interval_minutes), aria: { label: t(".frequency") }, class: "input w-auto py-1 text-xs" %></td>
+            <% if @groups.any? %>
+              <td>
+                <details class="automation-groups relative">
+                  <summary class="automation-scope input cursor-pointer py-1 text-xs whitespace-nowrap"><%= automation.scope_label %></summary>
+                  <div class="absolute right-0 z-10 mt-1 w-56 space-y-1 rounded-lg border border-line bg-surface p-2 shadow-lg">
+                    <%= hidden_field_tag "#{name}[server_group_ids][]", "", id: nil %>
+                    <p class="px-1 text-[11px] text-ink-3"><%= t(".group_checked_whole_fleet") %></p>
+                    <% @groups.each do |group| %>
+                      <label class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs text-ink-2 hover:bg-subtle">
+                        <%= check_box_tag "#{name}[server_group_ids][]", group.id, automation.server_group_ids.include?(group.id), id: "#{dom_id(automation)}_group_#{group.id}",
+                              class: "h-3.5 w-3.5 rounded border-line text-accent" %>
+                        <span class="h-2 w-2 rounded-full <%= group.dot_classes %>"></span><%= group.name %>
+                      </label>
+                    <% end %>
+                  </div>
+                </details>
+              </td>
             <% end %>
-            <span class="automation-scope badge bg-subtle font-normal text-ink-2"><%= automation.scope_label %></span>
-          </h2>
-          <p class="mt-1 text-xs text-ink-3"><%= automation.description %></p>
-          <dl class="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-ink-3">
-            <div><dt class="inline"><%= t(".last_run") %></dt> <dd class="inline"><%= automation.last_run_at ? relative_time_tag(automation.last_run_at) : "jamais" %></dd></div>
-            <% if automation.last_result %>
-              <div><dt class="inline"><%= t(".result") %></dt> <dd class="automation-result inline text-ink-2"><%= automation.last_result %></dd></div>
-            <% end %>
-            <% if (next_run = automation.next_run_at) %>
-              <div><dt class="inline"><%= t(".next") %></dt> <dd class="inline"><%= relative_time_tag next_run, expired: t(".next_minute") %></dd></div>
-            <% end %>
-          </dl>
-        </div>
-        <%= button_to run_settings_automation_path(automation), class: "btn btn-secondary" do %>
-          <%= icon :bolt %> <%= t(".run_now") %>
+            <td class="pr-4 text-right">
+              <button type="submit" form="<%= dom_id(automation, :run) %>" class="btn btn-ghost px-2 py-1 text-xs text-accent"><%= icon :play, class: "h-3.5 w-3.5" %> <%= t(".run_now") %></button>
+            </td>
+          </tr>
         <% end %>
-      </div>
+      </tbody>
+    </table>
+  </div>
+  <%= save_bar f %>
+<% end %>
 
-      <%= form_with model: automation, url: settings_automation_path(automation), class: "mt-3 flex flex-wrap items-center gap-3" do |f| %>
-        <label class="flex cursor-pointer items-center gap-2 text-sm text-ink-2">
-          <%= f.check_box :enabled, class: "h-4 w-4 rounded border-line text-accent" %>
-          Activer
-        </label>
-        <%= f.select :interval_minutes, Automation.interval_options, {}, aria: { label: t(".frequency") }, class: "input w-auto py-1 text-xs" %>
-        <% if @groups.any? %>
-          <details class="automation-groups relative">
-            <summary class="input cursor-pointer py-1 text-xs"><%= automation.server_group_ids.any? ? t(".groups", scope_label: automation.scope_label) : t(".whole_fleet") %></summary>
-            <div class="absolute right-0 z-10 mt-1 w-56 space-y-1 rounded-lg border border-line bg-surface p-2 shadow-lg sm:right-auto">
-              <%= hidden_field_tag "automation[server_group_ids][]", "", id: nil %>
-              <p class="px-1 text-[11px] text-ink-3"><%= t(".group_checked_whole_fleet") %></p>
-              <% @groups.each do |group| %>
-                <label class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs text-ink-2 hover:bg-subtle">
-                  <%= check_box_tag "automation[server_group_ids][]", group.id, automation.server_group_ids.include?(group.id), id: "#{dom_id(automation)}_group_#{group.id}",
-                        class: "h-3.5 w-3.5 rounded border-line text-accent" %>
-                  <span class="h-2 w-2 rounded-full <%= group.dot_classes %>"></span><%= group.name %>
-                </label>
-              <% end %>
-            </div>
-          </details>
-        <% end %>
-        <%= f.submit t(".save"), class: "btn btn-primary py-1 text-xs" %>
-      <% end %>
-    </section>
-  <% end %>
-</div>
+<% @automations.each do |automation| %>
+  <%= form_with url: run_settings_automation_path(automation), method: :post, id: dom_id(automation, :run), class: "hidden" do %><% end %>
+<% end %>
+
+<% end %>
+<%= render "settings/frame", page: page %>

@@ -1,5 +1,5 @@
 <% content_for :title, t("title", page: "#{t("settings.nav.docker")} · #{t("settings.nav.title")}") %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
 <%= form_with model: @setting, url: settings_docker_path, method: :patch do |f| %>
   <section id="docker-alerts" class="card mt-6 p-5">
@@ -65,3 +65,5 @@
     <p class="px-4 py-4 text-sm text-ink-3"><%= t(".image_checked_yet") %></p>
   <% end %>
 </section>
+<% end %>
+<%= render "settings/frame", page: page %>

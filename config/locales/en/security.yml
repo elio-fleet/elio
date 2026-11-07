@@ -333,6 +333,7 @@ en:
         delete_2: Delete %{provider_name}
         delete_scores: Delete “%{provider_name}” and its scores?
         band: Band %{index} from
+        band_name: Band %{index}
         colour_band: Colour of band %{index}
         save_colours: Save the colours
         feed_file: Feed file

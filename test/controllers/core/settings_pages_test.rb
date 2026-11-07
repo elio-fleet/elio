@@ -43,16 +43,36 @@ class SettingsPagesTest < ActionDispatch::IntegrationTest
 
     get settings_automations_path
 
-    assert_select "section.automation", 10
+    assert_select "form#automations-form[action=?][data-controller=dirty-form]", settings_automations_update_path
+    assert_select "form#automations-form tr.automation", 10
+    assert_select "form#automations-form .save-bar[hidden]"
     scan = Automation.find_by!(kind: "keys_scan")
     assert_select "##{ActionView::RecordIdentifier.dom_id(scan)}" do
       assert_select ".automation-state", "Activée"
       assert_select ".automation-result", "3/3 serveur(s) scanné(s)"
-      assert_select "form[action=?] input[type=checkbox][name='automation[enabled]'][checked]", settings_automation_path(scan)
-      assert_select "select[name='automation[interval_minutes]'] option[selected][value='360']", "Toutes les 6 heures"
-      assert_select "form[action=?] button", run_settings_automation_path(scan), text: "Lancer maintenant"
+      assert_select "input[type=checkbox][name=?][checked]", "automations[#{scan.id}][enabled]"
+      assert_select "select[name=?] option[selected][value='360']", "automations[#{scan.id}][interval_minutes]", text: "Toutes les 6 heures"
+      assert_select "button[form=?]", ActionView::RecordIdentifier.dom_id(scan, :run), text: /Lancer maintenant/
     end
+    assert_select "form##{ActionView::RecordIdentifier.dom_id(scan, :run)}[action=?]", run_settings_automation_path(scan)
     assert_select "##{ActionView::RecordIdentifier.dom_id(Automation.find_by!(kind: "servers_ping"))} .automation-state", "Désactivée"
+  end
+
+  test "one Save for every automation" do
+    scan = Automation.all_kinds.find { |automation| automation.kind == "keys_scan" }
+    ping = Automation.all_kinds.find { |automation| automation.kind == "servers_ping" }
+    sign_in users(:one)
+
+    patch settings_automations_update_path, params: { automations: { scan.id => { enabled: "1", interval_minutes: "60", server_group_ids: [ "", server_groups(:production).id.to_s ] },
+                                                                     ping.id => { enabled: "0", interval_minutes: "15" } } }
+    assert_redirected_to settings_automations_path
+    assert_equal "Automatisations enregistrées.", flash[:notice]
+    assert_equal [ true, 60, [ server_groups(:production).id ] ], [ scan.reload.enabled?, scan.interval_minutes, scan.server_group_ids ]
+    assert_not ping.reload.enabled?
+
+    patch settings_automations_update_path, params: { automations: { scan.id => { enabled: "1", interval_minutes: "7" } } }
+    assert_predicate flash[:alert], :present?
+    assert_equal 60, scan.reload.interval_minutes
   end
 
   test "enabling an automation and choosing its frequency" do
@@ -112,7 +132,7 @@ class SettingsPagesTest < ActionDispatch::IntegrationTest
     get settings_automations_path
     assert_select "##{ActionView::RecordIdentifier.dom_id(automation)}" do
       assert_select ".automation-scope", "Tout le parc"
-      assert_select "details.automation-groups input[type=checkbox][name='automation[server_group_ids][]']", 2
+      assert_select "details.automation-groups input[type=checkbox][name=?]", "automations[#{automation.id}][server_group_ids][]", 2
     end
 
     patch settings_automation_path(automation), params: { automation: { enabled: "1", interval_minutes: "5", server_group_ids: [ "", server_groups(:production).id.to_s ] } }

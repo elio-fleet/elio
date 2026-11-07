@@ -1,4 +1,6 @@
 <% content_for :title, t("title", page: "#{@provider.name} · #{t("settings.score_providers.new.title")}") %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 <h2 class="mt-6 font-semibold"><%= @provider.name %></h2>
 <%= render "settings/score_providers/form", provider: @provider %>
+<% end %>
+<%= render "settings/frame", page: page %>

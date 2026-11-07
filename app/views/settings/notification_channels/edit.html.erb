@@ -1,10 +1,12 @@
 <% content_for :title, t("title", page: t("settings.notification_channels.new.title")) %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
 <div class="mx-auto mt-8 max-w-3xl">
   <%= link_to t("words.back_notifications"), settings_notifications_path, class: "text-sm text-ink-3 hover:text-ink-2" %>
   <h2 class="mt-2 text-xl font-semibold"><%= t(".edit_html", name_was: @channel.name_was) %></h2>
-  <div class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
+  <div class="card p-5">
     <%= render "form", channel: @channel %>
   </div>
 </div>
+<% end %>
+<%= render "settings/frame", page: page %>

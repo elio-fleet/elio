@@ -108,6 +108,11 @@ fr:
   settings:
     automations:
       index:
+        active: Active
+        automation: Automatisation
+        "on": Sur
+        enable: Activer « %{label} »
+        never: jamais
         activity: l'activité
         tasks: les tâches
         text: Activée
@@ -124,6 +129,7 @@ fr:
         group_checked_whole_fleet: 'Aucun groupe coché : tout le parc.'
         intro_html: Collectes et vérifications lancées automatiquement, sur tout le parc ou sur certains groupes. Ce qu'elles détectent apparaît dans %{activity} et peut être notifié ; chaque passage est suivi dans %{tasks} (sauf les vérifications discrètes toutes les 15 minutes).
   automations_controller:
+    saved_all: Automatisations enregistrées.
     enabled: activée (%{interval_label}, %{downcase_first})
     disabled: désactivée
     saved: "« %{label} » %{state}."

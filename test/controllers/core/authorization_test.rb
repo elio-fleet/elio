@@ -90,6 +90,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
     administer: {
       "DNS alerts" => -> { patch settings_dns_alerts_path, params: { dns_alerts: { outside: "1" } } },
       "general settings" => -> { get settings_path },
+      "save the general settings" => -> { patch settings_path, params: { app_setting: { default_locale: "fr" } } },
+      "save the automations" => -> { patch settings_automations_update_path, params: { automations: {} } },
       "generate the Elio key" => -> { post ssh_key_path },
       "trust a new host key" => -> { post server_host_key_path(servers(:web)), params: { fingerprint: "SHA256:new" } },
       "notifications" => -> { get settings_notifications_path },
