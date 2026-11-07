@@ -10,7 +10,7 @@ class HealthThresholdsControllerTest < ActionDispatch::IntegrationTest
   test "the general settings show the thresholds form" do
     sign_in users(:one)
     get settings_path
-    assert_select "#health-thresholds form[action=?]", settings_health_thresholds_path do
+    assert_select "form[action=?] #health-thresholds", settings_path do
       assert_select "input[name='app_setting[health_disk_warn]'][value='80']"
       assert_select "input[name='app_setting[health_load_warn]'][value='2.0']"
     end

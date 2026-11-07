@@ -13,6 +13,7 @@ class KeyRotationTest < ApplicationSystemTestCase
     sign_in users(:one)
     visit settings_path
 
+    find("#ssh-key-actions summary").click
     accept_app_confirm("Lancer la rotation") { click_on "Faire tourner la clé" }
 
     assert_selector "h2", text: "Rotation de la clé Elio"
@@ -24,6 +25,6 @@ class KeyRotationTest < ApplicationSystemTestCase
 
     visit settings_path
     assert_no_selector "#ssh-key-fingerprint", text: old_fingerprint
-    assert_selector "#key-rotation button", text: "Faire tourner la clé"
+    assert_selector "#ssh-key-actions button", text: "Faire tourner la clé", visible: :all
   end
 end

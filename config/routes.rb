@@ -39,7 +39,7 @@ Rails.application.routes.draw do
     resource :access, only: :destroy, controller: "public_key_accesses"
   end
 
-  resource :settings, only: :show
+  resource :settings, only: %i[show update]
   namespace :settings do
     resource :dns_alerts, only: :update, path: "extensions/dns"
     resources :users, only: %i[index update] do
@@ -88,6 +88,7 @@ Rails.application.routes.draw do
     resources :automations, only: %i[index update] do
       post :run, on: :member
     end
+    patch "automations", to: "automations#update_all", as: :automations_update
     resources :integrations, only: %i[index edit update], param: :kind, path: "extensions" do
       member do
         match :test, via: %i[post patch] # (the button shares the settings form, sent as PATCH)

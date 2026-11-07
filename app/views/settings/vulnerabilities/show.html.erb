@@ -1,7 +1,7 @@
 <% content_for :title, t("title", page: "#{t("settings.nav.vulnerabilities")} · #{t("settings.nav.title")}") %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
-<section id="vulnerability-feeds" class="card mt-6">
+<section id="vulnerability-feeds" class="card">
   <div class="card-header">
     <div>
       <h2 class="font-semibold"><%= t(".vulnerability_feeds") %></h2>
@@ -36,7 +36,7 @@
   </p>
 </section>
 
-<section id="score-providers" class="card mt-6">
+<section id="score-providers" class="card">
   <div class="card-header">
     <div>
       <h2 class="font-semibold"><%= t(".score_providers") %></h2>
@@ -85,13 +85,18 @@
   </ol>
 </section>
 
-<section id="score-colors" class="card mt-6 p-5">
-  <h2 class="font-semibold"><%= t(".score_colours") %></h2>
-  <p class="mt-1 text-xs text-ink-3"><%= t(".colour_pill_cvss_score") %></p>
-  <%= form_with model: @setting, url: settings_vulnerabilities_path, method: :patch, class: "mt-4 space-y-2" do |f| %>
+<%= form_with model: @setting, url: settings_vulnerabilities_path, method: :patch, id: "vulnerability-settings", class: "card px-5 py-5", data: { controller: "dirty-form" } do |f| %>
+  <%= form_section t("words.alerts"), safe_join([ t(".alert_html"), " ", t(".debian_rates_only_small") ]), id: "vulnerability-alerts" do %>
+    <div class="max-w-xs">
+      <%= f.label :vulnerability_alert_severity, t(".minimum_severity"), class: "label" %>
+      <%= f.select :vulnerability_alert_severity, AppSetting.vulnerability_alert_options, {}, class: "input mt-1" %>
+    </div>
+  <% end %>
+  <%= form_section t(".score_colours"), t(".colour_pill_cvss_score"), id: "score-colors" do %>
+    <div class="space-y-2">
     <% @setting.score_bands.each_with_index do |band, index| %>
       <div class="score-band flex flex-wrap items-center gap-3 text-sm">
-        <span class="w-24 text-ink-2">Palier <%= index + 1 %></span>
+        <span class="w-24 text-ink-2"><%= t(".band_name", index: index + 1) %></span>
         <label class="flex items-center gap-1.5"><%= t(".text") %>
           <% if index.zero? %>
             <%= hidden_field_tag "app_setting[score_bands_form][#{index}][from]", 0 %><span class="w-16 font-mono">0</span>
@@ -104,12 +109,13 @@
         <%= score_pill([ band["from"].to_f, 0.0 ].max + (index.zero? ? 1.5 : 0.5)) %>
       </div>
     <% end %>
-    <div class="pt-2"><%= f.submit t(".save_colours"), class: "btn btn-primary" %></div>
+    </div>
   <% end %>
-</section>
+  <%= save_bar f %>
+<% end %>
 
-<section id="vulnerability-import" class="card mt-6 p-5">
-  <h2 class="font-semibold"><%= t(".import_feed_hand") %></h2>
+<section id="vulnerability-import" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".import_feed_hand") %></h2>
   <p class="mt-1 text-xs text-ink-3"><%= t(".closed_network_download_file") %></p>
   <ul class="mt-2 list-disc pl-5 text-xs text-ink-2">
     <li><%= t(".debian") %> <span class="font-mono"><%= Vulnerabilities::DebianTracker::URL %></span> <%= t(".json") %></li>
@@ -121,13 +127,5 @@
   <% end %>
 </section>
 
-<section id="vulnerability-alerts" class="card mt-6 p-5">
-  <h2 class="font-semibold"><%= t("words.alerts") %></h2>
-  <p class="mt-1 text-xs text-ink-3"><%= t(".alert_html") %></p>
-  <p class="mt-1 text-xs text-ink-3"><%= t(".debian_rates_only_small") %></p>
-  <%= form_with model: @setting, url: settings_vulnerabilities_path, method: :patch, class: "mt-4 flex flex-wrap items-center gap-3" do |f| %>
-    <%= f.label :vulnerability_alert_severity, t(".minimum_severity"), class: "label mb-0" %>
-    <%= f.select :vulnerability_alert_severity, AppSetting.vulnerability_alert_options, {}, class: "input w-auto" %>
-    <%= f.submit t(".save"), class: "btn btn-primary" %>
-  <% end %>
-</section>
+<% end %>
+<%= render "settings/frame", page: page %>

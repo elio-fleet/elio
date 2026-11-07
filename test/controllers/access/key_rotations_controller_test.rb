@@ -8,8 +8,8 @@ class KeyRotationsControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     get settings_path
 
-    assert_select "#key-rotation form[action=?] button[data-turbo-confirm]", settings_key_rotations_path, text: "Faire tourner la clé"
-    assert_select "#key-rotation form[action=?] button[data-confirm-variant=danger]", ssh_key_path
+    assert_select "#ssh-key-actions form[action=?][data-turbo-confirm] button", settings_key_rotations_path, text: "Faire tourner la clé"
+    assert_select "#ssh-key-actions form[action=?][data-confirm-variant=danger]", ssh_key_path
   end
 
   test "an admin starts a rotation" do

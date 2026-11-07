@@ -333,6 +333,7 @@ fr:
         delete_2: Supprimer %{provider_name}
         delete_scores: Supprimer « %{provider_name} » et ses notes ?
         band: Palier %{index} à partir de
+        band_name: Palier %{index}
         colour_band: Couleur du palier %{index}
         save_colours: Enregistrer les couleurs
         feed_file: Fichier de la base

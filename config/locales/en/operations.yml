@@ -108,6 +108,11 @@ en:
   settings:
     automations:
       index:
+        active: "On"
+        automation: Automation
+        "on": "On"
+        enable: Turn on “%{label}”
+        never: never
         activity: the activity
         tasks: the tasks
         text: 'On'
@@ -124,6 +129,7 @@ en:
         group_checked_whole_fleet: 'No group checked: the whole fleet.'
         intro_html: Collections and checks run automatically, on the whole fleet or on some groups. What they find appears in %{activity} and can be notified; each run is followed in %{tasks} (except the quiet checks every 15 minutes).
   automations_controller:
+    saved_all: Automations saved.
     enabled: on (%{interval_label}, %{downcase_first})
     disabled: 'off'
     saved: "“%{label}” %{state}."

@@ -1,5 +1,5 @@
 <% content_for :title, t("title", page: t("settings.key_rotations.show.title")) %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
 <div class="mx-auto mt-8 max-w-3xl">
   <%= link_to t(".ssh_key_application"), settings_path, class: "text-sm text-ink-3 hover:text-ink-2" %>
@@ -14,7 +14,7 @@
       <div data-controller="auto-refresh" hidden></div>
     <% end %>
 
-    <section id="rotation-summary" class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
+    <section id="rotation-summary" class="card p-5">
       <% if @rotation.status == :running %>
         <p class="rotation-status flex items-center gap-2 text-sm font-medium text-accent">
           <%= icon :arrow_path, class: "h-4 w-4 animate-spin" %> <%= t(".in_progress", done: @rotation.servers_done, count: @rotation.servers_count) %>
@@ -54,3 +54,5 @@
     <% end %>
   <% end %>
 </div>
+<% end %>
+<%= render "settings/frame", page: page %>

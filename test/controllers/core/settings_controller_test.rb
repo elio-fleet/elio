@@ -19,7 +19,29 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     assert_select "textarea#ssh-public-key", key.public_key
     assert_select "textarea#ssh-install-command", text: /echo '#{Regexp.escape(key.public_key)}' >> ~\/.ssh\/authorized_keys/
     assert_select "[data-controller=clipboard] button[data-action='clipboard#copy']", 2
-    assert_select "form[action=?] button[data-turbo-confirm]", ssh_key_path, text: "Régénérer la clé"
+    assert_select "#ssh-key-actions form[action=?][data-turbo-confirm][data-confirm-variant=danger] button", ssh_key_path, text: "Régénérer la clé"
+  end
+
+  test "one Save for the language, the thresholds and the prompt instructions" do
+    sign_in users(:one)
+    get settings_path
+    assert_select "form#general-settings[action=?][data-controller=dirty-form]", settings_path do
+      assert_select "#language select[name='app_setting[default_locale]']"
+      assert_select "#health-thresholds input[name='app_setting[health_disk_warn]']"
+      assert_select "#prompt-instructions textarea[name='prompt_instructions[firewall]']"
+      assert_select ".save-bar[hidden] button", "Enregistrer"
+    end
+    assert_select "form#general-settings input[type=submit], form#general-settings .btn-primary", 1
+
+    Server.update_all(health_status: "ok")
+    patch settings_path, params: { app_setting: { default_locale: "en", health_disk_warn: 70 }, prompt_instructions: { firewall: "SSH last." } }
+    assert_redirected_to settings_path
+    setting = AppSetting.current.reload
+    assert_equal [ "en", 70, "SSH last." ], [ setting.default_locale, setting.health_disk_warn, setting.prompt_instructions["firewall"] ]
+
+    patch settings_path, params: { app_setting: { health_disk_warn: 0 } }
+    assert_redirected_to settings_path
+    assert_predicate flash[:alert], :present?
   end
 
   test "never renders the private key" do

@@ -1,5 +1,5 @@
 <% content_for :title, t("title", page: "#{t("settings.nav.notifications")} · #{t("settings.nav.title")}") %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
 <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
   <p class="max-w-2xl text-sm text-ink-3">
@@ -86,3 +86,5 @@
     <%= link_to t(".add_your_first_channel"), new_settings_notification_channel_path, class: "mt-2 inline-block text-sm font-medium text-accent hover:text-accent" %>
   </div>
 <% end %>
+<% end %>
+<%= render "settings/frame", page: page %>
