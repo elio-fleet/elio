@@ -38,6 +38,9 @@ fr:
       back_key: "← Retour à la clé"
       heading_html: Modifier « %{name_was} »
     index:
+      subtitle: Les clés publiques connues d'Elio et les serveurs où elles donnent accès
+      scan_keys: Scanner les clés du parc
+      keyring_empty_hint: Ajoutez les clés des personnes et des services pour savoir qui a accès à quoi, et repérer les clés inconnues sur les serveurs.
       all: Toutes
       people: Personnes
       servers: Serveurs

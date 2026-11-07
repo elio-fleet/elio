@@ -1,20 +1,16 @@
 <% content_for :title, t("title", page: t("nav.keyring")) %>
 
 <section id="keyring-section">
-  <div class="flex items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight"><%= t("words.keyring") %></h1>
-      <p class="text-sm text-ink-3">
-        <%= t("count.keys", count: @pager.total) %>
-      </p>
-    </div>
+  <%= page_header t("nav.keyring"), subtitle: safe_join([ t(".subtitle"), " · ", t("count.keys", count: @pager.total) ]) do %>
     <% if can?(:operate) %>
-      <%= link_to t(".add_key"), new_public_key_path,
-            class: "btn btn-primary" %>
+      <%= link_to new_public_key_path, class: "btn btn-primary" do %><%= icon :plus %> <%= t(".add_key") %><% end %>
+      <%= actions_menu do %>
+        <%= menu_item t(".scan_keys"), server_scans_path, icon: :arrow_path, method: :post %>
+      <% end %>
     <% end %>
-  </div>
+  <% end %>
 
-  <nav class="key-kind-filter mt-4 flex flex-wrap gap-2" aria-label="<%= t(".key_type") %>">
+  <nav class="key-kind-filter filter-bar mb-3 flex flex-wrap gap-2" aria-label="<%= t(".key_type") %>">
     <% [ [ t(".all"), nil ], [ t(".people"), "person" ], [ t(".servers"), "server" ] ].each do |label, value| %>
       <%= filter_chip label, public_keys_path(kind: value), active: @kind == value %>
     <% end %>
@@ -22,7 +18,7 @@
   </nav>
 
   <% if @public_keys.any? %>
-    <div class="mt-4 overflow-x-auto rounded-xl border border-line bg-surface shadow-sm">
+    <div class="card overflow-x-auto">
       <table id="keyring" class="min-w-full divide-y divide-line text-sm">
         <thead class="bg-subtle text-left text-xs font-medium uppercase tracking-wide text-ink-3">
           <tr>
@@ -66,10 +62,9 @@
     </div>
     <%= render "shared/pagination", pager: @pager, noun: t(".keys") %>
   <% else %>
-    <div class="mt-4 rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center">
-      <p class="text-sm text-ink-3"><%= t(".keyring_empty") %></p>
-      <% if can?(:operate) %>
-        <%= link_to t(".add_first_key"), new_public_key_path, class: "mt-2 inline-block text-sm font-medium text-accent hover:text-accent" %>
+    <div class="card">
+      <%= empty_state t(".keyring_empty"), t(".keyring_empty_hint"), icon: :key do %>
+        <% if can?(:operate) %><%= link_to t(".add_first_key"), new_public_key_path, class: "btn btn-primary" %><% end %>
       <% end %>
     </div>
   <% end %>
