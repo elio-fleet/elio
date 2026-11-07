@@ -125,8 +125,10 @@ class Ssh::Connection
     raise CommandTimeoutError, I18n.t("ssh.connection.session_closed") if @timed_out
     raise Error, "No open session, call #exec inside Ssh::Connection.open" unless @session
 
-    stdout = +""
-    stderr = +""
+    # net-ssh hands over bytes (BINARY), cut anywhere, even inside a
+    # character: collect them, then read the whole as UTF-8 (see #text).
+    stdout = String.new(encoding: Encoding::BINARY)
+    stderr = String.new(encoding: Encoding::BINARY)
     exit_status = -1
     channel = @session.open_channel do |opened|
       opened.exec(command) do |_channel, started|
@@ -142,7 +144,7 @@ class Ssh::Connection
     @session.loop(0.1) { channel.active? && Process.clock_gettime(Process::CLOCK_MONOTONIC) < deadline }
     raise_timeout(command, timeout) if channel.active?
 
-    Result.new(stdout: stdout, stderr: stderr, exit_status: exit_status)
+    Result.new(stdout: text(stdout), stderr: text(stderr), exit_status: exit_status)
   end
 
   # Runs a command and raises CommandError unless it succeeds.
@@ -189,6 +191,11 @@ class Ssh::Connection
   def privileged(command) = privilege == :sudo ? "sudo -n #{command}" : command
 
   private
+
+  # Outputs are UTF-8 text from here on: a BINARY string with accents cannot
+  # be written as JSON (json 3.1 raises) nor compared with UTF-8 text; bytes
+  # that are not UTF-8 become "\uFFFD".
+  def text(bytes) = bytes.force_encoding(Encoding::UTF_8).scrub
 
   def raise_timeout(command, timeout)
     @session.shutdown!
