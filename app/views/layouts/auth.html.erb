@@ -19,10 +19,13 @@
   <body class="flex min-h-full flex-col items-center justify-center bg-canvas px-4 py-12 font-sans text-sm text-ink antialiased">
     <%= render "shared/flash_container" %>
     <div class="w-full max-w-sm">
-      <h1 class="mb-8 text-center text-3xl font-bold tracking-tight">Elio</h1>
-      <div class="rounded-xl border border-line bg-surface p-8 shadow-sm">
+      <h1 class="mb-6 flex items-center justify-center gap-2.5 text-2xl font-semibold tracking-tight">
+        <span class="grid h-9 w-9 place-items-center rounded-xl bg-accent-fill text-white"><%= icon :server_stack, class: "h-5 w-5" %></span>Elio
+      </h1>
+      <div class="card p-6">
         <%= yield %>
       </div>
+      <p class="mt-4 text-center text-xs text-ink-3"><%= t("layouts.auth.tagline", version: Elio::VERSION) %></p>
     </div>
     <%= js_translations_tag %>
   </body>

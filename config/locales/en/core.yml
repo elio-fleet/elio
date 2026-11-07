@@ -74,6 +74,8 @@ en:
       next: Next
       page: Page %{number}
   layouts:
+    auth:
+      tagline: "Elio %{version} · read-only fleet monitoring"
     sidebar:
       close_menu: Close the menu
       fleet_wide: Across the fleet

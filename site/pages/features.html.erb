@@ -64,7 +64,7 @@
       title: t(en: "Told when it matters, quiet otherwise", fr: "Prévenu quand ça compte, tranquille sinon"),
       points: [ t(en: "The overview lists what needs attention, most serious first, with a button to act.", fr: "La vue d'ensemble liste ce qui demande attention, le plus grave d'abord, avec un bouton pour agir."),
                 t(en: "An activity log of everything that changed; notifications to Slack, Discord, email or signed webhooks, chosen per kind and grouped by type over a few minutes (critical ones right away); a daily digest.", fr: "Un journal de tout ce qui a changé ; notifications Slack, Discord, email ou webhooks signés, au choix par type et regroupées par type sur quelques minutes (les critiques tout de suite) ; un résumé quotidien."),
-                t(en: "Every collection on schedule, on the fleet or per group, followed live in the Tasks page.", fr: "Chaque collecte à la fréquence voulue, sur le parc ou par groupe, suivie en direct dans la page Tâches.") ],
+                t(en: "Every collection on schedule, on the fleet or per group, followed live in the Runs tab of the Journal.", fr: "Chaque collecte à la fréquence voulue, sur le parc ou par groupe, suivie en direct dans l'onglet Exécutions du Journal.") ],
       shots: [ [ "overview", t(en: "The overview: what needs attention", fr: "La vue d'ensemble : ce qui est à traiter") ], [ "automations", t(en: "Automations", fr: "Automatisations") ] ] }
   ]
 -%>
@@ -116,13 +116,13 @@
       <ul class="mt-4 space-y-3 text-ink-2">
         <% [ t(en: "An API key limited to GET requests: Elio lists the exact rights for the products you check and opens OVH's token page already filled in; the connection test warns if the key could write.", fr: "Une clé d'API limitée aux requêtes GET : Elio liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie ; le test de connexion prévient si la clé permet d'écrire."),
              t(en: "Each product is a checkbox: IPs and reverse DNS, network firewall, anti-DDoS, DNS zones, dedicated servers, VPS, Public Cloud instances.", fr: "Chaque produit est une case à cocher : IP et reverse DNS, firewall réseau, anti-DDoS, zones DNS, serveurs dédiés, VPS, instances Public Cloud."),
-             t(en: "An OVH tab on each server: the service and its expiration, the IPs and reverse; the network firewall rules, whether they let each public port through (IPv4 only: IPv6 is not covered) and a prompt for an AI assistant are in the Firewall tab; its DNS records go to the DNS of the fleet.", fr: "Un onglet OVH sur chaque serveur : le service et son expiration, les IP et reverse ; les règles du firewall réseau, si elles laissent passer chaque port public (IPv4 seulement : l'IPv6 n'est pas couvert) et un prompt pour un assistant IA sont dans l'onglet Firewall ; ses enregistrements DNS vont dans le DNS du parc."),
+             t(en: "A Hosting card on each server: the OVHcloud service and its expiration, the IPs and reverse; the network firewall rules, whether they let each public port through (IPv4 only: IPv6 is not covered) and a prompt for an AI assistant are in the Firewall tab; its DNS records go to the DNS of the fleet.", fr: "Une carte Hébergement sur chaque serveur : le service OVHcloud et son expiration, les IP et reverse ; les règles du firewall réseau, si elles laissent passer chaque port public (IPv4 seulement : l'IPv6 n'est pas couvert) et un prompt pour un assistant IA sont dans l'onglet Firewall ; ses enregistrements DNS vont dans le DNS du parc."),
              t(en: "Alerts to choose: service about to expire, firewall disabled, reverse DNS that does not match, OVH service not followed by Elio.", fr: "Alertes au choix : service bientôt expiré, firewall désactivé, reverse DNS qui ne correspond pas, service OVH non suivi par Elio.") ].each do |point| -%>
           <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
         <% end -%>
       </ul>
     </div>
-    <figure class="lg:col-span-3"><%= screenshot("ovh", t(en: "The OVH tab of a server: service, IPs and reverse", fr: "L'onglet OVH d'un serveur : service, IP et reverse")) %>
+    <figure class="lg:col-span-3"><%= screenshot("ovh", t(en: "The Hosting card of a server: OVHcloud service, IPs and reverse", fr: "La carte Hébergement d'un serveur : service OVHcloud, IP et reverse")) %>
       <figcaption class="mt-2 text-center text-sm text-ink-3"><%= t en: "What OVH knows about a server", fr: "Ce qu'OVH sait d'un serveur" %></figcaption></figure>
   </div>
   <div class="mt-16 max-w-3xl">
@@ -156,7 +156,7 @@
     <% [ [ t(en: "Roles", fr: "Rôles"), t(en: "Administrators, operators and read-only users.", fr: "Administrateurs, opérateurs et lecture seule.") ],
          [ t(en: "Two-factor authentication", fr: "Double authentification"), t(en: "TOTP and backup codes, mandatory by default for admins and operators.", fr: "TOTP et codes de secours, obligatoire par défaut pour les admins et opérateurs.") ],
          [ t(en: "Invitations", fr: "Invitations"), t(en: "No public sign-up: the first account, then invitations only.", fr: "Pas d'inscription publique : le premier compte, puis des invitations.") ],
-         [ t(en: "Notes", fr: "Notes"), t(en: "What the team should know about a server, in Markdown, on its Notes tab.", fr: "Ce que l'équipe doit savoir d'un serveur, en Markdown, dans son onglet Notes.") ],
+         [ t(en: "Notes", fr: "Notes"), t(en: "What the team should know about a server, in Markdown, in its Journal with its history.", fr: "Ce que l'équipe doit savoir d'un serveur, en Markdown, dans son Journal avec son historique.") ],
          [ t(en: "Everywhere", fr: "Partout"), t(en: "⌘K search, light and dark themes, works on a phone. Interface in English and French.", fr: "Recherche ⌘K, thèmes clair et sombre, utilisable sur téléphone. Interface en anglais et en français.") ] ].each do |title, text| -%>
       <div class="card p-5"><h3 class="font-semibold"><%= title %></h3><p class="mt-1.5 text-sm text-ink-2"><%= text %></p></div>
     <% end -%>
