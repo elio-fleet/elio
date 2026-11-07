@@ -26,6 +26,19 @@ class AttentionListTest < ActiveSupport::TestCase
     assert_equal [ "warn", "1 serveur", "2 mises à jour de sécurité en attente", "/packages" ], [ item.tone, item.subject, item.text, item.path ]
   end
 
+  test "Docker apart: the servers whose Docker is to watch or critical, never in the main list" do
+    Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
+    servers(:web).update_columns(docker_status: "crit", docker_reasons: [ Inventory::HealthStatus.reason("crit", :container_looping, name: "worker").to_h,
+                                                                           Inventory::HealthStatus.reason("warn", :images_to_update, count: 1).to_h ])
+    servers(:db).update_columns(docker_status: "ok", docker_reasons: [])
+
+    attention = list
+    assert_empty attention.items
+    item = attention.docker_items.sole
+    assert_equal [ "crit", :docker, "Web", "Conteneur worker redémarre en boucle (+1)", "Voir Docker" ], [ item.tone, item.icon, item.subject, item.text, item.action ]
+    assert_equal [ true, 1 ], [ attention.any?, attention.size ]
+  end
+
   test "nothing to report" do
     Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
     assert_not list.any?
