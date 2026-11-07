@@ -72,6 +72,20 @@ class VulnerabilitiesTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "Aucune vulnérabilité ne correspond."
   end
 
+  test "the page: tiles that filter, the CVE page has a breadcrumb back to the list" do
+    sign_in users(:viewer)
+    get vulnerabilities_path
+    assert_select "a#stat-serious[href=?]", vulnerabilities_path(fixable: 1, severity: "high")
+    assert_select "a#stat-cves[aria-current=true]"
+    get vulnerabilities_path(fixable: 1, severity: "high")
+    assert_select "a#stat-serious[aria-current=true]"
+
+    cve = ServerVulnerability.first.cve
+    get vulnerability_path(cve)
+    assert_select "nav.breadcrumbs a[href=?]", vulnerabilities_path
+    assert_select "nav.breadcrumbs span[aria-current=page]", cve
+  end
+
   test "serious fixable CVEs are on the overview and in the daily digest" do
     sign_in users(:viewer)
     get root_path
