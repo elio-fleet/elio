@@ -5,6 +5,7 @@ en:
       close: Close
       loading: Loading…
     index:
+      refresh_feeds: Update the databases
       settings_vulnerabilities: Settings → Vulnerabilities
       vulnerabilities: Vulnerabilities
       distinct_cves: Distinct CVEs

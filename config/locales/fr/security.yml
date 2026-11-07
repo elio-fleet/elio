@@ -5,6 +5,7 @@ fr:
       close: Fermer
       loading: Chargement…
     index:
+      refresh_feeds: Mettre à jour les bases
       settings_vulnerabilities: Paramètres → Vulnérabilités
       vulnerabilities: Vulnérabilités
       distinct_cves: CVE distinctes
