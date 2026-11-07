@@ -21,14 +21,16 @@ fr:
       minimum_severity: Gravité minimale
       all_groups: Tous les groupes
       group: Groupe
-      systems_images: Systèmes et images
-      origin: Origine
       filter: Filtrer
       fix: pas de correctif
       vulnerabilities_2: vulnérabilités
       vulnerability_matches: Aucune vulnérabilité ne correspond.
       known_vulnerability_fleet: Aucune vulnérabilité connue sur le parc.
-      cves_packages_fleet_docker: CVE des paquets du parc et des images Docker, d'après les bases de Debian et d'Ubuntu. Les corrigeables et les plus graves en premier.
+      cves_packages_fleet: CVE des paquets des serveurs, d'après les bases de Debian et d'Ubuntu. Les corrigeables et les plus graves en premier.
+      cves_images: "CVE des paquets des images Docker du parc : elles se corrigent en mettant à jour l'image. Les corrigeables et les plus graves en premier."
+      origins: Origine des vulnérabilités
+      systems: Systèmes
+      docker_images: Images Docker
       feeds_not_downloaded_yet: Bases pas encore téléchargées
       group_2: Regrouper
       fixable_only_html: "%{submit} Corrigeables seulement"
