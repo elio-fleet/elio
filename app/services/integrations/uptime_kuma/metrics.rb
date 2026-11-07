@@ -28,13 +28,13 @@ module Integrations::UptimeKuma::Metrics
         version = labels["version"]
         next
       end
-      next unless match[:name].start_with?("monitor_") && labels["monitor_id"]
+      next unless match[:name].start_with?("monitor_") && (id = monitor_key(labels))
 
-      monitor = monitors[labels["monitor_id"]] ||= new_monitor(labels)
+      monitor = monitors[id] ||= new_monitor(labels, id)
       window = labels["window"]
       case match[:name]
       when "monitor_status" then monitor[:status] = value&.to_i
-      when "monitor_response_time" then monitor[:response_time_ms] = value
+      when "monitor_response_time" then monitor[:response_time_ms] = (value if value.nil? || value >= 0)
       when "monitor_response_time_seconds" then (monitor[:average_response_ms][window] = value && (value * 1000).round(3)) if window
       when "monitor_uptime_ratio" then (monitor[:uptime][window] = value) if window
       when "monitor_cert_days_remaining" then monitor[:cert_days_remaining] = value&.to_i
@@ -59,9 +59,16 @@ module Integrations::UptimeKuma::Metrics
   end
   private_class_method :parse_value
 
-  def self.new_monitor(labels)
+  # Uptime Kuma 2.x labels every series with monitor_id; 1.x has no id, its
+  # series are told apart by the monitor's name.
+  def self.monitor_key(labels)
+    labels["monitor_id"].presence || (name = labels["monitor_name"].presence) && "name:#{name}"
+  end
+  private_class_method :monitor_key
+
+  def self.new_monitor(labels, id)
     {
-      id: labels["monitor_id"], name: labels["monitor_name"], monitor_type: labels["monitor_type"],
+      id: id, name: labels["monitor_name"], monitor_type: labels["monitor_type"],
       url: url_with_host(labels["monitor_url"]), hostname: present(labels["monitor_hostname"]), port: present(labels["monitor_port"])&.to_i,
       tags: labels.keys - IDENTITY, status: nil, response_time_ms: nil, uptime: {}, average_response_ms: {}, cert_days_remaining: nil, cert_valid: nil
     }
