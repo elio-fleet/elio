@@ -3,9 +3,23 @@
 # Elio key), unknown keys, pending security updates, servers never inventoried;
 # then, apart (docker_items), Docker: the servers whose Docker is to watch or
 # critical (Inventory::DockerStatus) and the fixable CVEs of the images.
+# Each item names its action ("See the disks") and the servers it is about.
 # Servers must come with their inventory snapshots loaded.
 class AttentionList
-  Item = Data.define(:tone, :icon, :subject, :text, :action, :path)
+  Item = Data.define(:tone, :icon, :subject, :text, :action, :path, :servers) do
+    def initialize(tone:, icon:, subject:, text:, action:, path:, servers: [])
+      super
+    end
+  end
+
+  # The action of a health reason: its label (attention_list.actions.<key>) and the tab it opens.
+  REASON_ACTIONS = {
+    "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "health" ], "load" => [ :health, nil, "health" ],
+    "vulnerability" => [ :fixes, "vulnerabilities" ], "vulnerabilities" => [ :fixes, "vulnerabilities" ],
+    "service_failed" => [ :services, "services" ], "services_failed" => [ :services, "services" ],
+    "timer_failed" => [ :schedules, "schedules" ], "timers_failed" => [ :schedules, "schedules" ], "timer_late" => [ :schedules, "schedules" ], "timers_late" => [ :schedules, "schedules" ],
+    "port_unexpected" => [ :ports, "ports" ], "ports_unexpected" => [ :ports, "ports" ]
+  }.freeze
 
   TONE_ORDER = { "crit" => 0, "warn" => 1, "info" => 2 }.freeze
 
@@ -28,25 +42,29 @@ class AttentionList
 
   def size = items.size + docker_items.size
 
+  # Everything, Docker included, by gravity: { "crit" => [...], "warn" => [...], "info" => [...] }.
+  def by_tone = (items + docker_items).sort_by { |item| [ TONE_ORDER.fetch(item.tone), item.subject ] }.group_by(&:tone)
+
   private
 
   def server_items
     @servers.flat_map do |server|
       items = []
       if server.health_state == "off"
-        items << Item.new("crit", :signal_slash, server.name, I18n.t("attention_list.unreachable"), I18n.t("attention_list.see"), @routes.server_path(server))
+        items << Item.new("crit", :signal_slash, server.name, I18n.t("attention_list.unreachable"), I18n.t("attention_list.actions.connection"), @routes.server_path(server), [ server_ref(server) ])
       elsif (reasons = Array(server.health_reasons)).any?
         first = reasons.first
         more = reasons.size > 1 ? " (+#{reasons.size - 1})" : ""
-        items << Item.new(first["tone"], first["tone"] == "crit" ? :x_mark : :exclamation_triangle, server.name, "#{Inventory::HealthStatus.text(first)}#{more}", I18n.t("attention_list.see"), @routes.server_path(server))
+        label, path = reason_action(server, first)
+        items << Item.new(first["tone"], first["tone"] == "crit" ? :x_mark : :exclamation_triangle, server.name, "#{Inventory::HealthStatus.text(first)}#{more}", label, path, [ server_ref(server) ])
       elsif server.ssh_ok == false
-        items << Item.new("crit", :key, server.name, I18n.t("attention_list.key_refused"), I18n.t("attention_list.install_key"), @routes.server_path(server))
+        items << Item.new("crit", :key, server.name, I18n.t("attention_list.key_refused"), I18n.t("attention_list.install_key"), @routes.server_path(server), [ server_ref(server) ])
       end
       if (orphans = @insights.orphans_by_server_id[server.id]).present?
-        items << Item.new("warn", :key, server.name, I18n.t("attention_list.unknown_keys", count: orphans.size), I18n.t("attention_list.see_keys"), @routes.server_path(server, tab: "keys"))
+        items << Item.new("warn", :key, server.name, I18n.t("attention_list.unknown_keys", count: orphans.size), I18n.t("attention_list.see_keys"), @routes.server_path(server, tab: "keys"), [ server_ref(server) ])
       end
       if server.inventoried_at.nil? && server.ssh_ok
-        items << Item.new("info", :pulse, server.name, I18n.t("attention_list.no_inventory"), I18n.t("attention_list.see"), @routes.server_path(server))
+        items << Item.new("info", :pulse, server.name, I18n.t("attention_list.no_inventory"), I18n.t("attention_list.actions.inventory"), @routes.server_path(server), [ server_ref(server) ])
       end
       items
     end
@@ -63,16 +81,16 @@ class AttentionList
       reasons = Array(server.docker_reasons)
       more = reasons.size > 1 ? " (+#{reasons.size - 1})" : ""
       Item.new(server.docker_status, :docker, server.name, "#{Inventory::HealthStatus.text(reasons.first)}#{more}", I18n.t("attention_list.see_docker"),
-               @routes.server_path(server, tab: "docker"))
+               @routes.server_path(server, tab: "docker"), [ server_ref(server) ])
     end
   end
 
   def security_updates_item
     return unless @summary.security_updates.positive?
 
-    servers = @summary.servers_with_security_updates
-    Item.new("warn", :shield_check, I18n.t("count.servers", count: servers), I18n.t("attention_list.security_updates", count: @summary.security_updates),
-             I18n.t("attention_list.see_packages"), @routes.packages_path)
+    servers = @servers.select { |server| server.inventory("health")&.data&.dig("updates", "security").to_i.positive? }
+    Item.new("warn", :shield_check, I18n.t("count.servers", count: servers.size), I18n.t("attention_list.security_updates", count: @summary.security_updates),
+             I18n.t("attention_list.see_packages"), @routes.packages_path, servers.map { |server| server_ref(server) })
   end
 
   # Fixable CVEs at the alert severity of the settings, on the whole fleet:
@@ -100,7 +118,22 @@ class AttentionList
     cves = scope.distinct.count(:cve)
     return if cves.zero?
 
-    servers = scope.distinct.count(:server_id)
-    Item.new(tone, icon, I18n.t("count.servers", count: servers), I18n.t("attention_list.#{key}", count: cves), action, yield(minimum))
+    ids = scope.distinct.pluck(:server_id)
+    servers = @servers.select { |server| ids.include?(server.id) }
+    Item.new(tone, icon, I18n.t("count.servers", count: servers.size), I18n.t("attention_list.#{key}", count: cves), action, yield(minimum), servers.map { |server| server_ref(server) })
+  end
+
+  def server_ref(server) = [ server.name, @routes.server_path(server) ]
+
+  # Reasons raised by the extensions, by the start of their key.
+  EXTENSION_ACTIONS = { "integrations.uptime_kuma." => [ :probes, "monitors" ], "dns." => [ :dns, "dns" ],
+                        "integrations.ovh.health.expiring" => [ :hosting, "ovh" ], "integrations.ovh." => [ :ports, "firewall" ] }.freeze
+
+  def reason_action(server, reason)
+    key = reason["key"].to_s
+    label, tab, anchor = REASON_ACTIONS[key.delete_prefix("health.")] || EXTENSION_ACTIONS.find { |prefix, _| key.start_with?(prefix) }&.last
+    return [ I18n.t("attention_list.see"), @routes.server_path(server) ] unless label
+
+    [ I18n.t("attention_list.actions.#{label}"), @routes.server_path(server, tab: tab, anchor: anchor) ]
   end
 end

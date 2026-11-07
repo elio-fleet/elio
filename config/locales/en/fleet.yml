@@ -161,16 +161,48 @@ en:
       whole_group: 'The whole group:'
   dashboard:
     index:
+      see_all: See all
+      critical_thresholds_exceeded: critical thresholds exceeded
+      including_unreachable:
+        one: including %{count} unreachable
+        other: including %{count} unreachable
+      welcome: Welcome to Elio
+      welcome_subtitle: No server yet. Follow the steps to get started.
+      no_server: No server
+      no_server_viewer: An administrator or an operator must add the servers of the fleet.
+      refresh_fleet: Refresh the fleet
+      unreachable:
+        one: "%{count} unreachable"
+        other: "%{count} unreachable"
+      critical_caption: critical thresholds, unreachable
+      serious_vulnerabilities: Serious vulnerabilities
+      fixable: fixable, in the servers' own packages
+      most_serious_first: most serious first
+      group_crit:
+        one: "Critical · %{count}"
+        other: "Critical · %{count}"
+      group_warn:
+        one: "To watch · %{count}"
+        other: "To watch · %{count}"
+      group_info:
+        one: "For information · %{count}"
+        other: "For information · %{count}"
+      nothing_to_report: Nothing to report
+      journal: "Journal →"
+      by_group: By group
+      group_critical:
+        one: "%{count} critical"
+        other: "%{count} critical"
+      group_watch:
+        one: "%{count} to watch"
+        other: "%{count} to watch"
+      group_fine: nothing to report
       online: Online
       answer_their_ssh_port: answer on their SSH port
       watch: To watch
       reboot_disk_service: reboot, disk, service…
       critical: Critical
-      critical_thresholds_exceeded: critical thresholds exceeded
-      run_key_scan: run a key scan
       nothing_report_servers_reachable: 'Nothing to report: servers reachable, health normal, every key is in the keyring.'
-      add_first_server_begin: Add a first server to begin.
-      see_all: See all
       key_deleted: Key deleted
       expired_being_removed: expired, being removed
       inventory_html: "· inventory %{last_inventory_at}"
@@ -180,17 +212,6 @@ en:
       activity_yet: No activity yet.
       temporary_access: Temporary access
       ongoing_html: "%{count} ongoing"
-      temporary_access_choose_duration: No temporary access. Choose a duration when adding a key on a server.
-      systems: Systems
-      systems_will_appear_after: The systems will appear after a first inventory.
-      items_by_severity:
-        one: "%{count} item · by severity"
-        other: "%{count} items · by severity"
-      including_unreachable:
-        one: including %{count} unreachable
-        other: including %{count} unreachable
-      outside_keyring: outside the keyring
-      unknown_keys: Unknown keys
     checklist:
       generate_key: Generate the key
       add_server: Add a server
@@ -293,6 +314,18 @@ en:
     add_key: Add a key to the keyring
     add_key_text: The public key of a team member or of a server.
   attention_list:
+    actions:
+      probes: See the probes
+      dns: See the DNS
+      hosting: See the hosting
+      connection: Test the connection
+      disks: See the disks
+      health: See the health
+      fixes: See the fixes
+      services: See the services
+      schedules: See the scheduled tasks
+      ports: See the ports
+      inventory: Run an inventory
     see_docker: See Docker
     see_images: See the images
     unreachable: No longer answers on its SSH port
@@ -301,7 +334,7 @@ en:
     install_key: Install the key
     see_keys: See the keys
     no_inventory: No inventory yet
-    see_packages: See the packages
+    see_packages: See the updates
     see_vulnerabilities: See the vulnerabilities
     unknown_keys:
       one: "%{count} key outside the keyring"

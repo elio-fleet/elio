@@ -75,7 +75,7 @@ class VulnerabilitiesTest < ActionDispatch::IntegrationTest
   test "serious fixable CVEs are on the overview and in the daily digest" do
     sign_in users(:viewer)
     get root_path
-    assert_select "#attention li.attention-item[data-tone=crit]", text: /2 serveurs.*1 vulnérabilité grave corrigeable/m
+    assert_select "#attention li.attention-item[data-tone=crit]", text: /1 vulnérabilité grave corrigeable.*Database.*Web/m
     assert_select "#attention a[href=?]", vulnerabilities_path(fixable: 1, severity: "high", origin: "host")
 
     assert_includes NotificationDigest.new.lines, "Vulnérabilités : 5 connue(s), 3 corrigeable(s) dont 1 grave(s), sur 2 serveurs."

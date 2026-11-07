@@ -9,6 +9,7 @@ module ComponentsHelper
   # holds the actions (one btn-primary at most, then actions_menu).
   #   page_header t(".title"), subtitle: t(".subtitle"), crumbs: [[t("nav.servers"), servers_path], server.name] do … end
   def page_header(title, subtitle: nil, crumbs: nil, badges: nil, mono: false, id: nil, &actions)
+    actions_html = capture(&actions) if actions
     tag.header(class: "page-header mb-5", id: id) do
       safe_join([
         (breadcrumbs(crumbs) if crumbs.present?),
@@ -22,7 +23,7 @@ module ComponentsHelper
                 (tag.div(subtitle, class: "page-subtitle mt-0.5 text-xs text-ink-3") if subtitle.present?)
               ].compact)
             end,
-            (tag.div(class: "page-actions flex flex-wrap items-center gap-2", &actions) if actions)
+            (tag.div(actions_html, class: "page-actions flex flex-wrap items-center gap-2") if actions_html.present?)
           ].compact)
         end
       ].compact)
@@ -147,10 +148,10 @@ module ComponentsHelper
   end
 
   # A line of "To handle": gravity icon, text, servers as chips, a named action.
-  def attention_item(tone, text, action: nil, servers: [], **options)
+  def attention_item(tone, text, action: nil, servers: [], icon: nil, **options)
     tag.li(class: "attention-item grid grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-2 first:border-t-0", data: { tone: tone }, **options) do
       safe_join([
-        icon(UiHelper::TONES.fetch(tone)[:icon] || :information_circle, class: "h-4 w-4 #{TONE_TEXT.fetch(tone, "text-ink-3")}"),
+        icon(icon || UiHelper::TONES.fetch(tone)[:icon] || :information_circle, class: "h-4 w-4 #{TONE_TEXT.fetch(tone, "text-ink-3")}"),
         tag.div(class: "min-w-0") do
           safe_join([ tag.span(text), *Array(servers).map { |name, path| server_chip(name, path) } ], " ")
         end,
