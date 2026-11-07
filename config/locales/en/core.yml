@@ -98,6 +98,16 @@ en:
     hours_ago_24: 24 h ago
     hours_12: 12 h
     now_axis: now
+    breadcrumb: Breadcrumb
+    more_actions: More actions
+    more: More
+    view: View
+    save: Save
+    cancel: Cancel
+    unsaved:
+      one: "%{count} unsaved change"
+      other: "%{count} unsaved changes"
+    clear_filters: Clear the filters
   count:
     servers:
       one: "%{count} server"

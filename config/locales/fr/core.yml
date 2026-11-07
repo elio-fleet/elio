@@ -98,6 +98,16 @@ fr:
     hours_ago_24: il y a 24 h
     hours_12: 12 h
     now_axis: maintenant
+    breadcrumb: Fil d'Ariane
+    more_actions: Plus d'actions
+    more: Plus
+    view: Affichage
+    save: Enregistrer
+    cancel: Annuler
+    unsaved:
+      one: "%{count} modification non enregistrée"
+      other: "%{count} modifications non enregistrées"
+    clear_filters: Effacer les filtres
   count:
     servers:
       one: "%{count} serveur"

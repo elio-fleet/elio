@@ -13,8 +13,14 @@ class DesignControllerTest < ActionDispatch::IntegrationTest
     get design_path
 
     assert_response :success
-    %w[design-buttons design-badges design-stats design-gauges design-table design-form].each { |id| assert_select "##{id}" }
-    assert_select "#design-stats .stat-tile", 4
+    %w[design-header design-buttons design-badges design-tabs design-stats design-filters design-panel design-attention design-status
+       design-timeline design-empty design-gauges design-table design-form].each { |id| assert_select "##{id}" }
+    assert_select "#design-stats a.stat-tile", 4
+    assert_select "#design-stats a.stat-tile[aria-current=true]", 1
+    assert_select "header.page-header h1", "Design system"
+    assert_select "header.page-header details.actions-menu [role=menuitem]", 3
+    assert_select "#design-form[data-controller=dirty-form] .save-bar[hidden]"
+    assert_select "h1", 1
     assert_select "#design-table .meter", 4
   end
 
