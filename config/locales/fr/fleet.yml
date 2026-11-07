@@ -293,6 +293,8 @@ fr:
     add_key: Ajouter une clé au trousseau
     add_key_text: La clé publique d'un membre de l'équipe ou d'un serveur.
   attention_list:
+    see_docker: Voir Docker
+    see_images: Voir les images
     unreachable: Ne répond plus sur son port SSH
     see: Voir
     key_refused: 'La clé d''Elio est refusée : rien ne peut être lu'

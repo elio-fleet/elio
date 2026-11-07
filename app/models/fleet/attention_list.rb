@@ -1,6 +1,8 @@
 # What needs attention on the fleet, most serious first, for the "À traiter"
 # list of the overview: unreachable servers, health concerns (or a refused
-# Elio key), unknown keys, pending security updates, servers never inventoried.
+# Elio key), unknown keys, pending security updates, servers never inventoried;
+# then, apart (docker_items), Docker: the servers whose Docker is to watch or
+# critical (Inventory::DockerStatus) and the fixable CVEs of the images.
 # Servers must come with their inventory snapshots loaded.
 class AttentionList
   Item = Data.define(:tone, :icon, :subject, :text, :action, :path)
@@ -18,7 +20,13 @@ class AttentionList
     @items ||= (server_items + fleet_items).sort_by { |item| [ TONE_ORDER.fetch(item.tone), item.subject ] }
   end
 
-  def any? = items.any?
+  def docker_items
+    @docker_items ||= (docker_server_items + [ image_vulnerabilities_item ].compact).sort_by { |item| [ TONE_ORDER.fetch(item.tone), item.subject ] }
+  end
+
+  def any? = items.any? || docker_items.any?
+
+  def size = items.size + docker_items.size
 
   private
 
@@ -45,7 +53,18 @@ class AttentionList
   end
 
   def fleet_items
-    [ security_updates_item, vulnerabilities_item, image_vulnerabilities_item ].compact
+    [ security_updates_item, vulnerabilities_item ].compact
+  end
+
+  def docker_server_items
+    @servers.filter_map do |server|
+      next unless server.docker_status.in?(%w[warn crit])
+
+      reasons = Array(server.docker_reasons)
+      more = reasons.size > 1 ? " (+#{reasons.size - 1})" : ""
+      Item.new(server.docker_status, :docker, server.name, "#{Inventory::HealthStatus.text(reasons.first)}#{more}", I18n.t("attention_list.see_docker"),
+               @routes.server_path(server, tab: "docker"))
+    end
   end
 
   def security_updates_item
@@ -57,16 +76,23 @@ class AttentionList
   end
 
   # Fixable CVEs at the alert severity of the settings, on the whole fleet:
-  # the servers' own packages, then (a warning) their Docker images.
+  # the servers' own packages (critical), their Docker images (a warning, in
+  # the Docker group, when the Docker alerts ask for it).
   def vulnerabilities_item
-    serious_vulnerabilities_item("crit", :host, :vulnerabilities, origin: "host")
+    serious_vulnerabilities_item("crit", :host, :vulnerabilities, :shield_exclamation, I18n.t("attention_list.see_vulnerabilities")) do |minimum|
+      @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: "host")
+    end
   end
 
   def image_vulnerabilities_item
-    serious_vulnerabilities_item("warn", :images, :image_vulnerabilities, origin: "image")
+    return unless AppSetting.current.docker_alert_vulnerabilities
+
+    serious_vulnerabilities_item("warn", :images, :image_vulnerabilities, :docker, I18n.t("attention_list.see_images")) do |minimum|
+      @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: "image")
+    end
   end
 
-  def serious_vulnerabilities_item(tone, origin_scope, key, origin:)
+  def serious_vulnerabilities_item(tone, origin_scope, key, icon, action)
     minimum = AppSetting.current.vulnerability_alert_severity
     return if minimum == "none"
 
@@ -75,7 +101,6 @@ class AttentionList
     return if cves.zero?
 
     servers = scope.distinct.count(:server_id)
-    Item.new(tone, :shield_exclamation, I18n.t("count.servers", count: servers), I18n.t("attention_list.#{key}", count: cves),
-             I18n.t("attention_list.see_vulnerabilities"), @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: origin))
+    Item.new(tone, icon, I18n.t("count.servers", count: servers), I18n.t("attention_list.#{key}", count: cves), action, yield(minimum))
   end
 end

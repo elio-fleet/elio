@@ -293,6 +293,8 @@ en:
     add_key: Add a key to the keyring
     add_key_text: The public key of a team member or of a server.
   attention_list:
+    see_docker: See Docker
+    see_images: See the images
     unreachable: No longer answers on its SSH port
     see: See
     key_refused: 'Elio''s key is refused: nothing can be read'
