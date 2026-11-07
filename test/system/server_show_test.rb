@@ -51,6 +51,24 @@ class ServerShowTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Web"
   end
 
+  # Cancelling closes the dialog, but the browser fires its "close" event
+  # later: a confirmation opened before that event must not take it for its
+  # own answer (it did, and the deletion confirmed next did nothing).
+  test "a confirmation opened right after a cancelled one still waits for its answer" do
+    visit server_path(servers(:backup))
+    dismiss_app_confirm { first("button.delete-server").click }
+
+    page.execute_script(<<~JS)
+      document.querySelector("button.delete-server").click()
+      document.querySelector("#confirm-dialog button[value=cancel]").click()
+      document.querySelector("button.delete-server").click()
+    JS
+    accept_app_confirm("Supprimer le serveur") { }
+
+    assert_selector "h1", text: "Parc"
+    assert_text "Le serveur « Backup » a été supprimé d'Elio."
+  end
+
   test "deleting a server from its page" do
     visit server_path(servers(:backup))
 
