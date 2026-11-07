@@ -18,6 +18,8 @@ bin/setup          # gems, database, then starts the app (bin/dev) on http://loc
 
 The first visit creates the first (administrator) account. Background jobs (Solid Queue) run inside the web server in development.
 
+To try Elio without any server, fill the development database with the fictitious fleet of the screenshots: `bin/rails dev:demo`, then sign in as `demo@example.test` / `password1234` (it refuses a database that already has servers; `FORCE=1` deletes them first).
+
 To try Elio on real machines, add a server whose `~/.ssh/authorized_keys` holds Elio's public key (Settings → General). Disposable virtual machines or containers with `sshd` are ideal.
 
 ## Tests
