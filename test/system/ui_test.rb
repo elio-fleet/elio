@@ -70,8 +70,8 @@ class UiTest < ApplicationSystemTestCase
 
     within("#command-palette[open]") do
       assert_no_selector ".command-palette-item", text: "›"
-      find("input[type=search]").fill_in(with: "web paquets")
-      assert_selector ".command-palette-item", text: "Web › Paquets"
+      find("input[type=search]").fill_in(with: "web mises")
+      assert_selector ".command-palette-item", text: "Web › Mises à jour"
       find("input[type=search]").send_keys(:enter)
     end
     assert_selector "nav.server-tabs a[aria-current=page][data-tab=packages]"

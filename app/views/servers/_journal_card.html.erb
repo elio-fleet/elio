@@ -1,0 +1,42 @@
+<%# Journal tab of a server: the note form, then its notes and its activities on one timeline, newest first.
+    Locals: server, entries (ServerNote / Activity), filter (nil, "notes", "events"), page, more. %>
+<% path = ->(**params) { server_path(server, tab: "journal", **params.compact) } %>
+<div id="server-journal" class="space-y-4">
+  <%= filter_bar do %>
+    <%= filter_chip t(".all"), path.call, active: filter.nil? %>
+    <%= filter_chip t(".notes"), path.call(show: "notes"), active: filter == "notes", count: server.notes.count %>
+    <%= filter_chip t(".events"), path.call(show: "events"), active: filter == "events" %>
+    <%= filter_bar_end do %>
+      <%= link_to t(".full_journal"), activities_path(server_id: server.id), class: "text-xs font-medium text-accent hover:underline" %>
+    <% end %>
+  <% end %>
+
+  <%= panel t(".add_note"), id: "server-notes" do %>
+    <div class="px-4 py-4">
+      <p class="mb-3 text-xs text-ink-3"><%= t("server_notes.tab.intro") %></p>
+      <%= render "server_notes/form", server: server, note: server.notes.new %>
+    </div>
+  <% end %>
+
+  <%= panel t(".timeline"), id: "server-activity" do %>
+    <% if entries.any? %>
+      <ul class="journal-entries server-notes divide-y divide-line">
+        <% entries.each do |entry| %>
+          <% if entry.is_a?(ServerNote) %>
+            <li class="journal-note"><%= render "server_notes/note", server: server, note: entry %></li>
+          <% else %>
+            <li class="journal-event px-4"><ul><%= render "activities/activity", activity: entry, show_server: false %></ul></li>
+          <% end %>
+        <% end %>
+      </ul>
+      <% if page > 1 || more %>
+        <div class="flex items-center justify-between border-t border-line px-4 py-2 text-xs">
+          <% if page > 1 %><%= link_to t(".newer"), path.call(show: filter, page: (page - 1 if page > 2)), class: "text-accent hover:underline" %><% else %><span></span><% end %>
+          <% if more %><%= link_to t(".older"), path.call(show: filter, page: page + 1), class: "text-accent hover:underline" %><% end %>
+        </div>
+      <% end %>
+    <% else %>
+      <%= empty_state t(".empty"), t(".empty_text"), icon: :document_text %>
+    <% end %>
+  <% end %>
+</div>

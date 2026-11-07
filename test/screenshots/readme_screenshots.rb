@@ -111,7 +111,7 @@ class ReadmeScreenshots < ApplicationSystemTestCase
       shoot.("fleet-vulnerabilities", vulnerabilities_path(view: "packages"))
       shoot.("docker", server_path(db, tab: "docker"))
       shoot.("scheduled-tasks", server_path(db, tab: "schedules"))
-      shoot.("ports", server_path(db, tab: "ports"))
+      shoot.("ports", server_path(db, tab: "firewall"))
       shoot.("firewall", server_path(db, tab: "firewall"))
       shoot.("firewall-settings", settings_firewall_path)
       shoot.("gandi", edit_settings_integration_path("gandi"))
@@ -120,9 +120,9 @@ class ReadmeScreenshots < ApplicationSystemTestCase
       shoot.("score-providers", settings_vulnerabilities_path) { find("#score-providers").scroll_to(:top) }
       shoot.("automations", settings_automations_path)
       shoot.("uptime-kuma-monitors", monitors_path)
-      shoot.("ovh", server_path(db, tab: "ovh"))
+      shoot.("ovh", server_path(db))
       shoot.("dns", dns_records_path)
-      shoot.("notes", server_path(db, tab: "notes"))
+      shoot.("notes", server_path(db, tab: "journal"))
       shoot.("docker-cves", docker_path(tab: "cves")) { first("section.image-vulnerabilities details summary").click }
       shoot.("keyring-outside", public_keys_path(kind: "outside"))
     end

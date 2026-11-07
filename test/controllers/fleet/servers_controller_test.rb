@@ -237,10 +237,10 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     Activity.record!(:key_added, server: servers(:db), public_key: public_keys(:alice), unix_user: "admin")
     sign_in users(:one)
 
-    get server_path(servers(:web), tab: "history")
+    get server_path(servers(:web), tab: "journal")
 
     assert_select "#server-activity li.activity", 1
-    assert_select "#server-activity a[href=?]", activities_path(server_id: servers(:web).id), text: "Tout voir"
+    assert_select "#server-journal a[href=?]", activities_path(server_id: servers(:web).id), text: /journal du parc/
   end
 
   test "destroy requires authentication" do
@@ -310,17 +310,22 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:viewer)
 
     get server_path(servers(:web))
-    assert_select "nav.server-tabs .server-tabs-bar > a", 10
+    assert_equal %w[overview vulnerabilities packages services firewall schedules keys journal], css_select("nav.server-tabs .tabs-bar > a").map { |tab| tab["data-tab"] }
     assert_select "nav.server-tabs a[aria-current=page][data-tab=overview][href=?]", server_path(servers(:web))
-    assert_select "nav.server-tabs a[data-tab=packages][href=?]", server_path(servers(:web), tab: "packages"), text: /Paquets\s*412/
+    assert_select "nav.server-tabs a[data-tab=packages][href=?]", server_path(servers(:web), tab: "packages"), text: "Mises à jour"
     assert_select "#server-health-details"
     assert_select "#server-system"
     assert_select "#server-packages", 0
 
-    get server_path(servers(:web), tab: "ports")
-    assert_select "nav.server-tabs a[aria-current=page][data-tab=ports]"
+    get server_path(servers(:web), tab: "firewall")
+    assert_select "nav.server-tabs a[aria-current=page][data-tab=firewall]"
     assert_select "#server-ports"
     assert_select "#server-health-details", 0
+
+    get server_path(servers(:web), tab: "ports")
+    assert_redirected_to server_path(servers(:web), tab: "firewall")
+    get server_path(servers(:web), tab: "notes")
+    assert_redirected_to server_path(servers(:web), tab: "journal")
 
     get server_path(servers(:web), tab: "nope")
     assert_select "nav.server-tabs a[aria-current=page][data-tab=overview]"

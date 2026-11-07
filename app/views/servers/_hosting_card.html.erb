@@ -1,10 +1,22 @@
-<%# The hosting of a server on its overview: its OVHcloud service (offer, datacenter, expiry), when the extension is on. Locals: server. %>
-<% if Integration.enabled?(:ovh) && (services = server.ovh_resources.services.order(:name).to_a).any? %>
+<%# The hosting of a server on its overview, when the OVHcloud extension is on: its service (offer, datacenter, expiry)
+    and its IP blocks with their reverse. The network firewall is in the Firewall tab. Locals: server. %>
+<% resources = Integration.enabled?(:ovh) ? server.ovh_resources.order(:kind, :name).to_a : [] %>
+<% if resources.any? %>
   <%= panel t("nav.hosting"), header: source_tag("OVHcloud"), id: "server-hosting" do %>
-    <% services.each do |service| %>
-      <%= fact_list [ [ t("words.offer"), [ service.data["offer"], service.kind_label ].compact.join(" · ") ],
-                      [ service.kind == "instance" ? t("integrations.ovh.server_tab.region") : t("integrations.ovh.server_tab.datacenter"), service.data["datacenter"] || service.data["region"] || "—" ],
-                      [ t("words.expiry"), ovh_expiration(service) ] ], class: "border-b border-line last:border-b-0" %>
+    <% resources.select(&:service?).each do |service| %>
+      <div class="ovh-service border-b border-line last:border-b-0">
+        <%= fact_list [ [ t("words.offer"), [ service.data["offer"], service.kind_label ].compact.join(" · ") ],
+                        [ service.kind == "instance" ? t("integrations.ovh.server_tab.region") : t("integrations.ovh.server_tab.datacenter"), service.data["datacenter"] || service.data["region"] || "—" ],
+                        [ t("words.expiry"), ovh_expiration(service) ] ] %>
+      </div>
+    <% end %>
+    <% resources.select { |resource| resource.kind == "ip" }.each do |block| %>
+      <div class="ovh-ip border-b border-line px-4 py-2 text-xs last:border-b-0" data-block="<%= block.name %>">
+        <p class="font-mono text-sm font-medium"><%= block.name %></p>
+        <% Array(block.data["reverse"]).each do |ip, reverse| %>
+          <p class="mt-0.5 text-ink-2"><%= t("integrations.ovh.server_tab.reverse") %> <span class="font-mono"><%= ip %></span> : <span class="ovh-reverse font-mono"><%= reverse.presence || t("words.none") %></span></p>
+        <% end %>
+      </div>
     <% end %>
   <% end %>
 <% end %>

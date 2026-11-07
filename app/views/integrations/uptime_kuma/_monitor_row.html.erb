@@ -7,6 +7,7 @@
       <span class="ml-1 inline-flex flex-wrap gap-1 align-middle"><% monitor.tags.each do |tag_name| %><span class="badge bg-subtle text-ink-2"><%= tag_name %></span><% end %></span>
     <% end %>
   </td>
+  <td class="monitor-source"><%= source_tag "Uptime Kuma" %></td>
   <% if local_assigns[:show_server] %>
     <td class="monitor-server whitespace-nowrap">
       <% if monitor.server %>

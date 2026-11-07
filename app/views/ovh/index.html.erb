@@ -71,7 +71,7 @@
             <% end %>
             <td class="ovh-server whitespace-nowrap text-xs">
               <% if resource.server %>
-                <%= link_to resource.server.name, server_path(resource.server, tab: "ovh"), class: "hover:text-accent hover:underline" %>
+                <%= link_to resource.server.name, server_path(resource.server, anchor: "server-hosting"), class: "hover:text-accent hover:underline" %>
                 <span class="block text-[11px] text-ink-3"><%= ovh_match_label(resource) %></span>
               <% else %>
                 <span class="text-ink-3"><%= t(".not_attached_2") %></span>

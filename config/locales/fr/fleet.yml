@@ -1,5 +1,16 @@
 fr:
   servers:
+    journal_card:
+      all: Tout
+      notes: Notes
+      events: Événements
+      full_journal: "Dans le journal du parc →"
+      add_note: Ajouter une note
+      timeline: Journal du serveur
+      newer: "← Plus récents"
+      older: "Plus anciens →"
+      empty: Rien pour l'instant
+      empty_text: Les notes que vous ajoutez et ce qui arrive au serveur (clés, ports, alertes…) apparaîtront ici.
     docker_pill:
       fine: "Docker : rien à signaler"
       problems:
@@ -7,19 +18,15 @@ fr:
         other: "Docker, %{count} problèmes : %{reasons}"
     tabs:
       overview: Vue d'ensemble
-      packages: Paquets
+      packages: Mises à jour
       vulnerabilities: Vulnérabilités
       services: Services
       docker: Docker
       schedules: Tâches planifiées
-      ports: Ports
       firewall: Firewall
       keys: Clés SSH
-      history: Historique
+      journal: Journal
       server_sections: Sections du serveur
-      section: Section
-      more: Plus
-      notes: Notes
     index:
       all_groups: Tous les groupes
       check_every_server_answers: Vérifier que chaque serveur répond

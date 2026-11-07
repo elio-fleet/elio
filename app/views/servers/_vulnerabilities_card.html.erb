@@ -1,7 +1,7 @@
 <%# Vulnerabilities (CVE) of the server's own packages, see Vulnerabilities::Matcher; those of its Docker images are in the Docker tab. %>
 <% target = Vulnerabilities.target(server.inventory("os")&.data) %>
 <% feed = target && VulnerabilityFeed.for(target.first) %>
-<section id="server-vulnerabilities" class="card mt-6">
+<section id="server-vulnerabilities" class="card">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :shield_exclamation, class: "h-4 w-4 text-ink-3" %> <%= t("nav.vulnerabilities") %></h2>
     <div class="flex items-center gap-3 text-xs text-ink-3">

@@ -21,7 +21,7 @@ class PortsControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "#public-ports tr.public-port", 6
     assert_select "#public-ports tr.public-port:first-child", text: /Web.*non filtré/m
-    assert_select "#public-ports a[href=?]", server_path(servers(:db), tab: "ports")
+    assert_select "#public-ports a[href=?]", server_path(servers(:db), tab: "firewall")
     assert_select "p", text: /Sans inventaire des ports : Backup/
     assert_select "nav.main-nav a[aria-current=page][href=?]", ports_path
   end

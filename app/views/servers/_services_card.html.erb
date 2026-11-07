@@ -1,7 +1,7 @@
-<%# Services of the server from its last inventory (Inventory::Collectors::Services): systemd units, then Docker containers by Compose project. %>
+<%# Services of the server from its last inventory (Inventory::Collectors::Services): the systemd units; the containers are in the Docker tab. %>
 <% snapshot = server.inventory("services") %>
 <% data = snapshot&.collected? ? snapshot.data : nil %>
-<section id="server-services" class="card mt-6">
+<section id="server-services" class="card">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :list_bullet, class: "h-4 w-4 text-ink-3" %> Services</h2>
     <div class="flex items-center gap-2 text-xs text-ink-3">
@@ -23,7 +23,7 @@
       <% if data["docker"] == "ok" %>· <strong class="text-ink"><%= containers.count { |c| c["state"] == "running" } %></strong><%= t(".containers_running_html", count: containers.size) %><% end %>
     </p>
 
-    <div class="grid lg:grid-cols-2 lg:divide-x lg:divide-line">
+    <div>
       <div class="systemd-units">
         <h3 class="px-4 pt-3 text-xs font-semibold tracking-wide text-ink-3 uppercase">systemd</h3>
         <% if units.any? %>
@@ -41,39 +41,13 @@
         <% end %>
       </div>
 
-      <div class="docker-containers border-t border-line lg:border-t-0">
-        <h3 class="px-4 pt-3 text-xs font-semibold tracking-wide text-ink-3 uppercase">Docker</h3>
-        <% case data["docker"] %>
-        <% when "absent" %>
-          <p class="px-4 py-3 text-sm text-ink-3"><%= t(".docker_not_installed") %></p>
-        <% when "unreadable" %>
-          <p class="docker-unreadable px-4 py-3 text-sm text-warn-ink"><%= t(".elio_needs_root_password_html", message: snapshot.message) %></p>
-        <% else %>
-          <% if containers.empty? %>
-            <p class="px-4 py-3 text-sm text-ink-3"><%= t(".container") %></p>
-          <% end %>
-          <% containers.group_by { |container| container["project"] }.sort_by { |project, _| project.to_s.empty? ? "~" : project }.each do |project, members| %>
-            <div class="compose-project px-4 py-2">
-              <p class="text-sm font-medium"><%= project || t(".without_compose_project") %></p>
-              <% if (files = members.first["config_files"]) %>
-                <p class="compose-files font-mono text-[11px] text-ink-3"><%= files.join(", ") %></p>
-              <% end %>
-              <ul class="mt-1 space-y-1">
-                <% members.sort_by { |container| container["name"] }.each do |container| %>
-                  <li class="docker-container flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs" data-state="<%= container["state"] %>">
-                    <% running = container["state"] == "running" %>
-                    <span class="w-24 shrink-0"><%= status_badge(running ? :good : :neutral, running ? t("words.running") : (container["state"] == "exited" ? t(".stopped") : container["state"])) %></span>
-                    <span class="font-mono"><%= container["name"] %></span>
-                    <span class="text-ink-3"><%= container["image"] %></span>
-                    <% if container["ports"] %><span class="ml-auto font-mono text-[11px] text-ink-2"><%= container["ports"] %></span><% end %>
-                  </li>
-                <% end %>
-              </ul>
-            </div>
-          <% end %>
-        <% end %>
-      </div>
     </div>
+    <% if data["docker"].in?(%w[ok unreadable]) %>
+      <p class="services-docker-link border-t border-line px-4 py-2.5 text-xs text-ink-3">
+        <%= t(".containers_in_docker_tab", count: containers.size) %>
+        <%= link_to t(".see_docker_tab"), server_path(server, tab: "docker"), class: "font-medium text-accent hover:underline" %>
+      </p>
+    <% end %>
   <% elsif snapshot&.status == "unsupported" %>
     <p class="services-empty px-4 py-4 text-sm text-ink-3"><%= snapshot.message %></p>
   <% elsif snapshot&.failed? %>

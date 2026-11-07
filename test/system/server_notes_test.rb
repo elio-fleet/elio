@@ -6,8 +6,8 @@ class ServerNotesTest < ApplicationSystemTestCase
   setup { sign_in users(:viewer) }
 
   test "write a note with a preview, edit it in place, delete it" do
-    visit server_path(servers(:web), tab: "notes")
-    assert_selector ".server-notes-none"
+    visit server_path(servers(:web), tab: "journal")
+    assert_no_selector "article.server-note"
 
     fill_in "Note", with: "Front **nginx**\n\n- reload: `systemctl reload nginx`"
     click_on "Aperçu"
@@ -15,7 +15,7 @@ class ServerNotesTest < ApplicationSystemTestCase
       assert_selector "strong", text: "nginx"
       assert_selector "li code", text: "systemctl reload nginx"
     end
-    assert_current_path server_path(servers(:web), tab: "notes")
+    assert_current_path server_path(servers(:web), tab: "journal")
 
     click_on "Ajouter la note"
     assert_selector "#flash .toast", text: "Note ajoutée."
@@ -33,6 +33,6 @@ class ServerNotesTest < ApplicationSystemTestCase
 
     accept_app_confirm { within("article.server-note") { click_on "Supprimer" } }
     assert_selector "#flash .toast", text: "Note supprimée."
-    assert_selector ".server-notes-none"
+    assert_no_selector "article.server-note"
   end
 end

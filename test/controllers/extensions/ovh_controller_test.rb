@@ -22,9 +22,9 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
 
     sign_in users(:one)
-    get server_path(servers(:web), tab: "ovh")
-    assert_select "nav.server-tabs a[data-tab=ovh]", 0
-    assert_select "nav.main-nav a", text: "OVHcloud", count: 0
+    get server_path(servers(:web))
+    assert_select "#server-hosting", 0
+    assert_select "nav.main-nav a", text: "Hébergement", count: 0
   end
 
   test "the services tab, for every role" do
@@ -37,7 +37,7 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "#stat-ovh-expiring .stat-value", "1"
     assert_select "a[href=?] #stat-ovh-dns .stat-value", dns_records_path(source: "ovh"), "3"
     assert_select "tr.ovh-resource", 3
-    assert_select "tr.ovh-resource[data-kind=dedicated] .ovh-server a[href=?]", server_path(servers(:web), tab: "ovh"), text: "Web"
+    assert_select "tr.ovh-resource[data-kind=dedicated] .ovh-server a[href=?]", server_path(servers(:web), anchor: "server-hosting"), text: "Web"
     assert_select "tr.ovh-resource[data-kind=dedicated] .ovh-expiration", text: /\d{4}/
     assert_select "form.ovh-link-form", 0
   end
@@ -56,19 +56,15 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.ovh-resource", 1
   end
 
-  test "the server tab: service, IP with reverse and a link to the Firewall tab, DNS records" do
+  test "the hosting card of the overview: service and IP with reverse; the former OVH tab redirects to it" do
     record_ports(servers(:web))
     get server_path(servers(:web), tab: "ovh")
+    assert_redirected_to server_path(servers(:web), anchor: "server-hosting")
 
-    assert_select "nav.server-tabs a[data-tab=ovh][aria-current=page]", text: /OVH/
-    assert_select ".ovh-service", text: /Serveur dédié · web\.example\.com.*Advance-1.*gra3/m
-    assert_select ".ovh-ip[data-block='203.0.113.10/32'] .ovh-reverse", "web.example.com"
-    assert_select ".ovh-firewall-summary", text: /Firewall réseau : 1 IP, 1 actif/
-    assert_select ".ovh-firewall-summary a[href=?]", server_path(servers(:web), tab: "firewall")
-    assert_select ".ovh-firewall-rule", 0
-    assert_select ".server-prompt", 0
-    assert_select "tr.ovh-dns-record", 0
-    assert_select ".ovh-dns-link a[href=?]", server_path(servers(:web), tab: "dns"), text: "2 noms DNS → onglet DNS"
+    get server_path(servers(:web))
+    assert_select "nav.server-tabs a[data-tab=ovh]", 0
+    assert_select "#server-hosting .ovh-service", text: /Advance-1.*Serveur dédié.*gra3/m
+    assert_select "#server-hosting .ovh-ip[data-block='203.0.113.10/32'] .ovh-reverse", "web.example.com"
 
     get server_path(servers(:web), tab: "dns")
     assert_select "#server-dns tr.dns-record[data-source=ovh]", 2

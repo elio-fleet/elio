@@ -170,7 +170,7 @@ class DockerTest < ActionDispatch::IntegrationTest
       assert_select ".badge", "Critique"
       assert_select "span", /Conteneur worker redémarre en boucle · Conteneur db en mauvaise santé/
     end
-    assert_select ".server-tabs-bar a[data-tab=docker] span[data-tone=crit]", "2"
+    assert_select ".tabs-bar a[data-tab=docker] span[data-tone=crit]", "2"
     assert_select "#server-health-details", text: /Conteneur/, count: 0
   end
 
@@ -181,7 +181,7 @@ class DockerTest < ActionDispatch::IntegrationTest
     get server_path(servers(:web))
     assert_select "a.docker-pill[data-docker-status=ok][title='Docker : rien à signaler']"
     assert_select "#server-docker-state", text: /Rien à signaler/
-    assert_select ".server-tabs-bar a[data-tab=docker] span[data-tone=crit]", 0
+    assert_select ".tabs-bar a[data-tab=docker] span[data-tone=crit]", 0
 
     get server_path(servers(:db))
     assert_select "a.docker-pill", 0

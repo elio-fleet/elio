@@ -49,5 +49,5 @@ class ServerNotesController < ApplicationController
     @note = @server.notes.find(params[:id])
   end
 
-  def notes_path(**params) = server_path(@server, tab: "notes", **params.compact)
+  def notes_path(**params) = server_path(@server, tab: "journal", **params.compact)
 end
