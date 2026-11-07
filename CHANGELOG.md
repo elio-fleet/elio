@@ -4,6 +4,31 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.1.0-beta.4.1] — 2026-11-07
+
+### Upgrading from 0.1.0-beta.4
+
+- Nothing to do: no migration, no new setting, the same commands on the servers. Replace the image and restart.
+
+### Added
+
+- For contributors: `bin/rails dev:demo` fills a development database with the fictitious fleet of the screenshots (7 servers, inventories, Docker, vulnerabilities, extensions, DNS), to try Elio without servers; it refuses a database that already has servers unless `FORCE=1`.
+
+### Changed
+
+- For contributors: each pull request describes its change in a file of `changelog.d/` instead of editing `CHANGELOG.md`; `bin/changelog` assembles them at release time (see `changelog.d/README.md`).
+- Dependencies: `solid_queue` 1.7.1 (more resilient background jobs), `json` 3.1.0, `rack-test` 2.3.0 and small updates.
+
+### Fixed
+
+- **Confirmations**: a confirmation opened right after a cancelled one could take the answer of the cancelled one (the action was then not done).
+- **Accents in server outputs**: the outputs of the commands are read as UTF-8 text (bytes that are not UTF-8 are replaced). With the updated `json` gem of this version, an accent in a scheduled task, a file or a message would otherwise have broken the collection of the server.
+- **Uptime Kuma 1.x**: the probes were not read at all (Uptime Kuma 1.x gives them no id in `/metrics`); they are now identified by their name. A probe without answer no longer shows a response time of -1 ms.
+
+### Security
+
+- `net-ssh` 7.3.9: host keys marked `@revoked` in a known_hosts file are refused (Elio's own known_hosts file never holds such lines, so no change in practice).
+
 ## [0.1.0-beta.4] — 2026-11-06
 
 ### Upgrading from 0.1.0-beta.3.1
@@ -154,7 +179,8 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4.1...HEAD
+[0.1.0-beta.4.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4...v0.1.0-beta.4.1
 [0.1.0-beta.4]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3.1...v0.1.0-beta.4
 [0.1.0-beta.3.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3...v0.1.0-beta.3.1
 [0.1.0-beta.3]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.2...v0.1.0-beta.3
