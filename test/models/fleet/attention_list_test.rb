@@ -39,6 +39,26 @@ class AttentionListTest < ActiveSupport::TestCase
     assert_equal [ true, 1 ], [ attention.any?, attention.size ]
   end
 
+  test "each item names its action and the servers it is about" do
+    Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
+    servers(:web).update_columns(health_status: "crit", health_reasons: [ Inventory::HealthStatus.reason("crit", :disk, percent: 94, mount: "/").to_h ])
+    servers(:db).update_columns(health_status: "warn", health_reasons: [ Inventory::HealthStatus.reason("warn", "integrations.uptime_kuma.health.no_monitor").to_h ])
+    servers(:backup).update_columns(health_status: "warn", health_reasons: [ Inventory::HealthStatus.reason("warn", :reboot_required).to_h ])
+
+    actions = list.items.to_h { |item| [ item.subject, [ item.action, item.path, item.servers ] ] }
+    assert_equal [ "Voir les disques", "/servers/#{servers(:web).id}#disks", [ [ "Web", "/servers/#{servers(:web).id}" ] ] ], actions["Web"]
+    assert_equal [ "Voir les sondes", "/servers/#{servers(:db).id}?tab=monitors" ], actions["Database"].first(2)
+    assert_equal [ "Voir", "/servers/#{servers(:backup).id}" ], actions["Backup"].first(2)
+  end
+
+  test "by gravity, Docker included" do
+    Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
+    servers(:web).update_columns(docker_status: "crit", docker_reasons: [ Inventory::HealthStatus.reason("crit", :container_looping, name: "worker").to_h ])
+    servers(:db).update_columns(reachable: false)
+
+    assert_equal({ "crit" => [ "Database", "Web" ] }, list.by_tone.transform_values { |items| items.map(&:subject) })
+  end
+
   test "nothing to report" do
     Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
     assert_not list.any?

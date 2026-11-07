@@ -161,16 +161,48 @@ fr:
       whole_group: 'Tout le groupe :'
   dashboard:
     index:
+      see_all: Tout voir
+      critical_thresholds_exceeded: seuils critiques dépassés
+      including_unreachable:
+        one: dont %{count} injoignable
+        other: dont %{count} injoignables
+      welcome: Bienvenue dans Elio
+      welcome_subtitle: Aucun serveur pour l'instant. Suivez les étapes pour commencer.
+      no_server: Aucun serveur
+      no_server_viewer: Un administrateur ou un opérateur doit ajouter les serveurs du parc.
+      refresh_fleet: Actualiser le parc
+      unreachable:
+        one: "%{count} injoignable"
+        other: "%{count} injoignables"
+      critical_caption: seuils critiques, injoignables
+      serious_vulnerabilities: Vulnérabilités graves
+      fixable: corrigeables, sur le système des serveurs
+      most_serious_first: du plus grave au moins grave
+      group_crit:
+        one: "Critique · %{count}"
+        other: "Critique · %{count}"
+      group_warn:
+        one: "À surveiller · %{count}"
+        other: "À surveiller · %{count}"
+      group_info:
+        one: "Pour information · %{count}"
+        other: "Pour information · %{count}"
+      nothing_to_report: Rien à signaler
+      journal: "Journal →"
+      by_group: Par groupe
+      group_critical:
+        one: "%{count} critique"
+        other: "%{count} critiques"
+      group_watch:
+        one: "%{count} à surveiller"
+        other: "%{count} à surveiller"
+      group_fine: rien à signaler
       online: En ligne
       answer_their_ssh_port: répondent sur leur port SSH
       watch: À surveiller
       reboot_disk_service: redémarrage, disque, service…
       critical: Critiques
-      critical_thresholds_exceeded: seuils critiques dépassés
-      run_key_scan: lancez un scan des clés
       nothing_report_servers_reachable: 'Rien à signaler : serveurs joignables, santé normale, toutes les clés sont dans le trousseau.'
-      add_first_server_begin: Ajoutez un premier serveur pour commencer.
-      see_all: Tout voir
       key_deleted: Clé supprimée
       expired_being_removed: expiré, suppression en cours
       inventory_html: "· inventaire %{last_inventory_at}"
@@ -180,17 +212,6 @@ fr:
       activity_yet: Aucune activité pour le moment.
       temporary_access: Accès temporaires
       ongoing_html: "%{count} en cours"
-      temporary_access_choose_duration: Aucun accès temporaire. Choisissez une durée en ajoutant une clé sur un serveur.
-      systems: Systèmes
-      systems_will_appear_after: Les systèmes apparaîtront après un premier inventaire.
-      items_by_severity:
-        one: "%{count} élément · par gravité"
-        other: "%{count} éléments · par gravité"
-      including_unreachable:
-        one: dont %{count} injoignable
-        other: dont %{count} injoignables
-      outside_keyring: hors trousseau
-      unknown_keys: Clés inconnues
     checklist:
       generate_key: Générer la clé
       add_server: Ajouter un serveur
@@ -293,6 +314,18 @@ fr:
     add_key: Ajouter une clé au trousseau
     add_key_text: La clé publique d'un membre de l'équipe ou d'un serveur.
   attention_list:
+    actions:
+      probes: Voir les sondes
+      dns: Voir le DNS
+      hosting: Voir l'hébergement
+      connection: Tester la connexion
+      disks: Voir les disques
+      health: Voir la santé
+      fixes: Voir les correctifs
+      services: Voir les services
+      schedules: Voir les tâches planifiées
+      ports: Voir les ports
+      inventory: Lancer un inventaire
     see_docker: Voir Docker
     see_images: Voir les images
     unreachable: Ne répond plus sur son port SSH
@@ -301,7 +334,7 @@ fr:
     install_key: Installer la clé
     see_keys: Voir les clés
     no_inventory: Pas encore d'inventaire
-    see_packages: Voir les paquets
+    see_packages: Voir les mises à jour
     see_vulnerabilities: Voir les vulnérabilités
     unknown_keys:
       one: "%{count} clé hors trousseau"
