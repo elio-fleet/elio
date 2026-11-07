@@ -21,6 +21,7 @@ en:
       more: More
       notes: Notes
     index:
+      all_groups: All groups
       check_every_server_answers: Check that every server answers
       read_again_system_health: Read again the system, health and services of every server
       read_keys_every_server: Read the keys of every server
@@ -93,6 +94,10 @@ en:
       answer: No answer
       inventory_yet: No inventory yet
     form:
+      connection: Connection
+      connection_help: How Elio reaches this server, over SSH. The user must be able to use sudo without a password for a full inventory.
+      addresses: Addresses
+      groups_help: To filter the list and choose the expected ports.
       name: Name
       web_production: Web production
       host_ip_domain_name: Host (IP or domain name)
@@ -106,8 +111,10 @@ en:
       ip_addresses_through_which: IP addresses through which this server is reached but that it does not see itself (NAT, failover IP…). The addresses of its interfaces are read by the inventory.
       groups: Groups
     new:
+      subtitle: Elio connects to it over SSH, read-only, with its key.
       servers: "← Servers"
     edit:
+      modify: Edit
       servers: "← Servers"
       delete_server: Delete the server
       edit_html: Edit “%{name_was}”
@@ -243,6 +250,8 @@ en:
       groups: "← Groups"
       heading_html: Edit the group “%{group_name}”
     index:
+      no_group: No group
+      group_actions: Actions of the group “%{group_name}”
       servers: "← Servers"
       new_group: New group
       edit: Edit

@@ -26,25 +26,25 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     production = server_groups(:production)
 
     get servers_path
-    assert_select "nav.server-group-filter" do
-      assert_select "a[aria-current=page]", "Tous"
-      assert_select "a[href=?]", servers_path(group: production.id), text: "Production"
-      assert_select "a[href=?]", server_groups_path, text: "Gérer les groupes"
+    assert_select "form.fleet-filters .group-filter select[name=group]" do
+      assert_select "option[selected]", 0
+      assert_select "option[value=?]", production.id.to_s, text: "Production"
     end
-    assert_select "##{ActionView::RecordIdentifier.dom_id(servers(:web))} a.server-group-badge[href=?]", servers_path(group: production.id), text: "Production"
-    assert_select "##{ActionView::RecordIdentifier.dom_id(servers(:backup))} a.server-group-badge", 0
+    assert_select "#fleet-actions a[role=menuitem][href=?]", server_groups_path, text: /Gérer les groupes/
+    assert_select "##{ActionView::RecordIdentifier.dom_id(servers(:web))} a.group-tag[href=?]", servers_path(group: production.id), text: "Production"
+    assert_select "##{ActionView::RecordIdentifier.dom_id(servers(:backup))} a.group-tag", 0
 
     get servers_path(group: production.id)
     assert_select "#servers tbody tr", 2
     assert_select "#servers tbody tr td", text: "Backup", count: 0
-    assert_select "nav.server-group-filter a[aria-current=page]", "Production"
+    assert_select ".group-filter select[name=group] option[selected]", "Production"
   end
 
   test "an empty group offers to add servers to it, an unknown group shows everything" do
     sign_in users(:one)
 
     get servers_path(group: server_groups(:staging).id)
-    assert_select "p", text: "Aucun serveur dans ce groupe."
+    assert_select ".empty-state p", text: "Aucun serveur dans ce groupe."
     assert_select "a[href=?]", edit_server_group_path(server_groups(:staging)), text: "Ajouter des serveurs au groupe"
 
     get servers_path(group: 0)
@@ -56,8 +56,8 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     get servers_path
 
-    assert_select "nav.server-group-filter a[href=?]", server_groups_path, text: "Organiser les serveurs en groupes"
-    assert_select "nav.server-group-filter a[aria-current]", 0
+    assert_select ".group-filter", 0
+    assert_select "#fleet-actions a[role=menuitem][href=?]", server_groups_path, text: /Gérer les groupes/
   end
 
   test "shows an empty state when there are no servers" do
@@ -66,7 +66,7 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     get servers_path
 
     assert_select "#servers", 0
-    assert_select "p", text: "Aucun serveur pour le moment."
+    assert_select ".empty-state p", text: "Aucun serveur pour le moment."
   end
 
   test "shows the reachability status of each server" do
@@ -168,7 +168,7 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
 
     get servers_path(os: "Ubuntu 24.04.1 LTS", group: server_groups(:production).id)
     assert_select "#servers tbody tr", 1
-    assert_select "form.fleet-filters input[type=hidden][name=group][value=?]", server_groups(:production).id.to_s
+    assert_select "form.fleet-filters .group-filter option[selected][value=?]", server_groups(:production).id.to_s
 
     get servers_path(os: "Windows")
     assert_select "#servers tbody tr", Server.count
@@ -192,10 +192,12 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     assert_select "#stat-online .stat-value", "2/3"
     assert_select "#stat-to-watch .stat-value.text-warn-ink", "1"
     assert_select "#stat-critical .stat-value.text-crit-ink", "2"
-    assert_select "#stat-critical", text: /dont 1 injoignable/
+    assert_select "#stat-online", text: /1 injoignable/
+    assert_select "a#stat-critical[href=?]", servers_path(state: "crit")
+    assert_select "a#stat-security[href=?]", packages_path
     assert_select "#stat-security .stat-value", "6"
     assert_select "#stat-security", text: /sur 2 serveurs/
-    assert_select "p", text: /3 serveurs\s+· inventaire/
+    assert_select ".page-subtitle", text: /3 serveurs\s+· inventaire/
   end
 
   test "shows each server's health, gauges, updates and main reason" do
@@ -230,14 +232,15 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     get servers_path(state: "warn")
     assert_select "#servers tbody tr", 1
     assert_select "#servers tbody tr td a", text: "Web"
-    assert_select ".state-filter select[name=state] option[selected][value=warn]"
+    assert_select ".state-filter a.filter-chip[aria-current=true][data-state=warn]", text: /À surveiller\s*1/
+    assert_select "a#stat-to-watch[aria-current=true][href=?]", servers_path
 
     get servers_path(state: "off")
     assert_select "#servers tbody tr td a", text: "Database"
 
     get servers_path(state: "crit")
     assert_select "#servers", 0
-    assert_select "a[href=?]", servers_path, text: "Retirer les filtres"
+    assert_select ".empty-state a[href=?]", servers_path, text: "Effacer les filtres"
   end
 
   test "the status buttons ask for health badges" do
@@ -255,22 +258,26 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     get servers_path
 
     assert_select "details#fleet-actions[data-controller=dropdown]" do
-      assert_select "summary[aria-haspopup=menu]", text: /Actions/
+      assert_select "summary[aria-haspopup=menu][aria-label=?]", "Plus d'actions"
       assert_select "[role=menu] [role=menuitem]", 4
       assert_select "form[action=?] button[role=menuitem]", server_inventories_path, text: /Inventorier tout le parc/
       assert_select "form[action=?] button[role=menuitem]", server_scans_path, text: /Scanner les clés de tout le parc/
       assert_select "a[role=menuitem][href=?]", new_server_import_path, text: /Importer des serveurs/
+      assert_select "a[role=menuitem][href=?]", server_groups_path, text: /Gérer les groupes/
     end
+    assert_select "form[action=?] button.btn-secondary", server_pings_path, text: /Actualiser les statuts/
     assert_select "#fleet-actions a[href=?]", new_server_path, 0
     assert_select "a.btn-primary[href=?]", new_server_path
   end
 
-  test "a viewer's menu only refreshes the statuses" do
+  test "a viewer refreshes the statuses and sees the groups, nothing else" do
     sign_in users(:viewer)
     get servers_path
 
+    assert_select "form[action=?] button", server_pings_path, text: /Actualiser les statuts/
     assert_select "#fleet-actions [role=menuitem]", 1
-    assert_select "#fleet-actions [role=menuitem]", text: /Actualiser les statuts/
+    assert_select "#fleet-actions [role=menuitem]", text: /Gérer les groupes/
+    assert_select ".btn-primary", 0
   end
 
   test "the search reloads only the results frame" do
@@ -281,9 +288,8 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame#fleet-results form.fleet-filters", 0
     assert_select "turbo-frame#fleet-results[target=_top]" do
       assert_select "#servers tbody tr", 1
-      assert_select "nav.server-group-filter"
-      assert_select ".view-toggle"
     end
+    assert_select ".view-toggle"
   end
 
   test "the search finds a server by one of its DNS names" do

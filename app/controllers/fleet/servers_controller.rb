@@ -18,7 +18,9 @@ class ServersController < ApplicationController
     @os_names = Server.where.not(os_name: nil).distinct.order(:os_name).pluck(:os_name)
     @os = params[:os].presence_in(@os_names)
     @state = params[:state].presence_in(Server::HEALTH_STATES + %w[off] + DOCKER_FILTERS.keys)
-    @summary = FleetSummary.new(Server.includes(:inventory_snapshots))
+    all_servers = Server.includes(:inventory_snapshots).to_a
+    @summary = FleetSummary.new(all_servers)
+    @state_counts = all_servers.map(&:health_state).tally.merge(all_servers.filter_map { |server| "docker_#{server.docker_status}" if server.docker_status.in?(%w[warn crit]) }.tally)
     servers = (@group ? Server.in_group(@group) : Server.all).order(:name).includes(:server_groups, :inventory_snapshots)
     servers = servers.where(os_name: @os) if @os
     servers = servers.where(docker_status: DOCKER_FILTERS[@state]) if DOCKER_FILTERS.key?(@state)
@@ -35,10 +37,6 @@ class ServersController < ApplicationController
     @load_history = Inventory::HealthSample.where(server_id: @servers.map(&:id)).since(24.hours.ago)
                                            .pluck(:server_id, :load_percent).group_by(&:first).transform_values { |rows| rows.map(&:last).compact }
     @insights = KeyInsights.new
-    if Integration.enabled?(:uptime_kuma)
-      @monitor_counts = UptimeKumaMonitor.attached.group(:server_id).pluck(:server_id, Arel.sql("COUNT(*)"), Arel.sql("COUNT(*) FILTER (WHERE status = 0)"))
-                                         .to_h { |server_id, total, down| [ server_id, [ total, down ] ] }
-    end
   end
 
   TABS = %w[overview vulnerabilities packages services docker ports firewall schedules keys notes history].freeze

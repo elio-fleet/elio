@@ -10,7 +10,6 @@ class MenusAndTabsTest < ApplicationSystemTestCase
     assert_no_selector "#fleet-actions [role=menuitem]"
     find("#fleet-actions summary").click
     within("#fleet-actions [role=menu]") do
-      assert_selector "[role=menuitem]", text: "Actualiser les statuts"
       assert_selector "[role=menuitem]", text: "Inventorier tout le parc"
       assert_selector "[role=menuitem]", text: "Scanner les clés de tout le parc"
       assert_selector "[role=menuitem]", text: "Importer des serveurs"

@@ -101,7 +101,7 @@ module ComponentsHelper
       safe_join(options.map do |key, text, icon_name, path|
         active = key.to_s == current.to_s
         link_to path, class: "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs #{active ? "bg-subtle font-medium text-ink" : "text-ink-3 hover:text-ink"}",
-                      aria: { current: (active ? "true" : nil) }, data: { view: key } do
+                      aria: { pressed: active }, data: { view: key } do
           safe_join([ icon(icon_name, class: "h-3.5 w-3.5"), tag.span(text) ])
         end
       end)

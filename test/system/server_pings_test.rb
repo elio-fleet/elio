@@ -25,7 +25,7 @@ class ServerPingsTest < ApplicationSystemTestCase
   end
 
   test "refreshing all servers updates every badge in place" do
-    fleet_action "Actualiser les statuts"
+    click_on "Actualiser les statuts"
 
     assert_selector "#flash", text: "Statuts actualisés : 0 en ligne, 3 injoignable(s)."
     assert_selector ".server-status", text: "Injoignable", count: 3
