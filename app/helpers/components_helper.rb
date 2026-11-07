@@ -15,7 +15,7 @@ module ComponentsHelper
         (breadcrumbs(crumbs) if crumbs.present?),
         tag.div(class: "flex flex-wrap items-start justify-between gap-x-4 gap-y-3") do
           safe_join([
-            tag.div(class: "min-w-0") do
+            tag.div(class: "min-w-0 flex-1") do
               safe_join([
                 tag.div(class: "flex flex-wrap items-center gap-2") do
                   safe_join([ tag.h1(title, class: "page-title text-xl font-semibold tracking-tight #{"font-mono" if mono}"), badges ].compact)
@@ -23,7 +23,7 @@ module ComponentsHelper
                 (tag.div(subtitle, class: "page-subtitle mt-0.5 text-xs text-ink-3") if subtitle.present?)
               ].compact)
             end,
-            (tag.div(actions_html, class: "page-actions flex flex-wrap items-center gap-2") if actions_html.present?)
+            (tag.div(actions_html, class: "page-actions flex flex-wrap items-center gap-2 sm:shrink-0") if actions_html.present?)
           ].compact)
         end
       ].compact)

@@ -66,6 +66,8 @@ en:
       scan_keys_whole_fleet: Scan the keys of the whole fleet
       import_servers: Import servers
     show:
+      add_note: Add a note
+      see_keys: SSH keys of the server
       search_whole_fleet: Search the whole fleet
       activities: activities
       refresh_inventory: Refresh the inventory

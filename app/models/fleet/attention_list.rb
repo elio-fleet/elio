@@ -14,7 +14,7 @@ class AttentionList
 
   # The action of a health reason: its label (attention_list.actions.<key>) and the tab it opens.
   REASON_ACTIONS = {
-    "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "health" ], "load" => [ :health, nil, "health" ],
+    "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "server-health-details" ], "load" => [ :health, nil, "server-health-details" ],
     "vulnerability" => [ :fixes, "vulnerabilities" ], "vulnerabilities" => [ :fixes, "vulnerabilities" ],
     "service_failed" => [ :services, "services" ], "services_failed" => [ :services, "services" ],
     "timer_failed" => [ :schedules, "schedules" ], "timers_failed" => [ :schedules, "schedules" ], "timer_late" => [ :schedules, "schedules" ], "timers_late" => [ :schedules, "schedules" ],
@@ -28,6 +28,17 @@ class AttentionList
     @insights = insights
     @summary = summary
     @routes = routes
+  end
+
+  # The named action of a health (or Docker) reason of a server: [label, path], or a plain "See".
+  def self.action_for(server, reason, routes = Rails.application.routes.url_helpers)
+    key = reason["key"].to_s
+    return [ I18n.t("attention_list.see_docker"), routes.server_path(server, tab: "docker") ] if key.start_with?("health.container", "health.image")
+
+    label, tab, anchor = REASON_ACTIONS[key.delete_prefix("health.")] || EXTENSION_ACTIONS.find { |prefix, _| key.start_with?(prefix) }&.last
+    return [ I18n.t("attention_list.see"), routes.server_path(server) ] unless label
+
+    [ I18n.t("attention_list.actions.#{label}"), routes.server_path(server, tab: tab, anchor: anchor) ]
   end
 
   def items
@@ -129,11 +140,5 @@ class AttentionList
   EXTENSION_ACTIONS = { "integrations.uptime_kuma." => [ :probes, "monitors" ], "dns." => [ :dns, "dns" ],
                         "integrations.ovh.health.expiring" => [ :hosting, "ovh" ], "integrations.ovh." => [ :ports, "firewall" ] }.freeze
 
-  def reason_action(server, reason)
-    key = reason["key"].to_s
-    label, tab, anchor = REASON_ACTIONS[key.delete_prefix("health.")] || EXTENSION_ACTIONS.find { |prefix, _| key.start_with?(prefix) }&.last
-    return [ I18n.t("attention_list.see"), @routes.server_path(server) ] unless label
-
-    [ I18n.t("attention_list.actions.#{label}"), @routes.server_path(server, tab: tab, anchor: anchor) ]
-  end
+  def reason_action(server, reason) = self.class.action_for(server, reason, @routes)
 end

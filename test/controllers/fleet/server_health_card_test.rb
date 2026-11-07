@@ -27,10 +27,8 @@ class ServerHealthCardTest < ActionDispatch::IntegrationTest
       assert_select ".health-load", text: /1,92\s+\/ 8 processeurs/
       assert_select ".health-load svg.sparkline"
       assert_select ".health-memory", text: /88\u00A0%\s+27,6 Go \/ 31,3 Go/
-      assert_select ".health-disk", text: %r{Disque le plus plein /\s+94\u00A0%}
+      assert_select ".health-disk", text: %r{Disque le plus plein · /\s+94\u00A0%}
       assert_select ".health-disk .text-crit-ink", text: /94\u00A0%/
-      assert_select ".health-reasons li", 2
-      assert_select ".health-reasons li", text: "Disque / à 94\u00A0%"
       assert_select ".health-facts", text: /3 dont 2 de sécurité/
       assert_select ".health-facts", text: /fail2ban\.service/
       assert_select ".history-chart", 3
@@ -38,7 +36,11 @@ class ServerHealthCardTest < ActionDispatch::IntegrationTest
       assert_select ".history-chart rect.chart-point title", text: /— 94\u00A0%/
       assert_select ".history-chart line.chart-threshold", 2
       assert_select ".health-disks tbody tr", 3
+      assert_select "details#disks-charts .history-chart", 3
     end
+    assert_select "#server-attention .health-reasons li.attention-item", 2
+    assert_select "#server-attention li.attention-item[data-tone=crit]", text: /Disque \/ à 94\u00A0%/
+    assert_select "#server-attention li.attention-item a.attention-action[href=?]", server_path(@server, anchor: "disks"), text: /Voir les disques/
   end
 
   test "says when there is nothing to report" do
@@ -47,7 +49,8 @@ class ServerHealthCardTest < ActionDispatch::IntegrationTest
 
     get server_path(@server)
 
-    assert_select "#server-health-details .health-reasons", text: /Rien à signaler/
+    assert_select "#server-attention", text: /Rien à signaler/
+    assert_select "#server-attention li.attention-item", 0
     assert_select "#server-health-details .health-disks", 0
   end
 

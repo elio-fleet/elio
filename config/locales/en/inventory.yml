@@ -46,6 +46,7 @@ en:
       other: "%{count} serious fixable vulnerabilities in the Docker images"
   servers:
     system_card:
+      machine: Machine
       system: System
       read_html: read %{collected_at}
       memory_html: "· %{human_bytes} of memory"
@@ -56,7 +57,13 @@ en:
       last_attempt_html: 'Last attempt %{checked_at}: %{message}'
       inventory_yet_elio_reads: 'No inventory yet: Elio reads the system, health and services of the server over SSH, read-only.'
       run_inventory: Run the inventory
+    attention_card:
+      do: To handle
+      points:
+        one: "%{count} point"
+        other: "%{count} points"
     health_card:
+      charts_24_h: Charts of the last 24 hours
       load_over_24_h: Load over 24 h
       synchronized: synchronized
       not_synchronized: not synchronized
