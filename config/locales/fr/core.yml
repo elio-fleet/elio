@@ -213,6 +213,7 @@ fr:
     packages: paquets
     keys: clés
   words:
+    source: Source
     none: aucun
     'yes': oui
     'no': non

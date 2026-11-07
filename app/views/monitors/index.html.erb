@@ -60,7 +60,7 @@
 <% elsif @pager.records.any? %>
   <div class="card mt-3 overflow-x-auto">
     <table id="monitors" class="table-dense">
-      <thead><tr><th class="pl-4"><%= t("words.monitor") %></th><th><%= t(".server_2") %></th><th><%= t("words.target") %></th><th><%= t(".state") %></th><th><%= t(".response") %></th><th><%= t(".uptime_24_h_30") %></th><th><%= t("words.certificate") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t(".attach") %></th><% end %></tr></thead>
+      <thead><tr><th class="pl-4"><%= t("words.monitor") %></th><th><%= t("words.source") %></th><th><%= t(".server_2") %></th><th><%= t("words.target") %></th><th><%= t(".state") %></th><th><%= t(".response") %></th><th><%= t(".uptime_24_h_30") %></th><th><%= t("words.certificate") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t(".attach") %></th><% end %></tr></thead>
       <tbody><%= render partial: "integrations/uptime_kuma/monitor_row", collection: @pager.records, as: :monitor, locals: { base_url: base_url, show_server: true } %></tbody>
     </table>
   </div>

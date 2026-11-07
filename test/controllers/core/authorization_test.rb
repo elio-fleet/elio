@@ -39,7 +39,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "vulnerability detail" => -> { Vulnerability.create!(source: "debian", release: "bookworm", package: "x", cve: "CVE-2024-1", severity: "low") && get(vulnerability_path("CVE-2024-1")) },
       "server docker" => -> { get server_path(servers(:web), tab: "docker") },
       "server vulnerabilities" => -> { get server_path(servers(:web), tab: "vulnerabilities") },
-      "server notes" => -> { get server_path(servers(:web), tab: "notes") },
+      "server notes" => -> { get server_path(servers(:web), tab: "journal") },
       "add a note" => -> { post server_notes_path(servers(:web)), params: { server_note: { body: "Hello" } } },
       "preview a note" => -> { post preview_server_notes_path(servers(:web)), params: { server_note: { body: "**x**" } } },
       "ping one server" => -> { post server_ping_path(servers(:web)) },

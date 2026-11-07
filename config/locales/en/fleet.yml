@@ -1,5 +1,16 @@
 en:
   servers:
+    journal_card:
+      all: All
+      notes: Notes
+      events: Events
+      full_journal: "In the fleet journal →"
+      add_note: Add a note
+      timeline: Journal of the server
+      newer: "← Newer"
+      older: "Older →"
+      empty: Nothing yet
+      empty_text: The notes you add and what happens to the server (keys, ports, alerts…) will show here.
     docker_pill:
       fine: "Docker: nothing to report"
       problems:
@@ -7,19 +18,15 @@ en:
         other: "Docker, %{count} problems: %{reasons}"
     tabs:
       overview: Overview
-      packages: Packages
+      packages: Updates
       vulnerabilities: Vulnerabilities
       services: Services
       docker: Docker
       schedules: Scheduled tasks
-      ports: Ports
       firewall: Firewall
       keys: SSH keys
-      history: History
+      journal: Journal
       server_sections: Server sections
-      section: Section
-      more: More
-      notes: Notes
     index:
       all_groups: All groups
       check_every_server_answers: Check that every server answers

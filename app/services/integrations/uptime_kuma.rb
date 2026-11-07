@@ -54,7 +54,7 @@ class Integrations::UptimeKuma < Integrations::Base
       Integrations::UptimeKuma::Sync.new(integration, result).call
     end
 
-    def server_tabs = [ { key: "monitors", label: I18n.t("integrations.uptime_kuma.monitors"), count: ->(server) { server.uptime_kuma_monitors.size } } ]
+    def server_tabs = [ { key: "monitors", label: I18n.t("nav.probes"), count: ->(server) { server.uptime_kuma_monitors.size } } ]
 
     def sidebar_links = [ { label: I18n.t("nav.probes"), path: :monitors_path, icon: :signal, controller: "monitors", position: 1 } ]
 

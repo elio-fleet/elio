@@ -92,6 +92,10 @@ fr:
       scope: Portée
       added_hand: 'Ajoutées à la main :'
     services_card:
+      containers_in_docker_tab:
+        one: "%{count} conteneur :"
+        other: "%{count} conteneurs :"
+      see_docker_tab: voir l'onglet Docker
       without_compose_project: Sans projet Compose
       stopped: arrêté
       read_html: relevé %{collected_at}
@@ -109,6 +113,9 @@ fr:
       failed: en échec
       boot: au démarrage
     firewall_card:
+      all_listening_ports:
+        one: "Le port en écoute, privés et locaux compris (%{count})"
+        other: "Tous les ports en écoute, privés et locaux compris (%{count})"
       elio_never_changes: Lu dans le dernier inventaire et les extensions. Elio ne modifie jamais un firewall.
       server_firewall: Firewall du serveur
       needs_root: Le firewall ne se lit qu'en root (ou avec sudo sans mot de passe).
@@ -121,7 +128,7 @@ fr:
       ovh_ip: OVH %{ip}
       no_public_port: Aucun port public.
       ovh_firewall: Firewall réseau OVHcloud
-      ovh_tab: Onglet OVH
+      ovh_tab: Hébergement
       ovh_not_read: Le firewall de %{block} n'a pas été lu (droit manquant sur la clé API OVH).
       no_ovh_rule: Aucune règle.
       ipv6_column: IPv6

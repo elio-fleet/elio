@@ -213,6 +213,7 @@ en:
     packages: packages
     keys: keys
   words:
+    source: Source
     none: none
     'yes': 'yes'
     'no': 'no'

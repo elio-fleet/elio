@@ -17,7 +17,7 @@ class MobileTest < ApplicationSystemTestCase
   teardown { page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride") }
 
   test "no page is wider than the screen" do
-    [ root_path, servers_path, servers_path(view: "grid"), server_path(servers(:web)), server_path(servers(:web), tab: "keys"), server_path(servers(:web), tab: "ports"),
+    [ root_path, servers_path, servers_path(view: "grid"), server_path(servers(:web)), server_path(servers(:web), tab: "keys"), server_path(servers(:web), tab: "firewall"),
       ports_path, packages_path, public_keys_path, activities_path, tasks_path, settings_automations_path, settings_users_path,
       scheduled_tasks_path, vulnerabilities_path, settings_vulnerabilities_path, docker_path, settings_docker_path, new_settings_score_provider_path,
       server_path(servers(:web), tab: "vulnerabilities") ].each do |path|

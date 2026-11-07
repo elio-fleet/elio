@@ -1,9 +1,9 @@
-<%# "Sondes" tab of a server (Uptime Kuma extension). %>
+<%# "Probes" tab of a server: its probes from every monitoring source (Uptime Kuma for now), with a Source column. %>
 <% monitors = server.uptime_kuma_monitors.to_a %>
 <% base_url = integration.value(:url) %>
-<section id="server-monitors" class="card mt-6">
+<section id="server-monitors" class="card">
   <div class="card-header">
-    <h2 class="flex items-center gap-2 font-semibold"><%= icon :signal, class: "h-4 w-4 text-ink-3" %> <%= t(".uptime_kuma_monitors") %></h2>
+    <h2 class="flex items-center gap-2 font-semibold"><%= icon :signal, class: "h-4 w-4 text-ink-3" %> <%= t("nav.probes") %></h2>
     <div class="flex flex-wrap items-center gap-3">
       <span class="text-xs text-ink-3">
         <% if integration.last_synced_at %><%= t(".synchronized_html", last_synced_at: (relative_time_tag integration.last_synced_at)) %><% end %>
@@ -15,7 +15,7 @@
   <% if monitors.any? %>
     <div class="overflow-x-auto">
       <table class="table-dense">
-        <thead><tr><th class="pl-4"><%= t("words.monitor") %></th><th><%= t("words.target") %></th><th><%= t(".state") %></th><th><%= t(".response") %></th><th><%= t(".uptime_24_h_30") %></th><th><%= t("words.certificate") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t(".server") %></th><% end %></tr></thead>
+        <thead><tr><th class="pl-4"><%= t("words.monitor") %></th><th><%= t("words.source") %></th><th><%= t("words.target") %></th><th><%= t(".state") %></th><th><%= t(".response") %></th><th><%= t(".uptime_24_h_30") %></th><th><%= t("words.certificate") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t(".server") %></th><% end %></tr></thead>
         <tbody><%= render partial: "integrations/uptime_kuma/monitor_row", collection: monitors, as: :monitor, locals: { base_url: base_url } %></tbody>
       </table>
     </div>

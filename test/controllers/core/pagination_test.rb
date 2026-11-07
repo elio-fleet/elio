@@ -101,21 +101,24 @@ class PaginationTest < ActionDispatch::IntegrationTest
   test "a server's history" do
     3.times { Activity.record!(:server_created, server: servers(:web)) }
     with_per_page(ServersController, 2, name: :HISTORY_PER_PAGE) do
-      get server_path(servers(:web), tab: "history")
+      get server_path(servers(:web), tab: "journal")
       assert_select "#server-activity li.activity", 2
-      assert_select "#server-activity nav.pagination"
-      assert_equal({ "tab" => "history", "page" => "2" }, next_page_query)
+      assert_select "#server-activity a[href=?]", server_path(servers(:web), tab: "journal", page: 2), text: /Plus anciens/
+
+      get server_path(servers(:web), tab: "journal", page: 2)
+      assert_select "#server-activity li.activity", 1
+      assert_select "#server-activity a", text: /Plus anciens/, count: 0
     end
   end
 
   test "the notes of a server" do
     3.times { |index| servers(:web).notes.create!(body: "Note #{index}", user: users(:one), created_at: index.minutes.ago) }
     sign_in users(:one)
-    with_per_page(ServersController, 2, name: :NOTES_PER_PAGE) do
-      get server_path(servers(:web), tab: "notes", page: 2)
+    with_per_page(ServersController, 2, name: :HISTORY_PER_PAGE) do
+      get server_path(servers(:web), tab: "journal", show: "notes", page: 2)
     end
     assert_select "article.server-note", 1
     assert_select "article.server-note .note-body", "Note 2"
-    assert_select "#server-notes nav.pagination"
+    assert_select "#server-activity a[href=?]", server_path(servers(:web), tab: "journal", show: "notes"), text: /Plus récents/
   end
 end

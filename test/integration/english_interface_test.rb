@@ -78,7 +78,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
 
   test "the inventory pages" do
     data = [ ".sidebar-groups", ".account-link", ".server-group-filter", "#servers td:nth-child(2)" ]
-    %w[overview packages services ports firewall schedules].each do |tab|
+    %w[overview packages services firewall schedules journal].each do |tab|
       assert_english server_path(servers(:web), tab: tab), except: data
     end
     assert_english server_packages_path(servers(:web)), except: data
@@ -111,7 +111,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english edit_public_key_path(public_keys(:alice)), except: data
     assert_english server_path(servers(:web), tab: "keys"), except: data
     servers(:web).notes.create!(body: "Front **nginx**", user: users(:one))
-    assert_english server_path(servers(:web), tab: "notes"), except: data + [ ".note-body" ]
+    assert_english server_path(servers(:web), tab: "journal"), except: data + [ ".note-body" ]
     assert_english settings_path, except: data
   end
 
@@ -166,7 +166,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english server_path(servers(:web), tab: "monitors"), except: data
     OvhResource.create!(kind: "ip", external_id: "203.0.113.10/32", name: "203.0.113.10/32", server: servers(:web),
                         data: { "mitigation" => { "203.0.113.10" => { "permanent" => false, "state" => "ok" } } })
-    assert_english server_path(servers(:web), tab: "ovh"), except: data
+    assert_english server_path(servers(:web), tab: nil), except: data
     assert_english edit_settings_integration_path("ovh"), except: data
     assert_english edit_settings_integration_path("uptime_kuma"), except: data
     Integration.find_or_initialize_by(kind: "technitium").update!(enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })

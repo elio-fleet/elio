@@ -26,14 +26,8 @@ class ServerServicesCardTest < ActionDispatch::IntegrationTest
       assert_select ".systemd-units > ul li.systemd-unit", 5
       assert_select ".systemd-units details li.systemd-unit", 2
       assert_select "li.systemd-unit", text: /ssh\s+au démarrage/
-      assert_select ".compose-project", 2
-      assert_select ".compose-project", text: /ops-tools/ do
-        assert_select "p", text: "ops-tools"
-        assert_select ".compose-files", "/opt/ops-tools/compose.yml, /opt/ops-tools/compose.prod.yml"
-        assert_select "li.docker-container[data-state=running]", 2
-      end
-      assert_select ".compose-project:last-child p", text: "Sans projet Compose"
-      assert_select "li.docker-container[data-state=exited]", text: /arrêté\s+backup-once/
+      assert_select "li.docker-container", 0 # in the Docker tab
+      assert_select ".services-docker-link a[href=?]", server_path(servers(:web), tab: "docker"), text: /onglet Docker/
     end
   end
 
@@ -43,7 +37,7 @@ class ServerServicesCardTest < ActionDispatch::IntegrationTest
 
     get server_path(servers(:web), tab: "services")
 
-    assert_select "#server-services .docker-unreadable", text: /permission denied.*groupe docker/
+    assert_select "#server-services .services-docker-link a[href=?]", server_path(servers(:web), tab: "docker")
   end
 
   test "before any inventory" do

@@ -15,7 +15,7 @@ class ServerNotesControllerTest < ActionDispatch::IntegrationTest
     assert_difference -> { servers(:web).notes.count } => 1, -> { Activity.of_kind(:server_note_added).count } => 1 do
       post server_notes_path(servers(:web)), params: { server_note: { body: "Front **nginx**, see https://wiki.example/web" } }
     end
-    assert_redirected_to server_path(servers(:web), tab: "notes")
+    assert_redirected_to server_path(servers(:web), tab: "journal")
     note = servers(:web).notes.sole
     assert_equal users(:viewer), note.user
     activity = Activity.of_kind(:server_note_added).sole
@@ -29,7 +29,7 @@ class ServerNotesControllerTest < ActionDispatch::IntegrationTest
     assert_no_difference -> { ServerNote.count } do
       post server_notes_path(servers(:web)), params: { server_note: { body: "  " } }
     end
-    assert_redirected_to server_path(servers(:web), tab: "notes")
+    assert_redirected_to server_path(servers(:web), tab: "journal")
     assert flash[:alert].present?
   end
 
@@ -39,8 +39,8 @@ class ServerNotesControllerTest < ActionDispatch::IntegrationTest
     mine = add("<script>alert(1)</script> mine")
     sign_in users(:viewer)
 
-    get server_path(servers(:web), tab: "notes")
-    assert_select "nav.server-tabs .server-tabs-bar a[data-tab=notes][aria-current=page]", text: /Notes\s*2/
+    get server_path(servers(:web), tab: "journal")
+    assert_select "nav.server-tabs .tabs-bar a[data-tab=journal][aria-current=page]", text: "Journal"
     assert_select "#server-notes form.note-form[action=?] textarea[name='server_note[body]']", server_notes_path(servers(:web))
     assert_select "article.server-note", 2
     assert_select "turbo-frame##{ActionView::RecordIdentifier.dom_id(mine)} article.server-note" do
@@ -57,7 +57,7 @@ class ServerNotesControllerTest < ActionDispatch::IntegrationTest
     assert_select "ul.server-notes > li:first-child turbo-frame##{ActionView::RecordIdentifier.dom_id(mine)}"
 
     sign_in users(:one)
-    get server_path(servers(:web), tab: "notes")
+    get server_path(servers(:web), tab: "journal")
     assert_select "button.delete-note", 2, "an admin deletes any note"
     assert_select "a.edit-note", 0
   end
@@ -69,7 +69,7 @@ class ServerNotesControllerTest < ActionDispatch::IntegrationTest
     assert_select "turbo-frame##{ActionView::RecordIdentifier.dom_id(note)} form.note-form[action=?] textarea", server_note_path(servers(:web), note), text: "Before"
 
     patch server_note_path(servers(:web), note), params: { server_note: { body: "After" } }
-    assert_redirected_to server_path(servers(:web), tab: "notes")
+    assert_redirected_to server_path(servers(:web), tab: "journal")
     assert_equal "After", note.reload.body
 
     patch server_note_path(servers(:web), note), params: { server_note: { body: "" } }
@@ -92,7 +92,7 @@ class ServerNotesControllerTest < ActionDispatch::IntegrationTest
     patch server_note_path(servers(:web), note), params: { server_note: { body: "Hacked" } }
     assert_response :forbidden
     delete server_note_path(servers(:web), note)
-    assert_redirected_to server_path(servers(:web), tab: "notes")
+    assert_redirected_to server_path(servers(:web), tab: "journal")
     assert_not ServerNote.exists?(note.id)
   end
 

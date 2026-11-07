@@ -39,8 +39,10 @@ class ServersController < ApplicationController
     @insights = KeyInsights.new
   end
 
-  TABS = %w[overview vulnerabilities packages services docker ports firewall schedules keys notes history].freeze
-  NOTES_PER_PAGE = 20
+  TABS = %w[overview vulnerabilities packages services docker firewall schedules keys journal].freeze
+  # Former tabs, now inside another one (bookmarks, links of old notifications).
+  MOVED_TABS = { "ports" => [ "firewall", nil ], "notes" => [ "journal", nil ], "history" => [ "journal", nil ], "ovh" => [ nil, "server-hosting" ] }.freeze
+  JOURNAL_FILTERS = %w[notes events].freeze
   VULNERABILITIES_PER_PAGE = 100
   VULNERABILITY_PACKAGES_PER_PAGE = 50
   VULNERABILITY_VIEWS = %w[packages cves].freeze
@@ -48,16 +50,14 @@ class ServersController < ApplicationController
 
   # Tabbed page (?tab=), only the requested tab is rendered.
   def show
+    if (moved = MOVED_TABS[params[:tab]])
+      tab, anchor = moved
+      return redirect_to server_path(@server, tab: tab, anchor: anchor), status: :moved_permanently
+    end
+
     @integration_tabs = Integration.server_tabs
     @tab = params[:tab].presence_in(TABS + @integration_tabs.map { |tab| tab[:key] }) || "overview"
-    if @tab == "notes"
-      @pager = paginate(@server.notes.recent.includes(:user), per_page: NOTES_PER_PAGE)
-      @notes = @pager.records
-    end
-    if @tab == "history"
-      @pager = paginate(Activity.recent.where(server: @server).includes(:user, :server, :public_key), per_page: HISTORY_PER_PAGE)
-      @activities = @pager.records
-    end
+    show_journal if @tab == "journal"
     show_vulnerabilities if @tab == "vulnerabilities"
     show_docker if @tab == "docker"
     @health_history = @server.health_samples.since(24.hours.ago).pluck(:collected_at, :load_percent, :memory_percent, :disk_percent) if @tab == "overview"
@@ -66,6 +66,21 @@ class ServersController < ApplicationController
   def new
     @server = Server.new
   end
+
+  # The journal of a server: its notes and its activities on one timeline,
+  # newest first, HISTORY_PER_PAGE at a time ("show": notes or events only).
+  def show_journal
+    @journal_filter = params[:show].presence_in(JOURNAL_FILTERS)
+    @journal_page = [ params[:page].to_i, 1 ].max
+    limit = @journal_page * HISTORY_PER_PAGE
+    notes = @journal_filter == "events" ? [] : @server.notes.recent.includes(:user).limit(limit + 1).to_a
+    # The note itself is in the journal: not its "note added" activity as well.
+    events = @journal_filter == "notes" ? [] : Activity.recent.where(server: @server).where.not(kind: "server_note_added").includes(:user, :server, :public_key).limit(limit + 1).to_a
+    entries = (notes + events).sort_by(&:created_at).reverse
+    @journal_more = entries.size > limit
+    @journal = entries.drop(limit - HISTORY_PER_PAGE).first(HISTORY_PER_PAGE)
+  end
+  private :show_journal
 
   def create
     @server = Server.new(server_params)
