@@ -18,7 +18,7 @@
 
 <nav class="activity-filters mt-6 flex flex-wrap gap-2" aria-label="<%= t(".categories") %>">
   <% [ [ t(".all"), nil ], *Activity::CATEGORIES.map { |key| [ Activity.category_label(key), key.to_s ] } ].each do |label, category| %>
-    <%= filter_pill label, activities_path(category: category, server_id: @server&.id), active: @category == category %>
+    <%= filter_chip label, activities_path(category: category, server_id: @server&.id), active: @category == category %>
   <% end %>
 </nav>
 

@@ -39,14 +39,14 @@ class PublicKeysIndexTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
 
     get public_keys_path
-    assert_select "nav.key-kind-filter a[aria-current=page]", "Toutes"
+    assert_select "nav.key-kind-filter a[aria-current=true]", "Toutes"
     assert_select "##{ActionView::RecordIdentifier.dom_id(public_keys(:ci))}" do
       assert_select "td.key-kind", "Serveur"
       assert_select ".key-description", "Runner GitHub Actions"
     end
 
     get public_keys_path(kind: "server")
-    assert_select "nav.key-kind-filter a[aria-current=page][href=?]", public_keys_path(kind: "server"), text: "Serveurs"
+    assert_select "nav.key-kind-filter a[aria-current=true][href=?]", public_keys_path(kind: "server"), text: "Serveurs"
     assert_select "#keyring tbody tr", 1
     assert_select "#keyring tbody tr td a", text: "CI"
 
@@ -67,7 +67,7 @@ class PublicKeysIndexTest < ActionDispatch::IntegrationTest
 
     get public_keys_path(kind: "outside")
     assert_response :success
-    assert_select "nav.key-kind-filter a[data-kind=outside][aria-current=page]"
+    assert_select "nav.key-kind-filter a[data-kind=outside][aria-current=true]"
     assert_select "li.outside-key", 2
     assert_select "li.outside-key:first-child" do
       assert_select ".key-name", "bob@laptop"

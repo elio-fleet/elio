@@ -91,7 +91,7 @@ module ComponentsHelper
         (tag.span(class: "h-2 w-2 rounded-full #{dot}") if dot),
         tag.span(label),
         (tag.span(count, class: "text-xs tabular-nums #{active ? "opacity-70" : "text-ink-3"}") unless count.nil?)
-      ].compact)
+      ].compact, " ")
     end
   end
 

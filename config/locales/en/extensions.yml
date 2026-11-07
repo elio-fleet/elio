@@ -328,6 +328,9 @@ en:
       attach: Attach to
   ovh:
     index:
+      none_services: No OVHcloud service
+      none_ips: No OVHcloud IP address
+      none_hint: The linked account has no dedicated server, VPS, instance or IP block to attach.
       services: Services
       dedicated_vps_instances: dedicated, VPS, instances
       not_attached: Not attached

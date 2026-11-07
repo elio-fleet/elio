@@ -34,7 +34,7 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "li.activity", 1
     assert_select "li.activity[data-kind=unknown_key_detected] .severity-warning"
-    assert_select ".activity-filters a[aria-current=page]", text: "Sécurité"
+    assert_select ".activity-filters a[aria-current=true]", text: "Sécurité"
   end
 
   test "ignores an unknown category" do
@@ -44,7 +44,7 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
     get activities_path(category: "nope")
 
     assert_select "li.activity", 1
-    assert_select ".activity-filters a[aria-current=page]", text: "Tout"
+    assert_select ".activity-filters a[aria-current=true]", text: "Tout"
   end
 
   test "filters by server" do

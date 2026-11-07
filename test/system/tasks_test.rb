@@ -25,7 +25,7 @@ class TasksTest < ApplicationSystemTestCase
     click_on "Exécutions" # breadcrumb of the run
     assert_selector "tr.background-task", text: "Inventaire de « Web »"
     click_on "En échec"
-    assert_selector "nav.task-filters a[aria-current=page]", text: "En échec"
+    assert_selector "nav.task-filters a[aria-current=true]", text: "En échec"
     assert_selector "tr.background-task", count: 1
   end
 end

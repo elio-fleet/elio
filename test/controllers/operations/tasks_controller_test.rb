@@ -40,7 +40,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "tr.background-task", 1
     assert_select "tr.background-task", text: /Cassé/
-    assert_select "nav.task-filters a[aria-current=page][data-filter=failed]", text: /En échec\s+1/
+    assert_select "nav.task-filters a[aria-current=true][data-filter=failed]", text: /En échec\s+1/
     assert_select "nav.task-filters a[data-filter=queued]", text: /À venir\s+1/
     assert_select "[data-controller=auto-refresh]", 1
     assert_select "a[href='/jobs']", text: /Suivi technique/

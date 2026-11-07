@@ -95,6 +95,7 @@ en:
   throttled:
     too_many: 'Too many attempts: try again in a few minutes.'
   ui:
+    extension_settings: Extension settings
     trend: Trend
     over_24_hours: "%{label} over 24 hours"
     now: "%{value} now"
