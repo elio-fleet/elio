@@ -4,6 +4,10 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+### Fixed
+
+- **Accents in server outputs**: the outputs of the commands are read as UTF-8 text (bytes that are not UTF-8 are replaced). An accent in a scheduled task, a file or a message could otherwise break the collection with the next version of the `json` gem, which refuses such text.
+
 ## [0.1.0-beta.4] — 2026-11-06
 
 ### Upgrading from 0.1.0-beta.3.1
