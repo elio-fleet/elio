@@ -1,21 +1,21 @@
 <% content_for :title, t("title", page: t("nav.docker")) %>
 
-<div>
-  <h1 class="text-xl font-semibold">Docker</h1>
-  <p class="text-xs text-ink-3"><%= t(".containers_images_whole_fleet") %></p>
-</div>
+<%= page_header "Docker", subtitle: t(".containers_images_whole_fleet") %>
 
-<div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-5">
-  <%= stat_tile t(".docker_servers"), @summary[:servers], nil, icon: :server_stack, id: "stat-docker-servers" %>
-  <%= stat_tile t(".running_containers"), "#{@summary[:running]}/#{@summary[:containers]}", nil, icon: :docker, id: "stat-containers" %>
-  <%= stat_tile t(".trouble"), @summary[:troubled], t(".loop_unhealthy"), tone: (:crit if @summary[:troubled].positive?), id: "stat-troubled" %>
-  <%= stat_tile t(".new_versions"), @summary[:updates], t(".images_update"), tone: (:warn if @summary[:updates].positive?), id: "stat-updates" %>
+<%= stat_tiles do %>
+  <%= stat_tile t(".running_containers"), "#{@summary[:running]}/#{@summary[:containers]}", t("count.servers", count: @summary[:servers]), icon: :docker, id: "stat-containers" %>
+  <%= stat_tile t(".trouble"), @summary[:troubled], t(".loop_unhealthy"), tone: (:crit if @summary[:troubled].positive?), icon: :x_mark, id: "stat-troubled",
+                href: (docker_path(anchor: "troubled-containers") if @summary[:troubled].positive?) %>
+  <%= stat_tile t(".new_versions"), @summary[:updates], t(".images_update"), tone: (:warn if @summary[:updates].positive?), icon: :arrow_up_circle, id: "stat-updates",
+                href: docker_path(updates: 1), active: params[:updates] == "1" %>
   <%= stat_tile t(".image_cves"), @summary[:image_cves], t(".image_cves_detail", images: t("count.docker_images", count: @summary[:vulnerable_images]), count: @summary[:image_fixable]),
-                tone: (:warn if @summary[:image_fixable].positive?), id: "stat-image-cves" %>
-</div>
+                tone: (:warn if @summary[:image_fixable].positive?), icon: :shield_exclamation, id: "stat-image-cves", href: docker_path(tab: "cves") %>
+<% end %>
+
+<%= render "docker/tabs" %>
 
 <% if @troubled.any? %>
-  <section id="troubled-containers" class="card mt-6">
+  <section id="troubled-containers" class="card mb-4">
     <div class="card-header"><h2 class="font-semibold"><%= t(".containers_watch") %></h2></div>
     <ul class="divide-y divide-line">
       <% @troubled.each do |server, container| %>
@@ -34,12 +34,12 @@
   </section>
 <% end %>
 
-<%= render "docker/tabs" %>
+
 
 <%= form_with url: docker_path, method: :get, data: search_form_data, class: "docker-filters mt-3 flex flex-wrap items-center gap-2" do |f| %>
-  <%= f.search_field :q, value: @q, placeholder: t(".image_e_g_nginx"), aria: { label: t(".image") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1 text-xs" %>
+  <%= f.search_field :q, value: @q, placeholder: t(".image_e_g_nginx"), aria: { label: t(".image") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1.5" %>
   <%= f.select :group, [ [ t(".all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
-        aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
+        aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <label class="flex items-center gap-1.5 text-xs"><%= t(".new_version_available_html", submit: (check_box_tag :updates, "1", @updates_only, data: { action: "change->auto-submit#submit" })) %></label>
   <label class="flex items-center gap-1.5 text-xs"><%= t(".fixable_cves_html", submit: (check_box_tag :fixable, "1", @fixable_only, data: { action: "change->auto-submit#submit" })) %></label>
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
@@ -47,7 +47,7 @@
 
 <%= search_results_frame do %>
 <% if @repositories.any? %>
-  <div class="card mt-3 overflow-x-auto">
+  <div class="card overflow-x-auto">
     <table id="docker-images" class="table-dense">
       <thead><tr><th class="pl-4">Image</th><th><%= t("words.tag") %></th><th><%= t(".servers") %></th><th><%= t("words.registry") %></th><th class="pr-4"><%= t(".vulnerabilities") %></th></tr></thead>
       <tbody>
