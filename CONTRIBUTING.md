@@ -18,6 +18,8 @@ bin/setup          # gems, database, then starts the app (bin/dev) on http://loc
 
 The first visit creates the first (administrator) account. Background jobs (Solid Queue) run inside the web server in development.
 
+To try Elio without any server, fill the development database with the fictitious fleet of the screenshots: `bin/rails dev:demo`, then sign in as `demo@example.test` / `password1234` (it refuses a database that already has servers; `FORCE=1` deletes them first).
+
 To try Elio on real machines, add a server whose `~/.ssh/authorized_keys` holds Elio's public key (Settings → General). Disposable virtual machines or containers with `sshd` are ideal.
 
 ## Tests
@@ -63,6 +65,6 @@ Extensions (Uptime Kuma, OVHcloud) bring what another tool knows next to each se
 
 - One topic per pull request, with its tests; `bin/ci` green.
 - [Conventional Commits](https://www.conventionalcommits.org/) (`feat(inventory): …`, `fix: …`), with a body that explains *why*.
-- Add a line to [CHANGELOG.md](CHANGELOG.md) under *Unreleased*.
+- Describe your change in a new file of [`changelog.d/`](changelog.d/README.md) (not in `CHANGELOG.md` itself): `bin/changelog` shows what the next release notes will look like.
 
 By contributing, you agree that your contribution is licensed under the [AGPL-3.0](LICENSE).
