@@ -91,8 +91,15 @@ class DockerTest < ActionDispatch::IntegrationTest
       assert_select "#stat-updates .stat-value", "1"
       assert_select "#troubled-containers li.troubled-container", 3
       assert_select "#troubled-containers li.troubled-container", text: /redémarre en boucle\s+Web\s+worker.*12 redémarrages/m
-      assert_select "tr.docker-repository-version:first-child[data-repository=nginx]", text: /nginx\s+1.27\s+Web\s+nouvelle version\s+2\s+dont 1 corrigeable/
+      assert_select "tr.docker-repository-version:first-child[data-repository=nginx]", text: /nginx\s+1.27\s+Web\s+nouvelle version\s+Faible\s+2\s+dont 1 corrigeable/
+      assert_select "tr.docker-repository-version[data-repository=nginx] .docker-version-cves .severity[data-severity=low]"
       assert_select "tr.docker-repository-version[data-repository=redis]", text: /aucun conteneur/
+      assert_select "#stat-image-cves .stat-value", "2"
+      assert_select "#stat-image-cves", /1 image Docker · 1 corrigeable/
+
+      get docker_path(fixable: "1")
+      assert_select "tr.docker-repository-version", 1
+      assert_select "input[type=checkbox][name=fixable][checked]"
 
       get docker_path(updates: "1")
       assert_select "tr.docker-repository-version", 1

@@ -224,6 +224,11 @@ en:
       docker_inventory_yet: No Docker inventory yet.
   docker:
     index:
+      image_cves: CVEs in the images
+      image_cves_detail:
+        one: "%{images} · %{count} fixable"
+        other: "%{images} · %{count} fixable"
+      fixable_cves_html: "%{submit} With fixable CVEs"
       docker_servers: Docker servers
       running_containers: Running containers
       trouble: In trouble
@@ -248,7 +253,7 @@ en:
       container: no container
     tabs:
       images: Containers and images
-      cves: CVE
+      cves: Vulnerabilities of the images
     cves:
       loading: Loading…
       intro: 'The vulnerabilities of the Docker images of the fleet: they are fixed by updating the image, not the server.'

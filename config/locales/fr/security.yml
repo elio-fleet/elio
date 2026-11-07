@@ -224,6 +224,11 @@ fr:
       docker_inventory_yet: Pas encore d'inventaire Docker.
   docker:
     index:
+      image_cves: CVE dans les images
+      image_cves_detail:
+        one: "%{images} · %{count} corrigeable"
+        other: "%{images} · %{count} corrigeables"
+      fixable_cves_html: "%{submit} Avec CVE corrigeables"
       docker_servers: Serveurs Docker
       running_containers: Conteneurs en cours
       trouble: En difficulté
@@ -248,7 +253,7 @@ fr:
       container: aucun conteneur
     tabs:
       images: Conteneurs et images
-      cves: CVE
+      cves: Vulnérabilités des images
     cves:
       loading: Chargement…
       intro: 'Les vulnérabilités des images Docker du parc : elles se corrigent en mettant à jour l''image, pas le serveur.'
