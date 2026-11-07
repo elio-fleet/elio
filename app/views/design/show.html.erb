@@ -1,71 +1,165 @@
-<% content_for :title, "Composants · Elio" %>
-<% section_class = "card mt-6 p-5" %>
+<% content_for :title, "Design system · Elio" %>
+<%# Catalogue of the design system (outside production): every component with
+    its variants and its rule. Texts are not translated: a page for developers. %>
+<% rule = ->(good, bad = nil) { tag.div(class: "border-t border-line px-4 py-2 text-xs") { safe_join([ tag.p("✓ #{good}", class: "text-good-ink"), (tag.p("✗ #{bad}", class: "text-crit-ink") if bad) ].compact) } } %>
+<% demo_group = ServerGroup.new(name: "Production", color: "red") %>
 
-<h1 class="text-xl font-semibold">Composants</h1>
-<p class="text-xs text-ink-3">Catalogue de l'interface (direction A, voir <code>docs/design/</code>). Page disponible hors production uniquement.</p>
+<%= page_header "Design system", subtitle: "Les composants que toutes les pages utilisent. Une vue n'écrit pas son en-tête, ses onglets, ses filtres : elle appelle le composant (ComponentsHelper, UiHelper).",
+                crumbs: [ [ "Elio", root_path ], "/design" ] do %>
+  <button class="btn btn-secondary"><%= icon :arrow_path %> Actualiser</button>
+  <button class="btn btn-primary"><%= icon :plus %> Ajouter un serveur</button>
+  <%= actions_menu do %>
+    <%= menu_item "Importer des serveurs", "#", icon: :arrow_up_circle %>
+    <%= menu_item "Gérer les groupes", "#", icon: :list_bullet %>
+    <%= menu_separator %>
+    <%= menu_item "Supprimer", "#", icon: :trash, danger: true %>
+  <% end %>
+<% end %>
 
-<section class="<%= section_class %>" id="design-buttons">
-  <h2 class="font-semibold">Boutons</h2>
-  <div class="mt-3 flex flex-wrap items-center gap-2">
-    <button class="btn btn-primary"><%= icon :plus %> Ajouter un serveur</button>
-    <button class="btn btn-secondary"><%= icon :arrow_path %> Actualiser</button>
-    <button class="btn btn-danger"><%= icon :trash %> Supprimer</button>
-    <button class="btn btn-ghost">Annuler</button>
-    <button class="btn btn-ghost btn-icon" aria-label="Modifier"><%= icon :pencil_square %></button>
-    <button class="btn btn-primary" disabled>Désactivé</button>
-  </div>
-</section>
-
-<section class="<%= section_class %>" id="design-badges">
-  <h2 class="font-semibold">États</h2>
-  <div class="mt-3 flex flex-wrap items-center gap-2">
-    <%= status_badge :good, "En ligne" %>
-    <%= status_badge :warn, "À surveiller" %>
-    <%= status_badge :crit, "Critique" %>
-    <%= status_badge :off, "Injoignable" %>
-    <%= status_badge :neutral, "Inconnu" %>
-    <%= status_badge :accent, "Production" %>
-  </div>
-</section>
-
-<section class="mt-6 grid grid-cols-2 gap-3 lg:grid-cols-4" id="design-stats">
-  <%= stat_tile "En ligne", "7/12", "joignables et sains", tone: :good, icon: :check %>
-  <%= stat_tile "À surveiller", 2, "redémarrage, fin de support", tone: :warn, icon: :exclamation_triangle %>
-  <%= stat_tile "Critiques", 3, "dont 1 injoignable", tone: :crit, icon: :x_mark %>
-  <%= stat_tile "Mises à jour sécurité", 57, "sur 7 serveurs", icon: :shield_check %>
-</section>
-
-<section class="<%= section_class %>" id="design-gauges">
-  <h2 class="font-semibold">Jauges et courbes</h2>
-  <div class="mt-3 grid gap-3 sm:grid-cols-2">
-    <div class="space-y-2">
-      <%= meter 42, label: "CPU", width: "flex-1" %>
-      <%= meter 84, label: "RAM", width: "flex-1" %>
-      <%= meter 94, label: "Disque", width: "flex-1" %>
+<div class="grid gap-4 lg:grid-cols-2">
+  <%= panel "page_header · actions_menu", id: "design-header" do %>
+    <div class="space-y-2 px-4 py-3 text-sm text-ink-2">
+      <p>Fil d'Ariane (optionnel), titre <code>text-xl</code>, badges, une phrase, puis à droite <b>une seule</b> action en couleur, les secondaires, et le menu « ⋯ » (voir en haut de cette page).</p>
     </div>
-    <div class="flex items-center gap-6">
-      <%= sparkline [ 30, 32, 28, 35, 40, 38, 36, 41, 39, 44 ], title: "Charge 24 h" %>
-      <%= sparkline [ 78, 80, 83, 85, 88, 90, 94 ], max: 100, width: 120, height: 28, color: "var(--color-crit)", title: "Disque 24 h" %>
+    <%= rule.("Supprimer, régénérer, désactiver : dans « ⋯ », après un séparateur, avec confirmation", "un bouton rouge à côté des actions de tous les jours") %>
+  <% end %>
+
+  <%= panel "Boutons", id: "design-buttons" do %>
+    <div class="flex flex-wrap items-center gap-2 px-4 py-3">
+      <button class="btn btn-primary"><%= icon :plus %> Ajouter un serveur</button>
+      <button class="btn btn-secondary"><%= icon :arrow_path %> Actualiser</button>
+      <button class="btn btn-ghost">Annuler</button>
+      <button class="btn btn-ghost btn-icon" aria-label="Modifier"><%= icon :pencil_square %></button>
+      <button class="btn btn-danger"><%= icon :trash %> Supprimer</button>
+      <button class="btn btn-primary" disabled>Désactivé</button>
     </div>
-  </div>
+    <%= rule.("une action en couleur par écran ; btn-danger seulement dans une confirmation", "deux btn-primary sur la même page") %>
+  <% end %>
+
+  <%= panel "status_badge · group_tag · source_tag", id: "design-badges" do %>
+    <div class="flex flex-wrap items-center gap-2 px-4 py-3">
+      <%= status_badge :good, "En ligne" %>
+      <%= status_badge :warn, "À surveiller" %>
+      <%= status_badge :crit, "Critique" %>
+      <%= status_badge :off, "Injoignable" %>
+      <%= status_badge :neutral, "Inconnu" %>
+      <%= group_tag demo_group %>
+      <%= source_tag "Uptime Kuma" %>
+      <%= server_chip "db-prod" %>
+    </div>
+    <%= rule.("la couleur dit la gravité, toujours icône + texte ; le groupe : pastille + nom, neutre", "un groupe en badge coloré, qu'on confond avec un état") %>
+  <% end %>
+
+  <%= panel "tabs · tab_count", id: "design-tabs" do %>
+    <div class="px-4 pt-3">
+      <%= tabs [ { key: "overview", label: "Vue d'ensemble", path: "#" }, { key: "vulnerabilities", label: "Vulnérabilités", path: "#", count: 51, tone: :crit },
+                 { key: "updates", label: "Mises à jour", path: "#", count: 3, tone: :warn }, { key: "docker", label: "Docker", path: "#", count: 2 } ],
+               current: "overview", label: "Exemple d'onglets", class: "mb-3" %>
+    </div>
+    <%= rule.("onglets = contenus différents ; « Plus » prend ceux qui ne tiennent pas", "des puces en guise d'onglets, ou l'inverse") %>
+  <% end %>
+</div>
+
+<section class="mt-6" id="design-stats">
+  <h2 class="mb-2 text-sm font-semibold">stat_tiles · stat_tile</h2>
+  <%= stat_tiles do %>
+    <%= stat_tile "En ligne", "6/7", "staging ne répond plus", icon: :check, href: "#" %>
+    <%= stat_tile "Critiques", 2, "db-prod, web-prod-1", tone: :crit, icon: :x_mark, href: "#", active: true %>
+    <%= stat_tile "À surveiller", 4, "disque, redémarrage, sondes", tone: :warn, icon: :exclamation_triangle, href: "#" %>
+    <%= stat_tile "Vulnérabilités graves", 19, "corrigeables, sur 2 serveurs", tone: :crit, icon: :shield_exclamation, href: "#" %>
+  <% end %>
+  <p class="text-xs text-good-ink">✓ 4 au plus ; chacune filtre la liste en dessous (bordure accent = filtre actif)</p>
+  <p class="text-xs text-crit-ink">✗ une tuile « — » ou « 0 » qui n'apprend rien : on la masque</p>
 </section>
 
-<section class="mt-6 card overflow-hidden" id="design-table">
-  <div class="card-header"><h2 class="font-semibold">Tableau dense</h2><span class="text-xs text-ink-3">3 lignes</span></div>
+<section class="mt-6" id="design-filters">
+  <h2 class="mb-2 text-sm font-semibold">filter_bar · filter_chip · view_toggle</h2>
+  <%= filter_bar do %>
+    <input class="input w-60" type="search" placeholder="Nom, hostname, IP…" aria-label="Rechercher">
+    <select class="input w-auto" aria-label="Groupe"><option>Tous les groupes</option></select>
+    <%= filter_chip "Tous", "#", count: 7, active: true %>
+    <%= filter_chip "Critiques", "#", count: 2 %>
+    <%= filter_chip "Production", "#", dot: demo_group.dot_classes %>
+    <%= filter_bar_end do %>
+      <%= view_toggle [ [ "list", "Liste", :list_bullet, "#" ], [ "grid", "Grille", :squares_2x2, "#" ] ], current: "list" %>
+    <% end %>
+  <% end %>
+  <p class="text-xs text-good-ink">✓ une ligne : recherche, filtres, puces, la bascule toujours à droite ; tous les filtres dans l'adresse</p>
+</section>
+
+<div class="mt-6 grid gap-4 lg:grid-cols-2">
+  <%= panel "Machine", meta: "relevé il y a 9 min", icon: :server_stack, id: "design-panel" do %>
+    <%= fact_list [ [ "Système", "Debian 12 (bookworm)" ], [ "Noyau", tag.span("6.1.0-25-amd64", class: "font-mono") ], [ "Démarré", "il y a 41 jours" ] ] %>
+    <%= rule.("panel : titre à gauche, méta ou lien à droite ; fact_list pour les paires clé → valeur") %>
+  <% end %>
+
+  <%= panel "À traiter", meta: "2 points", id: "design-attention" do %>
+    <%= attention_list do %>
+      <%= attention_item :crit, "Disque / à 94 %", servers: [ "db-prod" ], action: [ "Voir le disque", "#" ] %>
+      <%= attention_item :warn, "Redémarrage requis", servers: [ "worker-1" ], action: [ "Voir", "#" ] %>
+    <% end %>
+    <%= rule.("une action nommée par ligne", "onze boutons « Voir » identiques") %>
+  <% end %>
+
+  <div id="design-status">
+    <%= status_line [ { key: "port", label: "Port 22", tone: :good, text: "En ligne" }, { key: "ssh", label: "SSH", tone: :good, text: "OK" },
+                      { key: "docker", label: "Docker", tone: :crit, text: "2 conteneurs en difficulté" } ] do %>vérifié à l'instant<% end %>
+    <p class="mt-1 text-xs text-good-ink">✓ status_line : les états de connexion sur une ligne</p>
+  </div>
+
+  <%= panel "Journal", id: "design-timeline" do %>
+    <%= timeline do %>
+      <%= list_divider "Aujourd'hui" %>
+      <%= timeline_item "Disque / passé à 94 % : critique", meta: "il y a 25 min", icon: :x_mark, tone: :crit %>
+      <%= timeline_item safe_join([ tag.b("one@example.com"), " a écrit une note" ]), meta: "il y a 2 h", tone: :note, initials: "ON", note: "Migration PostgreSQL 16 le 20 novembre." %>
+    <% end %>
+    <%= rule.("notes et événements sur la même ligne de temps") %>
+  <% end %>
+
+  <%= panel "Aucun service OVHcloud", id: "design-empty" do %>
+    <%= empty_state "Aucun service OVHcloud", "Le compte relié n'a ni serveur dédié, ni VPS, ni instance.", icon: :cloud do %>
+      <button class="btn btn-secondary"><%= icon :cog %> Réglages de l'extension</button>
+    <% end %>
+    <%= rule.("empty_state : dire pourquoi et quoi faire", "« Aucun résultat » quand aucun filtre n'est actif") %>
+  <% end %>
+
+  <%= panel "Jauges et courbes", id: "design-gauges" do %>
+    <div class="grid gap-3 px-4 py-3 sm:grid-cols-2">
+      <div class="space-y-2">
+        <%= meter 42, label: "CPU", width: "flex-1" %>
+        <%= meter 84, label: "RAM", width: "flex-1" %>
+        <%= meter 94, label: "Disque", width: "flex-1" %>
+      </div>
+      <div class="flex items-center gap-6">
+        <%= sparkline [ 30, 32, 28, 35, 40, 38, 36, 41, 39, 44 ], title: "Charge 24 h" %>
+        <%= sparkline [ 78, 80, 83, 85, 88, 90, 94 ], max: 100, width: 120, height: 28, color: "var(--color-crit)", title: "Disque 24 h" %>
+      </div>
+    </div>
+  <% end %>
+</div>
+
+<%= panel "Tableau dense", meta: "3 lignes", id: "design-table", class: "mt-6" do %>
   <table class="table-dense">
-    <thead><tr><th>État</th><th>Serveur</th><th>Système</th><th>Mémoire</th><th>Disque</th></tr></thead>
+    <thead><tr><th>État</th><th>Serveur</th><th class="col-secondary">Système</th><th>Mémoire</th><th>Disque</th><th class="col-num">Mises à jour</th><th>Point principal</th></tr></thead>
     <tbody>
-      <tr><td><%= status_badge :good, "En ligne" %></td><td><p class="font-medium">web-prod-1</p><p class="font-mono text-[11px] text-ink-3">deploy@51.38.12.4</p></td><td>Ubuntu 24.04 LTS</td><td><%= meter 61 %></td><td><%= meter 48 %></td></tr>
-      <tr><td><%= status_badge :crit, "Critique" %></td><td><p class="font-medium">db-prod</p><p class="font-mono text-[11px] text-ink-3">admin@10.0.1.20</p></td><td>Debian 12</td><td><%= meter 88 %></td><td><%= meter 94 %></td></tr>
-      <tr><td><%= status_badge :off, "Injoignable" %></td><td><p class="font-medium">ci-runner</p><p class="font-mono text-[11px] text-ink-3">ci@10.0.3.9</p></td><td>Ubuntu 22.04 LTS</td><td><%= meter nil %></td><td><%= meter nil %></td></tr>
+      <tr><td><%= status_badge :good, "En ligne" %></td><td><p class="font-medium">web-prod-2</p><p class="flex items-center gap-2 text-[11px] text-ink-3"><%= group_tag demo_group %><span class="font-mono">deploy@198.51.100.11</span></p></td><td class="col-secondary">Ubuntu 24.04</td><td><%= meter 24 %></td><td><%= meter 52 %></td><td class="col-num">3</td><td class="col-truncate" title="Aucune sonde Uptime Kuma">Aucune sonde Uptime Kuma</td></tr>
+      <tr><td><%= status_badge :crit, "Critique" %></td><td><p class="font-medium">db-prod</p><p class="flex items-center gap-2 text-[11px] text-ink-3"><%= group_tag demo_group %><span class="font-mono">admin@198.51.100.20</span></p></td><td class="col-secondary">Debian 12</td><td><%= meter 88 %></td><td><%= meter 94 %></td><td class="col-num">3</td><td class="col-truncate text-crit-ink" title="Disque / à 94 %">Disque / à 94 %</td></tr>
+      <tr><td><%= status_badge :off, "Injoignable" %></td><td><p class="font-medium">staging</p><p class="font-mono text-[11px] text-ink-3">deploy@198.51.100.77</p></td><td class="col-secondary">Ubuntu 24.04</td><td><%= meter nil %></td><td><%= meter nil %></td><td class="col-num">0</td><td class="col-truncate text-crit-ink">Ne répond plus sur le port SSH</td></tr>
     </tbody>
   </table>
-</section>
+  <%= rule.("col-num, col-truncate (texte entier en title), col-secondary (masquée sous 1280 px) : la page ne défile jamais de côté", "un tableau plus large que l'écran") %>
+<% end %>
 
-<section class="<%= section_class %>" id="design-form">
-  <h2 class="font-semibold">Formulaire</h2>
-  <div class="mt-3 grid gap-4 sm:grid-cols-2">
-    <div><label class="label" for="design-name">Nom</label><input id="design-name" class="input mt-1" placeholder="web-prod-1"></div>
-    <div><label class="label" for="design-host">Hôte</label><input id="design-host" class="input mt-1 font-mono" value="10.0.1.20"></div>
-  </div>
-</section>
+<%= form_with url: "#", method: :patch, id: "design-form", class: "mt-6 card px-5 py-5", data: { controller: "dirty-form" } do |form| %>
+  <%= form_section "Seuils de santé", "Au-delà, un serveur passe « à surveiller » ou « critique ». Modifiez un champ : la barre Enregistrer apparaît." do %>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <div><label class="label" for="design-disk-warn">Disque : attention (%)</label><input id="design-disk-warn" name="disk_warn" class="input mt-1" value="80"></div>
+      <div><label class="label" for="design-disk-crit">Disque : critique (%)</label><input id="design-disk-crit" name="disk_crit" class="input mt-1" value="90"></div>
+      <div><label class="label" for="design-host">Hôte</label><input id="design-host" name="host" class="input mt-1 font-mono" value="198.51.100.20"></div>
+    </div>
+  <% end %>
+  <%= form_section "Langue", "Pour les personnes qui n'ont pas choisi." do %>
+    <select id="design-language" name="language" class="input w-60" aria-label="Langue"><option>Français</option><option>English</option></select>
+  <% end %>
+  <%= save_bar form %>
+<% end %>

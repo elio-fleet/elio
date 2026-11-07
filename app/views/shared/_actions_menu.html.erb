@@ -1,0 +1,13 @@
+<%# The "⋯" menu (actions_menu helper): secondary and dangerous actions of a page or a row.
+    Locals: label (accessible name), id, align (:right / :left), items (menu_item / menu_separator, already rendered). %>
+<details <%= tag.attributes(id: id) %> class="actions-menu dropdown relative inline-block"
+         data-controller="dropdown" data-action="keydown->dropdown#keydown">
+  <summary class="btn btn-secondary list-none cursor-pointer px-2 [&::-webkit-details-marker]:hidden"
+           aria-haspopup="menu" aria-label="<%= label %>" title="<%= label %>">
+    <%= icon :ellipsis_horizontal, class: "h-4 w-4" %>
+  </summary>
+  <div role="menu" aria-label="<%= label %>" data-action="click->dropdown#chosen"
+       class="dropdown-menu absolute <%= align.to_s == "left" ? "left-0" : "right-0" %> z-30 mt-1 w-64 overflow-hidden rounded-lg border border-line bg-surface py-1 shadow-lg">
+    <%= items %>
+  </div>
+</details>
