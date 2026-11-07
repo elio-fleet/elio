@@ -25,6 +25,11 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
   # at a closed local port so no test reaches the network (or waits for it).
   setup { Server.update_all(host: "127.0.0.1", port: closed_port) }
 
+  # Start without the cookies of the previous test: a request of that test
+  # still running when Capybara reset the session (after its teardown) may
+  # have set its session cookie again (seen on GitHub: "already signed in").
+  setup { Capybara.reset_session! }
+
   # Let the frames still loading finish, so their requests cannot run into the
   # next test (and slow it down) once this one is over.
   teardown { page.has_no_selector?("turbo-frame[busy]", wait: 10) }
@@ -37,16 +42,19 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
 
   # The app replaces confirm() with its own dialog (app/javascript/confirm_dialog.js).
   # Looked up from the document root, whatever the current `within` scope.
+  # The buttons are pressed by a DOM click, not at mouse coordinates: on a
+  # slow machine the dialog may still be moving into place, and a click on
+  # its backdrop cancels.
   def accept_app_confirm(button = nil)
     yield
     dialog = page.document.find("#confirm-dialog[open]")
-    button ? dialog.click_on(button) : dialog.find("[data-confirm-accept]").click
+    (button ? dialog.find_button(button) : dialog.find("[data-confirm-accept]")).execute_script("this.click()")
     page.document.assert_no_selector "#confirm-dialog[open]"
   end
 
   def dismiss_app_confirm
     yield
-    page.document.find("#confirm-dialog[open]").click_on("Annuler")
+    page.document.find("#confirm-dialog[open]").find_button("Annuler").execute_script("this.click()")
     page.document.assert_no_selector "#confirm-dialog[open]"
   end
 end

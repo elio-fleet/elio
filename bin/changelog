@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+# The fragments of changelog.d/ (one per pull request):
+#   bin/changelog            shows what the next section of CHANGELOG.md would be
+#   bin/changelog <version>  writes it (dated today) and deletes the fragments
+require_relative "../lib/elio/changelog"
+
+changelog = Elio::Changelog.new(File.expand_path("..", __dir__))
+begin
+  if ARGV.empty?
+    puts changelog.fragments.empty? ? "No fragment in changelog.d/." : changelog.section
+  else
+    puts changelog.release!(ARGV.first)
+    puts "CHANGELOG.md: section #{ARGV.first} written, #{Dir["changelog.d/*.md"].size - 1} fragment(s) left."
+  end
+rescue Elio::Changelog::Error => e
+  warn e.message
+  exit 1
+end

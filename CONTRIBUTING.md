@@ -65,6 +65,6 @@ Extensions (Uptime Kuma, OVHcloud) bring what another tool knows next to each se
 
 - One topic per pull request, with its tests; `bin/ci` green.
 - [Conventional Commits](https://www.conventionalcommits.org/) (`feat(inventory): …`, `fix: …`), with a body that explains *why*.
-- Add a line to [CHANGELOG.md](CHANGELOG.md) under *Unreleased*.
+- Describe your change in a new file of [`changelog.d/`](changelog.d/README.md) (not in `CHANGELOG.md` itself): `bin/changelog` shows what the next release notes will look like.
 
 By contributing, you agree that your contribution is licensed under the [AGPL-3.0](LICENSE).
