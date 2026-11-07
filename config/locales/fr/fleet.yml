@@ -21,6 +21,7 @@ fr:
       more: Plus
       notes: Notes
     index:
+      all_groups: Tous les groupes
       check_every_server_answers: Vérifier que chaque serveur répond
       read_again_system_health: Relire le système, la santé et les services de tous les serveurs
       read_keys_every_server: Lire les clés de tous les serveurs
@@ -93,6 +94,10 @@ fr:
       answer: Pas de réponse
       inventory_yet: Pas encore d'inventaire
     form:
+      connection: Connexion
+      connection_help: Comment Elio joint ce serveur, en SSH. L'utilisateur doit pouvoir utiliser sudo sans mot de passe pour un inventaire complet.
+      addresses: Adresses
+      groups_help: Pour filtrer la liste et choisir les ports attendus.
       name: Nom
       web_production: Production web
       host_ip_domain_name: Hôte (IP ou nom de domaine)
@@ -106,8 +111,10 @@ fr:
       ip_addresses_through_which: Adresses IP par lesquelles ce serveur est joint mais qu'il ne voit pas lui-même (NAT, IP de basculement…). Les adresses de ses interfaces sont relevées par l'inventaire.
       groups: Groupes
     new:
+      subtitle: Elio s'y connecte en SSH, en lecture seule, avec sa clé.
       servers: "← Serveurs"
     edit:
+      modify: Modifier
       servers: "← Serveurs"
       delete_server: Supprimer le serveur
       edit_html: Modifier « %{name_was} »
@@ -243,6 +250,8 @@ fr:
       groups: "← Groupes"
       heading_html: Modifier le groupe « %{group_name} »
     index:
+      no_group: Aucun groupe
+      group_actions: Actions du groupe « %{group_name} »
       servers: "← Serveurs"
       new_group: Nouveau groupe
       edit: Modifier

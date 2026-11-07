@@ -2,13 +2,12 @@
 <% input_class = "input mt-1" %>
 <% label_class = "label" %>
 
-<div class="mx-auto max-w-4xl">
-  <%= link_to t(".servers"), servers_path, class: "text-sm text-ink-3 hover:text-ink-2" %>
-  <h1 class="mt-2 text-2xl font-bold tracking-tight"><%= t("command_palette.import_servers") %></h1>
+<div class="max-w-5xl">
+  <%= page_header t("command_palette.import_servers"), crumbs: [ [ t("nav.fleet"), servers_path ], t("command_palette.import_servers") ] %>
 
   <% if @rows %>
     <% counts = @rows.group_by(&:status).transform_values(&:size) %>
-    <section id="import-preview" class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
+    <section id="import-preview" class="card mb-5 p-5">
       <div class="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h2 class="text-lg font-semibold"><%= t(".preview") %></h2>
@@ -64,7 +63,7 @@
     </section>
   <% end %>
 
-  <section class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
+  <section class="card p-5">
     <%# Without Turbo: the preview is rendered in the response to the POST. %>
     <%= form_with url: preview_server_import_path, multipart: true, data: { turbo: false }, class: "space-y-5" do |f| %>
       <fieldset>

@@ -1,10 +1,7 @@
 <% content_for :title, t("title", page: t("server_groups.new.heading")) %>
 
-<div class="mx-auto max-w-2xl">
-  <%= link_to t(".groups"), server_groups_path, class: "text-sm text-ink-3 hover:text-ink-2" %>
-  <h1 class="mt-2 text-2xl font-bold tracking-tight"><%= t(".heading") %></h1>
+<%= page_header t(".heading"), crumbs: [ [ t("nav.fleet"), servers_path ], [ t("nav.server_groups"), server_groups_path ], t(".heading") ] %>
 
-  <div class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
-    <%= render "form", group: @group %>
-  </div>
+<div class="card max-w-4xl px-5 py-5">
+  <%= render "form", group: @group %>
 </div>

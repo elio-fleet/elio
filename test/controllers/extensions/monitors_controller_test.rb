@@ -108,15 +108,10 @@ class MonitorsControllerTest < ActionDispatch::IntegrationTest
     assert_select "select[name='integration[values][uptime_window]'] option[selected][value='30d']"
   end
 
-  test "the fleet shows the number of probes of each server" do
-    get servers_path
-    assert_select "#servers th", text: "Sondes"
-    assert_select "##{dom_id(servers(:web))} .server-monitors", text: "1"
-    assert_select "##{dom_id(servers(:db))} .server-monitors", text: "0"
-
-    @integration.update!(enabled: false)
+  test "the fleet list has no probe column: the probes are on the server page and the Probes page" do
     get servers_path
     assert_select "#servers th", text: "Sondes", count: 0
+    assert_select ".server-monitors", 0
   end
 
   test "the number of queries does not grow with the number of probes (AUDIT.md D1)" do

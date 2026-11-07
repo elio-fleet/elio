@@ -51,8 +51,8 @@ class ComponentsHelperTest < ActionView::TestCase
   test "view_toggle marks the current view" do
     render html: view_toggle([ [ "list", "Liste", :list_bullet, "/servers" ], [ "grid", "Grille", :squares_2x2, "/servers?view=grid" ] ], current: "grid")
 
-    assert_select ".view-toggle a[aria-current=true][data-view=grid]", "Grille"
-    assert_select ".view-toggle a[data-view=list]:not([aria-current])", 1
+    assert_select ".view-toggle a[aria-pressed=true][data-view=grid]", "Grille"
+    assert_select ".view-toggle a[aria-pressed=false][data-view=list]", 1
   end
 
   test "tabs: current tab, coloured count, select for small screens and More menu" do

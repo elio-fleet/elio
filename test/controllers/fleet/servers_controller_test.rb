@@ -301,7 +301,8 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?][data-turbo-confirm*='pas retirées'][data-turbo-confirm*='1 accès temporaire']", server_path(servers(:web))
 
     get edit_server_path(servers(:web))
-    assert_select "#danger-zone form[action=?] button", server_path(servers(:web)), text: /Supprimer le serveur/
+    assert_select ".page-actions details.actions-menu form[action=?][data-confirm-variant=danger] button.delete-server", server_path(servers(:web)), text: /Supprimer le serveur/
+    assert_select ".page-actions details.actions-menu form[action=?][data-turbo-confirm*='1 accès temporaire']", server_path(servers(:web))
   end
 
   test "the server page has one tab per section, the overview by default" do

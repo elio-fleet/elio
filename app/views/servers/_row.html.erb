@@ -2,15 +2,15 @@
 <% health = server.inventory("health")&.data || {} %>
 <tr id="<%= dom_id(server) %>" class="hover:bg-subtle/60">
   <td class="pl-4"><span class="inline-flex items-center gap-1.5 whitespace-nowrap"><%= render "servers/status", server: server, health: true %><%= render "servers/docker_pill", server: server %></span></td>
-  <td>
-    <div class="flex flex-wrap items-center gap-1.5">
-      <%= link_to server.name, server_path(server), class: "font-medium hover:text-accent hover:underline" %>
-      <%= render partial: "server_groups/badge", collection: server.server_groups, as: :group %>
-    </div>
-    <p class="server-address font-mono text-[11px] text-ink-3"><%= server.username %>@<%= server.host %><%= ":#{server.port}" unless server.port == 22 %></p>
-    <% if (hostname = server.distinct_hostname) %><p class="server-hostname font-mono text-[11px] text-ink-3" title="<%= t(".host_name_machine") %>"><%= hostname %></p><% end %>
+  <td class="min-w-0">
+    <%= link_to server.name, server_path(server), class: "font-medium hover:text-accent hover:underline" %>
+    <p class="flex flex-wrap items-center gap-x-2 text-[11px] text-ink-3">
+      <% server.server_groups.each do |group| %><%= group_tag group, path: servers_path(group: group.id) %><% end %>
+      <span class="server-address font-mono"><%= server.username %>@<%= server.host %><%= ":#{server.port}" unless server.port == 22 %></span>
+      <% if (hostname = server.distinct_hostname) %><span class="server-hostname truncate font-mono" title="<%= t(".host_name_machine") %>"><%= hostname %></span><% end %>
+    </p>
   </td>
-  <td class="server-os whitespace-nowrap text-xs"><%= render "servers/os", server: server %></td>
+  <td class="server-os col-secondary whitespace-nowrap text-xs"><%= render "servers/os", server: server %></td>
   <td class="server-load"><%= sparkline @load_history.fetch(server.id, []), max: 100, width: 60, title: t(".load_over_24_h") %></td>
   <td class="server-memory"><%= meter health.dig("memory", "used_percent"), warn: app_settings.health_memory_warn, crit: app_settings.health_memory_crit, width: "w-12" %></td>
   <td class="server-disk"><%= meter health["disk_max_percent"], warn: app_settings.health_disk_warn, crit: app_settings.health_disk_crit, width: "w-12" %></td>
@@ -24,18 +24,10 @@
       <span class="text-ink-3">—</span>
     <% end %>
   </td>
-  <% if @monitor_counts %>
-    <td class="server-monitors whitespace-nowrap text-xs">
-      <% total, down = @monitor_counts.fetch(server.id, [ 0, 0 ]) %>
-      <%= link_to server_path(server, tab: "monitors"), class: "hover:underline #{total.zero? ? "text-warn-ink" : "text-ink-2"}" do %>
-        <span class="tabular-nums"><%= total %></span><% if down.positive? %> <span class="badge bg-crit-soft text-crit-ink"><%= t(".down_html", down: down) %></span><% end %>
-      <% end %>
-    </td>
-  <% end %>
-  <td class="server-notes min-w-40 max-w-60 text-xs">
-    <div class="flex flex-wrap items-center gap-1.5">
+  <td class="server-notes max-w-64 text-xs">
+    <div class="flex min-w-0 items-center gap-1.5">
       <% if (reason = server.health_reason_texts.first) %>
-        <span class="<%= server.health_state == "crit" ? "text-crit-ink" : "text-warn-ink" %>"><%= reason %></span>
+        <span class="truncate <%= server.health_state == "crit" ? "text-crit-ink" : "text-warn-ink" %>" title="<%= reason %>"><%= reason %></span>
         <% if server.health_reason_texts.size > 1 %><span class="text-ink-3" title="<%= server.health_reason_texts.drop(1).join(" · ") %>">+<%= server.health_reason_texts.size - 1 %></span><% end %>
       <% elsif server.ssh_ok == false %>
         <%= render "servers/ssh_status", server: server %>

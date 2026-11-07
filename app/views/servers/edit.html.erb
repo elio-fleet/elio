@@ -1,20 +1,14 @@
 <% content_for :title, t("title", page: t(".title", name: @server.name_was)) %>
+<% temporary = @server.temporary_accesses.active.count %>
+<% warning = t("servers.delete_button.warning", server_name: @server.name_was) + (temporary.positive? ? t("servers.delete_button.temporary_warning", count: temporary) : "") %>
 
-<div class="mx-auto max-w-xl">
-  <%= link_to t(".servers"), servers_path, class: "text-sm text-ink-3 hover:text-ink-2" %>
-  <h1 class="mt-2 text-2xl font-bold tracking-tight"><%= t(".edit_html", name_was: @server.name_was) %></h1>
+<%= page_header t(".edit_html", name_was: @server.name_was), crumbs: [ [ t("nav.fleet"), servers_path ], [ @server.name_was, server_path(@server) ], t(".modify") ] do %>
+  <%= actions_menu do %>
+    <%= menu_item t(".delete_server"), server_path(@server), icon: :trash, method: :delete, danger: true, confirm: warning,
+                  data: { confirm_label: t("servers.delete_button.delete_server") }, class: "delete-server" %>
+  <% end %>
+<% end %>
 
-  <div class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
-    <%= render "form", server: @server %>
-  </div>
-
-  <section id="danger-zone" class="mt-6 rounded-xl border border-crit/40 bg-surface p-6 shadow-sm">
-    <h2 class="text-base font-semibold text-crit-ink"><%= t(".delete_server_2") %></h2>
-    <p class="mt-1 text-sm text-ink-2">
-      <%= t(".server_removed_elio_keys") %>
-    </p>
-    <div class="mt-4">
-      <%= render "servers/delete_button", server: @server, label: t(".delete_server") %>
-    </div>
-  </section>
+<div class="card max-w-4xl px-5 py-5">
+  <%= render "form", server: @server %>
 </div>
