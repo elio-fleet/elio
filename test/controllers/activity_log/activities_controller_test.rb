@@ -86,4 +86,16 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
     get activities_path
     assert_select "p", text: "Aucune activité pour le moment."
   end
+
+  test "the journal has two tabs: events and runs" do
+    sign_in users(:viewer)
+    get activities_path
+    assert_select "nav.journal-tabs a.tab[aria-current=page][data-tab=events]", text: "Événements"
+    assert_select "nav.journal-tabs a.tab[data-tab=runs][href=?]", tasks_path, text: /Exécutions/
+    assert_select "h1", "Journal"
+
+    get tasks_path
+    assert_select "nav.journal-tabs a.tab[aria-current=page][data-tab=runs]"
+    assert_select "nav.main-nav a[aria-current=page]", text: "Journal"
+  end
 end

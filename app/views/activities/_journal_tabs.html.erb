@@ -1,0 +1,5 @@
+<%# The two tabs of the Journal: what happened (activities) and what Elio ran (background tasks). Locals: current ("events" / "runs"). %>
+<% running = BackgroundTask.unfinished.count %>
+<%= tabs [ { key: "events", label: t("nav.activity"), path: activities_path },
+           { key: "runs", label: t("nav.tasks"), path: tasks_path, count: running.nonzero? } ],
+         current: current, label: t("nav.journal"), class: "journal-tabs" %>
