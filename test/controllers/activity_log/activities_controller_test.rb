@@ -22,7 +22,7 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
       assert_select "a[href=?]", server_path(servers(:web))
       assert_select ".severity-info"
     end
-    assert_select "nav.main-nav a[aria-current=page]", text: "Activité"
+    assert_select "nav.main-nav a[aria-current=page]", text: "Journal"
   end
 
   test "filters by category" do

@@ -14,21 +14,21 @@ class SettingsPagesTest < ActionDispatch::IntegrationTest
   test "settings pages share tabs, the current one highlighted" do
     sign_in users(:one)
 
-    { settings_path => "Général", settings_notifications_path => "Notifications", settings_users_path => "Utilisateurs",
+    { settings_path => "Général", settings_notifications_path => "Notifications", settings_users_path => "Utilisateurs", settings_automations_path => "Automatisations",
       settings_vulnerabilities_path => "Vulnérabilités", settings_docker_path => "Docker", settings_firewall_path => "Firewall", settings_integrations_path => "Extensions" }.each do |path, label|
       get path
-      assert_select "nav.settings-nav a", 7
+      assert_select "nav.settings-nav a", 8
       assert_select "nav.settings-nav a[aria-current=page]", label
       assert_select "nav.main-nav a[aria-current=page]", "Paramètres"
     end
   end
 
-  test "the automations page is only in the sidebar, not in the settings tabs" do
+  test "the automations are a page of the settings, not an entry of the sidebar" do
     sign_in users(:one)
     get settings_automations_path
-    assert_select "nav.settings-nav", 0
-    assert_select "h1", "Automatisations"
-    assert_select "nav.main-nav a[aria-current=page]", "Automatisations"
+    assert_select "nav.settings-nav a[aria-current=page]", "Automatisations"
+    assert_select "nav.main-nav a[href=?]", settings_automations_path, 0
+    assert_select "nav.main-nav a[aria-current=page]", "Paramètres"
   end
 
   test "the general settings keep the SSH key" do

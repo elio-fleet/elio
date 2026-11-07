@@ -1,17 +1,20 @@
 en:
   nav:
     overview: Overview
-    fleet: Fleet
-    packages: Packages
+    fleet: Servers
+    packages: Updates
     vulnerabilities: Vulnerabilities
     docker: Docker
     ports: Ports
     scheduled_tasks: Scheduled tasks
-    keyring: Keyring
-    activity: Activity
-    tasks: Tasks
-    tasks_title: Background tasks
+    keyring: SSH keys
+    activity: Events
+    tasks: Runs
+    tasks_title: "Journal: events and background runs"
     automations: Automations
+    journal: Journal
+    probes: Probes
+    hosting: Hosting
     settings: Settings
     server_groups: Server groups
     account: My account
@@ -19,10 +22,10 @@ en:
     pages: Pages
     groups: Groups
     servers: Servers
-    keyring: Keyring
+    keyring: SSH keys
     hints:
       fleet: servers
-      packages: search the whole fleet
+      packages: updates and package search
       ports: public ports of the fleet
       scheduled_tasks: cron jobs and timers of the fleet
       vulnerabilities: CVEs of the fleet
@@ -73,9 +76,10 @@ en:
   layouts:
     sidebar:
       close_menu: Close the menu
+      fleet_wide: Across the fleet
+      access: Access
+      extensions: Extensions
       main_navigation: Main navigation
-      groups: Groups
-      manage: Manage
       dark_theme: Dark theme
       sign_out: Sign out
     application:
@@ -274,7 +278,7 @@ en:
     cvss_score: CVSS score
     exploitation: exploitation
     a_records: A / AAAA records
-    back_keyring: "← Keyring"
+    back_keyring: "← SSH keys"
     unknown: unknown
     container_name: container %{name}
     available: available

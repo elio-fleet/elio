@@ -65,7 +65,7 @@ class ServerShowTest < ApplicationSystemTestCase
     JS
     accept_app_confirm("Supprimer le serveur") { }
 
-    assert_selector "h1", text: "Parc"
+    assert_selector "h1", text: "Serveurs"
     assert_text "Le serveur « Backup » a été supprimé d'Elio."
   end
 
@@ -77,7 +77,7 @@ class ServerShowTest < ApplicationSystemTestCase
 
     accept_app_confirm("Supprimer le serveur") { first("button.delete-server").click }
 
-    assert_selector "h1", text: "Parc"
+    assert_selector "h1", text: "Serveurs"
     assert_text "Le serveur « Backup » a été supprimé d'Elio."
     assert_no_selector "#servers", text: "Backup"
 

@@ -1,7 +1,7 @@
 <% content_for :title, t("title", page: t("nav.automations")) %>
-<h1 class="text-2xl font-bold tracking-tight"><%= t("words.automations") %></h1>
+<%= render "settings/nav" %>
 
-<p class="mt-2 text-sm text-ink-3">
+<p class="mt-6 text-sm text-ink-3">
   <%= t(".intro_html", activity: link_to(t(".activity"), activities_path, class: "font-medium text-accent hover:underline"), tasks: link_to(t(".tasks"), tasks_path, class: "font-medium text-accent hover:underline")) %>
 </p>
 

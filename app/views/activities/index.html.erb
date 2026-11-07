@@ -1,8 +1,8 @@
-<% content_for :title, t("title", page: t("nav.activity")) %>
+<% content_for :title, t("title", page: t("nav.journal")) %>
 
 <div class="flex flex-wrap items-end justify-between gap-4">
   <div>
-    <h1 class="text-2xl font-bold tracking-tight"><%= t("nav.activity") %></h1>
+    <h1 class="text-2xl font-bold tracking-tight"><%= t("nav.journal") %></h1>
     <p class="mt-1 text-sm text-ink-3">
       <%= (@server ? t(".history_on", server_name: @server.name) : t(".history")) %>.
       <% if @server %><%= link_to t(".see_all"), activities_path(category: @category), class: "font-medium text-accent hover:text-accent" %><% end %>

@@ -76,7 +76,7 @@ class NotificationBatchesTest < ActiveJob::TestCase
     assert_nil group.url
 
     with_default_url_options(host: "elio.example.com", protocol: "https") do
-      assert_equal "https://elio.example.com/activities?kind=unknown_key_detected", group.url
+      assert_equal "https://elio.example.com/journal?kind=unknown_key_detected", group.url
     end
   end
 

@@ -1,8 +1,8 @@
-<% content_for :title, t("title", page: "OVHcloud") %>
+<% content_for :title, t("title", page: t("nav.hosting")) %>
 
 <div class="flex flex-wrap items-end justify-between gap-4">
   <div>
-    <h1 class="text-xl font-semibold">OVHcloud</h1>
+    <h1 class="text-xl font-semibold"><%= t("nav.hosting") %></h1>
     <p class="text-xs text-ink-3">
       <%= t(".resources_ovhcloud_account_attached") %><% if @integration.last_synced_at %><%= t(".synchronized_html", last_synced_at: (relative_time_tag @integration.last_synced_at)) %><% end %>.
       <% if @integration.last_error %><span class="text-crit-ink"><%= t(".last_sync_failed_html", last_error: @integration.last_error) %></span><% end %>

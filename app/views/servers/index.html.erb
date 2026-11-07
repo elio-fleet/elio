@@ -5,7 +5,7 @@
 
   <div class="flex flex-wrap items-start justify-between gap-4">
     <div>
-      <h1 class="text-xl font-semibold"><%= t("words.fleet") %></h1>
+      <h1 class="text-xl font-semibold"><%= t("nav.fleet") %></h1>
       <p class="text-xs text-ink-3">
         <%= t("count.servers", count: @summary.total) %>
         <% if @summary.last_inventory_at %> <%= t("dashboard.index.inventory_html", last_inventory_at: (relative_time_tag @summary.last_inventory_at)) %><% end %>

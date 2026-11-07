@@ -212,7 +212,7 @@ class PublicKeysControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     get new_public_key_path(return_to: "https://evil.example")
 
-    assert_select "a[href=?]", public_keys_path, text: "← Trousseau"
+    assert_select "a[href=?]", public_keys_path, text: "← Clés SSH"
     assert_select "input[name=return_to]", 0
   end
 

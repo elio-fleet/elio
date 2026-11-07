@@ -30,9 +30,9 @@ class MobileTest < ApplicationSystemTestCase
 
   test "the sidebar opens as a drawer" do
     visit root_path
-    assert_no_selector "nav.main-nav a", text: "Parc" # off screen
+    assert_no_selector "nav.main-nav a", text: "Serveurs" # off screen
     find("button[aria-label='Ouvrir le menu']").click
-    within("nav.main-nav") { click_on "Tâches" }
-    assert_selector "h1", text: "Tâches"
+    within("nav.main-nav") { click_on "Journal" }
+    assert_selector "h1", text: "Journal"
   end
 end

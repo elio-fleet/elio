@@ -56,7 +56,7 @@ class Integrations::UptimeKuma < Integrations::Base
 
     def server_tabs = [ { key: "monitors", label: I18n.t("integrations.uptime_kuma.monitors"), count: ->(server) { server.uptime_kuma_monitors.size } } ]
 
-    def sidebar_links = [ { label: I18n.t("integrations.uptime_kuma.monitors"), path: :monitors_path, icon: :signal, controller: "monitors" } ]
+    def sidebar_links = [ { label: I18n.t("nav.probes"), path: :monitors_path, icon: :signal, controller: "monitors", position: 1 } ]
 
     def help_partial = "integrations/uptime_kuma/help"
 

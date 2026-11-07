@@ -74,20 +74,21 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     get root_path
     assert_select "nav.main-nav a[aria-current=page]", text: "Vue d'ensemble"
-    assert_select "nav.main-nav a[href=?]", servers_path, text: /Parc\s*3/
-    assert_select "nav.main-nav a[href=?]", public_keys_path, text: /Trousseau\s*2/
+    assert_select "nav.main-nav a[href=?]", servers_path, text: /Serveurs\s*3/
+    assert_select "nav.main-nav a[href=?]", public_keys_path, text: "Clés SSH"
     assert_select ".sidebar a.elio-version", "Elio #{Elio::VERSION}"
-    assert_select "nav.main-nav a[href=?]", settings_automations_path, text: "Automatisations"
-    assert_select "nav.sidebar-groups a[href=?]", servers_path(group: server_groups(:production).id), text: /Production/
+    assert_select "nav.main-nav a[href=?]", settings_automations_path, 0
+    assert_select "nav.main-nav p.sidebar-section", %w[Sur\ tout\ le\ parc Accès].size # Extensions: only with one enabled
+    assert_select "nav.sidebar-groups", 0 # the groups are a filter of the server list
 
     get server_path(servers(:web))
-    assert_select "nav.main-nav a[aria-current=page]", text: /Parc/
+    assert_select "nav.main-nav a[aria-current=page]", text: /Serveurs/
 
     get servers_path(group: server_groups(:production).id)
-    assert_select "nav.sidebar-groups a[aria-current=page]", text: /Production/
+    assert_select "nav.main-nav a[aria-current=page]", text: /Serveurs/
 
     get public_keys_path
-    assert_select "nav.main-nav a[aria-current=page]", text: /Trousseau/
+    assert_select "nav.main-nav a[aria-current=page]", text: "Clés SSH"
 
     sign_in users(:viewer)
     get root_path
@@ -132,7 +133,7 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "#recent-activity li.activity", 8
     assert_select "#recent-activity a[href=?]", activities_path, text: "Tout voir"
-    assert_select "nav.main-nav a[href=?]", activities_path, text: "Activité"
+    assert_select "nav.main-nav a[href=?]", activities_path, text: "Journal"
   end
 
   test "shows the fleet figures" do

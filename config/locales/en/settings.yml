@@ -13,6 +13,7 @@ en:
       title: Settings
       general: General
       notifications: Notifications
+      automations: Automations
       users: Users
       vulnerabilities: Vulnerabilities
       docker: Docker

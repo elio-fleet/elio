@@ -35,8 +35,8 @@ class Integration < ApplicationRecord
     # Sidebar links of the enabled extensions: [{ label:, path:, icon:, controller: }], and the DNS page.
     def sidebar_links
       links = enabled_kinds.flat_map { |integration| integration.definition.sidebar_links }
-      links << { label: I18n.t("dns_records.tab"), path: :dns_records_path, icon: :globe, controller: "dns_records" } if Dns.enabled?
-      links
+      links << { label: I18n.t("dns_records.tab"), path: :dns_records_path, icon: :globe, controller: "dns_records", position: 2 } if Dns.enabled?
+      links.sort_by { |link| link.fetch(:position, 9) }
     end
 
     # Health reasons the enabled extensions raise for a server.
