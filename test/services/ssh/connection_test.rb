@@ -79,6 +79,17 @@ class Ssh::ConnectionTest < ActiveSupport::TestCase
     assert result.success?
   end
 
+  test "outputs are UTF-8 text, even when an accent is cut between two chunks; bytes that are not UTF-8 are replaced" do
+    fake = FakeSsh.new(responses: { "cat" => FakeSsh::Response.new("# Sauvegarde réseau — été\n", "fichier introuvable : é\xFF".b, 1) })
+
+    result = connect(servers(:web), fake) { |ssh| ssh.exec("cat") }
+
+    assert_equal [ Encoding::UTF_8, Encoding::UTF_8 ], [ result.stdout.encoding, result.stderr.encoding ]
+    assert_equal "# Sauvegarde réseau — été\n", result.stdout
+    assert_equal "fichier introuvable : é\uFFFD", result.stderr
+    assert_equal %({"out":"# Sauvegarde réseau — été\\n"}), JSON.generate({ "out" => result.stdout }), "json 3.1 refuses BINARY text with accents"
+  end
+
   test "exec does not raise on a failing command" do
     fake = FakeSsh.new(responses: { "cat /missing" => FakeSsh::Response.new("", "No such file or directory\n", 1) })
 
