@@ -1,6 +1,6 @@
 <% content_for :title, t("title", page: t(".title")) %>
 
-<h2 class="text-xl font-semibold"><%= t(".heading") %></h2>
+<h2 class="text-base font-semibold"><%= t(".heading") %></h2>
 <p class="mt-1 mb-6 text-sm text-ink-3">
   <%= t(".intro_html", inviter: @invitation.invited_by.email, role: @invitation.role_label) %>
 </p>

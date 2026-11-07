@@ -1,6 +1,6 @@
 <% content_for :title, t("title", page: t(".title")) %>
 
-<h2 class="text-xl font-semibold"><%= t(".title") %></h2>
+<h2 class="text-base font-semibold"><%= t(".title") %></h2>
 <p class="mt-2 text-sm text-ink-2"><%= t(".text") %></p>
 <p class="mt-1 text-sm text-ink-3"><%= t(".ask") %></p>
 <%= link_to t(".sign_in"), new_user_session_path, class: "btn btn-primary mt-6" %>

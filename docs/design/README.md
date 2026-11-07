@@ -1,5 +1,8 @@
 # Interface d'Elio — direction A « Console »
 
+> Le design system en usage : la page `/design` de l'application (hors production) et `app/helpers/components_helper.rb`. Ce dossier garde les premières maquettes, pour l'historique.
+
+
 Choisie le 2026-10-31 parmi trois maquettes. Référence pour la refonte de l'interface (phase 3 du plan).
 
 ![Direction A](direction-a.png)

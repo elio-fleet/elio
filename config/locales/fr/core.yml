@@ -74,6 +74,8 @@ fr:
       next: Suivante
       page: Page %{number}
   layouts:
+    auth:
+      tagline: "Elio %{version} · surveillance du parc, en lecture seule"
     sidebar:
       close_menu: Fermer le menu
       fleet_wide: Sur tout le parc
