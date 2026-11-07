@@ -38,6 +38,9 @@ en:
       back_key: "← Back to the key"
       heading_html: Edit “%{name_was}”
     index:
+      subtitle: The public keys Elio knows and the servers where they give access
+      scan_keys: Scan the keys of the fleet
+      keyring_empty_hint: Add the keys of the people and services to know who has access to what, and to spot unknown keys on the servers.
       all: All
       people: People
       servers: Servers
