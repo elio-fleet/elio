@@ -76,7 +76,7 @@ class Integrations::Ovh < Integrations::Base
 
     def server_tabs = [ { key: "ovh", label: "OVH", count: ->(server) { server.ovh_resources.size.nonzero? } } ]
 
-    def sidebar_links = [ { label: "OVHcloud", path: :ovh_path, icon: :globe, controller: "ovh" } ]
+    def sidebar_links = [ { label: I18n.t("nav.hosting"), path: :ovh_path, icon: :cloud, controller: "ovh", position: 3 } ]
 
     def help_partial = "integrations/ovh/help"
 

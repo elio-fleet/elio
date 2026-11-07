@@ -1,17 +1,20 @@
 fr:
   nav:
     overview: Vue d'ensemble
-    fleet: Parc
-    packages: Paquets
+    fleet: Serveurs
+    packages: Mises à jour
     vulnerabilities: Vulnérabilités
     docker: Docker
     ports: Ports
     scheduled_tasks: Tâches planifiées
-    keyring: Trousseau
-    activity: Activité
-    tasks: Tâches
-    tasks_title: Tâches en arrière-plan
+    keyring: Clés SSH
+    activity: Événements
+    tasks: Exécutions
+    tasks_title: "Journal : événements et exécutions en arrière-plan"
     automations: Automatisations
+    journal: Journal
+    probes: Sondes
+    hosting: Hébergement
     settings: Paramètres
     server_groups: Groupes de serveurs
     account: Mon compte
@@ -19,10 +22,10 @@ fr:
     pages: Pages
     groups: Groupes
     servers: Serveurs
-    keyring: Trousseau
+    keyring: Clés SSH
     hints:
       fleet: serveurs
-      packages: recherche sur tout le parc
+      packages: mises à jour et recherche de paquet
       ports: ports publics du parc
       scheduled_tasks: cron et timers du parc
       vulnerabilities: CVE du parc
@@ -73,9 +76,10 @@ fr:
   layouts:
     sidebar:
       close_menu: Fermer le menu
+      fleet_wide: Sur tout le parc
+      access: Accès
+      extensions: Extensions
       main_navigation: Navigation principale
-      groups: Groupes
-      manage: Gérer
       dark_theme: Thème sombre
       sign_out: Déconnexion
     application:
@@ -274,7 +278,7 @@ fr:
     cvss_score: note CVSS
     exploitation: exploitation
     a_records: enregistrements A / AAAA
-    back_keyring: "← Trousseau"
+    back_keyring: "← Clés SSH"
     unknown: inconnu
     container_name: conteneur %{name}
     available: disponible

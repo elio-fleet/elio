@@ -1,8 +1,8 @@
 <%# Sidebar of the signed-in pages (direction A): always visible from `lg`, a drawer below (sidebar_controller.js). %>
-<% settings_active = controller_path.start_with?("settings") && controller_name != "automations" %>
+<% settings_active = controller_path.start_with?("settings") %>
 <div data-sidebar-target="backdrop" data-action="click->sidebar#close" class="fixed inset-0 z-30 hidden bg-black/40 lg:hidden"></div>
 <aside data-sidebar-target="panel"
-       class="sidebar fixed inset-y-0 left-0 z-40 flex w-60 -translate-x-full flex-col border-r border-line bg-surface px-3 py-4 transition-transform lg:translate-x-0">
+       class="sidebar fixed inset-y-0 left-0 z-40 flex w-60 -translate-x-full flex-col border-r border-line bg-surface overflow-y-auto px-3 py-4 transition-transform lg:translate-x-0">
   <div class="flex items-center justify-between">
     <%= link_to root_path, class: "flex items-center gap-2 px-1 text-base font-semibold tracking-tight text-ink" do %>
       <span class="grid h-7 w-7 place-items-center rounded-lg bg-accent-fill text-white"><%= icon :server_stack, class: "h-4 w-4" %></span>
@@ -13,46 +13,42 @@
 
   <%= render "shared/command_palette_button" %>
 
-  <nav class="main-nav mt-4 space-y-0.5" aria-label="<%= t(".main_navigation") %>">
-    <%= sidebar_link t("nav.overview"), root_path, icon: :squares_2x2, active: controller_name == "dashboard" %>
-    <%= sidebar_link t("nav.fleet"), servers_path, icon: :server_stack, count: Server.count,
-                     active: controller_name.start_with?("server") && controller_name != "server_groups" %>
-    <%= sidebar_link t("nav.packages"), packages_path, icon: :cube, active: controller_name == "packages" %>
-    <%= sidebar_link t("nav.vulnerabilities"), vulnerabilities_path, icon: :shield_exclamation, active: controller_name == "vulnerabilities" && !controller_path.start_with?("settings") %>
-    <%= sidebar_link t("nav.docker"), docker_path, icon: :docker, active: controller_path == "docker" %>
-    <%= sidebar_link t("nav.ports"), ports_path, icon: :globe, active: controller_name == "ports" %>
-    <%= sidebar_link t("nav.scheduled_tasks"), scheduled_tasks_path, icon: :calendar, active: controller_name == "scheduled_tasks" %>
-    <% Integration.sidebar_links.each do |link| %>
-      <%= sidebar_link link[:label], public_send(link[:path]), icon: link[:icon], active: controller_path == link[:controller], data: { integration_link: true } %>
-    <% end %>
-    <%= sidebar_link t("nav.keyring"), public_keys_path, icon: :key, count: PublicKey.count, active: controller_name == "public_keys" %>
-    <%= sidebar_link t("nav.activity"), activities_path, icon: :pulse, active: controller_name == "activities" %>
-    <%= sidebar_link t("nav.tasks"), tasks_path, icon: :clock, count: BackgroundTask.unfinished.count.nonzero?, active: controller_name == "tasks",
-                     id: "sidebar-tasks", title: t("nav.tasks_title") %>
-    <% if can?(:administer) %>
-      <%= sidebar_link t("nav.automations"), settings_automations_path, icon: :bolt, active: controller_path == "settings/automations" %>
-      <%= sidebar_link t("nav.settings"), settings_path, icon: :cog, active: settings_active, title: t("nav.settings") %>
-    <% end %>
-  </nav>
-
-  <% groups = sidebar_server_groups %>
-  <% if groups.any? %>
-    <div class="mt-6 flex items-center justify-between px-2.5">
-      <p class="text-[11px] font-semibold tracking-wider text-ink-3 uppercase"><%= t(".groups") %></p>
-      <%= link_to t(".manage"), server_groups_path, class: "text-[11px] text-ink-3 hover:text-ink" %>
+  <% counts = SidebarCounts.new %>
+  <nav class="main-nav mt-4" aria-label="<%= t(".main_navigation") %>">
+    <div class="space-y-0.5">
+      <%= sidebar_link t("nav.overview"), root_path, icon: :squares_2x2, active: controller_name == "dashboard" %>
+      <%= sidebar_link t("nav.fleet"), servers_path, icon: :server_stack, count: counts.servers.value,
+                       active: controller_name.start_with?("server") %>
     </div>
-    <nav class="sidebar-groups mt-1 space-y-0.5" aria-label="<%= t("nav.server_groups") %>">
-      <% groups.each do |group| %>
-        <% active = controller_name == "servers" && params[:group].to_s == group.id.to_s %>
-        <%= link_to servers_path(group: group.id), aria: { current: (active ? "page" : nil) },
-              class: "flex items-center gap-2 rounded-lg px-2.5 py-1 text-sm #{active ? "bg-subtle text-ink" : "text-ink-2 hover:bg-subtle hover:text-ink"}" do %>
-          <span class="h-2 w-2 rounded-full <%= group.dot_classes %>"></span>
-          <span class="truncate"><%= group.name %></span>
-          <span class="ml-auto text-xs text-ink-3"><%= group.servers_count %></span>
+    <%= sidebar_section t(".fleet_wide") %>
+    <div class="space-y-0.5">
+      <%= sidebar_link t("nav.vulnerabilities"), vulnerabilities_path, icon: :shield_exclamation, count: counts.vulnerabilities,
+                       active: controller_name == "vulnerabilities" && !controller_path.start_with?("settings") %>
+      <%= sidebar_link t("nav.packages"), packages_path, icon: :arrow_up_circle, active: controller_name == "packages" %>
+      <%= sidebar_link t("nav.docker"), docker_path, icon: :docker, count: counts.docker, active: controller_path == "docker" %>
+      <%= sidebar_link t("nav.ports"), ports_path, icon: :arrows_right_left, active: controller_name == "ports" %>
+      <%= sidebar_link t("nav.scheduled_tasks"), scheduled_tasks_path, icon: :calendar, count: counts.scheduled_tasks, active: controller_name == "scheduled_tasks" %>
+    </div>
+    <%= sidebar_section t(".access") %>
+    <div class="space-y-0.5">
+      <%= sidebar_link t("nav.keyring"), public_keys_path, icon: :key, active: controller_name == "public_keys" %>
+    </div>
+    <% if (links = Integration.sidebar_links).any? %>
+      <%= sidebar_section t(".extensions") %>
+      <div class="space-y-0.5">
+        <% links.each do |link| %>
+          <%= sidebar_link link[:label], public_send(link[:path]), icon: link[:icon], active: controller_path == link[:controller], data: { integration_link: true } %>
         <% end %>
+      </div>
+    <% end %>
+    <div class="mt-4 space-y-0.5 border-t border-line pt-3">
+      <%= sidebar_link t("nav.journal"), activities_path, icon: :document_text, count: counts.running_tasks,
+                       active: controller_name.in?(%w[activities tasks]), id: "sidebar-tasks", title: t("nav.tasks_title") %>
+      <% if can?(:administer) %>
+        <%= sidebar_link t("nav.settings"), settings_path, icon: :cog, active: settings_active, title: t("nav.settings") %>
       <% end %>
-    </nav>
-  <% end %>
+    </div>
+  </nav>
 
   <div class="mt-auto space-y-1 border-t border-line pt-3">
     <%= link_to account_path, title: t("nav.account"), aria: { current: (controller_name == "accounts" ? "page" : nil) },

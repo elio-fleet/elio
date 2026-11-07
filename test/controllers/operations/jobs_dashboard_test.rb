@@ -38,7 +38,7 @@ class JobsDashboardTest < ActionDispatch::IntegrationTest
     get "/jobs"
     follow_redirect! while response.redirect?
 
-    get "/activities"
+    get "/journal"
     assert_response :success
     assert_equal "jeudi", I18n.t("date.day_names", locale: :fr)[4]
   end

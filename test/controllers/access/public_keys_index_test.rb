@@ -73,7 +73,7 @@ class PublicKeysIndexTest < ActionDispatch::IntegrationTest
       assert_select ".key-name", "bob@laptop"
       assert_select ".key-places a", 3
       assert_select ".key-places a[href=?]", server_path(servers(:web), tab: "keys"), text: "Web (root)"
-      assert_select "a.add-to-keyring[href*='return_to=%2Fkeys%3Fkind%3Doutside']"
+      assert_select "a.add-to-keyring[href*='return_to=%2Fssh-keys%3Fkind%3Doutside']"
     end
     assert_select "li.outside-key:last-child .key-name", "Sans nom"
 

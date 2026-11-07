@@ -22,7 +22,7 @@ class TasksTest < ApplicationSystemTestCase
     assert_selector "#task-status[data-status=failed]", text: "En échec", wait: 6
     assert_selector "tr.task-item", text: "Clé d'Elio refusée"
 
-    find("#sidebar-tasks").click
+    click_on "Exécutions" # breadcrumb of the run
     assert_selector "tr.background-task", text: "Inventaire de « Web »"
     click_on "En échec"
     assert_selector "nav.task-filters a[aria-current=page]", text: "En échec"

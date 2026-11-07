@@ -90,18 +90,17 @@ module UiHelper
   end
 
   # Link of the sidebar navigation, highlighted (and aria-current) when active.
+  # count: a number (neutral) or a SidebarCounts::Count (coloured by its tone).
   def sidebar_link(label, path, icon:, active:, count: nil, **options)
     classes = "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm #{active ? "bg-accent-soft font-medium text-accent" : "text-ink-2 hover:bg-subtle hover:text-ink"}"
+    value, tone = count.respond_to?(:tone) ? [ count.value, count.tone ] : [ count, nil ]
+    badge = { crit: "rounded-full bg-crit-soft px-1.5 font-semibold text-crit-ink", warn: "rounded-full bg-warn-soft px-1.5 font-semibold text-warn-ink" }.fetch(tone, "text-ink-3")
     link_to path, class: classes, aria: { current: (active ? "page" : nil) }, **options do
-      safe_join([ icon(icon, class: "h-4 w-4"), tag.span(label), (tag.span(count, class: "ml-auto text-xs text-ink-3") if count) ].compact)
+      safe_join([ icon(icon, class: "h-4 w-4"), tag.span(label), (tag.span(value, class: "sidebar-count ml-auto text-xs tabular-nums #{badge}", data: { tone: tone }) if value) ].compact)
     end
   end
 
-  # Server groups listed in the sidebar, with their number of servers.
-  def sidebar_server_groups
-    ServerGroup.left_joins(:memberships).group(:id).order(:name)
-               .select("server_groups.*, COUNT(server_group_memberships.id) AS servers_count")
-  end
+  def sidebar_section(label) = tag.p(label, class: "sidebar-section px-2.5 pt-4 pb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase")
 
   # Line chart of a percentage over time (24 h by default), stretched to the
   # width of its container: grid at 0/50/100 %, optional dashed threshold, and

@@ -139,6 +139,6 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
 
     sign_in users(:viewer)
     get root_path
-    assert_select "nav.main-nav a#sidebar-tasks[href=?]", tasks_path, text: /Tâches\s*1/
+    assert_select "nav.main-nav a#sidebar-tasks[href=?]", activities_path, text: /Journal\s*1/
   end
 end

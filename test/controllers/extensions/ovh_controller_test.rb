@@ -31,7 +31,7 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:viewer)
     get ovh_path
 
-    assert_select "nav.main-nav a[data-integration-link][aria-current=page]", "OVHcloud"
+    assert_select "nav.main-nav a[data-integration-link][aria-current=page]", "Hébergement"
     assert_select "#stat-ovh-services .stat-value", "3"
     assert_select "#stat-ovh-unattached .stat-value", "1"
     assert_select "#stat-ovh-expiring .stat-value", "1"

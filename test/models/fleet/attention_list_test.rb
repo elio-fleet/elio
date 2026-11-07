@@ -23,7 +23,7 @@ class AttentionListTest < ActiveSupport::TestCase
                                               collected_at: Time.current, checked_at: Time.current)
 
     item = list.items.sole
-    assert_equal [ "warn", "1 serveur", "2 mises à jour de sécurité en attente", "/packages" ], [ item.tone, item.subject, item.text, item.path ]
+    assert_equal [ "warn", "1 serveur", "2 mises à jour de sécurité en attente", "/updates" ], [ item.tone, item.subject, item.text, item.path ]
   end
 
   test "Docker apart: the servers whose Docker is to watch or critical, never in the main list" do

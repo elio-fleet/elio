@@ -13,6 +13,7 @@ fr:
       title: Paramètres
       general: Général
       notifications: Notifications
+      automations: Automatisations
       users: Utilisateurs
       vulnerabilities: Vulnérabilités
       docker: Docker
