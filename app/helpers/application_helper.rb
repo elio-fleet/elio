@@ -11,13 +11,6 @@ module ApplicationHelper
     { data: { controller: "quiet-submit", action: "turbo:submit-start->server-ping#start turbo:submit-end->server-ping#finish", server_ping_badge_param: badge_id }.compact }
   end
 
-  # Status filters as pills (activity, tasks, keyring, probes…).
-  def filter_pill(label, path, active:, count: nil, **options)
-    classes = "rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset #{active ? "bg-accent-fill text-white ring-accent-fill" : "bg-surface text-ink-2 ring-line hover:bg-subtle"}"
-    link_to path, class: classes, aria: { current: (active ? "page" : nil) }, **options do
-      safe_join([ label, (tag.span(" #{count}", class: "tabular-nums opacity-70") if count) ].compact)
-    end
-  end
   # Relative time, e.g. "3 minutes ago", "in 2 hours", "just now".
   # Mirrored by app/javascript/controllers/relative_time_controller.js, with
   # the same texts (js.relative_time): keep both in sync.

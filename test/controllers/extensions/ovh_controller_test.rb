@@ -35,7 +35,7 @@ class OvhControllerTest < ActionDispatch::IntegrationTest
     assert_select "#stat-ovh-services .stat-value", "3"
     assert_select "#stat-ovh-unattached .stat-value", "1"
     assert_select "#stat-ovh-expiring .stat-value", "1"
-    assert_select "a[href=?] #stat-ovh-dns .stat-value", dns_records_path(source: "ovh"), "3"
+    assert_select "a#stat-ovh-dns[href=?] .stat-value", dns_records_path(source: "ovh"), text: "3"
     assert_select "tr.ovh-resource", 3
     assert_select "tr.ovh-resource[data-kind=dedicated] .ovh-server a[href=?]", server_path(servers(:web), anchor: "server-hosting"), text: "Web"
     assert_select "tr.ovh-resource[data-kind=dedicated] .ovh-expiration", text: /\d{4}/

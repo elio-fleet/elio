@@ -18,7 +18,7 @@
 
   <nav class="task-filters mt-6 flex flex-wrap gap-2" aria-label="<%= t(".status") %>">
     <% [ [ t(".all"), nil ], [ t(".queued"), "queued" ], [ t(".running"), "running" ], [ t(".done"), "succeeded" ], [ t(".failed"), "failed" ] ].each do |label, filter| %>
-      <%= filter_pill label, tasks_path(status: filter), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
+      <%= filter_chip label, tasks_path(status: filter), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
     <% end %>
   </nav>
 

@@ -10,9 +10,9 @@
 
   <nav class="key-kind-filter mt-4 flex flex-wrap gap-2" aria-label="<%= t("public_keys.index.key_type") %>">
     <% [ [ t("public_keys.index.all"), nil ], [ t("public_keys.index.people"), "person" ], [ t("public_keys.index.servers"), "server" ] ].each do |label, value| %>
-      <%= filter_pill label, public_keys_path(kind: value), active: false %>
+      <%= filter_chip label, public_keys_path(kind: value), active: false %>
     <% end %>
-    <%= filter_pill t("public_keys.outside.title"), public_keys_path(kind: "outside"), active: true, count: @pager.total.nonzero?, data: { kind: "outside" } %>
+    <%= filter_chip t("public_keys.outside.title"), public_keys_path(kind: "outside"), active: true, count: @pager.total.nonzero?, data: { kind: "outside" } %>
   </nav>
 
   <% if @outside_keys.any? %>
