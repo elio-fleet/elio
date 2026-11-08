@@ -81,7 +81,9 @@ class Activity < ApplicationRecord
     Kind.new(:ovh_service_unmanaged, :servers, :info),
     Kind.new(:integration_enabled, :configuration, :info),
     Kind.new(:integration_disabled, :configuration, :info),
-    Kind.new(:integration_sync_failed, :configuration, :warning)
+    Kind.new(:integration_sync_failed, :configuration, :warning),
+    Kind.new(:integration_connection_added, :configuration, :info),
+    Kind.new(:integration_connection_removed, :configuration, :info)
   ].index_by(&:key).freeze
 
   belongs_to :user, optional: true

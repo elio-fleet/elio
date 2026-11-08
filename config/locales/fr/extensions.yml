@@ -281,6 +281,12 @@ fr:
   integration:
     sync_label: Synchronisation %{label}
     required: "%{label} : obligatoire pour activer l'extension"
+    url_expected: "%{label} : adresse http(s) attendue (ex. https://uptime.example.com)"
+    no_connection: aucune connexion
+    connection_failed: "échec (%{error})"
+  integration_connection:
+    required: "%{label} : obligatoire"
+    default_label: "Connexion n° %{id}"
   uptime_kuma_monitor:
     matches:
       ip: par son adresse IP
@@ -364,6 +370,17 @@ fr:
       field:
         leave_empty_keep: "•••••••• (laisser vide pour la conserver)"
         optional: "(facultatif)"
+      connections:
+        title: Connexions
+        add: Ajouter une connexion
+        none: Aucune connexion
+        none_text: Ajoutez une connexion pour que l'extension lise son service.
+        failed: Échec
+        synchronized_html: synchronisée %{at}
+        never: pas encore synchronisée
+        edit: Modifier
+        delete: Supprimer la connexion
+        delete_confirm: "Supprimer la connexion « %{label} » et tout ce qu'elle a lu ?"
       test_result:
         succeeded: 'Connexion réussie : '
         failed: 'Échec : '
@@ -384,6 +401,22 @@ fr:
         not_synchronized_yet: Pas encore synchronisée
         extension_available: Aucune extension disponible.
         intro_html: 'Les extensions relient Elio à vos autres outils, <strong class="font-medium text-ink-2">en lecture seule</strong> : Elio n''y crée, ne modifie et ne supprime rien. Une extension désactivée n''apparaît nulle part dans l''interface.'
+    integration_connections:
+      form:
+        name: Nom
+        name_hint: Laissé vide, Elio prend le nom lu sur le service (l'équipe Coolify…).
+        test: Tester la connexion
+        save: Enregistrer
+      new:
+        title: Nouvelle connexion
+        intro: Chaque connexion est lue à part ; les alertes de l'extension valent pour toutes.
+      edit:
+        title: Connexion
+        intro: Un jeton laissé vide garde celui enregistré.
+  integration_connections_controller:
+    created: Connexion « %{label} » ajoutée.
+    updated: Connexion « %{label} » enregistrée.
+    deleted: Connexion « %{label} » supprimée.
   monitor_links_controller:
     attached: Sonde « %{monitor_name} » rattachée à « %{server_name} ».
     detached: Sonde « %{monitor_name} » rattachée à aucun serveur.

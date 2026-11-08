@@ -202,6 +202,12 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      integration_connection_added:
+        label: "Connexion d'extension ajoutée"
+        description: "Un administrateur a ajouté une connexion à une extension (une équipe Coolify…)."
+      integration_connection_removed:
+        label: "Connexion d'extension supprimée"
+        description: "Un administrateur a supprimé une connexion d'une extension, et ce qu'elle avait lu."
       server_note_added:
         label: Note ajoutée
         description: Quelqu'un a laissé une note sur un serveur (onglet Notes).
@@ -322,6 +328,8 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      integration_connection_added: '%{integration} : connexion « %{connection} » ajoutée'
+      integration_connection_removed: '%{integration} : connexion « %{connection} » supprimée'
       automation_run: "%{automation} : %{result}"
       server_note_added: 'Note sur « %{server} » par %{author} : %{excerpt}'
       dns_record_conflict: "%{record} diffère entre %{sources}"

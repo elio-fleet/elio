@@ -39,5 +39,27 @@ class Integrations::Base
 
     # Does this extension feed the DNS of the fleet (DnsRecord, Dns)?
     def dns_source?(_integration) = false
+
+    # Several connections (IntegrationConnection): the fields of ONE
+    # connection (URL, token…). Empty = a single connection, in `fields`.
+    # With connections, `fields` keeps what they share (alerts), and
+    # `test_connection` / `sync_connection` receive an IntegrationConnection.
+    def connection_fields = []
+
+    def multiple_connections? = connection_fields.any?
+
+    # Reads the service for one connection and stores what it found; returns a summary.
+    def sync_connection(_connection) = raise(NotImplementedError)
+
+    # After every connection was synchronized (at least one succeeded).
+    def after_connections_sync(_integration) = nil
+
+    # The name of a connection read from the service (a team), and the
+    # heading connections are grouped under (an instance); nil when none.
+    def connection_label(_connection) = nil
+    def connection_group(_connection) = nil
+
+    # One line under a connection in the settings ("6 servers · Coolify v4.6.0"), or nil.
+    def connection_summary(_connection) = nil
   end
 end

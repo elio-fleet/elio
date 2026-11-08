@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_08_140000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -181,6 +181,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
     t.datetime "checked_at"
     t.string "error"
     t.index ["reference"], name: "index_image_updates_on_reference", unique: true
+  end
+
+  create_table "integration_connections", force: :cascade do |t|
+    t.bigint "integration_id", null: false
+    t.string "name"
+    t.jsonb "settings", default: {}, null: false
+    t.text "secrets"
+    t.jsonb "state", default: {}, null: false
+    t.datetime "last_synced_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["integration_id"], name: "index_integration_connections_on_integration_id"
   end
 
   create_table "integration_links", force: :cascade do |t|
@@ -566,6 +579,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
   add_foreign_key "dns_links", "servers", on_delete: :cascade
   add_foreign_key "dns_links", "users", on_delete: :nullify
   add_foreign_key "dns_records", "servers", on_delete: :nullify
+  add_foreign_key "integration_connections", "integrations", on_delete: :cascade
   add_foreign_key "integration_links", "integrations", on_delete: :cascade
   add_foreign_key "integration_links", "servers", on_delete: :cascade
   add_foreign_key "integration_links", "users", on_delete: :nullify

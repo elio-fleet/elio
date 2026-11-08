@@ -21,6 +21,17 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
   end
 
 
+  # The demo extension with several connections, registered for one request; yields a connection.
+  def with_demo_multi
+    previous = Integration.registry
+    Integration.registry = previous.merge("demo_multi" => "DemoMultiIntegration")
+    integration = Integration.find_or_create_by!(kind: "demo_multi")
+    connection = integration.connections.first || integration.connections.create!(settings: { "url" => "https://a.example" }, secrets: { "token" => "t" })
+    yield connection
+  ensure
+    Integration.registry = previous
+  end
+
   REQUESTS = {
     view: {
       "dashboard" => -> { get root_path },
@@ -102,6 +113,12 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "delete channel" => -> { delete settings_notification_channel_path(create_channel) },
       "automations" => -> { get settings_automations_path },
       "extensions" => -> { get settings_integrations_path },
+      "new extension connection" => -> { with_demo_multi { get new_settings_integration_connection_path("demo_multi") } },
+      "add an extension connection" => -> { with_demo_multi { post settings_integration_connections_path("demo_multi"), params: { connection: { values: { url: "https://a.example", token: "t" } } } } },
+      "test an extension connection" => -> { with_demo_multi { post test_settings_integration_connections_path("demo_multi"), params: { connection: { values: { url: "https://a.example" } } } } },
+      "edit an extension connection" => -> { with_demo_multi { |connection| get edit_settings_integration_connection_path("demo_multi", connection) } },
+      "update an extension connection" => -> { with_demo_multi { |connection| patch settings_integration_connection_path("demo_multi", connection), params: { connection: { name: "x" } } } },
+      "delete an extension connection" => -> { with_demo_multi { |connection| delete settings_integration_connection_path("demo_multi", connection) } },
       "vulnerability feeds" => -> { get settings_vulnerabilities_path },
       "docker settings" => -> { get settings_docker_path },
       "update the CVE scores" => -> { post scores_settings_vulnerabilities_path },

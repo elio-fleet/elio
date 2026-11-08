@@ -1,6 +1,7 @@
-<%# One field of an extension's form (Integrations::Base::Field). %>
-<% name = "integration[values][#{field.key}]" %>
-<% id = "integration_#{field.key}" %>
+<%# One field of an extension's form (Integrations::Base::Field). Locals: field, integration (an Integration or an IntegrationConnection: value, secret?), scope (param name, "integration" by default). %>
+<% scope = local_assigns.fetch(:scope, "integration") %>
+<% name = "#{scope}[values][#{field.key}]" %>
+<% id = "#{scope}_#{field.key}" %>
 <% value = integration.value(field.key) %>
 <div class="integration-field" data-field="<%= field.key %>">
   <% case field.type %>
