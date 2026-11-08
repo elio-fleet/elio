@@ -24,7 +24,7 @@ class Integrations::CoolifyBackupsTest < ActiveSupport::TestCase
     CoolifyResource.find_by!(kind: "database", name: "pg-facturation")
   end
 
-  def reasons = Integrations::Coolify.health_reasons(@integration.reload, servers(:web).reload).map(&:text)
+  def reasons = Integrations::Coolify.health_reasons(@integration.reload, servers(:web).reload).map(&:text).grep(/Sauvegarde|sauvegarde/)
 
   test "the schedules and their last executions are kept, never their messages" do
     fake_coolify

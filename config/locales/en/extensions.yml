@@ -217,7 +217,10 @@ en:
       alert_backups_hint: the backups scheduled in Coolify, database by database
       backup_max_age_hours: "Late: no successful backup for (hours)"
       alert_no_backup: Alert when a database has no scheduled backup
+      alert_deploy_failed: Alert when the last deployment of an application failed
+      alert_deploy_failed_hint: until the next successful deployment
       health:
+        deploy_failed: "Coolify deployment of %{application} failed"
         backup_failed: "Coolify backup of %{database} failed"
         backup_late:
           one: "Coolify backup of %{database}: none succeeded for %{count} hour"
@@ -257,6 +260,20 @@ en:
         project: Project / environment
         domains: Domains
         version: Deployed version
+        last_deploy: Last deployment
+        deploy_failed: failed
+        deployments: Recent deployments
+        open_in_coolify: open in Coolify
+        deploy_kinds:
+          webhook: git webhook
+          restart: restart
+          rollback: rollback
+        deploy_statuses:
+          finished: succeeded
+          failed: failed
+          in_progress: in progress
+          queued: queued
+          cancelled-by-user: cancelled
         state: State
         no_health_check: "“Running” without “healthy”: the resource has no health check in Coolify, which does not know whether it answers."
         none: No resource

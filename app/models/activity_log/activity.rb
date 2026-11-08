@@ -83,6 +83,8 @@ class Activity < ApplicationRecord
     Kind.new(:integration_disabled, :configuration, :info),
     Kind.new(:integration_sync_failed, :configuration, :warning),
     Kind.new(:coolify_backup_failed, :servers, :warning),
+    Kind.new(:coolify_deployed, :servers, :info),
+    Kind.new(:coolify_deploy_failed, :servers, :warning),
     Kind.new(:integration_connection_added, :configuration, :info),
     Kind.new(:integration_connection_removed, :configuration, :info)
   ].index_by(&:key).freeze

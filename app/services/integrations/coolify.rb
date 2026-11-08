@@ -17,7 +17,9 @@ class Integrations::Coolify < Integrations::Base
         Integrations::Field.new(key: :alert_backups, label: I18n.t("integrations.coolify.alert_backups"), type: :boolean, default: true, section: section,
                                 hint: I18n.t("integrations.coolify.alert_backups_hint")),
         Integrations::Field.new(key: :backup_max_age_hours, label: I18n.t("integrations.coolify.backup_max_age_hours"), type: :number, default: 26, section: section),
-        Integrations::Field.new(key: :alert_no_backup, label: I18n.t("integrations.coolify.alert_no_backup"), type: :boolean, default: true, section: section)
+        Integrations::Field.new(key: :alert_no_backup, label: I18n.t("integrations.coolify.alert_no_backup"), type: :boolean, default: true, section: section),
+        Integrations::Field.new(key: :alert_deploy_failed, label: I18n.t("integrations.coolify.alert_deploy_failed"), type: :boolean, default: true, section: section,
+                                hint: I18n.t("integrations.coolify.alert_deploy_failed_hint"))
       ]
     end
 
@@ -66,7 +68,10 @@ class Integrations::Coolify < Integrations::Base
     # failed (crit), none succeeded for too long (warn), none planned (warn).
     def health_reasons(integration, server)
       max_age = integration.value(:backup_max_age_hours).to_f.nonzero? || 26
-      server.coolify_resources.select { |resource| resource.kind == "database" }.sort_by(&:name).filter_map do |database|
+      resources = server.coolify_resources.sort_by(&:name)
+      deploys = resources.select { |resource| resource.kind == "application" && resource.deploy_failed? }
+      deploys = integration.value(:alert_deploy_failed) ? deploys.map { |application| reason("warn", :deploy_failed, application: application.name) } : []
+      deploys + resources.select { |resource| resource.kind == "database" }.filter_map do |database|
         case database.backup_state(max_age)
         when :failed then reason("crit", :backup_failed, database: database.name) if integration.value(:alert_backups)
         when :late then reason("warn", :backup_late, database: database.name, count: max_age.round) if integration.value(:alert_backups)

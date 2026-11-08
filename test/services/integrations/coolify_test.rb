@@ -53,7 +53,7 @@ class Integrations::CoolifyTest < ActiveSupport::TestCase
     assert_equal [ "application", "running:healthy", servers(:web) ], [ api.kind, api.status, api.server ]
     assert_equal({ "type" => "application", "restart_count" => 0, "last_online_at" => "2026-11-08 12:50:09", "project" => "Facturation", "environment" => "production",
                    "build_pack" => "dockerfile", "domains" => [ "api.example.com" ], "git_repository" => "acme/api-facturation", "git_branch" => "main",
-                   "git_commit" => "623a4be", "health_check" => true, "health_check_path" => "/up", "ports_exposes" => "3000" }, api.data)
+                   "git_commit" => "623a4be", "health_check" => true, "health_check_path" => "/up", "ports_exposes" => "3000" }, api.data.except("deployments", "coolify_path"))
     assert_equal %w[admin.example.com admin.example.dev], resources["back-office"].domains
 
     n8n = resources["n8n"]

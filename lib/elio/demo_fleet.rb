@@ -197,14 +197,20 @@ module Elio
       server = { "ip" => "198.51.100.10", "user" => "root", "port" => 22, "reachable" => true, "usable" => true, "docker_version" => "27.3.1", "proxy" => "TRAEFIK",
                  "domains" => %w[api.example.com admin.example.com n8n.example.com] }
       CoolifyResource.create!(connection: tools, kind: "server", uuid: "srvweb1", name: "web-prod-1", coolify_server_uuid: "srvweb1", server: web, matched_by: "address", data: server)
-      [ [ "application", "api-billing", "running:healthy", { "build_pack" => "dockerfile", "domains" => [ "api.example.com" ], "git_branch" => "main", "git_commit" => "623a4be", "health_check" => true } ],
-        [ "application", "back-office", "running:unknown", { "build_pack" => "dockercompose", "domains" => [ "admin.example.com" ], "git_branch" => "main", "git_commit" => "1c9e0d2" } ],
+      deploys = ->(*list) { list.map.with_index { |(status, hours, commit, message), index| { "uuid" => "dep#{commit}#{index}", "status" => status, "commit" => commit, "message" => message, "at" => hours.hours.ago.iso8601, "finished_at" => (hours.hours.ago + 2.minutes).iso8601, "webhook" => true } } }
+      [ [ "application", "api-billing", "running:healthy", { "build_pack" => "dockerfile", "domains" => [ "api.example.com" ], "git_branch" => "main", "git_commit" => "623a4be", "health_check" => true,
+                                                              "deployments" => deploys.([ "finished", 46, "623a4be", "chore: 0.5.15" ], [ "finished", 150, "8d1e2f0", "feat: invoices in PDF" ]) } ],
+        [ "application", "back-office", "running:unknown", { "build_pack" => "dockercompose", "domains" => [ "admin.example.com" ], "git_branch" => "main", "git_commit" => "1c9e0d2",
+                                                             "deployments" => deploys.([ "failed", 5, "1c9e0d2", "feat: CSV export of the invoices" ], [ "finished", 30, "77ab3c1", "fix: login redirect" ]) } ],
         [ "service", "n8n", "exited", { "domains" => [ "n8n.example.com" ], "images" => [ "n8nio/n8n:1.82" ] } ],
         [ "service", "uptime-relay", "running:unhealthy", { "images" => [ "louislam/uptime-kuma:2" ] } ],
         [ "database", "pg-billing", "running:healthy", { "engine" => "postgresql", "image" => "postgres:17-alpine", "public" => false, "backups" => demo_backups } ],
         [ "database", "sessions-cache", "running:healthy", { "engine" => "redis", "image" => "redis:7.4-alpine", "public" => false, "backups" => [] } ] ].each_with_index do |(kind, name, status, data), index|
         CoolifyResource.create!(connection: tools, kind: kind, uuid: "res#{index}", name: name, status: status, coolify_server_uuid: "srvweb1", server: web, matched_by: "address",
                                 data: data.merge("project" => (index < 2 || index == 4 ? "Billing" : "Tools"), "environment" => "production"))
+      end
+      [ [ :coolify_deploy_failed, "back-office", "1c9e0d2", "feat: CSV export of the invoices", 5 ], [ :coolify_deployed, "api-billing", "623a4be", "chore: 0.5.15", 46 ] ].each do |kind, application, commit, message, hours|
+        Activity.record!(kind, server: web, user: nil, application: application, commit: commit, message: message).update_columns(created_at: hours.hours.ago)
       end
       CoolifyResource.create!(connection: tools, kind: "server", uuid: "srvdb", name: "db-prod", coolify_server_uuid: "srvdb", server: db, matched_by: "address",
                               data: server.merge("ip" => "198.51.100.20", "domains" => [ "shop.example.com" ]))
