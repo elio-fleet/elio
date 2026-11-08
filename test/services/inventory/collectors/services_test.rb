@@ -35,6 +35,18 @@ class Inventory::Collectors::ServicesTest < ActiveSupport::TestCase
     assert_includes commands, "sudo -n #{Ssh::Commands.render("inventory.docker_containers")}"
   end
 
+  test "the container state comes from the status, which every Docker version prints" do
+    { "Up 3 days" => "running", "Up 12 minutes (healthy)" => "running", "Up About an hour (unhealthy)" => "running",
+      "Up 5 minutes (Paused)" => "paused", "Restarting (1) 4 seconds ago" => "restarting", "Exited (137) 2 weeks ago" => "exited",
+      "Created" => "created", "Removal In Progress" => "removing", "Dead" => "dead", "" => nil, "Something new" => nil }.each do |status, state|
+      state ? assert_equal(state, Inventory::Collectors::Services.state(status), status.inspect) : assert_nil(Inventory::Collectors::Services.state(status), status.inspect)
+    end
+  end
+
+  test "the command never asks for {{.State}}: Docker before 20.10 refuses the whole format" do
+    assert_not_includes Ssh::Commands.render("inventory.docker_containers"), ".State"
+  end
+
   test "unreadable containers make the collection partial" do
     outcome, = collect(:debian12, sudo: false, docker: FakeSsh::Response.new("", "permission denied while trying to connect to the Docker daemon socket", 1))
 
