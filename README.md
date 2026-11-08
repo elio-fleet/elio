@@ -30,7 +30,7 @@
 
 Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are healthy, what runs on them, which packages are vulnerable and how to fix them, who has an SSH key on them. Nothing to install on the servers: Elio logs in with its own SSH key and runs a short list of **read-only commands**, all written in one file you can review — [`config/ssh_commands.yml`](config/ssh_commands.yml).
 
-> **Beta.** Elio is young (`v0.1.0-beta.4.1`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
+> **Beta.** Elio is young (`v0.4.0-beta`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
 
 ## Features
 
@@ -41,10 +41,10 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | **Vulnerabilities** | CVEs of every package, from the Debian Security Tracker and Ubuntu's OSV data, matched with the inventory — no extra command on the servers; signed packages (grub, shim, kernel, fwupd) compared with the code they sign. Grouped **by package with the update to make**, in two tabs: the CVEs of the servers' packages, and those of their Docker images (fixed by updating the image), and **the commands to fix a CVE** (`apt-get install --only-upgrade …`, or `docker compose pull` and `up -d` for an image) — to copy, never run by Elio. Scores from NVD, Red Hat and CVE.org (or your own providers), exploitation from EPSS and CISA KEV. |
 | **Docker** | A **Docker state** per server, apart from its health: critical for unhealthy or looping containers, to watch for vulnerable images or images to update — a pill next to the health badge, a filter of the fleet list, its own notifications. Images per server, **new versions published on the registries** (Docker Hub, GHCR, Quay, private ones), vulnerabilities of the images (Trivy or Grype if installed, else Elio's own matching) in the server's Docker tab and on the Docker page, by image, with the servers and containers that run it. |
 | **SSH keys** | A shared keyring (people and machines), keys added to or removed from a server in one click, **temporary access** that expires on its own, **the keys of every account** of a server (with root), unknown keys flagged and gathered in an **Outside the keyring** list, rotation of Elio's own key without downtime. |
-| **Alerts** | What needs attention, by severity, on the overview; activity log; notifications to Slack, Discord, email or a signed webhook, grouped by type (critical ones right away); daily digest. |
-| **Automation** | Every collection runs on schedule, on the whole fleet or per group, followed live in the *Tasks* page. |
+| **Alerts** | What needs attention, by severity, on the overview, each with what to do; a journal of events; notifications to Slack, Discord, email or a signed webhook, grouped by type (critical ones right away); daily digest. |
+| **Automation** | Every collection runs on schedule, on the whole fleet or per group, followed live in the *Runs* tab of the *Journal*. |
 | **Extensions** | **Uptime Kuma** (monitors attached to each server), **OVHcloud** (IPs, network firewall, DNS records, services), **Technitium DNS** (zones and records) and **Gandi** (LiveDNS records, domains and their expiry), read-only, with **one DNS of the fleet** and **prompts for an AI assistant** (monitors to create, firewall rules) that end with your own instructions. |
-| **Team** | Roles (admin, operator, read-only), invitations, mandatory two-factor authentication, **notes on each server** (Markdown), ⌘K search everywhere, light and dark themes. |
+| **Team** | Roles (admin, operator, read-only), invitations, mandatory two-factor authentication, **notes on each server** (Markdown) in its journal, ⌘K search everywhere, light and dark themes, the same layout on every page (one Save per settings page, dangerous actions behind a menu and a confirmation). |
 
 | | |
 |:---:|:---:|
@@ -55,9 +55,9 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | ![Overview](docs/screenshots/en/overview.png) | ![Dark theme](docs/screenshots/en/fleet-dark.png) |
 | **What needs attention**, most serious first | **Dark theme** |
 | ![SSH keys of every account](docs/screenshots/en/ssh-keys.png) | ![Notes](docs/screenshots/en/notes.png) |
-| **SSH keys** of every account of a server | **Notes** of the team on a server |
+| **SSH keys** of every account of a server | **Journal** of a server: the team's notes and its history |
 | ![Uptime Kuma monitors](docs/screenshots/en/uptime-kuma-monitors.png) | ![OVHcloud](docs/screenshots/en/ovh.png) |
-| **Uptime Kuma**: monitors attached to each server | **OVHcloud**: service, IPs and reverse |
+| **Probes**: the Uptime Kuma monitors attached to each server | **Hosting**: the OVHcloud service, IPs and reverse of a server |
 | ![DNS of the fleet](docs/screenshots/en/dns.png) | ![CVEs of the Docker images](docs/screenshots/en/docker-cves.png) |
 | **DNS of the fleet**: OVHcloud, Technitium and Gandi together | **CVEs of the Docker images**, by image |
 | ![Firewall tab](docs/screenshots/en/firewall.png) | ![Firewall settings](docs/screenshots/en/firewall-settings.png) |
@@ -146,14 +146,14 @@ Elio can read what your other tools know and show it next to each server. Enable
 
 - **Setup**: the address of your instance and an API key (*Uptime Kuma → Settings → API Keys*). *Test the connection* checks them before saving.
 - Elio reads the `/metrics` page every 15 minutes (Uptime Kuma 1.x and 2.x) and **attaches each monitor to its server**: by the IP it watches (WireGuard addresses included), by host name (with DNS resolution as an option), or by the server's name in the monitor's name (`[SRV] web-prod-1`). An attachment can be corrected by hand and is kept.
-- A **Monitors** tab on each server (state, response time, uptime over 24 hours and 30 days, certificate) and a **Monitors** page: monitors attached to no server, servers without any monitor.
+- A **Probes** tab on each server (source, state, response time, uptime over 24 hours and 30 days, certificate) and a **Probes** page: monitors attached to no server, servers without any monitor.
 - Optional alerts: server without a monitor (with groups to ignore), monitor down or back, certificate about to expire, uptime under a threshold, monitor in maintenance for too long.
 
 ### OVHcloud
 
 - **Setup**: the API endpoint (EU, CA, US), an Application Key, an Application Secret and a Consumer Key **limited to GET requests**. *Rights to give to the API key* lists the exact rights for the products you check and opens OVH's token page already filled in. *Test the connection* reports missing rights, and **warns if the key could write** — make a new one then.
 - Each product is a checkbox: IPs and reverse DNS, network firewall, anti-DDoS, DNS zones (all or some), dedicated servers, VPS, Public Cloud instances (all projects or some).
-- An **OVH** tab on each server: the OVH service (offer, datacenter, expiration), its IPs and reverse; the network firewall rules, **whether they let each public port through** and the anti-DDoS are in the [Firewall tab](#the-firewall-tab). An **OVHcloud** page: services, IPs, resources attached to no server. Its DNS records go to the [DNS of the fleet](#dns-of-the-fleet).
+- A **Hosting** card on the overview of each server: the OVH service (offer, datacenter, expiration), its IPs and reverse; the network firewall rules, **whether they let each public port through** and the anti-DDoS are in the [Firewall tab](#the-firewall-tab). A **Hosting** page: services, IPs, resources attached to no server. Its DNS records go to the [DNS of the fleet](#dns-of-the-fleet).
 - Optional alerts: service about to expire (automatic renewal taken into account), network firewall disabled, reverse DNS that does not match, OVH service not followed by Elio.
 
 The OVH client of Elio only knows the GET method: it cannot write, whatever the key allows.
