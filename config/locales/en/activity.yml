@@ -340,7 +340,7 @@ en:
       coolify_deployed: "Coolify: %{application} deployed%{commit}"
       coolify_deploy_failed: "Coolify: deployment of %{application} failed%{commit}"
       quoted: "“%{text}”"
-      coolify_backup_failed: "Coolify backup of %{database} failed (team %{team})"
+      coolify_backup_failed: "Coolify: backup of %{database} failed (team %{team})"
       integration_connection_added: '%{integration}: connection “%{connection}” added'
       integration_connection_removed: '%{integration}: connection “%{connection}” removed'
       automation_run: "%{automation}: %{result}"

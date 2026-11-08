@@ -78,7 +78,7 @@ class Integrations::CoolifyBackupsTest < ActiveSupport::TestCase
     answer = backups([ "failed", 30 ])
     answer.first["executions"].unshift({ "uuid" => "exe-new", "status" => "failed", "finished_at" => 1.hour.ago.iso8601 })
     sync(answer)
-    assert_equal [ "Sauvegarde Coolify de pg-facturation en échec (équipe Outils internes)" ], Activity.of_kind(:coolify_backup_failed).map(&:summary)
+    assert_equal [ "Coolify : sauvegarde de pg-facturation en échec (équipe Outils internes)" ], Activity.of_kind(:coolify_backup_failed).map(&:summary)
     assert_equal servers(:web), Activity.of_kind(:coolify_backup_failed).first.server
   end
 end
