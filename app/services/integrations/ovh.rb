@@ -102,7 +102,9 @@ class Integrations::Ovh < Integrations::Base
       if integration.value(:alert_firewall_disabled)
         disabled = ip_blocks.flat_map { |block| Array(block.data["firewall"]).select { |_ip, firewall| firewall["enabled"] == false }.map(&:first) }
         missing = ip_blocks.select { |block| block.data.key?("firewall") && block.data["firewall"].empty? }.map(&:name)
-        (disabled + missing).uniq.each { |ip| reasons << reason("warn", :firewall_disabled, ip: ip) }
+        # OVH has no network firewall for IPv6: its blocks always come back
+        # without one, which is not something to fix (see ipv6_not_covered).
+        (disabled + missing).uniq.reject { |ip| Integrations::Ovh::Firewall.ipv6?(ip) }.each { |ip| reasons << reason("warn", :firewall_disabled, ip: ip) }
       end
       if AppSetting.current.ovh_ipv6_health
         ports = FirewallOverview.new(server).ipv6_bypassing_ovh
