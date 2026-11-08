@@ -293,5 +293,58 @@
    "fingerprint": "SHA256:elioTestCoolifyFingerprint",
    "is_git_related": false
   }
+ ],
+ "/databases/dbpg000000000000000000004/backups": [
+  {
+   "id": 3,
+   "uuid": "bkp00000000000000000001",
+   "team_id": 6,
+   "description": null,
+   "enabled": true,
+   "save_s3": true,
+   "frequency": "0 3 * * *",
+   "database_backup_retention_amount_locally": 7,
+   "database_type": "App\\Models\\StandalonePostgresql",
+   "database_id": 4,
+   "s3_storage_id": 1,
+   "created_at": "2026-01-10T10:00:00.000000Z",
+   "last_execution_at": "2026-11-07T03:00:12.000000Z",
+   "s3_storage_uuid": "s3a",
+   "s3_storage_uuids": [
+    "s3a"
+   ],
+   "executions": [
+    {
+     "uuid": "exe0000000000000000000003",
+     "status": "success",
+     "message": null,
+     "size": 1288490188,
+     "filename": "/data/coolify/backups/pg-dump.dmp",
+     "created_at": "2026-11-07T03:00:00.000000Z",
+     "finished_at": "2026-11-07T03:00:12.000000Z",
+     "s3_uploaded": true
+    },
+    {
+     "uuid": "exe0000000000000000000002",
+     "status": "failed",
+     "message": null,
+     "size": 0,
+     "filename": null,
+     "created_at": "2026-11-06T03:00:00.000000Z",
+     "finished_at": "2026-11-06T03:00:04.000000Z",
+     "s3_uploaded": false
+    },
+    {
+     "uuid": "exe0000000000000000000001",
+     "status": "success",
+     "message": null,
+     "size": 1280000000,
+     "filename": "/data/coolify/backups/pg-dump.dmp",
+     "created_at": "2026-11-05T03:00:00.000000Z",
+     "finished_at": "2026-11-05T03:00:11.000000Z",
+     "s3_uploaded": true
+    }
+   ]
+  }
  ]
 }

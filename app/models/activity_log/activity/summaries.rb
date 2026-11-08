@@ -95,6 +95,7 @@ module Activity::Summaries
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },
     integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) },
+    coolify_backup_failed: proc { Activity::Summaries.t(:coolify_backup_failed, database: data["database"], team: data["team"]) },
     integration_connection_added: proc { Activity::Summaries.t(:integration_connection_added, integration: data["integration_label"], connection: data["connection"]) },
     integration_connection_removed: proc { Activity::Summaries.t(:integration_connection_removed, integration: data["integration_label"], connection: data["connection"]) }
   }.freeze

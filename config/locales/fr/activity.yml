@@ -202,6 +202,9 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      coolify_backup_failed:
+        label: Sauvegarde Coolify en échec
+        description: Une sauvegarde de base planifiée dans Coolify a échoué.
       integration_connection_added:
         label: "Connexion d'extension ajoutée"
         description: "Un administrateur a ajouté une connexion à une extension (une équipe Coolify…)."
@@ -328,6 +331,7 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      coolify_backup_failed: "Sauvegarde Coolify de %{database} en échec (équipe %{team})"
       integration_connection_added: '%{integration} : connexion « %{connection} » ajoutée'
       integration_connection_removed: '%{integration} : connexion « %{connection} » supprimée'
       automation_run: "%{automation} : %{result}"

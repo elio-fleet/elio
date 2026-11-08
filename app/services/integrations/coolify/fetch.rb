@@ -70,7 +70,22 @@ class Integrations::Coolify::Fetch
 
   def database_data(database)
     { "engine" => database["type"].to_s.delete_prefix("standalone-"), "image" => database["image"].presence, "public" => database["is_public"],
-      "public_port" => database["public_port"], "ports_mappings" => database["ports_mappings"].presence }
+      "public_port" => database["public_port"], "ports_mappings" => database["ports_mappings"].presence, "backups" => backups(database["uuid"]) }
+  end
+
+  EXECUTIONS_KEPT = 14
+
+  # The backup schedules with their last executions (newest first): status,
+  # size and date; never the execution message (it may hold secrets, and a
+  # read token gets it redacted anyway).
+  def backups(uuid)
+    @client.database_backups(uuid).map do |backup|
+      executions = Array(backup["executions"]).sort_by { |execution| execution["created_at"].to_s }.reverse.first(EXECUTIONS_KEPT).map do |execution|
+        { "uuid" => execution["uuid"], "status" => execution["status"], "size" => execution["size"], "at" => execution["finished_at"] || execution["created_at"] }.compact
+      end
+      { "uuid" => backup["uuid"], "enabled" => backup["enabled"] != false, "frequency" => backup["frequency"].presence, "s3" => backup["save_s3"] == true,
+        "created_at" => backup["created_at"], "executions" => executions }.compact
+    end
   end
 
   # environment id => { "project" => name, "environment" => name }

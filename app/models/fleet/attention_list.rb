@@ -138,7 +138,8 @@ class AttentionList
 
   # Reasons raised by the extensions, by the start of their key.
   EXTENSION_ACTIONS = { "integrations.uptime_kuma." => [ :probes, "monitors" ], "dns." => [ :dns, "dns" ],
-                        "integrations.ovh.health.expiring" => [ :hosting, "ovh" ], "integrations.ovh." => [ :ports, "firewall" ] }.freeze
+                        "integrations.ovh.health.expiring" => [ :hosting, "ovh" ], "integrations.ovh." => [ :ports, "firewall" ],
+                        "integrations.coolify." => [ :coolify, "coolify" ] }.freeze
 
   def reason_action(server, reason) = self.class.action_for(server, reason, @routes)
 end
