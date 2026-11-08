@@ -201,7 +201,7 @@ fr:
       description: Ce que Coolify fait tourner sur vos serveurs (applications, services, bases de données), rattaché aux serveurs du parc. Une connexion par équipe Coolify, autant d'instances que nécessaire.
       url: Adresse de l'instance
       token: Jeton d'API
-      token_hint: Un jeton avec la permission read seulement, créé dans l'équipe à suivre (voir ci-dessous).
+      token_hint: Un jeton avec la permission read seulement, créé dans l'équipe à suivre (voir plus haut).
       unexpected: "Réponse inattendue de Coolify (l'adresse est-elle bien celle de l'instance ?)"
       valid_token:
         one: "équipe « %{team} », Coolify v%{version}, %{count} serveur"

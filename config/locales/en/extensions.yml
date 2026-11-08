@@ -201,7 +201,7 @@ en:
       description: What Coolify runs on your servers (applications, services, databases), attached to the servers of the fleet. One connection per Coolify team, as many instances as needed.
       url: Instance address
       token: API token
-      token_hint: A token with the read permission only, created in the team to follow (see below).
+      token_hint: A token with the read permission only, created in the team to follow (see above).
       unexpected: Unexpected answer from Coolify (is the address the one of the instance?)
       valid_token:
         one: "team “%{team}”, Coolify v%{version}, %{count} server"
