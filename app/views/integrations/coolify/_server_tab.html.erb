@@ -1,6 +1,7 @@
 <%# "Coolify" tab of a server: each Coolify server it is (one per team / instance that manages it) with what Coolify says of it, then its resources. Locals: server, integration. %>
 <% coolify_servers = server.coolify_resources.servers.includes(:connection).order(:name).to_a %>
 <% resources = server.coolify_resources.resources.ordered.to_a %>
+<% dns_check = Integrations::Coolify::DomainCheck.new(server) if Dns.enabled? %>
 <div id="server-coolify" class="space-y-4">
   <% coolify_servers.each do |coolify_server| %>
     <% connection = coolify_server.connection %>
@@ -28,7 +29,7 @@
               <tr class="coolify-resource" data-uuid="<%= resource.uuid %>" data-kind="<%= resource.kind %>">
                 <td class="pl-4"><% if (url = coolify_url(resource)) %><%= link_to resource.name, url, class: "font-medium hover:underline", target: "_blank", rel: "noopener", title: t("integrations.coolify.server_tab.open_in_coolify") %><% else %><span class="font-medium"><%= resource.name %></span><% end %><span class="block text-xs text-ink-3"><%= coolify_kind_detail(resource) %></span></td>
                 <td class="text-xs text-ink-2"><%= [ resource.data["project"], resource.data["environment"] ].compact.join(" / ").presence || "—" %></td>
-                <td class="text-xs"><%= coolify_domain_links(resource) %></td>
+                <td class="text-xs"><%= coolify_domain_links(resource, check: dns_check) %></td>
                 <td class="col-secondary col-truncate font-mono text-xs text-ink-2" title="<%= coolify_version(resource) %>"><%= coolify_version(resource) || "—" %></td>
                 <td class="col-secondary text-xs whitespace-nowrap"><%= resource.kind == "application" ? coolify_last_deploy(resource) : "—" %></td>
                 <td class="pr-4"><%= coolify_state_badge(resource) %></td>

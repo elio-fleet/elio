@@ -224,7 +224,11 @@ en:
       alert_server_unreachable: Alert when Coolify can no longer reach or use a server
       alert_no_health_check: Alert when an application has no health check
       alert_no_health_check_hint: "“running” then does not say whether it answers"
+      alert_dns: Alert when a domain served by Coolify does not point to its server
+      alert_dns_hint: from the DNS extensions (OVHcloud, Technitium, Gandi); a domain of a zone Elio does not read is not checked
       health:
+        dns_elsewhere: "Coolify: %{domain} is served here, but its DNS points to %{targets}"
+        dns_missing: "Coolify: %{domain} is served here, but has no DNS record"
         stopped: "Coolify: %{name} stopped (%{kind})"
         unhealthy: "Coolify: %{name} unhealthy (%{kind})"
         server_unreachable: "Coolify: can no longer reach or use this server (team %{team})"
@@ -428,6 +432,8 @@ en:
       keydb: KeyDB
       dragonfly: Dragonfly
       clickhouse: ClickHouse
+    dns_elsewhere: "The DNS points to %{targets}, not to this server"
+    dns_missing: No DNS record for this domain
     no_domain: none
   coolify_resource:
     kinds:
