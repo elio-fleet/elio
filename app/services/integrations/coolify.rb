@@ -9,6 +9,9 @@ class Integrations::Coolify < Integrations::Base
   self.icon = :cube
   self.default_interval = 15
 
+  # A resource stopped for longer is taken as stopped on purpose (no alert).
+  STOPPED_FOR_DAYS = 30
+
   class << self
     # Shared by every connection: the alerts.
     def fields
@@ -19,7 +22,12 @@ class Integrations::Coolify < Integrations::Base
         Integrations::Field.new(key: :backup_max_age_hours, label: I18n.t("integrations.coolify.backup_max_age_hours"), type: :number, default: 26, section: section),
         Integrations::Field.new(key: :alert_no_backup, label: I18n.t("integrations.coolify.alert_no_backup"), type: :boolean, default: true, section: section),
         Integrations::Field.new(key: :alert_deploy_failed, label: I18n.t("integrations.coolify.alert_deploy_failed"), type: :boolean, default: true, section: section,
-                                hint: I18n.t("integrations.coolify.alert_deploy_failed_hint"))
+                                hint: I18n.t("integrations.coolify.alert_deploy_failed_hint")),
+        Integrations::Field.new(key: :alert_resources, label: I18n.t("integrations.coolify.alert_resources"), type: :boolean, default: true, section: section,
+                                hint: I18n.t("integrations.coolify.alert_resources_hint", count: STOPPED_FOR_DAYS)),
+        Integrations::Field.new(key: :alert_server_unreachable, label: I18n.t("integrations.coolify.alert_server_unreachable"), type: :boolean, default: true, section: section),
+        Integrations::Field.new(key: :alert_no_health_check, label: I18n.t("integrations.coolify.alert_no_health_check"), type: :boolean, default: false, section: section,
+                                hint: I18n.t("integrations.coolify.alert_no_health_check_hint"))
       ]
     end
 
@@ -71,13 +79,38 @@ class Integrations::Coolify < Integrations::Base
       resources = server.coolify_resources.sort_by(&:name)
       deploys = resources.select { |resource| resource.kind == "application" && resource.deploy_failed? }
       deploys = integration.value(:alert_deploy_failed) ? deploys.map { |application| reason("warn", :deploy_failed, application: application.name) } : []
-      deploys + resources.select { |resource| resource.kind == "database" }.filter_map do |database|
+      servers = resources.select { |resource| resource.kind == "server" }
+      unreachable = integration.value(:alert_server_unreachable) ? servers.reject { |coolify| coolify.data["reachable"] != false && coolify.data["usable"] != false } : []
+      unreachable.map { |coolify| reason("crit", :server_unreachable, team: coolify.connection.label) } +
+        resource_reasons(integration, resources) + deploys + resources.select { |resource| resource.kind == "database" }.filter_map do |database|
         case database.backup_state(max_age)
         when :failed then reason("crit", :backup_failed, database: database.name) if integration.value(:alert_backups)
         when :late then reason("warn", :backup_late, database: database.name, count: max_age.round) if integration.value(:alert_backups)
         when :none then reason("warn", :no_backup, database: database.name) if integration.value(:alert_no_backup)
         end
       end
+    end
+
+    # Stopped (recently: it ran in the last STOPPED_FOR_DAYS days) or unhealthy
+    # resources, and, if chosen, running applications without a health check.
+    def resource_reasons(integration, resources)
+      reasons = []
+      if integration.value(:alert_resources)
+        resources.each do |resource|
+          next unless CoolifyResource::RESOURCE_KINDS.include?(resource.kind)
+
+          if resource.stopped? && resource.online_since?(STOPPED_FOR_DAYS.days.ago)
+            reasons << reason("warn", :stopped, kind: resource.kind_label.downcase, name: resource.name)
+          elsif resource.unhealthy?
+            reasons << reason("warn", :unhealthy, kind: resource.kind_label.downcase, name: resource.name)
+          end
+        end
+      end
+      if integration.value(:alert_no_health_check)
+        resources.select { |resource| resource.kind == "application" && resource.running? && resource.data["health_check"] != true }
+                 .each { |application| reasons << reason("warn", :no_health_check, name: application.name) }
+      end
+      reasons
     end
 
     def reason(tone, key, **params) = Inventory::HealthStatus.reason(tone, "integrations.coolify.health.#{key}", **params)

@@ -24,7 +24,7 @@ class Integrations::CoolifyBackupsTest < ActiveSupport::TestCase
     CoolifyResource.find_by!(kind: "database", name: "pg-facturation")
   end
 
-  def reasons = Integrations::Coolify.health_reasons(@integration.reload, servers(:web).reload).map(&:text).grep(/Sauvegarde|sauvegarde/)
+  def reasons = Integrations::Coolify.health_reasons(@integration.reload, servers(:web).reload).map(&:text).grep(/sauvegarde/)
 
   test "the schedules and their last executions are kept, never their messages" do
     fake_coolify
@@ -52,13 +52,13 @@ class Integrations::CoolifyBackupsTest < ActiveSupport::TestCase
 
   test "health reasons of the server, as chosen in the settings" do
     sync(backups([ "failed", 3 ]))
-    assert_includes reasons, "Sauvegarde Coolify de pg-facturation en échec"
+    assert_includes reasons, "Coolify : sauvegarde de pg-facturation en échec"
     sync(backups([ "success", 40 ]))
-    assert_includes reasons, "Sauvegarde Coolify de pg-facturation : aucune réussie depuis 26 heures"
+    assert_includes reasons, "Coolify : aucune sauvegarde de pg-facturation réussie depuis 26 heures"
     @integration.update!(settings: { "backup_max_age_hours" => 48 })
     assert_empty reasons
     sync([])
-    assert_includes reasons, "Base Coolify pg-facturation sans sauvegarde planifiée"
+    assert_includes reasons, "Coolify : base pg-facturation sans sauvegarde planifiée"
     @integration.update!(settings: { "alert_no_backup" => false })
     assert_empty reasons
   end

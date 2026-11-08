@@ -219,13 +219,22 @@ fr:
       alert_no_backup: Alerter quand une base n'a aucune sauvegarde planifiée
       alert_deploy_failed: Alerter quand le dernier déploiement d'une application a échoué
       alert_deploy_failed_hint: jusqu'au prochain déploiement réussi
+      alert_resources: Alerter quand une ressource est arrêtée ou en mauvaise santé
+      alert_resources_hint: "sauf celles arrêtées depuis plus de %{count} jours (sans doute volontairement)"
+      alert_server_unreachable: Alerter quand Coolify ne peut plus joindre ou utiliser un serveur
+      alert_no_health_check: Alerter quand une application n'a pas de health check
+      alert_no_health_check_hint: "« en cours » ne dit pas alors si elle répond"
       health:
-        deploy_failed: "Déploiement Coolify de %{application} en échec"
-        backup_failed: "Sauvegarde Coolify de %{database} en échec"
+        stopped: "Coolify : %{name} à l'arrêt (%{kind})"
+        unhealthy: "Coolify : %{name} en mauvaise santé (%{kind})"
+        server_unreachable: "Coolify : ne peut plus joindre ou utiliser ce serveur (équipe %{team})"
+        no_health_check: "Coolify : application %{name} sans health check"
+        deploy_failed: "Coolify : déploiement de %{application} en échec"
+        backup_failed: "Coolify : sauvegarde de %{database} en échec"
         backup_late:
-          one: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heure"
-          other: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heures"
-        no_backup: "Base Coolify %{database} sans sauvegarde planifiée"
+          one: "Coolify : aucune sauvegarde de %{database} réussie depuis %{count} heure"
+          other: "Coolify : aucune sauvegarde de %{database} réussie depuis %{count} heures"
+        no_backup: "Coolify : base %{database} sans sauvegarde planifiée"
       backups:
         title: Sauvegardes de bases
         count:
