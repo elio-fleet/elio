@@ -226,7 +226,11 @@ en:
       alert_no_health_check_hint: "“running” then does not say whether it answers"
       alert_dns: Alert when a domain served by Coolify does not point to its server
       alert_dns_hint: from the DNS extensions (OVHcloud, Technitium, Gandi); a domain of a zone Elio does not read is not checked
+      alert_stale_key: Alert when the key of Coolify is on a server Coolify does not manage
+      alert_stale_key_hint: a forgotten access to remove, or a server to add in Coolify
+      key_detail: "team %{team} · %{instance}"
       health:
+        stale_key: "Coolify: the key “%{name}” (%{detail}) is on this server, which Coolify does not manage"
         dns_elsewhere: "Coolify: %{domain} is served here, but its DNS points to %{targets}"
         dns_missing: "Coolify: %{domain} is served here, but has no DNS record"
         stopped: "Coolify: %{name} stopped (%{kind})"
