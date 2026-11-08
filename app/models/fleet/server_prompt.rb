@@ -17,7 +17,7 @@ class ServerPrompt
 
   def monitors
     document(:monitors, [
-      server_section, addresses_section, dns_names_section, services_section, containers_section, ports_section,
+      server_section, addresses_section, dns_names_section, services_section, containers_section, ports_section, coolify_monitors_section,
       section(:existing_monitors, @server.uptime_kuma_monitors.order(:name).map { |monitor| monitor_line(monitor) })
     ])
   end
@@ -140,6 +140,34 @@ class ServerPrompt
     ipv6 = overview.ipv6_bypassing_ovh
     lines << t("ovh.ipv6_not_covered", addresses: overview.public_ipv6.join(", "), ports: ipv6.map(&:key).join(", ")) if ipv6.any?
     section(:ovh_firewall, lines)
+  end
+
+  # The domains of the applications and services Coolify runs here, with the
+  # health check set in Coolify and the probe that already watches each (by
+  # the host of its URL or its host name, attached to any server).
+  def coolify_monitors_section
+    resources = @server.coolify_resources.select { |resource| CoolifyResource::RESOURCE_KINDS.include?(resource.kind) && resource.domains.any? }.sort_by(&:name)
+    return if resources.empty?
+
+    monitors = UptimeKumaMonitor.all.to_a
+    lines = resources.flat_map do |resource|
+      resource.domains.map do |domain|
+        host = Integrations::Coolify::DomainCheck.host(domain)
+        monitor = monitors.find { |candidate| [ candidate.hostname, url_host(candidate.url) ].any? { |value| value.to_s.casecmp?(host.to_s) } }
+        health = if resource.kind == "application"
+          resource.data["health_check"] ? t("coolify.health_check_on", path: resource.data["health_check_path"] || "/") : t("coolify.health_check_off")
+        end
+        [ "https://#{domain} (#{[ resource.name, resource.kind_label.downcase, resource.state ].compact.join(", ")})", health,
+          (monitor ? t("coolify.monitored", name: monitor.name) : t("coolify.not_monitored")) ].compact.join(" — ")
+      end
+    end
+    section(:coolify, lines)
+  end
+
+  def url_host(url)
+    URI.parse(url.to_s).host
+  rescue URI::InvalidURIError
+    nil
   end
 
   def monitor_line(monitor)

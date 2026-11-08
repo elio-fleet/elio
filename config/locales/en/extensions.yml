@@ -634,6 +634,7 @@ en:
       ovh_firewall: OVHcloud network firewall (per IP)
       ssh_sources: Sources allowed to reach SSH
       dns_names: DNS names pointing to it
+      coolify: Domains served by Coolify on this server
     fields:
       name: 'Name in Elio: %{value}'
       hostname: 'Hostname: %{value}'
@@ -647,6 +648,11 @@ en:
       private: private / VPN
       local: local only
     manual_address: added by hand in Elio
+    coolify:
+      health_check_on: "Coolify health check: %{path}"
+      health_check_off: no health check in Coolify
+      monitored: "existing monitor: %{name}"
+      not_monitored: no monitor
     container: image %{image}, %{state}
     published: ports %{ports}
     compose: Compose project %{project}
