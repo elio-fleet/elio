@@ -1,21 +1,20 @@
 <% content_for :title, t("title", page: t("nav.ports")) %>
 
-<div>
-  <h1 class="text-xl font-semibold"><%= t(".public_ports_2") %></h1>
-  <p class="text-xs text-ink-3"><%= t(".what_each_server_exposes") %></p>
-</div>
+<%= page_header t(".public_ports_2"), subtitle: t(".what_each_server_exposes") %>
 
-<%= form_with url: ports_path, method: :get, data: search_form_data, class: "ports-filters mt-5 flex flex-wrap items-center gap-2" do |f| %>
+<%= form_with url: ports_path, method: :get, data: search_form_data, class: "ports-filters" do |f| %>
+  <%= filter_bar do %>
   <%= f.select :group, [ [ t(".all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
-        aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
+        aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <%= f.search_field :q, value: @port, placeholder: t(".port_e_g_3306"), inputmode: "numeric", aria: { label: t(".port") },
-        data: { action: "input->auto-submit#submitLater" }, class: "input w-36 py-1 text-xs" %>
+        data: { action: "input->auto-submit#submitLater" }, class: "input w-36 py-1.5" %>
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
+  <% end %>
 <% end %>
 
 <%= search_results_frame do %>
 <% if @rows.any? %>
-  <div class="card mt-3 overflow-x-auto">
+  <div class="card overflow-x-auto">
     <table id="public-ports" class="table-dense">
       <thead><tr><th class="pl-4"><%= t(".port") %></th><th><%= t(".server") %></th><th><%= t("words.process") %></th><th><%= t(".service_container") %></th><th class="pr-4"><%= t("words.firewall") %></th></tr></thead>
       <tbody>
@@ -23,7 +22,7 @@
           <tr class="public-port">
             <td class="pl-4 font-mono font-medium"><%= port.port %><span class="text-ink-3">/<%= port.proto %></span>
               <% if port.unexpected %><%= status_badge :warn, t("words.unexpected"), class: "port-unexpected ml-1" %><% end %></td>
-            <td><%= link_to server.name, server_path(server, tab: "ports"), class: "font-medium hover:text-accent hover:underline" %></td>
+            <td><%= link_to server.name, server_path(server, tab: "firewall"), class: "font-medium hover:text-accent hover:underline" %></td>
             <td class="font-mono text-xs"><%= port.process || tag.span(t("words.unknown"), class: "text-ink-3") %></td>
             <td class="text-xs text-ink-2"><%= port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || "—" %></td>
             <td class="pr-4 text-xs"><%= render "servers/port_firewall", port: port %></td>
@@ -34,7 +33,7 @@
   </div>
   <%= render "shared/pagination", pager: @pager, noun: t(".public_ports") %>
 <% else %>
-  <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @port ? t(".server_exposes_port", port: @port) : t(".known_public_port") %></p>
+  <div class="card"><%= empty_state((@port ? t(".server_exposes_port", port: @port) : t(".known_public_port")), icon: :arrows_right_left) %></div>
 <% end %>
 
 <% if @without_inventory.any? %>

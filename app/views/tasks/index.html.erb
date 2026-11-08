@@ -4,25 +4,23 @@
 <turbo-frame id="tasks" target="_top">
   <% if @counts.slice("queued", "running").values.sum.positive? %><div data-controller="auto-refresh" data-auto-refresh-interval-value="3000" hidden></div><% end %>
 
-  <div class="flex flex-wrap items-end justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight"><%= t("nav.tasks") %></h1>
-      <p class="mt-1 text-sm text-ink-3"><%= t(".inventories_key_scans_automations_html", in_days_to_i: (BackgroundTask::RETENTION.in_days.to_i)) %></p>
-    </div>
+  <%= page_header t("nav.journal"), subtitle: t(".inventories_key_scans_automations_html", in_days_to_i: BackgroundTask::RETENTION.in_days.to_i) do %>
     <% if can?(:administer) %>
-      <%= link_to "/jobs", class: "btn btn-secondary", data: { turbo: false } do %><%= icon :list_bullet, class: "h-4 w-4" %><%= t("command_palette.jobs") %><% end %>
+      <%= actions_menu do %><%= menu_item t("command_palette.jobs"), "/jobs", icon: :list_bullet, data: { turbo: false } %><% end %>
     <% end %>
-  </div>
+  <% end %>
+
+  <%= render "activities/journal_tabs", current: "runs" %>
 
   <%= render "tasks/workers_warning", workers_running: @workers_running %>
 
-  <nav class="task-filters mt-6 flex flex-wrap gap-2" aria-label="<%= t(".status") %>">
+  <nav class="task-filters filter-bar mb-3 flex flex-wrap gap-2" aria-label="<%= t(".status") %>">
     <% [ [ t(".all"), nil ], [ t(".queued"), "queued" ], [ t(".running"), "running" ], [ t(".done"), "succeeded" ], [ t(".failed"), "failed" ] ].each do |label, filter| %>
-      <%= filter_pill label, tasks_path(status: filter), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
+      <%= filter_chip label, tasks_path(status: filter), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
     <% end %>
   </nav>
 
-  <section class="card mt-4 overflow-x-auto">
+  <section class="card overflow-x-auto">
     <% if @tasks.any? %>
       <table id="background-tasks" class="table-dense w-full">
         <thead>
@@ -51,7 +49,7 @@
 
   <%= render "shared/pagination", pager: @pager, noun: t(".tasks") %>
 
-  <section id="upcoming-automations" class="card mt-8">
+  <section id="upcoming-automations" class="card mt-5">
     <div class="card-header">
       <h2 class="text-sm font-semibold"><%= t(".next_automations") %></h2>
       <% if can?(:administer) %><%= link_to t(".manage"), settings_automations_path, class: "text-xs font-medium text-accent" %><% end %>

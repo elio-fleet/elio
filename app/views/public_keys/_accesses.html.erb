@@ -1,6 +1,6 @@
 <%# Where the keyring key is installed, from the last key reads (see Keys::PublicKeyAccessOverview). %>
 <% accesses = Keys::PublicKeyAccessOverview.new(public_key).accesses %>
-<section id="key-accesses" class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
+<section id="key-accesses" class="card mt-4 p-5">
   <div class="flex items-start justify-between gap-4">
     <div>
       <h2 class="text-lg font-semibold"><%= t(".access") %></h2>

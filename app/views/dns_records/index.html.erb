@@ -1,9 +1,6 @@
 <% content_for :title, t("title", page: t("dns_records.tab")) %>
 
-<div class="flex flex-wrap items-end justify-between gap-4">
-  <div>
-    <h1 class="text-xl font-semibold"><%= t("dns_records.index.title") %></h1>
-    <p class="text-xs text-ink-3"><%= t("dns_records.index.intro") %></p>
+<% sources = capture do %>
     <ul class="dns-sources mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-3">
       <% @sources.each do |integration| %>
         <li data-source="<%= integration.kind %>">
@@ -14,41 +11,42 @@
         </li>
       <% end %>
     </ul>
-  </div>
-</div>
+<% end %>
+<%= page_header t("dns_records.index.title"), subtitle: safe_join([ t("dns_records.index.intro"), sources ]) %>
 
-<div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <%= stat_tile t("dns_records.index.records"), @counts[:total], nil, icon: :globe, id: "stat-dns-records" %>
-  <%= stat_tile t("dns_records.index.outside"), @counts[:outside], t("dns_records.index.outside_caption"), tone: (:warn if @counts[:outside].positive?), id: "stat-dns-outside" %>
-  <%= stat_tile t("dns_records.index.unattached"), @counts[:unattached], nil, id: "stat-dns-unattached" %>
+<%= stat_tiles do %>
+  <%= stat_tile t("dns_records.index.records"), @counts[:total], nil, icon: :globe, id: "stat-dns-records", href: dns_records_path, active: @filter.nil? %>
+  <%= stat_tile t("dns_records.index.outside"), @counts[:outside], t("dns_records.index.outside_caption"), tone: (:warn if @counts[:outside].positive?), icon: :exclamation_triangle, id: "stat-dns-outside",
+                href: dns_records_path(filter: "outside"), active: @filter == "outside" %>
+  <%= stat_tile t("dns_records.index.unattached"), @counts[:unattached], nil, icon: :list_bullet, id: "stat-dns-unattached", href: dns_records_path(filter: "unattached"), active: @filter == "unattached" %>
   <%= stat_tile t("dns_records.index.servers_without"), @counts[:servers_without], nil, icon: :server_stack, id: "stat-dns-servers-without" %>
-</div>
+<% end %>
 
-<div class="mt-5 flex flex-wrap items-center gap-2">
+<div class="filter-bar mb-3 flex flex-wrap items-center gap-2">
   <nav class="dns-filters flex flex-wrap gap-2" aria-label="<%= t("dns_records.index.filters") %>">
     <% [ [ t("dns_records.index.all"), nil ], [ t("dns_records.index.outside"), "outside" ], [ t("dns_records.index.unattached"), "unattached" ],
          *([ [ t("dns_records.index.conflicts"), "conflicts", @counts[:conflicts] ] ] if @sources.size > 1 || @counts[:conflicts].positive?) ].each do |label, filter, count| %>
-      <%= filter_pill label, dns_records_path(filter: filter, zone: @zone, source: @source), active: @filter == filter, count: count&.nonzero?, data: { filter: filter || "all" } %>
+      <%= filter_chip label, dns_records_path(filter: filter, zone: @zone, source: @source), active: @filter == filter, count: count&.nonzero?, data: { filter: filter || "all" } %>
     <% end %>
   </nav>
   <%= form_with url: dns_records_path, method: :get, data: search_form_data, class: "ml-auto flex flex-wrap items-center gap-2" do |f| %>
     <%= hidden_field_tag :filter, @filter if @filter %>
     <% if @sources.size > 1 %>
       <%= f.select :source, [ [ t("dns_records.index.all_sources"), "" ], *@sources.map { |integration| [ DnsRecord.source_label(integration.kind), integration.kind ] } ], { selected: @source },
-            aria: { label: t("dns_records.index.source") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
+            aria: { label: t("dns_records.index.source") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
     <% end %>
     <% if @zones.size > 1 %>
       <%= f.select :zone, [ [ t("dns_records.index.all_zones"), "" ], *@zones.map { |zone| [ zone, zone ] } ], { selected: @zone },
-            aria: { label: t("dns_records.index.zone") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
+            aria: { label: t("dns_records.index.zone") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
     <% end %>
     <%= f.search_field :q, value: @q, placeholder: t("dns_records.index.search"), aria: { label: t("dns_records.index.search") },
-          data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1 text-xs" %>
+          data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1.5" %>
   <% end %>
 </div>
 
 <%= search_results_frame do %>
   <% if @records.any? %>
-    <div class="card mt-3 overflow-x-auto">
+    <div class="card overflow-x-auto">
       <table id="dns-records" class="table-dense">
         <thead><tr><th class="pl-4"><%= t("dns_records.index.name") %></th><th>Type</th><th><%= t("dns_records.index.value") %></th><th><%= t("dns_records.index.source") %></th><th><%= t("dns_records.index.server") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t("dns_records.index.attach") %></th><% end %></tr></thead>
         <tbody>
@@ -77,6 +75,6 @@
     </div>
     <%= render "shared/pagination", pager: @pager, noun: t("dns_records.index.records").downcase %>
   <% else %>
-    <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= DnsRecord.exists? ? t("dns_records.index.none") : t("dns_records.index.no_record_yet") %></p>
+    <p class="card px-4 py-6 text-sm text-ink-3"><%= DnsRecord.exists? ? t("dns_records.index.none") : t("dns_records.index.no_record_yet") %></p>
   <% end %>
 <% end %>

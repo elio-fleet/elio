@@ -1,9 +1,10 @@
 <% input_class = "input mt-1" %>
 <% label_class = "label" %>
 
-<%= form_with model: server, class: "space-y-5" do |f| %>
+<%= form_with model: server do |f| %>
   <%= render "shared/form_errors", record: server %>
 
+  <%= form_section t(".connection"), t(".connection_help") do %>
   <div>
     <%= f.label :name, t(".name"), class: label_class %>
     <%= f.text_field :name, autofocus: true, required: true, placeholder: t(".web_production"), class: input_class %>
@@ -25,30 +26,36 @@
     <%= f.text_field :username, required: true, placeholder: "root", autocomplete: "off", spellcheck: false, class: "#{input_class} font-mono" %>
   </div>
 
+  <% end %>
+
+  <%= form_section t(".extra_addresses"), t(".optional") do %>
   <div>
-    <%= f.label :extra_addresses_text, class: label_class do %><%= t(".extra_addresses") %> <span class="font-normal text-ink-3"><%= t(".optional") %></span><% end %>
+    <%= f.label :extra_addresses_text, t(".addresses"), class: label_class %>
     <%= f.text_field :extra_addresses_text, placeholder: "203.0.113.4, 10.8.0.12", autocomplete: "off", spellcheck: false, class: "#{input_class} font-mono" %>
     <p class="mt-1 text-xs text-ink-3"><%= t(".ip_addresses_through_which") %></p>
   </div>
+  <% end %>
 
   <% if ServerGroup.exists? %>
+    <%= form_section t(".groups"), t(".groups_help") do %>
     <fieldset>
-      <legend class="<%= label_class %>"><%= t(".groups") %></legend>
-      <div class="mt-2 flex flex-wrap gap-2">
+      <legend class="sr-only"><%= t(".groups") %></legend>
+      <div class="flex flex-wrap gap-2">
         <%= f.collection_check_boxes :server_group_ids, ServerGroup.order(:name), :id, :name do |b| %>
           <label class="cursor-pointer">
             <%= b.check_box class: "peer sr-only" %>
-            <span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset opacity-50 peer-checked:opacity-100 peer-checked:ring-2 peer-checked:[&>svg]:block peer-focus-visible:outline-2 peer-focus-visible:outline-accent <%= b.object.badge_classes %>">
-              <%= icon :check, class: "hidden h-3 w-3" %><%= b.text %>
+            <span class="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1 text-sm text-ink-2 peer-checked:border-ink peer-checked:bg-ink peer-checked:text-surface peer-focus-visible:outline-2 peer-focus-visible:outline-accent">
+              <span class="h-2 w-2 rounded-full <%= b.object.dot_classes %>"></span><%= b.text %>
             </span>
           </label>
         <% end %>
       </div>
     </fieldset>
+    <% end %>
   <% end %>
 
-  <div class="flex items-center justify-end gap-3 pt-2">
-    <%= link_to t(".cancel"), server.persisted? ? server_path(server) : servers_path, class: "btn btn-ghost" %>
+  <div class="flex items-center gap-3 border-t border-line pt-4">
     <%= f.submit server.persisted? ? t(".save") : t(".add_server"), class: "btn btn-primary" %>
+    <%= link_to t(".cancel"), server.persisted? ? server_path(server) : servers_path, class: "btn btn-ghost" %>
   </div>
 <% end %>

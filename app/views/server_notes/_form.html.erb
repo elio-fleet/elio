@@ -11,7 +11,7 @@
     <%= f.button t("server_notes.form.preview"), type: "submit", formaction: preview_server_notes_path(server), formmethod: "post", formnovalidate: true,
           name: nil, data: { turbo_frame: preview_id }, class: "note-preview-button btn btn-secondary" %>
     <% if note.persisted? %>
-      <%= link_to t("server_notes.form.cancel"), server_path(server, tab: "notes"), data: { turbo_frame: "_top" }, class: "btn btn-ghost" %>
+      <%= link_to t("server_notes.form.cancel"), server_path(server, tab: "journal"), data: { turbo_frame: "_top" }, class: "btn btn-ghost" %>
     <% end %>
   </div>
   <%= turbo_frame_tag preview_id, class: "block" %>

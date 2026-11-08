@@ -1,14 +1,13 @@
 <% content_for :title, t("title", page: t(".title")) %>
 <% input_class = "input mt-1" %>
 
-<div class="mx-auto max-w-2xl">
-  <h1 class="text-2xl font-bold tracking-tight"><%= t(".title") %></h1>
-  <p class="mt-1 text-sm text-ink-3"><%= current_user.email %> · <%= current_user.role_label %></p>
+<div class="max-w-3xl space-y-4">
+  <%= page_header t(".title"), subtitle: "#{current_user.email} · #{current_user.role_label}" %>
 
-  <section id="two-factor" class="mt-8 rounded-xl border border-line bg-surface p-6 shadow-sm">
+  <section id="two-factor" class="card p-5">
     <div class="flex items-start justify-between gap-4">
       <div>
-        <h2 class="text-base font-semibold"><%= t(".two_factor") %></h2>
+        <h2 class="text-sm font-semibold"><%= t(".two_factor") %></h2>
         <p class="mt-1 text-sm text-ink-3"><%= t(".two_factor_intro") %></p>
       </div>
       <% if current_user.two_factor_enabled? %>
@@ -44,8 +43,8 @@
 
   <%= render "accounts/language" %>
 
-  <section id="password" class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
-    <h2 class="text-base font-semibold"><%= t(".password") %></h2>
+  <section id="password" class="card p-5">
+    <h2 class="text-sm font-semibold"><%= t(".password") %></h2>
     <%= form_with model: current_user, url: password_account_path, method: :patch, scope: :user, class: "mt-4 space-y-4" do |f| %>
       <%= render "shared/form_errors", record: current_user %>
       <div>
@@ -62,7 +61,7 @@
           <%= f.password_field :password_confirmation, required: true, autocomplete: "new-password", class: input_class %>
         </div>
       </div>
-      <%= f.submit t(".change_password"), class: "btn btn-primary" %>
+      <%= f.submit t(".change_password"), class: "btn btn-secondary" %>
     <% end %>
   </section>
 </div>

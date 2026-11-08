@@ -2,9 +2,9 @@
 <% snapshot = server.inventory("health") %>
 <% health = snapshot&.collected? ? snapshot.data : nil %>
 <% settings = app_settings %>
-<section id="server-health-details" class="card mt-6">
+<section id="server-health-details" class="card">
   <div class="card-header">
-    <h2 class="flex items-center gap-2 font-semibold"><%= icon :pulse, class: "h-4 w-4 text-ink-3" %> <%= t(".health") %></h2>
+    <h2 class="flex items-center gap-2 text-sm font-semibold"><%= icon :pulse, class: "h-4 w-4 text-ink-3" %> <%= t(".health") %></h2>
     <div class="flex items-center gap-2 text-xs text-ink-3">
       <%= inventory_status_badge(snapshot) %>
       <% if snapshot&.collected_at %><%= t(".read_html", collected_at: (relative_time_tag snapshot.collected_at)) %><% end %>
@@ -14,68 +14,39 @@
   <% if health %>
     <% memory = health["memory"] || {} %>
     <% fullest = Array(health["disks"]).max_by { |disk| disk["used_percent"].to_f } %>
-    <div class="grid gap-3 p-4 sm:grid-cols-3">
-      <div class="health-load rounded-lg border border-line px-3 py-2.5">
-        <p class="text-xs text-ink-3"><%= t(".load") %></p>
-        <div class="mt-1 flex items-end justify-between gap-2">
-          <p class="text-xl font-semibold tabular-nums"><%= number_with_precision(health.dig("load", 0), precision: 2, strip_insignificant_zeros: true) %>
-            <span class="text-xs font-normal text-ink-3">/ <%= t("count.processors", count: health["cpus"].to_i) %></span></p>
-          <%= sparkline @health_history.map { |_, load, _, _| load }, max: 100, width: 80, height: 26, title: t(".load_over_24_h") %>
-        </div>
-      </div>
-      <div class="health-memory rounded-lg border border-line px-3 py-2.5">
-        <p class="text-xs text-ink-3"><%= t(".memory") %></p>
-        <p class="mt-1 text-xl font-semibold tabular-nums"><%= memory["used_percent"] && number_to_percentage(memory["used_percent"], precision: 0) %>
-          <span class="text-xs font-normal text-ink-3"><%= human_bytes(memory["total"].to_i - memory["available"].to_i) %> / <%= human_bytes(memory["total"]) %></span></p>
-        <div class="mt-2"><%= meter memory["used_percent"], warn: settings.health_memory_warn, crit: settings.health_memory_crit, width: "w-full", value: false %></div>
-      </div>
-      <div class="health-disk rounded-lg border border-line px-3 py-2.5">
-        <p class="text-xs text-ink-3"><%= t(".fullest_disk") %> <% if fullest %><span class="font-mono"><%= fullest["mount"] %></span><% end %></p>
-        <% if fullest %>
-          <p class="mt-1 text-xl font-semibold tabular-nums <%= "text-crit-ink" if fullest["used_percent"] >= settings.health_disk_crit %>"><%= number_to_percentage(fullest["used_percent"], precision: 0) %>
-            <span class="text-xs font-normal text-ink-3"><%= human_bytes(fullest["used"]) %> / <%= human_bytes(fullest["size"]) %></span></p>
-          <div class="mt-2"><%= meter fullest["used_percent"], warn: settings.health_disk_warn, crit: settings.health_disk_crit, width: "w-full", value: false %></div>
-        <% else %>
-          <p class="mt-1 text-xl text-ink-3">—</p>
-        <% end %>
-      </div>
-    </div>
+    <table class="health-now table-dense">
+      <tbody>
+        <tr class="health-load">
+          <td class="w-48 pl-4 text-xs text-ink-3"><%= t(".load") %></td>
+          <td><span class="font-semibold tabular-nums"><%= number_with_precision(health.dig("load", 0), precision: 2, strip_insignificant_zeros: true) %></span>
+            <span class="text-xs text-ink-3">/ <%= t("count.processors", count: health["cpus"].to_i) %></span></td>
+          <td class="pr-4 text-right"><%= sparkline @health_history.map { |_, load, _, _| load }, max: 100, width: 200, height: 22, title: t(".load_over_24_h") %></td>
+        </tr>
+        <tr class="health-memory">
+          <td class="pl-4 text-xs text-ink-3"><%= t(".memory") %></td>
+          <td><div class="flex flex-wrap items-center gap-x-3"><%= meter memory["used_percent"], warn: settings.health_memory_warn, crit: settings.health_memory_crit, width: "w-24" %>
+            <span class="text-xs text-ink-3"><%= human_bytes(memory["total"].to_i - memory["available"].to_i) %> / <%= human_bytes(memory["total"]) %></span></div></td>
+          <td class="pr-4 text-right"><%= sparkline @health_history.map { |_, _, used, _| used }, max: 100, width: 200, height: 22, title: t(".memory") %></td>
+        </tr>
+        <tr class="health-disk">
+          <td class="pl-4 text-xs text-ink-3"><%= t(".fullest_disk") %><% if fullest %> · <span class="font-mono"><%= fullest["mount"] %></span><% end %></td>
+          <td><% if fullest %><div class="flex flex-wrap items-center gap-x-3"><%= meter fullest["used_percent"], warn: settings.health_disk_warn, crit: settings.health_disk_crit, width: "w-24" %>
+            <span class="text-xs text-ink-3"><%= human_bytes(fullest["used"]) %> / <%= human_bytes(fullest["size"]) %></span></div><% else %><span class="text-ink-3">—</span><% end %></td>
+          <td class="pr-4 text-right"><%= sparkline @health_history.map { |_, _, _, disk| disk }, max: 100, width: 200, height: 22, title: t(".fullest_disk"),
+                                                    color: (fullest && fullest["used_percent"] >= settings.health_disk_crit ? "var(--color-crit)" : "var(--color-spark)") %></td>
+        </tr>
+      </tbody>
+    </table>
 
-    <div class="grid gap-4 border-t border-line p-4 lg:grid-cols-3">
-      <div class="health-reasons">
-        <h3 class="text-xs font-semibold tracking-wide text-ink-3 uppercase"><%= t(".do") %></h3>
-        <% if server.health_reasons.any? %>
-          <ul class="mt-2 space-y-1.5">
-            <% server.health_reasons.each do |reason| %>
-              <li class="flex items-start gap-2 <%= reason["tone"] == "crit" ? "text-crit-ink" : "text-warn-ink" %>">
-                <%= icon(reason["tone"] == "crit" ? :x_mark : :exclamation_triangle, class: "mt-0.5 h-4 w-4") %><span class="text-ink"><%= Inventory::HealthStatus.text(reason) %></span>
-              </li>
-            <% end %>
-          </ul>
-        <% else %>
-          <p class="mt-2 flex items-center gap-2 text-sm text-good-ink"><%= icon :check_circle %> <%= t(".nothing_report") %></p>
-        <% end %>
-        <dl class="health-facts mt-4 space-y-1 text-xs">
-          <div class="flex justify-between gap-2"><dt class="text-ink-3"><%= t(".updates") %></dt>
-            <dd><% if (updates = health["updates"]) %><%= updates["total"] %><% if updates["security"].to_i.positive? %> <%= t(".including_html", security: tag.span(t(".security_html", security: updates["security"]), class: "font-medium text-crit-ink")) %><% end %><% else %>—<% end %></dd></div>
-          <div class="flex justify-between gap-2"><dt class="text-ink-3"><%= t(".reboot_required") %></dt><dd><%= health["reboot_required"] ? t("words.yes") : t("words.no") %></dd></div>
-          <div class="flex justify-between gap-2"><dt class="text-ink-3"><%= t(".failed_services") %></dt><dd class="text-right font-mono"><%= Array(health["failed_units"]).join(", ").presence || t("words.none") %></dd></div>
-          <div class="flex justify-between gap-2"><dt class="text-ink-3"><%= t("words.clock") %></dt><dd><%= { true => t(".synchronized"), false => t(".not_synchronized") }.fetch(health["ntp_synchronized"], "—") %></dd></div>
-          <% if (swap = health["swap"]) %>
-            <div class="flex justify-between gap-2"><dt class="text-ink-3"><%= t("words.swap") %></dt><dd><%= t(".swap_html", percent: number_to_percentage(swap["used_percent"], precision: 0), size: human_bytes(swap["total"])) %></dd></div>
-          <% end %>
-        </dl>
-      </div>
-      <div class="health-history grid gap-4 sm:grid-cols-3 lg:col-span-2 lg:grid-cols-1">
-        <%= history_chart @health_history.map { |time, load, _, _| [ time, load ] }, label: t(".load_processors") %>
-        <%= history_chart @health_history.map { |time, _, memory, _| [ time, memory ] }, label: t(".memory"), threshold: settings.health_memory_warn %>
-        <%= history_chart @health_history.map { |time, _, _, disk| [ time, disk ] }, label: t(".fullest_disk"), threshold: settings.health_disk_warn,
-                          color: (fullest && fullest["used_percent"] >= settings.health_disk_crit ? "var(--color-crit)" : "var(--color-accent)") %>
-      </div>
-    </div>
+    <%= fact_list [ [ t(".updates"), (updates = health["updates"]) ? safe_join([ updates["total"], (" " if updates["security"].to_i.positive?), (t(".including_html", security: tag.span(t(".security_html", security: updates["security"]), class: "font-medium text-crit-ink")) if updates["security"].to_i.positive?) ].compact) : "—" ],
+                    [ t(".reboot_required"), health["reboot_required"] ? t("words.yes") : t("words.no") ],
+                    [ t(".failed_services"), tag.span(Array(health["failed_units"]).join(", ").presence || t("words.none"), class: "font-mono") ],
+                    [ t("words.clock"), { true => t(".synchronized"), false => t(".not_synchronized") }.fetch(health["ntp_synchronized"], "—") ],
+                    [ t("words.swap"), ((swap = health["swap"]) ? t(".swap_html", percent: number_to_percentage(swap["used_percent"], precision: 0), size: human_bytes(swap["total"])) : nil) ] ],
+                  class: "health-facts border-t border-line" %>
 
     <% if Array(health["disks"]).any? %>
-      <table class="health-disks table-dense border-t border-line">
+      <table id="disks" class="health-disks table-dense border-t border-line">
         <thead><tr><th class="pl-4"><%= t(".mount_point") %></th><th>Type</th><th><%= t("words.size") %></th><th><%= t(".used") %></th><th class="pr-4">Inodes</th></tr></thead>
         <tbody>
           <% health["disks"].each do |disk| %>
@@ -90,6 +61,16 @@
         </tbody>
       </table>
     <% end %>
+
+    <details id="disks-charts" class="health-history-details border-t border-line">
+      <summary class="cursor-pointer list-none px-4 py-2 text-xs font-medium text-accent hover:underline [&::-webkit-details-marker]:hidden"><%= t(".charts_24_h") %></summary>
+      <div class="health-history grid gap-4 px-4 pb-4 sm:grid-cols-3">
+        <%= history_chart @health_history.map { |time, load, _, _| [ time, load ] }, label: t(".load_processors") %>
+        <%= history_chart @health_history.map { |time, _, memory, _| [ time, memory ] }, label: t(".memory"), threshold: settings.health_memory_warn %>
+        <%= history_chart @health_history.map { |time, _, _, disk| [ time, disk ] }, label: t(".fullest_disk"), threshold: settings.health_disk_warn,
+                          color: (fullest && fullest["used_percent"] >= settings.health_disk_crit ? "var(--color-crit)" : "var(--color-accent)") %>
+      </div>
+    </details>
   <% elsif snapshot&.failed? %>
     <p class="inventory-error px-4 py-4 text-sm text-crit-ink"><%= snapshot.message %></p>
   <% else %>

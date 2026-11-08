@@ -1,17 +1,20 @@
 en:
   nav:
     overview: Overview
-    fleet: Fleet
-    packages: Packages
+    fleet: Servers
+    packages: Updates
     vulnerabilities: Vulnerabilities
     docker: Docker
     ports: Ports
     scheduled_tasks: Scheduled tasks
-    keyring: Keyring
-    activity: Activity
-    tasks: Tasks
-    tasks_title: Background tasks
+    keyring: SSH keys
+    activity: Events
+    tasks: Runs
+    tasks_title: "Journal: events and background runs"
     automations: Automations
+    journal: Journal
+    probes: Probes
+    hosting: Hosting
     settings: Settings
     server_groups: Server groups
     account: My account
@@ -19,10 +22,10 @@ en:
     pages: Pages
     groups: Groups
     servers: Servers
-    keyring: Keyring
+    keyring: SSH keys
     hints:
       fleet: servers
-      packages: search the whole fleet
+      packages: updates and package search
       ports: public ports of the fleet
       scheduled_tasks: cron jobs and timers of the fleet
       vulnerabilities: CVEs of the fleet
@@ -71,11 +74,14 @@ en:
       next: Next
       page: Page %{number}
   layouts:
+    auth:
+      tagline: "Elio %{version} · read-only fleet monitoring"
     sidebar:
       close_menu: Close the menu
+      fleet_wide: Across the fleet
+      access: Access
+      extensions: Extensions
       main_navigation: Main navigation
-      groups: Groups
-      manage: Manage
       dark_theme: Dark theme
       sign_out: Sign out
     application:
@@ -91,6 +97,7 @@ en:
   throttled:
     too_many: 'Too many attempts: try again in a few minutes.'
   ui:
+    extension_settings: Extension settings
     trend: Trend
     over_24_hours: "%{label} over 24 hours"
     now: "%{value} now"
@@ -98,6 +105,16 @@ en:
     hours_ago_24: 24 h ago
     hours_12: 12 h
     now_axis: now
+    breadcrumb: Breadcrumb
+    more_actions: More actions
+    more: More
+    view: View
+    save: Save
+    cancel: Cancel
+    unsaved:
+      one: "%{count} unsaved change"
+      other: "%{count} unsaved changes"
+    clear_filters: Clear the filters
   count:
     servers:
       one: "%{count} server"
@@ -199,6 +216,7 @@ en:
     packages: packages
     keys: keys
   words:
+    source: Source
     none: none
     'yes': 'yes'
     'no': 'no'
@@ -264,7 +282,7 @@ en:
     cvss_score: CVSS score
     exploitation: exploitation
     a_records: A / AAAA records
-    back_keyring: "← Keyring"
+    back_keyring: "← SSH keys"
     unknown: unknown
     container_name: container %{name}
     available: available

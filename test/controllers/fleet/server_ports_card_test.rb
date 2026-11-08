@@ -11,7 +11,7 @@ class ServerPortsCardTest < ActionDispatch::IntegrationTest
     record_containers(servers(:db), [ { "name" => "pgbouncer", "state" => "running", "ports" => "0.0.0.0:6432->6432/tcp" } ])
     sign_in users(:viewer)
 
-    get server_path(servers(:db), tab: "ports")
+    get server_path(servers(:db), tab: "firewall")
 
     assert_select "#server-ports" do
       assert_select ".ports-summary", text: /3 publics sur 8 en écoute/
@@ -23,7 +23,6 @@ class ServerPortsCardTest < ActionDispatch::IntegrationTest
       assert_select "tr.port", text: /6432\/tcp.*conteneur pgbouncer.*publié par Docker/m
       assert_select "tr.port", text: /9100\/tcp\s+inattendu.*bloqué/m
       assert_select "tr.port[data-scope=local]", 3
-      assert_select ".firewall-link a[href=?]", server_path(servers(:db), tab: "firewall")
       assert_select ".ufw-rules", 0
     end
   end
@@ -61,7 +60,7 @@ class ServerPortsCardTest < ActionDispatch::IntegrationTest
 
   test "before any inventory" do
     sign_in users(:viewer)
-    get server_path(servers(:web), tab: "ports")
+    get server_path(servers(:web), tab: "firewall")
     assert_select "#server-ports .ports-empty", "Pas encore d'inventaire des ports."
   end
 end

@@ -73,31 +73,34 @@ module UiHelper
     { controller: "auto-submit", turbo_frame: frame }
   end
 
-  # Headline figure with a label and a caption, optionally toned.
-  def stat_tile(label, value, caption = nil, tone: nil, icon: nil, id: nil)
+  # Headline figure with a label and a caption, optionally toned. With href:
+  # a link that filters the list below (active: the filter in use).
+  def stat_tile(label, value, caption = nil, tone: nil, icon: nil, id: nil, href: nil, active: false)
     value_class = { good: "text-good-ink", warn: "text-warn-ink", crit: "text-crit-ink", off: "text-crit-ink" }.fetch(tone, "text-ink")
-    tag.div(class: "stat-tile card px-4 py-3", id: id) do
-      safe_join([
-        tag.p(class: "flex items-center gap-1.5 text-xs text-ink-3") { safe_join([ (icon(icon, class: "h-3.5 w-3.5") if icon), label ].compact) },
-        tag.p(value, class: "stat-value mt-1 text-2xl font-semibold tabular-nums #{value_class}"),
-        (tag.p(caption, class: "text-xs text-ink-3") if caption)
-      ].compact)
-    end
+    content = safe_join([
+      tag.p(class: "flex items-center gap-1.5 text-xs text-ink-3") { safe_join([ (icon(icon, class: "h-3.5 w-3.5") if icon), label ].compact) },
+      tag.p(value, class: "stat-value mt-1 text-2xl font-semibold tabular-nums #{value_class}"),
+      (tag.p(caption, class: "truncate text-xs text-ink-3") if caption)
+    ].compact)
+    classes = "stat-tile card block min-w-0 px-4 py-3"
+    return tag.div(content, class: classes, id: id) unless href
+
+    link_to content, href, id: id, aria: { current: (active ? "true" : nil) },
+                     class: "#{classes} transition-colors hover:border-ink-3 #{"border-accent ring-1 ring-accent" if active}"
   end
 
   # Link of the sidebar navigation, highlighted (and aria-current) when active.
+  # count: a number (neutral) or a SidebarCounts::Count (coloured by its tone).
   def sidebar_link(label, path, icon:, active:, count: nil, **options)
     classes = "flex items-center gap-2.5 rounded-lg px-2.5 py-1.5 text-sm #{active ? "bg-accent-soft font-medium text-accent" : "text-ink-2 hover:bg-subtle hover:text-ink"}"
+    value, tone = count.respond_to?(:tone) ? [ count.value, count.tone ] : [ count, nil ]
+    badge = { crit: "rounded-full bg-crit-soft px-1.5 font-semibold text-crit-ink", warn: "rounded-full bg-warn-soft px-1.5 font-semibold text-warn-ink" }.fetch(tone, "text-ink-3")
     link_to path, class: classes, aria: { current: (active ? "page" : nil) }, **options do
-      safe_join([ icon(icon, class: "h-4 w-4"), tag.span(label), (tag.span(count, class: "ml-auto text-xs text-ink-3") if count) ].compact)
+      safe_join([ icon(icon, class: "h-4 w-4"), tag.span(label), (tag.span(value, class: "sidebar-count ml-auto text-xs tabular-nums #{badge}", data: { tone: tone }) if value) ].compact)
     end
   end
 
-  # Server groups listed in the sidebar, with their number of servers.
-  def sidebar_server_groups
-    ServerGroup.left_joins(:memberships).group(:id).order(:name)
-               .select("server_groups.*, COUNT(server_group_memberships.id) AS servers_count")
-  end
+  def sidebar_section(label) = tag.p(label, class: "sidebar-section px-2.5 pt-4 pb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase")
 
   # Line chart of a percentage over time (24 h by default), stretched to the
   # width of its container: grid at 0/50/100 %, optional dashed threshold, and

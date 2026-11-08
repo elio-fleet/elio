@@ -34,12 +34,12 @@ Rails.application.routes.draw do
   resource :server_pings, only: :create, path: "servers/pings"
   resource :server_scans, only: :create, path: "servers/scans"
 
-  resources :public_keys, path: "keys" do
+  resources :public_keys, path: "ssh-keys" do
     resources :accesses, only: :create, controller: "public_key_accesses"
     resource :access, only: :destroy, controller: "public_key_accesses"
   end
 
-  resource :settings, only: :show
+  resource :settings, only: %i[show update]
   namespace :settings do
     resource :dns_alerts, only: :update, path: "extensions/dns"
     resources :users, only: %i[index update] do
@@ -88,6 +88,7 @@ Rails.application.routes.draw do
     resources :automations, only: %i[index update] do
       post :run, on: :member
     end
+    patch "automations", to: "automations#update_all", as: :automations_update
     resources :integrations, only: %i[index edit update], param: :kind, path: "extensions" do
       member do
         match :test, via: %i[post patch] # (the button shares the settings form, sent as PATCH)
@@ -95,9 +96,9 @@ Rails.application.routes.draw do
       end
     end
   end
-  resources :activities, only: :index
-  resources :tasks, only: %i[index show]
-  resources :packages, only: :index
+  resources :activities, only: :index, path: "journal"
+  resources :tasks, only: %i[index show], path: "journal/runs"
+  resources :packages, only: :index, path: "updates"
   resources :ports, only: :index
   resources :scheduled_tasks, only: :index, path: "scheduled-tasks"
   resources :vulnerabilities, only: %i[index show], param: :cve, constraints: { cve: /[A-Za-z0-9-]+/ }
@@ -111,8 +112,8 @@ Rails.application.routes.draw do
   resources :dns_records, only: :index, path: "dns" do
     resource :link, only: %i[create destroy], controller: "dns_links"
   end
-  get "ovh", to: "ovh#index", as: :ovh
-  resources :ovh_resources, only: [], path: "ovh/resources" do
+  get "hosting", to: "ovh#index", as: :ovh
+  resources :ovh_resources, only: [], path: "hosting/resources" do
     resource :link, only: %i[create destroy], controller: "ovh_links"
   end
   scope "settings" do
@@ -133,6 +134,14 @@ Rails.application.routes.draw do
   # Render dynamic PWA files from app/views/pwa/* (remember to link manifest in application.html.erb)
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
+
+  # Former addresses of renamed pages (bookmarks, links in old notifications).
+  moved = ->(to) { redirect { |params, request| [ to.call(params), request.query_string.presence ].compact.join("?") } }
+  get "keys(/*rest)", to: moved.(->(params) { [ "/ssh-keys", params[:rest] ].compact.join("/") }), format: false
+  get "packages", to: moved.(->(_) { "/updates" })
+  get "activities", to: moved.(->(_) { "/journal" })
+  get "tasks(/:id)", to: moved.(->(params) { [ "/journal/runs", params[:id] ].compact.join("/") })
+  get "ovh", to: moved.(->(_) { "/hosting" })
 
   # Defines the root path route ("/")
   root "dashboard#index"

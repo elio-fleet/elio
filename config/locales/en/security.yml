@@ -5,6 +5,7 @@ en:
       close: Close
       loading: Loading…
     index:
+      refresh_feeds: Update the databases
       settings_vulnerabilities: Settings → Vulnerabilities
       vulnerabilities: Vulnerabilities
       distinct_cves: Distinct CVEs
@@ -21,14 +22,16 @@ en:
       minimum_severity: Minimum severity
       all_groups: All groups
       group: Group
-      systems_images: Systems and images
-      origin: Origin
       filter: Filter
       fix: no fix
       vulnerabilities_2: vulnerabilities
       vulnerability_matches: No vulnerability matches.
       known_vulnerability_fleet: No known vulnerability on the fleet.
-      cves_packages_fleet_docker: CVEs of the packages of the fleet and of the Docker images, from the Debian and Ubuntu feeds. The fixable and most serious first.
+      cves_packages_fleet: CVEs of the packages of the servers, from the Debian and Ubuntu feeds. The fixable and most serious first.
+      cves_images: "CVEs of the packages of the Docker images of the fleet: they are fixed by updating the image. The fixable and most serious first."
+      origins: Origin of the vulnerabilities
+      systems: Systems
+      docker_images: Docker images
       feeds_not_downloaded_yet: Feeds not downloaded yet
       group_2: Group by
       fixable_only_html: "%{submit} Fixable only"
@@ -143,16 +146,13 @@ en:
       fixable:
         one: "%{count} fixable"
         other: "%{count} fixable"
-      on_server:
-        one: "%{count} on the server"
-        other: "%{count} on the server"
-      in_images:
-        one: "%{count} in %{images}"
-        other: "%{count} in %{images}"
       images:
         one: "%{count} Docker image"
         other: "%{count} Docker images"
-      include_images: Include the Docker containers
+      images_apart_html:
+        one: "Packages of the system only. The Docker image of this server has %{cves} CVEs too:"
+        other: "Packages of the system only. The %{images} of this server have %{cves} CVEs too:"
+      docker_tab: Docker tab
       by_severity:
         critical:
           one: "%{count} critical"
@@ -199,6 +199,9 @@ en:
       pending_html: 'The server does not offer this version yet: run %{command}, or check that the security repository is configured.'
       in_image_html: 'These packages are in the image %{image}: download a newer version of the image (or rebuild it), then recreate its containers.'
     docker_card:
+      sections: Docker sections
+      no_image_vulnerability: No known vulnerability in the images of this server.
+      fixed_by_image: "Fixed by updating the image (a newer version published by its registry), not the packages of the server."
       images_fleet: Images of the fleet
       elio_neither_trivy_nor: Elio (neither Trivy nor Grype on the server)
       tag: no tag
@@ -224,6 +227,11 @@ en:
       docker_inventory_yet: No Docker inventory yet.
   docker:
     index:
+      image_cves: CVEs in the images
+      image_cves_detail:
+        one: "%{images} · %{count} fixable"
+        other: "%{images} · %{count} fixable"
+      fixable_cves_html: "%{submit} With fixable CVEs"
       docker_servers: Docker servers
       running_containers: Running containers
       trouble: In trouble
@@ -247,8 +255,8 @@ en:
       versions_fleet_html: "%{count} versions on the fleet"
       container: no container
     tabs:
-      images: Containers and images
-      cves: CVE
+      images: Images
+      cves: Vulnerabilities of the images
     cves:
       loading: Loading…
       intro: 'The vulnerabilities of the Docker images of the fleet: they are fixed by updating the image, not the server.'
@@ -279,7 +287,7 @@ en:
         registry_credentials: Registry credentials
         save: Save
         automation_off: 'off'
-        what_containers_images_report: 'What the containers and images report: a “to watch” reason on the server and an activity (can be notified).'
+        what_containers_images_report: 'What the containers and images report: the Docker state of the server (apart from its health) and an activity (can be notified). Red for containers, orange for images.'
         healthcheck_fails: Its healthcheck fails.
         restarting_state_least_restarts_html: "“restarting” state, or at least %{_} restarts and restarted less than %{in_minutes_to_i} minutes ago."
         handy_latest_1_27: Handy for “latest” or “1.27” tags; no effect on a pinned tag.
@@ -295,6 +303,8 @@ en:
         unhealthy_html: "<strong>Unhealthy</strong> container"
         looping_html: Container <strong>restarting in a loop</strong>
         updates_html: Image in use whose registry publishes a <strong>new version</strong> of the same tag
+        vulnerabilities_html: Image with <strong>serious fixable vulnerabilities</strong>
+        vulnerabilities_hint: From the severity chosen in Settings → Vulnerabilities; fixed by updating the image, not the server.
         registries_html: 'Elio asks the registries for the digest of each tag in use (read-only, HEAD requests that do not count in the Docker Hub limits). Public images need nothing; for a private image, a <strong>read-only</strong> token per registry, one line each:'
         registries_example: |-
           ghcr.io my-account ghp_…
@@ -323,6 +333,7 @@ en:
         delete_2: Delete %{provider_name}
         delete_scores: Delete “%{provider_name}” and its scores?
         band: Band %{index} from
+        band_name: Band %{index}
         colour_band: Colour of band %{index}
         save_colours: Save the colours
         feed_file: Feed file

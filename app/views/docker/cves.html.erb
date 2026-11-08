@@ -1,12 +1,9 @@
 <% content_for :title, t("title", page: t("nav.docker")) %>
 
-<div>
-  <h1 class="text-xl font-semibold">Docker</h1>
-  <p class="text-xs text-ink-3"><%= t("docker.cves.intro") %></p>
-</div>
+<%= page_header "Docker", subtitle: t("docker.cves.intro") %>
 
-<div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <%= stat_tile t("docker.cves.images"), @summary[:images], nil, icon: :container, id: "stat-vulnerable-images" %>
+<div class="stat-tiles mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+  <%= stat_tile t("docker.cves.images"), @summary[:images], nil, icon: :docker, id: "stat-vulnerable-images" %>
   <%= stat_tile t("docker.cves.cves"), @summary[:cves], nil, icon: :shield_exclamation, id: "stat-image-cves" %>
   <%= stat_tile t("docker.cves.fixable"), @summary[:fixable], t("docker.cves.by_updating"), tone: (:warn if @summary[:fixable].positive?), id: "stat-image-fixable" %>
   <%= stat_tile t("docker.cves.servers"), @summary[:servers], nil, icon: :server_stack, id: "stat-image-servers" %>
@@ -16,9 +13,9 @@
 
 <%= form_with url: docker_path, method: :get, data: search_form_data, class: "docker-filters mt-3 flex flex-wrap items-center gap-2" do |f| %>
   <%= hidden_field_tag :tab, "cves" %>
-  <%= f.search_field :q, value: @q, placeholder: t("docker.index.image_e_g_nginx"), aria: { label: t("docker.index.image") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1 text-xs" %>
+  <%= f.search_field :q, value: @q, placeholder: t("docker.index.image_e_g_nginx"), aria: { label: t("docker.index.image") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1.5" %>
   <%= f.select :group, [ [ t("docker.index.all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
-        aria: { label: t("docker.index.group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
+        aria: { label: t("docker.index.group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <noscript><%= f.submit t("docker.index.filter"), class: "btn btn-secondary" %></noscript>
 <% end %>
 

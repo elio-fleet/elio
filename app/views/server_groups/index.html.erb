@@ -1,20 +1,14 @@
 <% content_for :title, t("title", page: t("nav.server_groups")) %>
 
 <section id="server-groups-section">
-  <%= link_to t(".servers"), servers_path, class: "text-sm text-ink-3 hover:text-ink-2" %>
-  <div class="mt-2 flex items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight"><%= t("nav.server_groups") %></h1>
-      <p class="text-sm text-ink-3"><%= t("count.groups", count: @groups.size) %></p>
-    </div>
+  <%= page_header t("nav.server_groups"), subtitle: t("count.groups", count: @groups.size), crumbs: [ [ t("nav.fleet"), servers_path ], t("nav.server_groups") ] do %>
     <% if can?(:operate) %>
-      <%= link_to t(".new_group"), new_server_group_path,
-            class: "btn btn-primary" %>
+      <%= link_to new_server_group_path, class: "btn btn-primary" do %><%= icon :plus %> <%= t(".new_group") %><% end %>
     <% end %>
-  </div>
+  <% end %>
 
   <% if @groups.any? %>
-    <ul id="server-groups" class="mt-4 divide-y divide-line rounded-xl border border-line bg-surface shadow-sm">
+    <ul id="server-groups" class="card divide-y divide-line">
       <% @groups.each do |group| %>
         <li id="<%= dom_id(group) %>" class="server-group flex items-center gap-4 px-4 py-3">
           <span class="h-3 w-3 shrink-0 rounded-full <%= group.dot_classes %>"></span>
@@ -29,25 +23,21 @@
             </p>
           </div>
           <% if can?(:operate) %>
-            <%= link_to edit_server_group_path(group), title: t(".edit"), aria: { label: t(".edit_group", group_name: group.name) },
-                  class: "rounded-md p-1.5 text-ink-3 hover:bg-subtle hover:text-ink-2" do %>
+            <%= link_to edit_server_group_path(group), title: t(".edit"), aria: { label: t(".edit_group", group_name: group.name) }, class: "btn btn-ghost btn-icon" do %>
               <%= icon :pencil_square %>
             <% end %>
-            <%= button_to server_group_path(group), method: :delete, title: t(".delete"), aria: { label: t(".delete_group", group_name: group.name) },
-                  form: { data: { turbo_confirm: t(".group_will_deleted_servers", group_name: group.name),
-                                  confirm_label: t(".delete_group_2"), confirm_variant: "danger" } },
-                  class: "cursor-pointer rounded-md p-1.5 text-ink-3 hover:bg-crit-soft hover:text-crit-ink" do %>
-              <%= icon :trash %>
+            <%= actions_menu label: t(".group_actions", group_name: group.name) do %>
+              <%= menu_item t(".delete_group_2"), server_group_path(group), icon: :trash, method: :delete, danger: true,
+                            confirm: t(".group_will_deleted_servers", group_name: group.name), data: { confirm_label: t(".delete_group_2") } %>
             <% end %>
           <% end %>
         </li>
       <% end %>
     </ul>
   <% else %>
-    <div class="mt-4 rounded-xl border border-dashed border-line bg-surface px-6 py-12 text-center">
-      <p class="text-sm text-ink-3"><%= t(".group_groups_filter_servers") %></p>
-      <% if can?(:operate) %>
-        <%= link_to t(".create_group"), new_server_group_path, class: "mt-2 inline-block text-sm font-medium text-accent hover:text-accent" %>
+    <div class="card">
+      <%= empty_state t(".no_group"), t(".group_groups_filter_servers"), icon: :list_bullet do %>
+        <% if can?(:operate) %><%= link_to t(".create_group"), new_server_group_path, class: "btn btn-primary" %><% end %>
       <% end %>
     </div>
   <% end %>

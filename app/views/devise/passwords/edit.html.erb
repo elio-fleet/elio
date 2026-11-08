@@ -1,6 +1,6 @@
 <% content_for :title, t("title", page: t("auth.reset.title")) %>
 
-<h2 class="mb-6 text-xl font-semibold"><%= t("auth.reset.heading") %></h2>
+<h2 class="mb-5 text-base font-semibold"><%= t("auth.reset.heading") %></h2>
 
 <%= form_for(resource, as: resource_name, url: password_path(resource_name), html: { method: :put, class: "space-y-5" }) do |f| %>
   <%= render "devise/shared/error_messages", resource: resource %>

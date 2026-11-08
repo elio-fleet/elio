@@ -74,9 +74,10 @@ class Integrations::Ovh < Integrations::Base
       "#{base}?#{rights(integration).map { |path| "GET=#{path}" }.join("&")}" # (paths are made of / and * only, like in OVH docs)
     end
 
-    def server_tabs = [ { key: "ovh", label: "OVH", count: ->(server) { server.ovh_resources.size.nonzero? } } ]
+    # No tab: the service and the IP blocks are in the "Hosting" card of the overview, the network firewall in the Firewall tab.
+    def server_tabs = []
 
-    def sidebar_links = [ { label: "OVHcloud", path: :ovh_path, icon: :globe, controller: "ovh" } ]
+    def sidebar_links = [ { label: I18n.t("nav.hosting"), path: :ovh_path, icon: :cloud, controller: "ovh", position: 3 } ]
 
     def help_partial = "integrations/ovh/help"
 

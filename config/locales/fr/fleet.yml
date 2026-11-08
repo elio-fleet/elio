@@ -1,21 +1,34 @@
 fr:
   servers:
+    journal_card:
+      all: Tout
+      notes: Notes
+      events: Événements
+      full_journal: "Dans le journal du parc →"
+      add_note: Ajouter une note
+      timeline: Journal du serveur
+      newer: "← Plus récents"
+      older: "Plus anciens →"
+      empty: Rien pour l'instant
+      empty_text: Les notes que vous ajoutez et ce qui arrive au serveur (clés, ports, alertes…) apparaîtront ici.
+    docker_pill:
+      fine: "Docker : rien à signaler"
+      problems:
+        one: "Docker, %{count} problème : %{reasons}"
+        other: "Docker, %{count} problèmes : %{reasons}"
     tabs:
       overview: Vue d'ensemble
-      packages: Paquets
+      packages: Mises à jour
       vulnerabilities: Vulnérabilités
       services: Services
       docker: Docker
       schedules: Tâches planifiées
-      ports: Ports
       firewall: Firewall
       keys: Clés SSH
-      history: Historique
+      journal: Journal
       server_sections: Sections du serveur
-      section: Section
-      more: Plus
-      notes: Notes
     index:
+      all_groups: Tous les groupes
       check_every_server_answers: Vérifier que chaque serveur répond
       read_again_system_health: Relire le système, la santé et les services de tous les serveurs
       read_keys_every_server: Lire les clés de tous les serveurs
@@ -31,6 +44,8 @@ fr:
       all_states: Tous les états
       unreachable: Injoignables
       without_inventory: Sans inventaire
+      docker_watch: Docker à surveiller
+      docker_critical: Docker critique
       state: État
       filter: Filtrer
       list: Liste
@@ -58,6 +73,8 @@ fr:
       scan_keys_whole_fleet: Scanner les clés de tout le parc
       import_servers: Importer des serveurs
     show:
+      add_note: Ajouter une note
+      see_keys: Clés SSH du serveur
       search_whole_fleet: Chercher sur tout le parc
       activities: activités
       refresh_inventory: Actualiser l'inventaire
@@ -86,6 +103,10 @@ fr:
       answer: Pas de réponse
       inventory_yet: Pas encore d'inventaire
     form:
+      connection: Connexion
+      connection_help: Comment Elio joint ce serveur, en SSH. L'utilisateur doit pouvoir utiliser sudo sans mot de passe pour un inventaire complet.
+      addresses: Adresses
+      groups_help: Pour filtrer la liste et choisir les ports attendus.
       name: Nom
       web_production: Production web
       host_ip_domain_name: Hôte (IP ou nom de domaine)
@@ -99,8 +120,10 @@ fr:
       ip_addresses_through_which: Adresses IP par lesquelles ce serveur est joint mais qu'il ne voit pas lui-même (NAT, IP de basculement…). Les adresses de ses interfaces sont relevées par l'inventaire.
       groups: Groupes
     new:
+      subtitle: Elio s'y connecte en SSH, en lecture seule, avec sa clé.
       servers: "← Serveurs"
     edit:
+      modify: Modifier
       servers: "← Serveurs"
       delete_server: Supprimer le serveur
       edit_html: Modifier « %{name_was} »
@@ -129,6 +152,14 @@ fr:
     health_bar:
       port: Port %{port}
       ssh: SSH
+      docker: Docker
+      docker_ok: Rien à signaler
+      docker_warn: À surveiller
+      docker_crit: Critique
+      docker_fine:
+        one: "%{running}/%{count} conteneur en cours · aucun problème"
+        other: "%{running}/%{count} conteneurs en cours · aucun problème"
+      docker_tab: Onglet Docker
     health_checking:
       checking: Vérification…
     os:
@@ -146,16 +177,48 @@ fr:
       whole_group: 'Tout le groupe :'
   dashboard:
     index:
+      see_all: Tout voir
+      critical_thresholds_exceeded: seuils critiques dépassés
+      including_unreachable:
+        one: dont %{count} injoignable
+        other: dont %{count} injoignables
+      welcome: Bienvenue dans Elio
+      welcome_subtitle: Aucun serveur pour l'instant. Suivez les étapes pour commencer.
+      no_server: Aucun serveur
+      no_server_viewer: Un administrateur ou un opérateur doit ajouter les serveurs du parc.
+      refresh_fleet: Actualiser le parc
+      unreachable:
+        one: "%{count} injoignable"
+        other: "%{count} injoignables"
+      critical_caption: seuils critiques, injoignables
+      serious_vulnerabilities: Vulnérabilités graves
+      fixable: corrigeables, sur le système des serveurs
+      most_serious_first: du plus grave au moins grave
+      group_crit:
+        one: "Critique · %{count}"
+        other: "Critique · %{count}"
+      group_warn:
+        one: "À surveiller · %{count}"
+        other: "À surveiller · %{count}"
+      group_info:
+        one: "Pour information · %{count}"
+        other: "Pour information · %{count}"
+      nothing_to_report: Rien à signaler
+      journal: "Journal →"
+      by_group: Par groupe
+      group_critical:
+        one: "%{count} critique"
+        other: "%{count} critiques"
+      group_watch:
+        one: "%{count} à surveiller"
+        other: "%{count} à surveiller"
+      group_fine: rien à signaler
       online: En ligne
       answer_their_ssh_port: répondent sur leur port SSH
       watch: À surveiller
       reboot_disk_service: redémarrage, disque, service…
       critical: Critiques
-      critical_thresholds_exceeded: seuils critiques dépassés
-      run_key_scan: lancez un scan des clés
       nothing_report_servers_reachable: 'Rien à signaler : serveurs joignables, santé normale, toutes les clés sont dans le trousseau.'
-      add_first_server_begin: Ajoutez un premier serveur pour commencer.
-      see_all: Tout voir
       key_deleted: Clé supprimée
       expired_being_removed: expiré, suppression en cours
       inventory_html: "· inventaire %{last_inventory_at}"
@@ -165,17 +228,6 @@ fr:
       activity_yet: Aucune activité pour le moment.
       temporary_access: Accès temporaires
       ongoing_html: "%{count} en cours"
-      temporary_access_choose_duration: Aucun accès temporaire. Choisissez une durée en ajoutant une clé sur un serveur.
-      systems: Systèmes
-      systems_will_appear_after: Les systèmes apparaîtront après un premier inventaire.
-      items_by_severity:
-        one: "%{count} élément · par gravité"
-        other: "%{count} éléments · par gravité"
-      including_unreachable:
-        one: dont %{count} injoignable
-        other: dont %{count} injoignables
-      outside_keyring: hors trousseau
-      unknown_keys: Clés inconnues
     checklist:
       generate_key: Générer la clé
       add_server: Ajouter un serveur
@@ -207,6 +259,8 @@ fr:
       groups: "← Groupes"
       heading_html: Modifier le groupe « %{group_name} »
     index:
+      no_group: Aucun groupe
+      group_actions: Actions du groupe « %{group_name} »
       servers: "← Serveurs"
       new_group: Nouveau groupe
       edit: Modifier
@@ -278,13 +332,27 @@ fr:
     add_key: Ajouter une clé au trousseau
     add_key_text: La clé publique d'un membre de l'équipe ou d'un serveur.
   attention_list:
+    actions:
+      probes: Voir les sondes
+      dns: Voir le DNS
+      hosting: Voir l'hébergement
+      connection: Tester la connexion
+      disks: Voir les disques
+      health: Voir la santé
+      fixes: Voir les correctifs
+      services: Voir les services
+      schedules: Voir les tâches planifiées
+      ports: Voir les ports
+      inventory: Lancer un inventaire
+    see_docker: Voir Docker
+    see_images: Voir les images
     unreachable: Ne répond plus sur son port SSH
     see: Voir
     key_refused: 'La clé d''Elio est refusée : rien ne peut être lu'
     install_key: Installer la clé
     see_keys: Voir les clés
     no_inventory: Pas encore d'inventaire
-    see_packages: Voir les paquets
+    see_packages: Voir les mises à jour
     see_vulnerabilities: Voir les vulnérabilités
     unknown_keys:
       one: "%{count} clé hors trousseau"

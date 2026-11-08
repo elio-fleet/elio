@@ -52,7 +52,7 @@ class ImageRegistry::UpdateCheckTest < ActiveSupport::TestCase
     assert_equal [ "docker.io/library/nginx:1.27", "ghcr.io/acme/app:2" ], client.asked, "redis (Docker Hub too) not asked"
   end
 
-  test "a new version is logged and becomes a health reason when the Docker alerts ask for it" do
+  test "a new version is logged and becomes a Docker reason when the Docker alerts ask for it" do
     AppSetting.current.update!(docker_alert_updates: true)
     ImageRegistry::UpdateCheck.call(client: FakeClient.new("library/nginx" => PULLED, "acme/app" => PULLED))
     assert_equal 0, Activity.of_kind(:image_update_available).count
@@ -60,7 +60,7 @@ class ImageRegistry::UpdateCheckTest < ActiveSupport::TestCase
 
     ImageRegistry::UpdateCheck.call(client: FakeClient.new("library/nginx" => NEWER, "acme/app" => PULLED))
     assert_equal [ "Nouvelle version de l'image nginx:1.27 pour « Web »" ], Activity.of_kind(:image_update_available).map(&:summary), "Database already has it"
-    assert_includes servers(:web).reload.health_reason_texts, "1 image Docker à mettre à jour"
+    assert_includes servers(:web).reload.docker_reason_texts, "1 image Docker à mettre à jour"
   end
 
   test "registry credentials of the settings, one line each" do

@@ -1,5 +1,5 @@
 <% content_for :title, "#{@integration.label} · Extensions · Elio" %>
-<%= render "settings/nav" %>
+<% page = capture do %>
 
 <div class="mt-6 flex flex-wrap items-start justify-between gap-4">
   <div class="max-w-2xl">
@@ -48,3 +48,5 @@
   </div>
   <%= render "settings/integrations/test_result", result: @test_result %>
 <% end %>
+<% end %>
+<%= render "settings/frame", page: page %>

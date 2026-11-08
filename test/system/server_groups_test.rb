@@ -7,7 +7,7 @@ class ServerGroupsTest < ApplicationSystemTestCase
 
   test "creating a group and filtering the servers with it" do
     visit servers_path
-    click_on "Gérer les groupes"
+    fleet_action "Gérer les groupes"
     click_on "Nouveau groupe"
 
     fill_in "Nom", with: "Clients"
@@ -16,11 +16,11 @@ class ServerGroupsTest < ApplicationSystemTestCase
     click_on "Créer le groupe"
 
     assert_selector "#flash .toast", text: "Le groupe « Clients » a été créé."
-    assert_selector "nav.server-group-filter a[aria-current=page]", text: "Clients"
+    assert_selector ".group-filter option[selected]", text: "Clients"
     assert_selector "#servers tbody tr", count: 1
     assert_selector "#servers tbody tr", text: "Backup"
 
-    click_on "Tous"
+    find(".group-filter select").select("Tous les groupes")
     assert_selector "#servers tbody tr", count: Server.count
   end
 

@@ -7,52 +7,17 @@
 <% ovh_firewalls = overview.ovh_firewalls %>
 <% ipv6_bypassing = overview.ipv6_bypassing_ovh %>
 <% ipv6_column = overview.ovh_blocks.any? && overview.public_ipv6.any? %>
-<div id="server-firewall">
-  <div class="mt-6 flex flex-wrap items-center justify-between gap-3">
+<div id="server-firewall" class="space-y-4">
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <p class="text-xs text-ink-3"><%= t(".elio_never_changes") %></p>
     <%= render "server_prompts/dialog", server: server, kind: :firewall %>
   </div>
 
-  <section id="server-local-firewall" class="card mt-4">
-    <div class="card-header">
-      <h2 class="flex items-center gap-2 font-semibold"><%= icon :shield_check, class: "h-4 w-4 text-ink-3" %> <%= t(".server_firewall") %></h2>
-      <div class="flex items-center gap-2 text-xs text-ink-3">
-        <%= inventory_status_badge(snapshot) %>
-        <% if snapshot&.collected_at %><%= t("servers.ports_card.read_html", collected_at: relative_time_tag(snapshot.collected_at)) %><% end %>
-      </div>
-    </div>
-    <% if analysis.collected? %>
-      <% firewall = analysis.firewall %>
-      <p class="firewall-state flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm <%= analysis.firewall_active? ? "text-ink-2" : "text-warn-ink" %>">
-        <%= analysis.firewall_label %>
-      </p>
-      <% if firewall["active"].nil? %>
-        <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".needs_root") %></p>
-      <% elsif Array(firewall["allowed"]).any? %>
-        <ul class="local-firewall-rules divide-y divide-line border-t border-line">
-          <% firewall["allowed"].each do |rule| %>
-            <li class="local-firewall-rule flex flex-wrap items-center gap-2 px-4 py-2 text-xs">
-              <%= status_badge :good, t(".allow"), class: "shrink-0" %>
-              <span class="font-mono text-ink"><%= rule["rule"] %></span>
-              <span class="text-ink-3"><%= rule["from"] ? t(".from", source: rule["from"]) : t(".from_anywhere") %></span>
-            </li>
-          <% end %>
-        </ul>
-      <% elsif analysis.firewall_active? %>
-        <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".no_allow_rule") %></p>
-      <% end %>
-    <% elsif snapshot&.failed? %>
-      <p class="inventory-error px-4 py-4 text-sm text-crit-ink"><%= snapshot.message %></p>
-    <% else %>
-      <p class="px-4 py-4 text-sm text-ink-3"><%= t("servers.ports_card.ports_inventory_yet") %></p>
-    <% end %>
-  </section>
-
   <% if analysis.collected? %>
-    <section id="server-firewall-ports" class="card mt-6">
+    <section id="server-firewall-ports" class="card">
       <div class="card-header">
         <h2 class="flex items-center gap-2 font-semibold"><%= icon :globe, class: "h-4 w-4 text-ink-3" %> <%= t(".public_ports") %></h2>
-        <%= link_to t(".all_ports"), server_path(server, tab: "ports"), class: "text-xs font-medium text-accent hover:underline" %>
+        <a href="#all-ports" class="text-xs font-medium text-accent hover:underline"><%= t(".all_ports") %></a>
       </div>
       <% if analysis.public_ports.any? %>
         <div class="overflow-x-auto">
@@ -104,11 +69,55 @@
     </section>
   <% end %>
 
+  <% if analysis.collected? %>
+    <details id="all-ports" class="all-ports">
+      <summary class="cursor-pointer list-none text-xs font-medium text-accent hover:underline [&::-webkit-details-marker]:hidden"><%= t(".all_listening_ports", count: analysis.ports.size) %></summary>
+      <div class="mt-3"><%= render "servers/ports_card", server: server %></div>
+    </details>
+  <% else %>
+    <%= render "servers/ports_card", server: server %>
+  <% end %>
+
+  <section id="server-local-firewall" class="card">
+    <div class="card-header">
+      <h2 class="flex items-center gap-2 font-semibold"><%= icon :shield_check, class: "h-4 w-4 text-ink-3" %> <%= t(".server_firewall") %></h2>
+      <div class="flex items-center gap-2 text-xs text-ink-3">
+        <%= inventory_status_badge(snapshot) %>
+        <% if snapshot&.collected_at %><%= t("servers.ports_card.read_html", collected_at: relative_time_tag(snapshot.collected_at)) %><% end %>
+      </div>
+    </div>
+    <% if analysis.collected? %>
+      <% firewall = analysis.firewall %>
+      <p class="firewall-state flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm <%= analysis.firewall_active? ? "text-ink-2" : "text-warn-ink" %>">
+        <%= analysis.firewall_label %>
+      </p>
+      <% if firewall["active"].nil? %>
+        <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".needs_root") %></p>
+      <% elsif Array(firewall["allowed"]).any? %>
+        <ul class="local-firewall-rules divide-y divide-line border-t border-line">
+          <% firewall["allowed"].each do |rule| %>
+            <li class="local-firewall-rule flex flex-wrap items-center gap-2 px-4 py-2 text-xs">
+              <%= status_badge :good, t(".allow"), class: "shrink-0" %>
+              <span class="font-mono text-ink"><%= rule["rule"] %></span>
+              <span class="text-ink-3"><%= rule["from"] ? t(".from", source: rule["from"]) : t(".from_anywhere") %></span>
+            </li>
+          <% end %>
+        </ul>
+      <% elsif analysis.firewall_active? %>
+        <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".no_allow_rule") %></p>
+      <% end %>
+    <% elsif snapshot&.failed? %>
+      <p class="inventory-error px-4 py-4 text-sm text-crit-ink"><%= snapshot.message %></p>
+    <% else %>
+      <p class="px-4 py-4 text-sm text-ink-3"><%= t("servers.ports_card.ports_inventory_yet") %></p>
+    <% end %>
+  </section>
+
   <% if overview.ovh_blocks.any? %>
-    <section id="server-ovh-firewall" class="card mt-6">
+    <section id="server-ovh-firewall" class="card">
       <div class="card-header">
         <h2 class="flex items-center gap-2 font-semibold"><%= icon :shield_check, class: "h-4 w-4 text-ink-3" %> <%= t(".ovh_firewall") %></h2>
-        <%= link_to t(".ovh_tab"), server_path(server, tab: "ovh"), class: "text-xs font-medium text-accent hover:underline" %>
+        <%= link_to t(".ovh_tab"), server_path(server, anchor: "server-hosting"), class: "text-xs font-medium text-accent hover:underline" %>
       </div>
       <% overview.unread_ovh_blocks.each do |block| %>
         <p class="border-b border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".ovh_not_read", block: block.name) %></p>
@@ -139,7 +148,7 @@
   <% end %>
 
   <% if analysis.collected? %>
-    <section id="server-firewall-suggested" class="card mt-6" data-controller="clipboard">
+    <section id="server-firewall-suggested" class="card" data-controller="clipboard">
       <div class="card-header">
         <h2 class="flex items-center gap-2 font-semibold"><%= icon :clipboard, class: "h-4 w-4 text-ink-3" %> <%= t("servers.ports_card.suggested_ufw_rules") %></h2>
         <%= render "settings/copy_button" %>

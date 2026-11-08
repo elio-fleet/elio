@@ -1,37 +1,32 @@
 <% content_for :title, t("title", page: t("monitors.index.monitors")) %>
 <% base_url = @integration.value(:url) %>
 
-<div class="flex flex-wrap items-end justify-between gap-4">
-  <div>
-    <h1 class="text-xl font-semibold"><%= t("words.monitors") %></h1>
-    <p class="text-xs text-ink-3">
-      <%= t(".uptime_kuma_monitors_attached") %><% if @integration.last_synced_at %><%= t(".synchronized_html", last_synced_at: (relative_time_tag @integration.last_synced_at)) %><% end %>.
-      <% if @integration.last_error %><span class="text-crit-ink"><%= t(".last_sync_failed_html", last_error: @integration.last_error) %></span><% end %>
-    </p>
-  </div>
+<% subtitle = safe_join([ source_tag("Uptime Kuma"), " ", t(".uptime_kuma_monitors_attached"), (t(".synchronized_html", last_synced_at: relative_time_tag(@integration.last_synced_at)) if @integration.last_synced_at), ".",
+                          (tag.span(t(".last_sync_failed_html", last_error: @integration.last_error), class: "ml-1 text-crit-ink") if @integration.last_error) ].compact) %>
+<%= page_header t("nav.probes"), subtitle: subtitle do %>
   <% if can?(:administer) %>
-    <%= link_to edit_settings_integration_path(@integration.kind), class: "btn btn-secondary" do %><%= icon :cog, class: "h-4 w-4" %>Extension<% end %>
+    <%= actions_menu do %><%= menu_item t("ui.extension_settings"), edit_settings_integration_path(@integration.kind), icon: :cog %><% end %>
   <% end %>
-</div>
+<% end %>
 
-<div class="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
-  <%= stat_tile t(".monitors"), @counts[:total], nil, icon: :signal, id: "stat-monitors" %>
-  <%= stat_tile t(".down"), @counts[:down], nil, tone: (@counts[:down].positive? ? :crit : nil), icon: :x_circle, id: "stat-monitors-down" %>
-  <%= stat_tile t(".not_attached"), @counts[:unattached], t(".server"), tone: (@counts[:unattached].positive? ? :warn : nil), icon: :exclamation_triangle, id: "stat-unattached" %>
-  <%= stat_tile t(".servers_without_monitor"), @servers_without.size, nil, tone: (@servers_without.any? ? :warn : nil), icon: :server_stack, id: "stat-without" %>
-</div>
+<%= stat_tiles do %>
+  <%= stat_tile t(".monitors"), @counts[:total], nil, icon: :signal, id: "stat-monitors", href: monitors_path, active: @filter.nil? %>
+  <%= stat_tile t(".down"), @counts[:down], nil, tone: (@counts[:down].positive? ? :crit : nil), icon: :x_circle, id: "stat-monitors-down", href: monitors_path(filter: "down"), active: @filter == "down" %>
+  <%= stat_tile t(".not_attached"), @counts[:unattached], t(".server"), tone: (@counts[:unattached].positive? ? :warn : nil), icon: :exclamation_triangle, id: "stat-unattached", href: monitors_path(filter: "unattached"), active: @filter == "unattached" %>
+  <%= stat_tile t(".servers_without_monitor"), @servers_without.size, nil, tone: (@servers_without.any? ? :warn : nil), icon: :server_stack, id: "stat-without", href: monitors_path(filter: "without"), active: @filter == "without" %>
+<% end %>
 
-<div class="mt-5 flex flex-wrap items-center gap-2">
+<div class="filter-bar mb-3 flex flex-wrap items-center gap-2">
   <nav class="monitor-filters flex flex-wrap gap-2" aria-label="<%= t(".filters") %>">
     <% [ [ t(".all"), nil ], [ t(".not_attached"), "unattached" ], [ t(".down"), "down" ], [ t(".servers_without_monitor"), "without" ] ].each do |label, filter| %>
-      <%= filter_pill label, monitors_path(filter: filter), active: @filter == filter, data: { filter: filter || "all" } %>
+      <%= filter_chip label, monitors_path(filter: filter), active: @filter == filter, data: { filter: filter || "all" } %>
     <% end %>
   </nav>
   <% unless @filter == "without" %>
     <%= form_with url: monitors_path, method: :get, data: search_form_data, class: "ml-auto" do |f| %>
       <%= hidden_field_tag :filter, @filter if @filter %>
       <%= f.search_field :q, value: @q, placeholder: t(".name_host_url"), aria: { label: t(".search_monitor") },
-            data: { action: "input->auto-submit#submitLater" }, class: "input w-48 py-1 text-xs" %>
+            data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1.5" %>
     <% end %>
   <% end %>
 </div>
@@ -39,7 +34,7 @@
 <%= search_results_frame do %>
 <% if @filter == "without" %>
   <% if @pager.records.any? %>
-    <div class="card mt-3 overflow-x-auto">
+    <div class="card overflow-x-auto">
       <table id="servers-without-monitor" class="table-dense">
         <thead><tr><th class="pl-4"><%= t(".server_2") %></th><th><%= t("words.addresses") %></th><th class="pr-4"><%= t(".groups") %></th></tr></thead>
         <tbody>
@@ -55,17 +50,17 @@
     </div>
     <%= render "shared/pagination", pager: @pager, noun: t("nouns.servers") %>
   <% else %>
-    <p class="card mt-3 px-4 py-6 text-sm text-good-ink"><%= t(".each_server_watched_least") %></p>
+    <div class="card"><%= empty_state t(".each_server_watched_least"), icon: :check_circle %></div>
   <% end %>
 <% elsif @pager.records.any? %>
-  <div class="card mt-3 overflow-x-auto">
+  <div class="card overflow-x-auto">
     <table id="monitors" class="table-dense">
-      <thead><tr><th class="pl-4"><%= t("words.monitor") %></th><th><%= t(".server_2") %></th><th><%= t("words.target") %></th><th><%= t(".state") %></th><th><%= t(".response") %></th><th><%= t(".uptime_24_h_30") %></th><th><%= t("words.certificate") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t(".attach") %></th><% end %></tr></thead>
+      <thead><tr><th class="pl-4"><%= t("words.monitor") %></th><th><%= t("words.source") %></th><th><%= t(".server_2") %></th><th><%= t("words.target") %></th><th><%= t(".state") %></th><th><%= t(".response") %></th><th><%= t(".uptime_24_h_30") %></th><th><%= t("words.certificate") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t(".attach") %></th><% end %></tr></thead>
       <tbody><%= render partial: "integrations/uptime_kuma/monitor_row", collection: @pager.records, as: :monitor, locals: { base_url: base_url, show_server: true } %></tbody>
     </table>
   </div>
   <%= render "shared/pagination", pager: @pager, noun: t("nouns.monitors") %>
 <% else %>
-  <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @integration.last_synced_at ? t(".monitor_matches") : t(".not_synchronized_uptime_kuma") %></p>
+  <p class="card px-4 py-6 text-sm text-ink-3"><%= @integration.last_synced_at ? t(".monitor_matches") : t(".not_synchronized_uptime_kuma") %></p>
 <% end %>
 <% end %>

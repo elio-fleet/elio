@@ -74,20 +74,21 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     get root_path
     assert_select "nav.main-nav a[aria-current=page]", text: "Vue d'ensemble"
-    assert_select "nav.main-nav a[href=?]", servers_path, text: /Parc\s*3/
-    assert_select "nav.main-nav a[href=?]", public_keys_path, text: /Trousseau\s*2/
+    assert_select "nav.main-nav a[href=?]", servers_path, text: /Serveurs\s*3/
+    assert_select "nav.main-nav a[href=?]", public_keys_path, text: "Clés SSH"
     assert_select ".sidebar a.elio-version", "Elio #{Elio::VERSION}"
-    assert_select "nav.main-nav a[href=?]", settings_automations_path, text: "Automatisations"
-    assert_select "nav.sidebar-groups a[href=?]", servers_path(group: server_groups(:production).id), text: /Production/
+    assert_select "nav.main-nav a[href=?]", settings_automations_path, 0
+    assert_select "nav.main-nav p.sidebar-section", %w[Sur\ tout\ le\ parc Accès].size # Extensions: only with one enabled
+    assert_select "nav.sidebar-groups", 0 # the groups are a filter of the server list
 
     get server_path(servers(:web))
-    assert_select "nav.main-nav a[aria-current=page]", text: /Parc/
+    assert_select "nav.main-nav a[aria-current=page]", text: /Serveurs/
 
     get servers_path(group: server_groups(:production).id)
-    assert_select "nav.sidebar-groups a[aria-current=page]", text: /Production/
+    assert_select "nav.main-nav a[aria-current=page]", text: /Serveurs/
 
     get public_keys_path
-    assert_select "nav.main-nav a[aria-current=page]", text: /Trousseau/
+    assert_select "nav.main-nav a[aria-current=page]", text: "Clés SSH"
 
     sign_in users(:viewer)
     get root_path
@@ -131,8 +132,8 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select "#recent-activity li.activity", 8
-    assert_select "#recent-activity a[href=?]", activities_path, text: "Tout voir"
-    assert_select "nav.main-nav a[href=?]", activities_path, text: "Activité"
+    assert_select "#recent-activity a[href=?]", activities_path, text: "Journal →"
+    assert_select "nav.main-nav a[href=?]", activities_path, text: "Journal"
   end
 
   test "shows the fleet figures" do
@@ -145,16 +146,48 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "#stat-online .stat-value", "1/3"
     assert_select "#stat-critical .stat-value", "1"
-    assert_select "#stat-orphans .stat-value", "1"
+    assert_select "a#stat-critical[href=?]", servers_path(state: "crit")
+    assert_select "a#stat-to-watch[href=?]", servers_path(state: "warn")
+    assert_select "#stat-vulnerabilities .stat-value", "0"
+    assert_select ".stat-tiles a.stat-tile", 4
   end
 
-  test "the unknown keys figure asks for a scan before any read" do
+  test "the serious fixable vulnerabilities, a tile that opens them" do
+    servers(:web).server_vulnerabilities.create!(origin: "host", source: "debian", cve: "CVE-2024-6387", source_package: "openssh", installed_version: "1", fixed_version: "2", severity: "high")
     sign_in users(:one)
     get root_path
 
-    assert_select "#stat-orphans .stat-value", "—"
-    assert_select "#stat-orphans", text: /lancez un scan des clés/
-    assert_select "form[action=?]", server_scans_path
+    assert_select "a#stat-vulnerabilities[href=?] .stat-value.text-crit-ink", vulnerabilities_path(fixable: 1, origin: "host"), text: "1"
+  end
+
+  test "the actions: refresh the fleet, and the key scan in the menu" do
+    sign_in users(:one)
+    get root_path
+
+    assert_select ".page-actions form[action=?] button", server_inventories_path, text: /Actualiser le parc/
+    assert_select ".page-actions details.actions-menu form[action=?]", server_scans_path
+    assert_select ".page-actions .btn-primary", 0
+
+    sign_in users(:viewer)
+    get root_path
+    assert_select ".page-actions", 0
+  end
+
+  test "an empty fleet shows only the getting started guide" do
+    Server.delete_all
+    sign_in users(:one)
+    get root_path
+
+    assert_select "h1", "Bienvenue dans Elio"
+    assert_select "#onboarding"
+    assert_select ".stat-tiles", 0
+    assert_select "#attention", 0
+    assert_select "#recent-activity", 0
+
+    sign_in users(:viewer)
+    get root_path
+    assert_select "#onboarding", 0
+    assert_select ".empty-state", text: /Aucun serveur/
   end
 
   test "lists the temporary accesses in progress" do
@@ -181,11 +214,14 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select "#attention li.attention-item", 5
-    assert_select "#attention li.attention-item:last-child[data-tone=info]", text: /Web.*Pas encore d'inventaire/m
-    assert_select "#attention li.attention-item:nth-child(1)[data-tone=crit]", text: /Backup.*clé d'Elio est refusée/m
-    assert_select "#attention li.attention-item:nth-child(2)[data-tone=crit]", text: /Database.*Ne répond plus/m
-    assert_select "#attention li.attention-item[data-tone=warn]", text: /Web.*Redémarrage requis/m
-    assert_select "#attention li.attention-item a[href=?]", server_path(servers(:web), tab: "keys"), text: "Voir les clés"
+    assert_equal [ "Critique · 2", "À surveiller · 2", "Pour information · 1" ], css_select("#attention .attention-group").map { |group| group.text.strip }
+    assert_select "#attention ul.attention-list:nth-of-type(1) li.attention-item:nth-child(1)[data-tone=crit]", text: /clé d'Elio est refusée.*Backup/m
+    assert_select "#attention ul.attention-list:nth-of-type(1) li.attention-item:nth-child(2)[data-tone=crit]", text: /Ne répond plus.*Database/m
+    assert_select "#attention li.attention-item[data-tone=crit] a.attention-action[href=?]", server_path(servers(:db)), text: /Tester la connexion/
+    assert_select "#attention li.attention-item[data-tone=warn]", text: /Redémarrage requis.*Web/m
+    assert_select "#attention li.attention-item[data-tone=neutral]", text: /Pas encore d'inventaire.*Web/m
+    assert_select "#attention li.attention-item a.server-chip[href=?]", server_path(servers(:web)), text: "Web"
+    assert_select "#attention li.attention-item a.attention-action[href=?]", server_path(servers(:web), tab: "keys"), text: /Voir les clés/
   end
 
   test "nothing to report" do
@@ -194,19 +230,23 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
 
     get root_path
 
-    assert_select "#attention .attention-empty", text: /Rien à signaler/
+    assert_select "#attention .empty-state", text: /Rien à signaler/
   end
 
-  test "counts the systems of the fleet" do
-    servers(:web).update_columns(os_name: "Debian GNU/Linux 12 (bookworm)")
-    servers(:db).update_columns(os_name: "Debian GNU/Linux 12 (bookworm)")
+  test "the groups, with their servers to handle" do
+    group = server_groups(:production)
+    group.servers.first.update_columns(reachable: false)
     sign_in users(:viewer)
 
     get root_path
 
-    assert_select "#systems li", 1
-    assert_select "#systems a[href=?]", servers_path(os: "Debian GNU/Linux 12 (bookworm)")
-    assert_select "#systems li span", "2"
-    assert_select "#systems .card-header", text: /Systèmes\s*2 serveurs/
+    assert_select "#groups li.group-summary", ServerGroup.count
+    assert_select "#groups a[href=?]", servers_path(group: group.id), text: /#{group.name}.*1 critique/m
+  end
+
+  test "the temporary accesses only when there are some" do
+    sign_in users(:one)
+    get root_path
+    assert_select "#temporary-accesses", 0
   end
 end

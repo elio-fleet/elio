@@ -1,8 +1,4 @@
-<nav class="docker-tabs mt-6 flex gap-5 border-b border-line text-sm" aria-label="Docker">
-  <% [ [ "images", t("docker.tabs.images"), nil ], [ "cves", t("docker.tabs.cves"), @image_vulnerability_count.nonzero? ] ].each do |tab, label, count| %>
-    <%= link_to docker_path(tab: (tab unless tab == "images"), group: @group&.id), aria: { current: (@tab == tab ? "page" : nil) }, data: { tab: tab },
-          class: "flex items-center gap-1.5 border-b-2 px-1 pb-2.5 #{@tab == tab ? "border-accent font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink"}" do %>
-      <%= label %><% if count %><span class="rounded-full bg-subtle px-1.5 text-[11px] text-ink-2"><%= count %></span><% end %>
-    <% end %>
-  <% end %>
-</nav>
+<%# Tabs of the Docker page: the images of the fleet, the vulnerabilities of the images. %>
+<%= tabs [ { key: "images", label: t("docker.tabs.images"), path: docker_path(group: @group&.id) },
+           { key: "cves", label: t("docker.tabs.cves"), count: @image_vulnerability_count.nonzero?, tone: :warn, path: docker_path(tab: "cves", group: @group&.id) } ],
+         current: @tab, label: "Docker", class: "docker-tabs" %>

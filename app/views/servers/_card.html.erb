@@ -16,7 +16,7 @@
         <% if server.server_groups.any? %> · <%= server.server_groups.map(&:name).join(", ") %><% end %>
       </p>
     </div>
-    <%= render "servers/status", server: server, health: true %>
+    <span class="inline-flex shrink-0 items-center gap-1.5"><%= render "servers/status", server: server, health: true %><%= render "servers/docker_pill", server: server %></span>
   </div>
 
   <% if state == "off" %>

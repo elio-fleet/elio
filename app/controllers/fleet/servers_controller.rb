@@ -9,19 +9,26 @@ class ServersController < ApplicationController
 
   before_action :set_server, only: %i[show edit update destroy]
 
+  # State filter on the Docker state (servers.docker_status) instead of the health.
+  DOCKER_FILTERS = { "docker_warn" => "warn", "docker_crit" => "crit" }.freeze
+
   def index
     @groups = ServerGroup.order(:name)
     @group = @groups.find { |group| group.id.to_s == params[:group].to_s } if params[:group].present?
     @os_names = Server.where.not(os_name: nil).distinct.order(:os_name).pluck(:os_name)
     @os = params[:os].presence_in(@os_names)
-    @state = params[:state].presence_in(Server::HEALTH_STATES + %w[off])
-    @summary = FleetSummary.new(Server.includes(:inventory_snapshots))
+    @state = params[:state].presence_in(Server::HEALTH_STATES + %w[off] + DOCKER_FILTERS.keys)
+    all_servers = Server.includes(:inventory_snapshots).to_a
+    @summary = FleetSummary.new(all_servers)
+    @state_counts = all_servers.map(&:health_state).tally.merge(all_servers.filter_map { |server| "docker_#{server.docker_status}" if server.docker_status.in?(%w[warn crit]) }.tally)
     servers = (@group ? Server.in_group(@group) : Server.all).order(:name).includes(:server_groups, :inventory_snapshots)
     servers = servers.where(os_name: @os) if @os
+    servers = servers.where(docker_status: DOCKER_FILTERS[@state]) if DOCKER_FILTERS.key?(@state)
     @q = params[:q].to_s.strip.first(100)
     servers = servers.includes(:dns_records) if @q.present?
-    servers = servers.to_a if @state || @q.present?
-    servers = servers.select { |server| server.health_state == @state } if @state
+    health_state = @state unless DOCKER_FILTERS.key?(@state)
+    servers = servers.to_a if health_state || @q.present?
+    servers = servers.select { |server| server.health_state == health_state } if health_state
     servers = servers.select { |server| server.matches_search?(@q) } if @q.present?
     @view = fleet_view
     servers = servers.to_a.sort_by { |server| [ STATE_ORDER.fetch(server.health_state, 2), server.name.downcase ] } if @view == "grid"
@@ -30,37 +37,50 @@ class ServersController < ApplicationController
     @load_history = Inventory::HealthSample.where(server_id: @servers.map(&:id)).since(24.hours.ago)
                                            .pluck(:server_id, :load_percent).group_by(&:first).transform_values { |rows| rows.map(&:last).compact }
     @insights = KeyInsights.new
-    if Integration.enabled?(:uptime_kuma)
-      @monitor_counts = UptimeKumaMonitor.attached.group(:server_id).pluck(:server_id, Arel.sql("COUNT(*)"), Arel.sql("COUNT(*) FILTER (WHERE status = 0)"))
-                                         .to_h { |server_id, total, down| [ server_id, [ total, down ] ] }
-    end
   end
 
-  TABS = %w[overview vulnerabilities packages services docker ports firewall schedules keys notes history].freeze
-  NOTES_PER_PAGE = 20
+  TABS = %w[overview vulnerabilities packages services docker firewall schedules keys journal].freeze
+  # Former tabs, now inside another one (bookmarks, links of old notifications).
+  MOVED_TABS = { "ports" => [ "firewall", nil ], "notes" => [ "journal", nil ], "history" => [ "journal", nil ], "ovh" => [ nil, "server-hosting" ] }.freeze
+  JOURNAL_FILTERS = %w[notes events].freeze
   VULNERABILITIES_PER_PAGE = 100
   VULNERABILITY_PACKAGES_PER_PAGE = 50
   VULNERABILITY_VIEWS = %w[packages cves].freeze
+  DOCKER_SECTIONS = %w[containers images vulnerabilities].freeze
 
   # Tabbed page (?tab=), only the requested tab is rendered.
   def show
+    if (moved = MOVED_TABS[params[:tab]])
+      tab, anchor = moved
+      return redirect_to server_path(@server, tab: tab, anchor: anchor), status: :moved_permanently
+    end
+
     @integration_tabs = Integration.server_tabs
     @tab = params[:tab].presence_in(TABS + @integration_tabs.map { |tab| tab[:key] }) || "overview"
-    if @tab == "notes"
-      @pager = paginate(@server.notes.recent.includes(:user), per_page: NOTES_PER_PAGE)
-      @notes = @pager.records
-    end
-    if @tab == "history"
-      @pager = paginate(Activity.recent.where(server: @server).includes(:user, :server, :public_key), per_page: HISTORY_PER_PAGE)
-      @activities = @pager.records
-    end
+    show_journal if @tab == "journal"
     show_vulnerabilities if @tab == "vulnerabilities"
+    show_docker if @tab == "docker"
     @health_history = @server.health_samples.since(24.hours.ago).pluck(:collected_at, :load_percent, :memory_percent, :disk_percent) if @tab == "overview"
   end
 
   def new
     @server = Server.new
   end
+
+  # The journal of a server: its notes and its activities on one timeline,
+  # newest first, HISTORY_PER_PAGE at a time ("show": notes or events only).
+  def show_journal
+    @journal_filter = params[:show].presence_in(JOURNAL_FILTERS)
+    @journal_page = [ params[:page].to_i, 1 ].max
+    limit = @journal_page * HISTORY_PER_PAGE
+    notes = @journal_filter == "events" ? [] : @server.notes.recent.includes(:user).limit(limit + 1).to_a
+    # The note itself is in the journal: not its "note added" activity as well.
+    events = @journal_filter == "notes" ? [] : Activity.recent.where(server: @server).where.not(kind: "server_note_added").includes(:user, :server, :public_key).limit(limit + 1).to_a
+    entries = (notes + events).sort_by(&:created_at).reverse
+    @journal_more = entries.size > limit
+    @journal = entries.drop(limit - HISTORY_PER_PAGE).first(HISTORY_PER_PAGE)
+  end
+  private :show_journal
 
   def create
     @server = Server.new(server_params)
@@ -109,16 +129,15 @@ class ServersController < ApplicationController
     view || cookies[:elio_vulnerability_view].presence_in(VULNERABILITY_VIEWS) || "packages"
   end
 
-  # Vulnerabilities tab: fixable first, most serious first (?fixable=1, ?severity=, ?origin=).
-  # Only the server's own packages by default; ?containers=1 adds the Docker
-  # images (remembered in a cookie).
+  # Vulnerabilities tab: the server's own packages (those of its Docker
+  # images are in the Docker tab), fixable first, most serious first
+  # (?fixable=1, ?severity=, ?q=, ?package=).
   def show_vulnerabilities
     all = @server.server_vulnerabilities
-    @include_images = include_image_vulnerabilities?
-    scope = @include_images ? all : all.host
+    scope = all.host
     @vulnerability_counts = { total: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve),
                               by_severity: scope.group(:severity).distinct.count(:cve),
-                              host: all.host.distinct.count(:cve), images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
+                              images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
     @fixable_only = params[:fixable] == "1"
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     scope = scope.fixable if @fixable_only
@@ -140,13 +159,17 @@ class ServersController < ApplicationController
     end
   end
 
-  def include_image_vulnerabilities?
-    if params.key?(:containers)
-      value = params[:containers] == "1"
-      cookies.permanent[:elio_vulnerability_containers] = { value: value ? "1" : "0", same_site: :lax, httponly: true }
-      return value
-    end
-    cookies[:elio_vulnerability_containers] == "1"
+  # Docker tab in sections (?section=): containers, images, or the
+  # vulnerabilities of the images by image then package.
+  def show_docker
+    @docker_section = params[:section].presence_in(DOCKER_SECTIONS) || "containers"
+    images = @server.server_vulnerabilities.images
+    @image_vulnerability_count = images.distinct.count(:cve)
+    @image_fixable_count = images.fixable.distinct.count(:cve)
+    return unless @docker_section == "vulnerabilities"
+
+    @pager = paginate(PackageVulnerabilities.new(images, server: @server).groups, per_page: VULNERABILITY_PACKAGES_PER_PAGE)
+    @package_groups = @pager.records
   end
 
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.

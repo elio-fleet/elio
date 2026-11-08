@@ -11,13 +11,6 @@ module ApplicationHelper
     { data: { controller: "quiet-submit", action: "turbo:submit-start->server-ping#start turbo:submit-end->server-ping#finish", server_ping_badge_param: badge_id }.compact }
   end
 
-  # Status filters as pills (activity, tasks, keyring, probes…).
-  def filter_pill(label, path, active:, count: nil, **options)
-    classes = "rounded-full px-3 py-1 text-sm font-medium ring-1 ring-inset #{active ? "bg-accent-fill text-white ring-accent-fill" : "bg-surface text-ink-2 ring-line hover:bg-subtle"}"
-    link_to path, class: classes, aria: { current: (active ? "page" : nil) }, **options do
-      safe_join([ label, (tag.span(" #{count}", class: "tabular-nums opacity-70") if count) ].compact)
-    end
-  end
   # Relative time, e.g. "3 minutes ago", "in 2 hours", "just now".
   # Mirrored by app/javascript/controllers/relative_time_controller.js, with
   # the same texts (js.relative_time): keep both in sync.
@@ -55,6 +48,15 @@ module ApplicationHelper
   # Shell command adding the app's public key to ~/.ssh/authorized_keys.
   def ssh_key_install_command(ssh_key)
     "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '#{ssh_key.public_key}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+  end
+
+  # Docker tab of a server page: the number of containers, or the number of
+  # Docker problems coloured by the Docker state (Inventory::DockerStatus).
+  def docker_tab(server, docker)
+    problems = Array(server.docker_reasons).size
+    return [ "docker", t("servers.tabs.docker"), problems, server.docker_status ] if problems.positive?
+
+    [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ]
   end
 
   # Tabs of a server page (but the overview) and their labels, for ⌘K.

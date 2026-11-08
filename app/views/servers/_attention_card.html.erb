@@ -1,0 +1,19 @@
+<%# "To handle" on a server's overview: its health reasons then its Docker reasons, most serious first, each with its named action. Locals: server. %>
+<% reasons = (Array(server.health_reasons) + Array(server.docker_reasons)).sort_by { |reason| reason["tone"] == "crit" ? 0 : 1 } %>
+<%= panel t(".do"), meta: (t(".points", count: reasons.size) if reasons.any?), id: "server-attention" do %>
+  <% if server.health_state == "off" %>
+    <%= attention_list do %>
+      <%= attention_item :crit, t("attention_list.unreachable"), icon: :signal_slash, action: [ t("attention_list.actions.connection"), server_ping_path(server) ] %>
+    <% end %>
+  <% end %>
+  <% if reasons.any? %>
+    <%= attention_list class: "health-reasons" do %>
+      <% reasons.each do |reason| %>
+        <% label, path = AttentionList.action_for(server, reason) %>
+        <%= attention_item reason["tone"] == "crit" ? :crit : :warn, Inventory::HealthStatus.text(reason), action: [ label, path ] %>
+      <% end %>
+    <% end %>
+  <% elsif server.health_state != "off" %>
+    <p class="flex items-center gap-2 px-4 py-3 text-sm text-good-ink"><%= icon :check_circle %> <%= t("servers.health_card.nothing_report") %></p>
+  <% end %>
+<% end %>

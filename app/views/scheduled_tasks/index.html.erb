@@ -1,50 +1,48 @@
 <% content_for :title, t("title", page: t("nav.scheduled_tasks")) %>
 
-<div>
-  <h1 class="text-xl font-semibold"><%= t("nav.scheduled_tasks") %></h1>
-  <p class="text-xs text-ink-3"><%= t(".cron_jobs_systemd_timers") %></p>
-</div>
+<%= page_header t("nav.scheduled_tasks"), subtitle: t(".cron_jobs_systemd_timers") %>
 
-<%= form_with url: scheduled_tasks_path, method: :get, data: search_form_data, class: "scheduled-tasks-filters mt-5 flex flex-wrap items-center gap-2" do |f| %>
+<%= form_with url: scheduled_tasks_path, method: :get, data: search_form_data, class: "scheduled-tasks-filters" do |f| %>
+  <%= filter_bar do %>
   <%= f.search_field :q, value: @q, placeholder: t(".command_timer_file_e"), aria: { label: t(".search") },
-        data: { action: "input->auto-submit#submitLater" }, class: "input w-72 py-1 text-xs" %>
+        data: { action: "input->auto-submit#submitLater" }, class: "input w-72 py-1.5" %>
   <%= f.select :group, [ [ t(".all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
-        aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
+        aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <%= f.select :state, [ [ t(".all_states"), "" ], [ t(".failed"), "failed" ], [ t(".late"), "late" ] ], { selected: @state },
-        aria: { label: t(".state") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1 text-xs" %>
+        aria: { label: t(".state") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
+  <% end %>
 <% end %>
 
 <%= search_results_frame do %>
 <% if @rows.any? %>
-  <div class="card mt-3 overflow-x-auto">
+  <div class="card overflow-x-auto">
     <table id="scheduled-tasks" class="table-dense">
-      <thead><tr><th class="pl-4"><%= t(".server") %></th><th>Type</th><th><%= t("words.when") %></th><th><%= t(".task") %></th><th><%= t("words.user") %></th><th class="pr-4"><%= t(".state") %></th></tr></thead>
+      <thead><tr><th class="pl-4"><%= t(".state") %></th><th><%= t(".server") %></th><th class="col-secondary">Type</th><th><%= t("words.when") %></th><th><%= t(".task") %></th><th class="pr-4"><%= t("words.user") %></th></tr></thead>
       <tbody>
         <% @rows.each do |row| %>
           <tr class="scheduled-task" data-kind="<%= row.kind %>">
-            <td class="pl-4"><%= link_to row.server.name, server_path(row.server, tab: "schedules"), class: "font-medium hover:text-accent hover:underline" %></td>
-            <td class="text-xs text-ink-2"><%= { "timer" => "timer", "cron" => "cron", "periodic" => "script" }.fetch(row.kind) %></td>
-            <td class="text-xs whitespace-nowrap">
+            <td class="pl-4 text-xs whitespace-nowrap">
+              <% if row.timer %><%= timer_state_badge(row.timer) %><% if row.timer["last_at"] %><span class="block text-[11px] text-ink-3"><%= timer_time(row.timer["last_at"]) %></span><% end %>
+              <% else %><span class="text-ink-3" title="<%= t(".cron_keeps_record_runs") %>">—</span><% end %>
+            </td>
+            <td class="col-nowrap"><%= link_to row.server.name, server_path(row.server, tab: "schedules"), class: "font-medium hover:text-accent hover:underline" %></td>
+            <td class="col-secondary text-xs text-ink-2"><%= { "timer" => "timer", "cron" => "cron", "periodic" => "script" }.fetch(row.kind) %></td>
+            <td class="max-w-52 text-xs">
               <% if row.kind == "timer" %><%= timer_schedule_text(row.timer) %>
               <% elsif row.kind == "cron" %><span title="<%= row.schedule %>"><%= Inventory::CronSchedule.cron(row.schedule).text %></span>
               <% else %><%= period_label(row.schedule) %>
               <% end %>
             </td>
-            <td class="max-w-md text-xs">
+            <td class="max-w-xs text-xs xl:max-w-md">
               <% if row.kind == "cron" %>
                 <span class="block truncate font-mono" title="<%= row.command %>"><%= row.command %></span>
               <% else %>
-                <span class="font-mono"><%= row.name.delete_suffix(".timer") %></span>
-                <% if row.command %><span class="text-ink-3"> — <%= row.command %></span><% end %>
+                <span class="block truncate" title="<%= row.command %>"><span class="font-mono"><%= row.name.delete_suffix(".timer") %></span><% if row.command %><span class="text-ink-3"> — <%= row.command %></span><% end %></span>
               <% end %>
               <span class="block text-[11px] text-ink-3"><%= row.source %></span>
             </td>
-            <td class="font-mono text-xs"><%= row.user || "—" %></td>
-            <td class="pr-4 text-xs">
-              <% if row.timer %><%= timer_state_badge(row.timer) %><% if row.timer["last_at"] %> <span class="text-ink-3">· <%= timer_time(row.timer["last_at"]) %></span><% end %>
-              <% else %><span class="text-ink-3" title="<%= t(".cron_keeps_record_runs") %>">—</span><% end %>
-            </td>
+            <td class="pr-4 font-mono text-xs"><%= row.user || "—" %></td>
           </tr>
         <% end %>
       </tbody>
@@ -52,7 +50,7 @@
   </div>
   <%= render "shared/pagination", pager: @pager, noun: t(".tasks") %>
 <% else %>
-  <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @q.present? || @state ? t(".scheduled_task_matches") : t(".known_scheduled_task") %></p>
+  <div class="card"><%= empty_state(@q.present? || @state ? t(".scheduled_task_matches") : t(".known_scheduled_task"), icon: :calendar) %></div>
 <% end %>
 
 <% if @without_inventory.any? %>

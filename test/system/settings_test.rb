@@ -23,9 +23,11 @@ class SettingsTest < ApplicationSystemTestCase
     visit settings_path
     old_key = SshKey.current.public_key
 
+    find("#ssh-key-actions summary").click
     dismiss_app_confirm { click_on "Régénérer la clé" }
     assert_field "ssh-public-key", with: old_key
 
+    find("#ssh-key-actions summary").click unless page.has_selector?("#ssh-key-actions[open]", wait: 0)
     accept_app_confirm { click_on "Régénérer la clé" }
     assert_text "Nouvelle clé SSH générée."
     assert_no_field "ssh-public-key", with: old_key

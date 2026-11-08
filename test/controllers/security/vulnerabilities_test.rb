@@ -72,10 +72,24 @@ class VulnerabilitiesTest < ActionDispatch::IntegrationTest
     assert_select "p", text: "Aucune vulnérabilité ne correspond."
   end
 
+  test "the page: tiles that filter, the CVE page has a breadcrumb back to the list" do
+    sign_in users(:viewer)
+    get vulnerabilities_path
+    assert_select "a#stat-serious[href=?]", vulnerabilities_path(fixable: 1, severity: "high")
+    assert_select "a#stat-cves[aria-current=true]"
+    get vulnerabilities_path(fixable: 1, severity: "high")
+    assert_select "a#stat-serious[aria-current=true]"
+
+    cve = ServerVulnerability.first.cve
+    get vulnerability_path(cve)
+    assert_select "nav.breadcrumbs a[href=?]", vulnerabilities_path
+    assert_select "nav.breadcrumbs span[aria-current=page]", cve
+  end
+
   test "serious fixable CVEs are on the overview and in the daily digest" do
     sign_in users(:viewer)
     get root_path
-    assert_select "#attention li.attention-item[data-tone=crit]", text: /2 serveurs.*1 vulnérabilité grave corrigeable/m
+    assert_select "#attention li.attention-item[data-tone=crit]", text: /1 vulnérabilité grave corrigeable.*Database.*Web/m
     assert_select "#attention a[href=?]", vulnerabilities_path(fixable: 1, severity: "high", origin: "host")
 
     assert_includes NotificationDigest.new.lines, "Vulnérabilités : 5 connue(s), 3 corrigeable(s) dont 1 grave(s), sur 2 serveurs."

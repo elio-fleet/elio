@@ -5,6 +5,7 @@ fr:
       close: Fermer
       loading: Chargement…
     index:
+      refresh_feeds: Mettre à jour les bases
       settings_vulnerabilities: Paramètres → Vulnérabilités
       vulnerabilities: Vulnérabilités
       distinct_cves: CVE distinctes
@@ -21,14 +22,16 @@ fr:
       minimum_severity: Gravité minimale
       all_groups: Tous les groupes
       group: Groupe
-      systems_images: Systèmes et images
-      origin: Origine
       filter: Filtrer
       fix: pas de correctif
       vulnerabilities_2: vulnérabilités
       vulnerability_matches: Aucune vulnérabilité ne correspond.
       known_vulnerability_fleet: Aucune vulnérabilité connue sur le parc.
-      cves_packages_fleet_docker: CVE des paquets du parc et des images Docker, d'après les bases de Debian et d'Ubuntu. Les corrigeables et les plus graves en premier.
+      cves_packages_fleet: CVE des paquets des serveurs, d'après les bases de Debian et d'Ubuntu. Les corrigeables et les plus graves en premier.
+      cves_images: "CVE des paquets des images Docker du parc : elles se corrigent en mettant à jour l'image. Les corrigeables et les plus graves en premier."
+      origins: Origine des vulnérabilités
+      systems: Systèmes
+      docker_images: Images Docker
       feeds_not_downloaded_yet: Bases pas encore téléchargées
       group_2: Regrouper
       fixable_only_html: "%{submit} Corrigeables seulement"
@@ -143,16 +146,13 @@ fr:
       fixable:
         one: "%{count} corrigeable"
         other: "%{count} corrigeables"
-      on_server:
-        one: "%{count} sur le serveur"
-        other: "%{count} sur le serveur"
-      in_images:
-        one: "%{count} dans %{images}"
-        other: "%{count} dans %{images}"
       images:
         one: "%{count} image Docker"
         other: "%{count} images Docker"
-      include_images: Inclure celles des conteneurs Docker
+      images_apart_html:
+        one: "Paquets du système seulement. L'image Docker de ce serveur a aussi %{cves} CVE :"
+        other: "Paquets du système seulement. Les %{images} de ce serveur ont aussi %{cves} CVE :"
+      docker_tab: Onglet Docker
       by_severity:
         critical:
           one: "%{count} critique"
@@ -199,6 +199,9 @@ fr:
       pending_html: 'Le serveur ne propose pas encore cette version : lancez %{command}, ou vérifiez que le dépôt de sécurité est configuré.'
       in_image_html: 'Ces paquets sont dans l''image %{image} : téléchargez une version plus récente de l''image (ou reconstruisez-la), puis recréez ses conteneurs.'
     docker_card:
+      sections: Sections Docker
+      no_image_vulnerability: Aucune vulnérabilité connue dans les images de ce serveur.
+      fixed_by_image: "Corrigées en mettant à jour l'image (une version plus récente publiée par son registre), pas les paquets du serveur."
       images_fleet: Images du parc
       elio_neither_trivy_nor: Elio (ni Trivy ni Grype sur le serveur)
       tag: sans tag
@@ -224,6 +227,11 @@ fr:
       docker_inventory_yet: Pas encore d'inventaire Docker.
   docker:
     index:
+      image_cves: CVE dans les images
+      image_cves_detail:
+        one: "%{images} · %{count} corrigeable"
+        other: "%{images} · %{count} corrigeables"
+      fixable_cves_html: "%{submit} Avec CVE corrigeables"
       docker_servers: Serveurs Docker
       running_containers: Conteneurs en cours
       trouble: En difficulté
@@ -247,8 +255,8 @@ fr:
       versions_fleet_html: "%{count} versions sur le parc"
       container: aucun conteneur
     tabs:
-      images: Conteneurs et images
-      cves: CVE
+      images: Images
+      cves: Vulnérabilités des images
     cves:
       loading: Chargement…
       intro: 'Les vulnérabilités des images Docker du parc : elles se corrigent en mettant à jour l''image, pas le serveur.'
@@ -279,7 +287,7 @@ fr:
         registry_credentials: Identifiants des registres
         save: Enregistrer
         automation_off: désactivée
-        what_containers_images_report: 'Ce que les conteneurs et les images signalent : raison « à surveiller » sur le serveur et activité (notifiable).'
+        what_containers_images_report: 'Ce que les conteneurs et les images signalent : l''état Docker du serveur (à part de sa santé) et une activité (notifiable). Rouge pour les conteneurs, orange pour les images.'
         healthcheck_fails: Son healthcheck échoue.
         restarting_state_least_restarts_html: État « restarting », ou au moins %{_} redémarrages et relancé il y a moins de %{in_minutes_to_i} minutes.
         handy_latest_1_27: Pratique pour les tags « latest » ou « 1.27 » ; sans effet sur un tag figé.
@@ -295,6 +303,8 @@ fr:
         unhealthy_html: Conteneur en <strong>mauvaise santé</strong>
         looping_html: Conteneur qui <strong>redémarre en boucle</strong>
         updates_html: Image utilisée dont le registre publie une <strong>nouvelle version</strong> du même tag
+        vulnerabilities_html: Image avec des <strong>vulnérabilités graves corrigeables</strong>
+        vulnerabilities_hint: À partir de la gravité choisie dans Paramètres → Vulnérabilités ; corrigées en mettant à jour l'image, pas le serveur.
         registries_html: 'Elio demande aux registres l''empreinte de chaque tag utilisé (lecture seule, requêtes HEAD qui ne comptent pas dans les limites de Docker Hub). Les images publiques n''ont besoin de rien ; pour une image privée, un jeton <strong>en lecture seule</strong> par registre, une ligne chacun :'
         registries_example: |-
           ghcr.io mon-compte ghp_…
@@ -323,6 +333,7 @@ fr:
         delete_2: Supprimer %{provider_name}
         delete_scores: Supprimer « %{provider_name} » et ses notes ?
         band: Palier %{index} à partir de
+        band_name: Palier %{index}
         colour_band: Couleur du palier %{index}
         save_colours: Enregistrer les couleurs
         feed_file: Fichier de la base

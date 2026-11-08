@@ -1,0 +1,12 @@
+<%# The one Save of a page (save_bar helper): hidden until a field of the form changes
+    (dirty-form controller on the form), then sticks to the bottom of the screen.
+    Locals: form (the form builder), label (of the button). %>
+<div class="save-bar sticky bottom-4 z-20 mt-6 flex flex-wrap items-center gap-3 rounded-xl bg-ink px-4 py-2.5 text-sm text-surface shadow-lg"
+     data-dirty-form-target="bar" hidden>
+  <%= icon :pencil_square, class: "h-4 w-4 opacity-70" %>
+  <span data-dirty-form-target="summary" data-one="<%= t("ui.unsaved.one") %>" data-other="<%= t("ui.unsaved.other") %>"></span>
+  <span class="ml-auto flex items-center gap-2">
+    <button type="button" class="btn border border-white/20 text-surface hover:bg-white/10" data-action="dirty-form#reset"><%= t("ui.cancel") %></button>
+    <%= form.button label, class: "btn btn-primary", data: { disable_with: false } %>
+  </span>
+</div>

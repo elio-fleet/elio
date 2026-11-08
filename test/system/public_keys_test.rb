@@ -12,7 +12,7 @@ class PublicKeysTest < ApplicationSystemTestCase
     key = Ssh::KeyGenerator.generate(comment: "bob@desktop")
     visit root_path
 
-    within("nav.main-nav") { click_on "Trousseau" }
+    within("nav.main-nav") { click_on "Clés SSH" }
     click_on "Ajouter une clé"
     fill_in "Nom", with: "Bob"
     fill_in "Clé SSH publique", with: key.public_key
@@ -26,6 +26,7 @@ class PublicKeysTest < ApplicationSystemTestCase
     click_on "Enregistrer"
     assert_text "La clé « Bob Martin » a été modifiée."
 
+    find(".page-actions details.actions-menu summary").click
     accept_app_confirm { click_on "Supprimer" }
     assert_text "La clé « Bob Martin » a été retirée du trousseau."
     assert_no_selector "#keyring", text: "Bob Martin"

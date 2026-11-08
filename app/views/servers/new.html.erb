@@ -1,10 +1,7 @@
 <% content_for :title, t("title", page: t("command_palette.add_server")) %>
 
-<div class="mx-auto max-w-xl">
-  <%= link_to t(".servers"), servers_path, class: "text-sm text-ink-3 hover:text-ink-2" %>
-  <h1 class="mt-2 text-2xl font-bold tracking-tight"><%= t("command_palette.add_server") %></h1>
+<%= page_header t("command_palette.add_server"), subtitle: t(".subtitle"), crumbs: [ [ t("nav.fleet"), servers_path ], t("command_palette.add_server") ] %>
 
-  <div class="mt-6 rounded-xl border border-line bg-surface p-6 shadow-sm">
-    <%= render "form", server: @server %>
-  </div>
+<div class="card max-w-4xl px-5 py-5">
+  <%= render "form", server: @server %>
 </div>

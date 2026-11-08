@@ -65,18 +65,14 @@ class UiHelperTest < ActionView::TestCase
   end
 
   test "sidebar_link marks the active page" do
-    render html: sidebar_link("Parc", "/servers", icon: :server_stack, active: true, count: 12) +
-                 sidebar_link("Trousseau", "/keys", icon: :key, active: false)
+    render html: sidebar_link("Serveurs", "/servers", icon: :server_stack, active: true, count: 12) +
+                 sidebar_link("Clés SSH", "/ssh-keys", icon: :key, active: false) +
+                 sidebar_link("Vulnérabilités", "/vulnerabilities", icon: :shield_exclamation, active: false, count: SidebarCounts::Count.new(19, :crit))
 
-    assert_select "a[href='/servers'][aria-current=page].bg-accent-soft", text: /Parc\s*12/
-    assert_select "a[href='/keys']:not([aria-current])", text: "Trousseau"
-  end
-
-  test "sidebar_server_groups counts the servers of each group" do
-    counts = sidebar_server_groups.to_h { |group| [ group.name, group.servers_count ] }
-
-    assert_equal ServerGroup.order(:name).pluck(:name), counts.keys
-    assert_equal servers(:web).server_groups.first.servers.count, counts[servers(:web).server_groups.first.name]
+    assert_select "a[href='/servers'][aria-current=page].bg-accent-soft", text: /Serveurs\s*12/
+    assert_select "a[href='/servers'] .sidebar-count.text-ink-3", "12"
+    assert_select "a[href='/ssh-keys']:not([aria-current])", text: "Clés SSH"
+    assert_select "a[href='/vulnerabilities'] .sidebar-count.text-crit-ink[data-tone=crit]", "19"
   end
 
   test "history_chart draws the last 24 hours with a threshold and a tooltip per point" do

@@ -134,6 +134,23 @@
   .table-dense td {
     @apply border-t border-line px-2.5 py-2;
   }
+  /* Columns of a dense table: numbers on the right, long text cut (title= gives it in full), secondary columns only on wide screens. */
+  .table-dense .col-num {
+    @apply text-right tabular-nums whitespace-nowrap;
+  }
+  .table-dense .col-truncate {
+    @apply max-w-[18rem] truncate;
+  }
+  .table-dense .col-secondary {
+    @apply hidden xl:table-cell;
+  }
+  .table-dense .col-nowrap {
+    @apply whitespace-nowrap;
+  }
+  /* A field changed and not saved yet (dirty-form controller). */
+  .is-dirty {
+    @apply border-accent ring-2 ring-accent-soft;
+  }
   .kbd {
     @apply rounded border border-line px-1 font-sans text-[10px] text-ink-3;
   }
@@ -162,4 +179,9 @@
 /* Ping requests show their own loading state (see server_ping_controller.js). */
 html.hide-turbo-progress .turbo-progress-bar {
   display: none !important;
+}
+
+/* Settings pages: the spacing between blocks comes from the page (gap), not from each block. */
+.settings-page > * {
+  margin-top: 0;
 }

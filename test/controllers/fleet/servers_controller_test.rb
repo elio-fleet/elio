@@ -38,7 +38,7 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     stub_method(Servers::Ping, :reachable?, true) { get server_path(servers(:web)) }
 
-    assert_select ".server-groups a.server-group-badge[href=?]", servers_path(group: server_groups(:production).id), text: "Production"
+    assert_select ".server-groups a.group-tag[href=?]", servers_path(group: server_groups(:production).id), text: "Production"
   end
 
   test "new redirects to sign in when not authenticated" do
@@ -190,7 +190,7 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_select "h1", "Web"
-    assert_select "p", text: "deploy@192.168.1.10:22"
+    assert_select ".page-subtitle .server-summary", text: /\Adeploy@192\.168\.1\.10:22/
     assert_select "a[href=?]", edit_server_path(server)
     assert_select "#server-health" do
       assert_select "turbo-frame##{dom_id(server, :reachability)}[loading=lazy][src=?]", server_ping_path(server) do
@@ -237,10 +237,10 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     Activity.record!(:key_added, server: servers(:db), public_key: public_keys(:alice), unix_user: "admin")
     sign_in users(:one)
 
-    get server_path(servers(:web), tab: "history")
+    get server_path(servers(:web), tab: "journal")
 
     assert_select "#server-activity li.activity", 1
-    assert_select "#server-activity a[href=?]", activities_path(server_id: servers(:web).id), text: "Tout voir"
+    assert_select "#server-journal a[href=?]", activities_path(server_id: servers(:web).id), text: /journal du parc/
   end
 
   test "destroy requires authentication" do
@@ -301,7 +301,8 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?][data-turbo-confirm*='pas retirées'][data-turbo-confirm*='1 accès temporaire']", server_path(servers(:web))
 
     get edit_server_path(servers(:web))
-    assert_select "#danger-zone form[action=?] button", server_path(servers(:web)), text: /Supprimer le serveur/
+    assert_select ".page-actions details.actions-menu form[action=?][data-confirm-variant=danger] button.delete-server", server_path(servers(:web)), text: /Supprimer le serveur/
+    assert_select ".page-actions details.actions-menu form[action=?][data-turbo-confirm*='1 accès temporaire']", server_path(servers(:web))
   end
 
   test "the server page has one tab per section, the overview by default" do
@@ -309,17 +310,22 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:viewer)
 
     get server_path(servers(:web))
-    assert_select "nav.server-tabs .server-tabs-bar > a", 10
+    assert_equal %w[overview vulnerabilities packages services firewall schedules keys journal], css_select("nav.server-tabs .tabs-bar > a").map { |tab| tab["data-tab"] }
     assert_select "nav.server-tabs a[aria-current=page][data-tab=overview][href=?]", server_path(servers(:web))
-    assert_select "nav.server-tabs a[data-tab=packages][href=?]", server_path(servers(:web), tab: "packages"), text: /Paquets\s*412/
+    assert_select "nav.server-tabs a[data-tab=packages][href=?]", server_path(servers(:web), tab: "packages"), text: "Mises à jour"
     assert_select "#server-health-details"
     assert_select "#server-system"
     assert_select "#server-packages", 0
 
-    get server_path(servers(:web), tab: "ports")
-    assert_select "nav.server-tabs a[aria-current=page][data-tab=ports]"
+    get server_path(servers(:web), tab: "firewall")
+    assert_select "nav.server-tabs a[aria-current=page][data-tab=firewall]"
     assert_select "#server-ports"
     assert_select "#server-health-details", 0
+
+    get server_path(servers(:web), tab: "ports")
+    assert_redirected_to server_path(servers(:web), tab: "firewall")
+    get server_path(servers(:web), tab: "notes")
+    assert_redirected_to server_path(servers(:web), tab: "journal")
 
     get server_path(servers(:web), tab: "nope")
     assert_select "nav.server-tabs a[aria-current=page][data-tab=overview]"

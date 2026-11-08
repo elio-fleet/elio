@@ -1,69 +1,69 @@
 <% content_for :title, "#{@server.name} · Elio" %>
 <% os = @server.inventory("os")&.data || {} %>
-<% packages = @server.inventory("packages")&.data || {} %>
+<% health_data = @server.inventory("health")&.data || {} %>
 <% services = @server.inventory("services")&.data || {} %>
 <% schedules = @server.inventory("scheduled_tasks")&.data || {} %>
 <% docker = @server.inventory("docker")&.data || {} %>
 <% ports = @server.inventory("ports") %>
 <% snapshots = @server.account_snapshots.to_a %>
 
-<div class="mx-auto max-w-6xl">
-  <p class="text-xs text-ink-3">
-    <%= link_to t("nav.fleet"), servers_path, class: "hover:text-ink" %>
-    <% if (group = @server.server_groups.first) %><span class="mx-1">/</span><%= link_to group.name, servers_path(group: group.id), class: "hover:text-ink" %><% end %>
-    <span class="mx-1">/</span><span class="text-ink-2"><%= @server.name %></span>
-  </p>
-
-  <div class="mt-2 flex flex-wrap items-start justify-between gap-4">
-    <div class="min-w-0">
-      <div class="flex flex-wrap items-center gap-2">
-        <h1 class="text-xl font-semibold"><%= @server.name %></h1>
-        <%= render "servers/status", server: @server, health: true %>
-        <% if @server.server_groups.any? %>
-          <span class="server-groups flex flex-wrap gap-1.5"><%= render partial: "server_groups/badge", collection: @server.server_groups, as: :group %></span>
-        <% end %>
-      </div>
-      <p class="server-summary mt-1 font-mono text-xs text-ink-3">
-        <%= [ "#{@server.username}@#{@server.host}:#{@server.port}", (os["hostname"] if os["hostname"].present? && os["hostname"] != @server.host), os["name"],
-              (t("count.processors", count: os["cpus"]) if os["cpus"]), (human_bytes(os["memory_bytes"]) if os["memory_bytes"]) ].compact.join(" · ") %>
-      </p>
-    </div>
-    <div class="flex flex-wrap items-center gap-2">
-      <% if can?(:operate) %>
-        <%= button_to server_inventory_path(@server), form: { class: "refresh-inventory" }, class: "btn btn-secondary" do %>
-          <%= icon :arrow_path %> <%= t(".refresh_inventory") %>
-        <% end %>
-        <%= link_to edit_server_path(@server), class: "btn btn-secondary" do %>
-          <%= icon :pencil_square %> <%= t(".edit") %>
-        <% end %>
-        <%= render "servers/delete_button", server: @server %>
+<div>
+  <% first_group = @server.server_groups.first %>
+  <% crumbs = [ [ t("nav.fleet"), servers_path ], ([ first_group.name, servers_path(group: first_group.id) ] if first_group), @server.name ].compact %>
+  <% badges = safe_join([ render("servers/status", server: @server, health: true), render("servers/docker_pill", server: @server),
+                          (tag.span(safe_join(@server.server_groups.map { |server_group| group_tag(server_group, path: servers_path(group: server_group.id)) }), class: "server-groups flex flex-wrap gap-2") if @server.server_groups.any?) ].compact) %>
+  <% summary = tag.span([ "#{@server.username}@#{@server.host}:#{@server.port}", (os["hostname"] if os["hostname"].present? && os["hostname"] != @server.host), os["name"],
+                          (t("count.processors", count: os["cpus"]) if os["cpus"]), (human_bytes(os["memory_bytes"]) if os["memory_bytes"]) ].compact.join(" · "), class: "server-summary font-mono") %>
+  <%= page_header @server.name, crumbs: crumbs, badges: badges, subtitle: summary do %>
+    <% if can?(:operate) %>
+      <%= button_to server_inventory_path(@server), form: { class: "refresh-inventory" }, class: "btn btn-secondary" do %>
+        <%= icon :arrow_path %> <%= t(".refresh_inventory") %>
       <% end %>
-    </div>
-  </div>
+      <%= link_to edit_server_path(@server), class: "btn btn-secondary" do %>
+        <%= icon :pencil_square %> <%= t(".edit") %>
+      <% end %>
+      <% temporary = @server.temporary_accesses.active.count %>
+      <%= actions_menu id: "server-actions" do %>
+        <%= menu_item t(".add_note"), server_path(@server, tab: "journal", anchor: "server-notes"), icon: :pencil_square %>
+        <%= menu_item t(".see_keys"), server_path(@server, tab: "keys"), icon: :key %>
+        <%= menu_separator %>
+        <%= menu_item t("servers.delete_button.delete_server"), server_path(@server), icon: :trash, method: :delete, danger: true, class: "delete-server",
+                      confirm: t("servers.delete_button.warning", server_name: @server.name) + (temporary.positive? ? t("servers.delete_button.temporary_warning", count: temporary) : ""),
+                      data: { confirm_label: t("servers.delete_button.delete_server") } %>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <%= render "servers/health_bar", server: @server %>
 
-  <% tabs = [ [ "overview", t("servers.tabs.overview"), nil ],
-              [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.host.fixable.distinct.count(:cve).nonzero? ],
-              [ "packages", t("servers.tabs.packages"), packages["total"] ],
-              [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "active" } if services["units"]) ],
-              *([ [ "docker", t("servers.tabs.docker"), (Array(docker["containers"]).size if docker["docker"] == "ok") ] ] if docker["docker"].in?(%w[ok unreadable])),
-              [ "ports", t("servers.tabs.ports"), (Inventory::PortAnalysis.new(@server).public_ports.size if ports&.collected?) ],
-              [ "firewall", t("servers.tabs.firewall"), nil ],
-              [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
-              [ "keys", t("servers.tabs.keys"), (snapshots.sum { |snapshot| snapshot.keys.size } if snapshots.any?) ],
-              *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] },
-              [ "notes", t("servers.tabs.notes"), @server.notes.count.nonzero? ],
-              [ "history", t("servers.tabs.history"), nil ] ] %>
-  <%= render "servers/tabs", server: @server, tabs: tabs, current: @tab %>
+  <% tab_list = [ [ "overview", t("servers.tabs.overview"), nil ],
+                  [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.host.fixable.distinct.count(:cve).nonzero?, (:crit if @server.health_reasons.any? { |reason| reason["key"].to_s.start_with?("health.vulnerabilit") }) ],
+                  [ "packages", t("servers.tabs.packages"), health_data.dig("updates", "total").to_i.nonzero?, (:warn if health_data.dig("updates", "security").to_i.positive?) ],
+                  [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "failed" }.nonzero? if services["units"]), :crit ],
+                  *([ docker_tab(@server, docker) ] if docker["docker"].in?(%w[ok unreadable])),
+                  [ "firewall", t("servers.tabs.firewall"), (Inventory::PortAnalysis.new(@server).unexpected_ports.size.nonzero? if ports&.collected?), :warn ],
+                  [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
+                  [ "keys", t("servers.tabs.keys"), (snapshots.sum { |snapshot| snapshot.keys.size } if snapshots.any?) ],
+                  *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] },
+                  [ "journal", t("servers.tabs.journal"), nil ] ] %>
+  <%= tabs tab_list.map { |key, label, count, tone| { key: key, label: label, count: count, tone: (tone if count), path: server_path(@server, tab: (key unless key == "overview")) } },
+           current: @tab, label: t("servers.tabs.server_sections"), class: "server-tabs" %>
 
   <% case @tab %>
   <% when "overview" %>
-    <%= render "servers/health_card", server: @server %>
-    <%= render "servers/system_card", server: @server %>
-    <%= render "servers/network_card", server: @server %>
+    <div class="server-overview grid items-start gap-4 lg:grid-cols-[21rem_minmax(0,1fr)]">
+      <div class="min-w-0 space-y-4">
+        <%= render "servers/system_card", server: @server %>
+        <%= render "servers/network_card", server: @server %>
+        <%= render "servers/hosting_card", server: @server %>
+      </div>
+      <div class="min-w-0 space-y-4">
+        <%= render "servers/attention_card", server: @server %>
+        <%= render "servers/health_card", server: @server %>
+      </div>
+    </div>
   <% when "packages" %>
-    <section id="server-packages" class="card mt-6">
+    <section id="server-packages" class="card">
       <div class="card-header">
         <h2 class="flex items-center gap-2 font-semibold"><%= icon :cube, class: "h-4 w-4 text-ink-3" %> <%= t("servers.tabs.packages") %></h2>
         <%= link_to t(".search_whole_fleet"), packages_path, class: "text-xs font-medium text-accent hover:underline" %>
@@ -75,15 +75,14 @@
   <% when "services" %>
     <%= render "servers/services_card", server: @server %>
   <% when "docker" %>
-    <%= render "servers/docker_card", server: @server %>
+    <%= render "servers/docker_card", server: @server, section: @docker_section, groups: @package_groups, pager: @pager,
+                                      image_cves: @image_vulnerability_count, image_fixable: @image_fixable_count %>
   <% when "schedules" %>
     <%= render "servers/scheduled_tasks_card", server: @server %>
-  <% when "ports" %>
-    <%= render "servers/ports_card", server: @server %>
   <% when "firewall" %>
     <%= render "servers/firewall_card", server: @server %>
   <% when "keys" %>
-    <section id="server-authorized-keys" class="card mt-6 p-5">
+    <section id="server-authorized-keys" class="card p-5">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 class="flex items-center gap-2 font-semibold"><%= icon :key, class: "h-4 w-4 text-ink-3" %> <%= t(".authorized_ssh_keys") %></h2>
@@ -98,22 +97,7 @@
   <% when *@integration_tabs.map { |tab| tab[:key] } %>
     <% tab = @integration_tabs.find { |candidate| candidate[:key] == @tab } %>
     <%= render tab[:partial] || "integrations/#{tab[:integration].kind}/server_tab", server: @server, integration: tab[:integration] %>
-  <% when "notes" %>
-    <%= render "server_notes/tab", server: @server, notes: @notes, pager: @pager %>
-  <% when "history" %>
-    <section id="server-activity" class="card mt-6 px-5 pt-4 pb-2">
-      <div class="flex items-center justify-between">
-        <h2 class="flex items-center gap-2 font-semibold"><%= icon :clock, class: "h-4 w-4 text-ink-3" %> <%= t("servers.tabs.history") %></h2>
-        <%= link_to t("dashboard.index.see_all"), activities_path(server_id: @server.id), class: "text-xs font-medium text-accent hover:underline" %>
-      </div>
-      <% if @activities.any? %>
-        <ul class="mt-2 divide-y divide-line">
-          <%= render partial: "activities/activity", collection: @activities, locals: { show_server: false } %>
-        </ul>
-        <% if @pager.multiple_pages? %><div class="pb-3"><%= render "shared/pagination", pager: @pager, noun: t(".activities") %></div><% end %>
-      <% else %>
-        <p class="py-6 text-sm text-ink-3"><%= t(".activity_server_yet") %></p>
-      <% end %>
-    </section>
+  <% when "journal" %>
+    <%= render "servers/journal_card", server: @server, entries: @journal, filter: @journal_filter, page: @journal_page, more: @journal_more %>
   <% end %>
 </div>

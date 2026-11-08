@@ -8,8 +8,8 @@ class SignInTest < ApplicationSystemTestCase
     click_on "Se connecter"
 
     assert_selector "h1", text: "Vue d'ensemble"
-    within("nav.main-nav") { click_on "Parc" }
-    assert_selector "h1", text: "Parc"
+    within("nav.main-nav") { click_on "Serveurs" }
+    assert_selector "h1", text: "Serveurs"
     assert_selector ".sidebar .user-role", text: "Lecture"
   end
 end

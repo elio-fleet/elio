@@ -26,6 +26,7 @@ class UiTest < ApplicationSystemTestCase
 
   test "the confirm dialog uses the action's label and colour, and Escape cancels" do
     visit public_key_path(public_keys(:alice))
+    find(".page-actions details.actions-menu summary").click
     click_on "Supprimer"
 
     within("#confirm-dialog[open]") do
@@ -70,8 +71,8 @@ class UiTest < ApplicationSystemTestCase
 
     within("#command-palette[open]") do
       assert_no_selector ".command-palette-item", text: "›"
-      find("input[type=search]").fill_in(with: "web paquets")
-      assert_selector ".command-palette-item", text: "Web › Paquets"
+      find("input[type=search]").fill_in(with: "web mises")
+      assert_selector ".command-palette-item", text: "Web › Mises à jour"
       find("input[type=search]").send_keys(:enter)
     end
     assert_selector "nav.server-tabs a[aria-current=page][data-tab=packages]"

@@ -1,7 +1,7 @@
 <%# Ports of the server (Inventory::PortAnalysis); the firewalls and the rules to copy are in the Firewall tab. %>
 <% analysis = Inventory::PortAnalysis.new(server) %>
 <% snapshot = analysis.snapshot %>
-<section id="server-ports" class="card mt-6">
+<section id="server-ports" class="card">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :globe, class: "h-4 w-4 text-ink-3" %> <%= t(".ports") %></h2>
     <div class="flex items-center gap-2 text-xs text-ink-3">
@@ -49,10 +49,6 @@
       <p class="px-4 py-4 text-sm text-ink-3"><%= t(".listening_port") %></p>
     <% end %>
 
-    <p class="firewall-link border-t border-line px-4 py-2.5 text-xs text-ink-3">
-      <%= t(".firewall_tab_hint") %>
-      <%= link_to t(".see_firewall_tab"), server_path(server, tab: "firewall"), class: "font-medium text-accent hover:underline" %>
-    </p>
   <% elsif snapshot&.status == "unsupported" %>
     <p class="ports-empty px-4 py-4 text-sm text-ink-3"><%= snapshot.message %></p>
   <% elsif snapshot&.failed? %>

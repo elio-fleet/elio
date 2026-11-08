@@ -22,7 +22,7 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
       assert_select "a[href=?]", server_path(servers(:web))
       assert_select ".severity-info"
     end
-    assert_select "nav.main-nav a[aria-current=page]", text: "Activité"
+    assert_select "nav.main-nav a[aria-current=page]", text: "Journal"
   end
 
   test "filters by category" do
@@ -34,7 +34,7 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
 
     assert_select "li.activity", 1
     assert_select "li.activity[data-kind=unknown_key_detected] .severity-warning"
-    assert_select ".activity-filters a[aria-current=page]", text: "Sécurité"
+    assert_select ".activity-filters a[aria-current=true]", text: "Sécurité"
   end
 
   test "ignores an unknown category" do
@@ -44,7 +44,7 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
     get activities_path(category: "nope")
 
     assert_select "li.activity", 1
-    assert_select ".activity-filters a[aria-current=page]", text: "Tout"
+    assert_select ".activity-filters a[aria-current=true]", text: "Tout"
   end
 
   test "filters by server" do
@@ -85,5 +85,17 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     get activities_path
     assert_select "p", text: "Aucune activité pour le moment."
+  end
+
+  test "the journal has two tabs: events and runs" do
+    sign_in users(:viewer)
+    get activities_path
+    assert_select "nav.journal-tabs a.tab[aria-current=page][data-tab=events]", text: "Événements"
+    assert_select "nav.journal-tabs a.tab[data-tab=runs][href=?]", tasks_path, text: /Exécutions/
+    assert_select "h1", "Journal"
+
+    get tasks_path
+    assert_select "nav.journal-tabs a.tab[aria-current=page][data-tab=runs]"
+    assert_select "nav.main-nav a[aria-current=page]", text: "Journal"
   end
 end

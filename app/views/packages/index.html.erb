@@ -1,25 +1,22 @@
 <% content_for :title, t("title", page: t("nav.packages")) %>
 
-<div class="flex flex-wrap items-start justify-between gap-4">
-  <div>
-    <h1 class="text-xl font-semibold"><%= t("nav.packages") %></h1>
-    <p class="text-xs text-ink-3"><%= t(".which_servers_have_package") %></p>
-  </div>
-</div>
+<%= page_header t("nav.packages"), subtitle: t(".which_servers_have_package") %>
 
-<%= form_with url: packages_path, method: :get, data: { turbo_action: "advance" }, class: "packages-search mt-5 flex gap-2" do |f| %>
-  <%= f.search_field :q, value: @q, placeholder: "openssl, nginx, postgres…", autofocus: true, autocomplete: "off",
-        aria: { label: t(".package_name") }, class: "input max-w-md" %>
-  <%= f.button class: "btn btn-primary" do %><%= icon :magnifying_glass %> Rechercher<% end %>
-<% end %>
-
-<% if @servers_without_inventory.positive? %>
-  <p class="mt-2 text-xs text-ink-3"><%= t(".packages_inventory_yet_html", t: (t("count.servers_have", count: @servers_without_inventory))) %></p>
+<%= form_with url: packages_path, method: :get, data: { turbo_action: "advance" }, class: "packages-search" do |f| %>
+  <%= filter_bar do %>
+    <%= f.search_field :q, value: @q, placeholder: t(".search_placeholder"), autofocus: true, autocomplete: "off",
+          aria: { label: t(".package_name") }, class: "input w-80 py-1.5" %>
+    <%= f.button class: "btn btn-secondary" do %><%= icon :magnifying_glass %> <%= t(".search") %><% end %>
+    <% if @q.present? %><%= link_to t("ui.clear_filters"), packages_path, class: "text-xs text-accent hover:underline" %><% end %>
+    <% if @servers_without_inventory.positive? %>
+      <%= filter_bar_end do %><span class="text-xs text-ink-3"><%= t(".packages_inventory_yet_html", t: (t("count.servers_have", count: @servers_without_inventory))) %></span><% end %>
+    <% end %>
+  <% end %>
 <% end %>
 
 <% if @q.present? %>
   <% if @results.any? %>
-    <div class="mt-5 space-y-4">
+    <div class="space-y-4">
       <% @results.each do |name, rows| %>
         <section class="package-result card">
           <div class="card-header">
@@ -56,10 +53,10 @@
     </div>
     <%= render "shared/pagination", pager: @pager, noun: t("nouns.packages") %>
   <% else %>
-    <p class="card mt-5 px-4 py-6 text-sm text-ink-3"><%= t(".package_contains_html", q: @q) %></p>
+    <div class="card"><%= empty_state t(".package_contains_html", q: @q), icon: :magnifying_glass %></div>
   <% end %>
 <% else %>
-  <section class="security-updates card mt-5">
+  <section class="security-updates card">
     <div class="card-header">
       <h2 class="flex items-center gap-2 font-semibold"><%= icon :shield_check, class: "h-4 w-4 text-ink-3" %> <%= t(".pending_security_updates") %></h2>
       <span class="text-xs text-ink-3"><%= t("count.packages", count: @pager.total) %></span>

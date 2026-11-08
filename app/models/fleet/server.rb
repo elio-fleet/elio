@@ -1,6 +1,10 @@
 require "resolv"
 
 class Server < ApplicationRecord
+  # Activities logged when the health of the server or the state of its Docker changes.
+  HEALTH_KINDS = { "ok" => :health_recovered, "warn" => :health_warning, "crit" => :health_critical }.freeze
+  DOCKER_KINDS = { "ok" => :docker_recovered, "warn" => :docker_warning, "crit" => :docker_critical }.freeze
+
   has_many :account_snapshots, dependent: :delete_all
   has_many :temporary_accesses, dependent: :delete_all
   has_many :activities, dependent: :nullify
@@ -118,20 +122,31 @@ class Server < ApplicationRecord
   # Main reasons of the health state, most serious first.
   def health_reason_texts = Array(health_reasons).map { |reason| Inventory::HealthStatus.text(reason) }
 
-  # Recomputes the health state (Inventory::HealthStatus) and logs when it
-  # changes between ok, warn and crit (not on the first evaluation).
-  def refresh_health!
-    previous = health_status
-    inventory_snapshots.reset
-    result = Inventory::HealthStatus.evaluate(self)
-    update_columns(health_status: result.state, health_reasons: result.reasons.map(&:to_h))
-    return if previous.nil? || previous == "unknown" || result.state == "unknown" || previous == result.state
+  # Reasons of the Docker state (docker_status, Inventory::DockerStatus: ok,
+  # warn, crit, or nil without a readable Docker), most serious first.
+  def docker_reason_texts = Array(docker_reasons).map { |reason| Inventory::HealthStatus.text(reason) }
 
-    kind = { "ok" => :health_recovered, "warn" => :health_warning, "crit" => :health_critical }.fetch(result.state)
-    Activity.record!(kind, server: self, user: nil, reasons: result.reasons.map(&:to_h).first(3))
+  # Recomputes the health of the server (Inventory::HealthStatus) and the state
+  # of its Docker (Inventory::DockerStatus), and logs each change between ok,
+  # warn and crit (not on the first evaluation).
+  def refresh_health!
+    previous = { health: health_status, docker: docker_status }
+    inventory_snapshots.reset
+    health = Inventory::HealthStatus.evaluate(self)
+    docker = Inventory::DockerStatus.evaluate(self)
+    update_columns(health_status: health.state, health_reasons: health.reasons.map(&:to_h),
+                   docker_status: docker.state, docker_reasons: docker.reasons.map(&:to_h))
+    record_state_change(previous[:health], health, HEALTH_KINDS)
+    record_state_change(previous[:docker], docker, DOCKER_KINDS)
   end
 
   private
+
+  def record_state_change(previous, result, kinds)
+    return if previous.nil? || previous == "unknown" || result.state.nil? || result.state == "unknown" || previous == result.state
+
+    Activity.record!(kinds.fetch(result.state), server: self, user: nil, reasons: result.reasons.map(&:to_h).first(3))
+  end
 
   # The last ping and SSH results no longer apply once the address changes.
   def reset_reachability

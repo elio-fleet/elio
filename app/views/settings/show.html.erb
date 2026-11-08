@@ -1,12 +1,29 @@
 <% content_for :title, t("title", page: t("settings.nav.title")) %>
 
-<%= render "settings/nav" %>
+<% page = capture do %>
 
-<section id="ssh-key" class="mt-8 rounded-xl border border-line bg-surface p-6 shadow-sm">
-  <h2 class="text-lg font-semibold"><%= t(".ssh_key_application") %></h2>
-  <p class="mt-1 text-sm text-ink-3">
-    <%= t(".key_intro_html", file: tag.code("~/.ssh/authorized_keys", class: "rounded bg-subtle px-1 font-mono text-xs")) %>
-  </p>
+<section id="ssh-key" class="card p-5">
+  <div class="flex items-start justify-between gap-4">
+    <div>
+      <h2 class="text-sm font-semibold"><%= t(".ssh_key_application") %></h2>
+      <p class="mt-1 max-w-3xl text-xs text-ink-3">
+        <%= t(".key_intro_html", file: tag.code("~/.ssh/authorized_keys", class: "rounded bg-subtle px-1 font-mono")) %>
+      </p>
+    </div>
+    <% if @ssh_key %>
+      <%= actions_menu id: "ssh-key-actions" do %>
+        <% if @rotation %>
+          <%= menu_item t(".follow_rotation"), settings_key_rotation_path(@rotation), icon: :arrow_path %>
+        <% else %>
+          <%= menu_item t(".rotate_key"), settings_key_rotations_path, icon: :arrow_path, method: :post,
+                        confirm: t(".rotation_confirm", count: Server.count), data: { confirm_label: t(".start_rotation") } %>
+        <% end %>
+        <%= menu_separator %>
+        <%= menu_item t(".regenerate_key"), ssh_key_path, icon: :exclamation_triangle, method: :post, danger: true,
+                      confirm: t(".old_key_will_deleted"), data: { confirm_label: t(".regenerate_key") } %>
+      <% end %>
+    <% end %>
+  </div>
 
   <% if @ssh_key %>
     <dl class="mt-6 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
@@ -38,30 +55,13 @@
                 class="mt-2 block w-full resize-none rounded-md border border-line bg-neutral-950 px-3 py-2 font-mono text-xs text-neutral-100"><%= ssh_key_install_command(@ssh_key) %></textarea>
     </div>
 
-    <div id="key-rotation" class="mt-6 border-t border-line pt-6">
+    <div id="key-rotation" class="mt-5 border-t border-line pt-4 text-xs text-ink-3">
       <% if @rotation %>
-        <div class="flex flex-wrap items-center justify-between gap-4 rounded-md border border-accent/40 bg-accent-soft/50 px-4 py-3">
-          <p class="text-sm text-accent"><%= t(".key_rotation_progress_elio") %></p>
-          <%= link_to t(".follow_rotation"), settings_key_rotation_path(@rotation), class: "text-sm font-medium text-accent hover:text-accent" %>
-        </div>
+        <p class="rounded-md border border-accent/40 bg-accent-soft/50 px-3 py-2 text-accent"><%= t(".key_rotation_progress_elio") %>
+          <%= link_to t(".follow_rotation"), settings_key_rotation_path(@rotation), class: "font-medium underline" %></p>
       <% else %>
-        <div class="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <p class="text-sm font-medium text-ink-2"><%= t(".rotate_key") %></p>
-            <p class="text-sm text-ink-3"><%= t(".new_key_installed_each") %></p>
-          </div>
-          <%= button_to t(".rotate_key"), settings_key_rotations_path,
-                data: { turbo_confirm: t(".rotation_confirm", count: Server.count), confirm_label: t(".start_rotation") },
-                class: "btn btn-primary shrink-0" %>
-        </div>
+        <p><%= t(".new_key_installed_each") %> <%= t(".only_if_key_compromised") %></p>
       <% end %>
-      <div class="mt-6 flex flex-wrap items-center justify-between gap-4">
-        <p class="text-sm text-ink-3"><%= t(".only_if_key_compromised") %></p>
-        <%= button_to t(".regenerate_key"), ssh_key_path,
-              data: { turbo_confirm: t(".old_key_will_deleted"),
-                      confirm_label: t(".regenerate_key"), confirm_variant: "danger" },
-              class: "shrink-0 cursor-pointer rounded-md border border-crit/40 bg-surface px-4 py-2 text-sm font-medium text-crit-ink shadow-sm hover:bg-crit-soft" %>
-      </div>
     </div>
   <% else %>
     <div class="mt-6 rounded-lg border border-dashed border-line px-6 py-10 text-center">
@@ -72,39 +72,33 @@
   <% end %>
 </section>
 
-<%= render "settings/language" %>
 
-<% setting = app_settings %>
-<section id="health-thresholds" class="card mt-6">
-  <div class="card-header">
-    <h2 class="font-semibold"><%= t(".health_thresholds") %></h2>
-    <span class="text-xs text-ink-3"><%= t(".beyond_them_server_watch") %></span>
-  </div>
-  <%= form_with model: setting, url: settings_health_thresholds_path, method: :patch, class: "grid gap-4 p-4 sm:grid-cols-5" do |f| %>
-    <% [ [ :health_disk_warn, t(".disk_warning") ], [ :health_disk_crit, t(".disk_critical") ], [ :health_memory_warn, t(".memory_warning") ],
-         [ :health_memory_crit, t(".memory_critical") ] ].each do |field, label| %>
-      <div>
-        <%= f.label field, label, class: "label text-xs" %>
-        <%= f.number_field field, in: 1..100, step: 1, required: true, class: "input mt-1" %>
-      </div>
-    <% end %>
-    <div>
-      <%= f.label :health_load_warn, t(".load_warning_processors"), class: "label text-xs" %>
-      <%= f.number_field :health_load_warn, in: 0.1..50, step: 0.1, required: true, class: "input mt-1" %>
-    </div>
-    <div class="sm:col-span-5 flex items-center justify-between gap-3">
-      <p class="text-xs text-ink-3"><%= t(".also_watch_reboot_required") %></p>
-      <%= f.submit t(".save_thresholds"), class: "btn btn-primary" %>
+<%= form_with model: app_settings, url: settings_path, method: :patch, id: "general-settings", class: "card px-5 py-5", data: { controller: "dirty-form" } do |f| %>
+  <% setting = app_settings %>
+  <%= form_section t("settings.language.title"), t("settings.language.hint"), id: "language" do %>
+    <div class="max-w-xs">
+      <%= f.label :default_locale, t("settings.language.label"), class: "label" %>
+      <%= f.select :default_locale, locale_options, {}, class: "input mt-1" %>
     </div>
   <% end %>
-</section>
 
-<section id="prompt-instructions" class="card mt-6">
-  <div class="card-header">
-    <h2 class="font-semibold"><%= t(".prompt_instructions") %></h2>
-    <span class="text-xs text-ink-3"><%= t(".prompt_instructions_hint") %></span>
-  </div>
-  <%= form_with url: settings_prompt_instructions_path, method: :patch, class: "space-y-4 p-4" do %>
+  <%= form_section t(".health_thresholds"), safe_join([ t(".beyond_them_server_watch"), ". ", t(".also_watch_reboot_required") ]), id: "health-thresholds" do %>
+    <div class="grid gap-4 sm:grid-cols-3">
+      <% [ [ :health_disk_warn, t(".disk_warning") ], [ :health_disk_crit, t(".disk_critical") ], [ :health_memory_warn, t(".memory_warning") ],
+           [ :health_memory_crit, t(".memory_critical") ] ].each do |field, label| %>
+        <div>
+          <%= f.label field, label, class: "label text-xs" %>
+          <%= f.number_field field, in: 1..100, step: 1, required: true, class: "input mt-1" %>
+        </div>
+      <% end %>
+      <div>
+        <%= f.label :health_load_warn, t(".load_warning_processors"), class: "label text-xs" %>
+        <%= f.number_field :health_load_warn, in: 0.1..50, step: 0.1, required: true, class: "input mt-1" %>
+      </div>
+    </div>
+  <% end %>
+
+  <%= form_section t(".prompt_instructions"), safe_join([ t(".prompt_instructions_hint"), " ", t(".prompt_instructions_footer", count: AppSetting::PROMPT_INSTRUCTIONS_MAX) ]), id: "prompt-instructions" do %>
     <% AppSetting::PROMPT_KINDS.each do |kind| %>
       <% next if kind == "monitors" && !Integration.enabled?(:uptime_kuma) && setting.prompt_instruction(kind).nil? %>
       <div>
@@ -113,9 +107,10 @@
               maxlength: AppSetting::PROMPT_INSTRUCTIONS_MAX, placeholder: t(".prompt_placeholders.#{kind}"), class: "input mt-1 w-full text-sm" %>
       </div>
     <% end %>
-    <div class="flex items-center justify-between gap-3">
-      <p class="text-xs text-ink-3"><%= t(".prompt_instructions_footer", count: AppSetting::PROMPT_INSTRUCTIONS_MAX) %></p>
-      <%= submit_tag t(".save_prompt_instructions"), class: "btn btn-primary" %>
-    </div>
   <% end %>
-</section>
+
+  <%= save_bar f %>
+<% end %>
+
+<% end %>
+<%= render "settings/frame", page: page %>

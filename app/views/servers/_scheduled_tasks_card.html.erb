@@ -1,7 +1,7 @@
 <%# Scheduled tasks of the server from its last inventory (Inventory::Collectors::ScheduledTasks): systemd timers, crontabs, cron.* scripts. %>
 <% snapshot = server.inventory("scheduled_tasks") %>
 <% data = snapshot&.collected? && snapshot.status != "unsupported" ? snapshot.data : nil %>
-<section id="server-scheduled-tasks" class="card mt-6">
+<section id="server-scheduled-tasks" class="card">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :calendar, class: "h-4 w-4 text-ink-3" %> <%= t(".scheduled_tasks") %></h2>
     <div class="flex items-center gap-3 text-xs text-ink-3">

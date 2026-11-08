@@ -19,7 +19,8 @@ class ServerGroupsControllerTest < ActionDispatch::IntegrationTest
       assert_select "a[href=?]", servers_path(group: server_groups(:production).id), text: "Production"
       assert_select "p", text: "2 serveurs : Database, Web"
       assert_select "a[href=?]", edit_server_group_path(server_groups(:production))
-      assert_select "form[action=?] button[aria-label=?]", server_group_path(server_groups(:production)), "Supprimer le groupe Production"
+      assert_select "details.actions-menu summary[aria-label=?]", "Actions du groupe « Production »"
+      assert_select "details.actions-menu form[action=?][data-confirm-variant=danger] button", server_group_path(server_groups(:production)), text: /Supprimer le groupe/
     end
     assert_select "##{dom_id(server_groups(:staging))} p", text: "Aucun serveur"
   end

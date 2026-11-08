@@ -30,7 +30,7 @@
 
 Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels vont bien, ce qui tourne dessus, quels paquets sont vulnérables et comment les corriger, qui a une clé SSH dessus. Rien à installer sur les serveurs : Elio s'y connecte avec sa propre clé SSH et lance une courte liste de **commandes en lecture seule**, toutes écrites dans un seul fichier à relire — [`config/ssh_commands.yml`](config/ssh_commands.yml).
 
-> **Bêta.** Elio est jeune (`v0.1.0-beta.4.1`). Il tourne sur de vrais serveurs, mais attendez-vous à quelques aspérités, et lisez les [limites connues](#limites-connues).
+> **Bêta.** Elio est jeune (`v0.4.0-beta`). Il tourne sur de vrais serveurs, mais attendez-vous à quelques aspérités, et lisez les [limites connues](#limites-connues).
 
 ## Fonctionnalités
 
@@ -39,12 +39,12 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 | **Santé** | Charge, mémoire, swap, disques et inodes, redémarrage requis, services en échec, horloge, mises à jour en attente — avec vos seuils et 30 jours d'historique. |
 | **Inventaire** | Système et date de fin de support, adresses réseau (WireGuard compris), paquets (dpkg, snap), services systemd, **Docker** (conteneurs, images, projets Compose), **tâches planifiées** (cron, timers systemd), ports en écoute, et un onglet **Firewall** : le firewall du serveur (ufw, nftables, iptables) et celui d'OVHcloud côte à côte pour chaque port public, avec des règles ufw à copier — SSH ouvert seulement aux sources que vous listez, IPv6 entrant bloqué si vous le voulez. |
 | **Vulnérabilités** | Les CVE de chaque paquet, d'après le Debian Security Tracker et les données OSV d'Ubuntu, rapprochées de l'inventaire — aucune commande de plus sur les serveurs ; les paquets signés (grub, shim, noyau, fwupd) comparés au code qu'ils signent. Regroupées **par paquet, avec la mise à jour à faire**, celles du serveur à part de celles de ses images Docker, et **les commandes pour corriger une CVE** (`apt-get install --only-upgrade …`, ou `docker compose pull` et `up -d` pour une image) — à copier, jamais lancées par Elio. Notes de NVD, Red Hat et CVE.org (ou de vos propres fournisseurs), exploitation d'après EPSS et le catalogue CISA KEV. |
-| **Docker** | Conteneurs en mauvaise santé ou qui redémarrent en boucle, images par serveur, **nouvelles versions publiées sur les registres** (Docker Hub, GHCR, Quay, registres privés), vulnérabilités des images (Trivy ou Grype s'ils sont installés, sinon le rapprochement d'Elio) dans un onglet **CVE** : par image, avec les serveurs et conteneurs qui l'utilisent. |
+| **Docker** | Conteneurs en mauvaise santé ou qui redémarrent en boucle, un **état Docker** par serveur, à part de sa santé, images par serveur, **nouvelles versions publiées sur les registres** (Docker Hub, GHCR, Quay, registres privés), vulnérabilités des images (Trivy ou Grype s'ils sont installés, sinon le rapprochement d'Elio) dans un onglet **CVE** : par image, avec les serveurs et conteneurs qui l'utilisent. |
 | **Clés SSH** | Un trousseau commun (personnes et machines), des clés ajoutées ou retirées d'un serveur en un clic, des **accès temporaires** qui expirent tout seuls, **les clés de tous les comptes** d'un serveur (avec root), les clés inconnues signalées et réunies dans une liste **Hors trousseau**, la rotation de la clé d'Elio sans coupure. |
-| **Alertes** | Ce qui demande votre attention, par gravité, sur la vue d'ensemble ; journal d'activité ; notifications Slack, Discord, email ou webhook signé, regroupées par type (les critiques tout de suite) ; résumé quotidien. |
-| **Automatisations** | Chaque collecte tourne à la fréquence voulue, sur tout le parc ou par groupe, suivie en direct dans la page *Tâches*. |
+| **Alertes** | Ce qui demande votre attention, par gravité, sur la vue d'ensemble, chacun avec quoi faire ; un journal des événements ; notifications Slack, Discord, email ou webhook signé, regroupées par type (les critiques tout de suite) ; résumé quotidien. |
+| **Automatisations** | Chaque collecte tourne à la fréquence voulue, sur tout le parc ou par groupe, suivie en direct dans l'onglet *Exécutions* du *Journal*. |
 | **Extensions** | **Uptime Kuma** (sondes rattachées à chaque serveur), **OVHcloud** (IP, firewall réseau, enregistrements DNS, services), **Technitium DNS** (zones et enregistrements) et **Gandi** (enregistrements LiveDNS, domaines et leur expiration), en lecture seule, avec **un DNS du parc** et des **prompts pour une IA** (sondes à créer, règles de firewall) qui se terminent par vos propres consignes. |
-| **Équipe** | Rôles (admin, opérateur, lecture), invitations, double authentification obligatoire, **des notes sur chaque serveur** (Markdown), recherche ⌘K partout, thèmes clair et sombre. |
+| **Équipe** | Rôles (admin, opérateur, lecture), invitations, double authentification obligatoire, **des notes sur chaque serveur** (Markdown) dans son journal, recherche ⌘K partout, thèmes clair et sombre, la même mise en page partout (un seul Enregistrer par page de paramètres, les actions dangereuses derrière un menu et une confirmation). |
 
 | | |
 |:---:|:---:|
@@ -55,9 +55,9 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 | ![Vue d'ensemble](docs/screenshots/fr/overview.png) | ![Thème sombre](docs/screenshots/fr/fleet-dark.png) |
 | **Ce qui est à traiter**, le plus grave d'abord | **Thème sombre** |
 | ![Clés SSH de tous les comptes](docs/screenshots/fr/ssh-keys.png) | ![Notes](docs/screenshots/fr/notes.png) |
-| **Clés SSH** de tous les comptes d'un serveur | **Notes** de l'équipe sur un serveur |
+| **Clés SSH** de tous les comptes d'un serveur | **Journal** d'un serveur : les notes de l'équipe et son historique |
 | ![Sondes Uptime Kuma](docs/screenshots/fr/uptime-kuma-monitors.png) | ![OVHcloud](docs/screenshots/fr/ovh.png) |
-| **Uptime Kuma** : les sondes rattachées à chaque serveur | **OVHcloud** : service, IP et reverse |
+| **Sondes** : les sondes Uptime Kuma rattachées à chaque serveur | **Hébergement** : le service OVHcloud, les IP et reverse d'un serveur |
 | ![DNS du parc](docs/screenshots/fr/dns.png) | ![CVE des images Docker](docs/screenshots/fr/docker-cves.png) |
 | **DNS du parc** : OVHcloud, Technitium et Gandi ensemble | **CVE des images Docker**, par image |
 | ![Onglet Firewall](docs/screenshots/fr/firewall.png) | ![Réglages du firewall](docs/screenshots/fr/firewall-settings.png) |
@@ -146,14 +146,14 @@ Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque
 
 - **Réglage** : l'adresse de votre instance et une clé d'API (*Uptime Kuma → Paramètres → Clés API*). *Tester la connexion* les vérifie avant d'enregistrer.
 - Elio lit la page `/metrics` toutes les 15 minutes (Uptime Kuma 1.x et 2.x) et **rattache chaque sonde à son serveur** : par l'IP surveillée (adresses WireGuard comprises), par le nom d'hôte (avec résolution DNS en option), ou par le nom du serveur dans celui de la sonde (`[SRV] web-prod-1`). Un rattachement se corrige à la main et reste gardé.
-- Un onglet **Sondes** sur chaque serveur (état, temps de réponse, disponibilité sur 24 h et 30 jours, certificat) et une page **Sondes** : sondes rattachées à aucun serveur, serveurs sans sonde.
+- Un onglet **Sondes** sur chaque serveur (source, état, temps de réponse, disponibilité sur 24 h et 30 jours, certificat) et une page **Sondes** : sondes rattachées à aucun serveur, serveurs sans sonde.
 - Alertes au choix : serveur sans sonde (avec des groupes à ignorer), sonde hors ligne ou de retour, certificat bientôt expiré, disponibilité sous un seuil, sonde en maintenance depuis trop longtemps.
 
 ### OVHcloud
 
 - **Réglage** : le point d'accès de l'API (EU, CA, US), une Application Key, un Application Secret et une Consumer Key **limitée aux requêtes GET**. *Droits à donner à la clé API* liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie. *Tester la connexion* signale les droits manquants, et **prévient si la clé permet d'écrire** — refaites-en une dans ce cas.
 - Chaque produit est une case à cocher : IP et reverse DNS, firewall réseau, anti-DDoS, zones DNS (toutes ou certaines), serveurs dédiés, VPS, instances Public Cloud (tous les projets ou certains).
-- Un onglet **OVH** sur chaque serveur : le service OVH (offre, datacenter, expiration), ses IP et reverse ; les règles du firewall réseau, **si elles laissent passer chaque port public** et l'anti-DDoS sont dans l'[onglet Firewall](#longlet-firewall). Une page **OVHcloud** : services, IP, ressources rattachées à aucun serveur. Ses enregistrements DNS vont dans le [DNS du parc](#dns-du-parc).
+- Une carte **Hébergement** dans la vue d'ensemble de chaque serveur : le service OVH (offre, datacenter, expiration), ses IP et reverse ; les règles du firewall réseau, **si elles laissent passer chaque port public** et l'anti-DDoS sont dans l'[onglet Firewall](#longlet-firewall). Une page **Hébergement** : services, IP, ressources rattachées à aucun serveur. Ses enregistrements DNS vont dans le [DNS du parc](#dns-du-parc).
 - Alertes au choix : service bientôt expiré (renouvellement automatique pris en compte), firewall réseau désactivé, reverse DNS qui ne correspond pas, service OVH non suivi par Elio.
 
 Le client OVH d'Elio ne connaît que la méthode GET : il ne peut pas écrire, quels que soient les droits de la clé.

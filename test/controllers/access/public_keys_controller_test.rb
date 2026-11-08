@@ -182,8 +182,8 @@ class PublicKeysControllerTest < ActionDispatch::IntegrationTest
 
     get new_public_key_path(content: @key.public_key, name: "bob", return_to: "/servers/1#server-authorized-keys")
 
-    assert_select "p.prefilled-hint"
-    assert_select "a[href=?]", "/servers/1#server-authorized-keys", text: "← Retour au serveur"
+    assert_select ".prefilled-hint"
+    assert_select "nav.breadcrumbs a[href=?]", "/servers/1#server-authorized-keys", text: "Retour au serveur"
     assert_select "form[action=?]", public_keys_path do
       assert_select "input[name='public_key[name]'][value=bob]"
       assert_select "textarea[name='public_key[content]']", @key.public_key
@@ -212,7 +212,7 @@ class PublicKeysControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     get new_public_key_path(return_to: "https://evil.example")
 
-    assert_select "a[href=?]", public_keys_path, text: "← Trousseau"
+    assert_select "nav.breadcrumbs a[href=?]", public_keys_path, text: "Clés SSH"
     assert_select "input[name=return_to]", 0
   end
 

@@ -1,0 +1,12 @@
+<%# Pill of the Docker state of a server (Inventory::DockerStatus), next to its health badge:
+    the whale with the number of problems (red: containers, orange: images), grey with a check
+    when Docker is fine, nothing without Docker. Links to the Docker tab. Locals: server. %>
+<% if server.docker_status.present? %>
+  <% problems = Array(server.docker_reasons).size %>
+  <% tone = { "crit" => "bg-crit-soft text-crit-ink", "warn" => "bg-warn-soft text-warn-ink" }.fetch(server.docker_status, "bg-subtle text-ink-3") %>
+  <% title = problems.zero? ? t("servers.docker_pill.fine") : t("servers.docker_pill.problems", count: problems, reasons: server.docker_reason_texts.join(" · ")) %>
+  <%= link_to server_path(server, tab: "docker"), title: title, aria: { label: title }, data: { docker_status: server.docker_status, turbo_frame: "_top" },
+        class: "docker-pill inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-medium tabular-nums #{tone} hover:opacity-80" do %>
+    <%= icon :docker, class: "h-4 w-4" %><% if problems.zero? %><%= icon :check, class: "h-3 w-3" %><% else %><%= problems %><% end %>
+  <% end %>
+<% end %>

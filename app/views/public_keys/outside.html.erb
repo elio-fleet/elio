@@ -1,18 +1,13 @@
 <% content_for :title, t("title", page: t("public_keys.outside.title")) %>
 
 <section id="keyring-section">
-  <div class="flex items-center justify-between gap-4">
-    <div>
-      <h1 class="text-2xl font-bold tracking-tight"><%= t("words.keyring") %></h1>
-      <p class="text-sm text-ink-3"><%= t("public_keys.outside.intro") %></p>
-    </div>
-  </div>
+  <%= page_header t("nav.keyring"), subtitle: t("public_keys.outside.intro") %>
 
-  <nav class="key-kind-filter mt-4 flex flex-wrap gap-2" aria-label="<%= t("public_keys.index.key_type") %>">
+  <nav class="key-kind-filter filter-bar mb-3 flex flex-wrap gap-2" aria-label="<%= t("public_keys.index.key_type") %>">
     <% [ [ t("public_keys.index.all"), nil ], [ t("public_keys.index.people"), "person" ], [ t("public_keys.index.servers"), "server" ] ].each do |label, value| %>
-      <%= filter_pill label, public_keys_path(kind: value), active: false %>
+      <%= filter_chip label, public_keys_path(kind: value), active: false %>
     <% end %>
-    <%= filter_pill t("public_keys.outside.title"), public_keys_path(kind: "outside"), active: true, count: @pager.total.nonzero?, data: { kind: "outside" } %>
+    <%= filter_chip t("public_keys.outside.title"), public_keys_path(kind: "outside"), active: true, count: @pager.total.nonzero?, data: { kind: "outside" } %>
   </nav>
 
   <% if @outside_keys.any? %>
@@ -44,8 +39,6 @@
     </ul>
     <%= render "shared/pagination", pager: @pager, noun: t("nouns.keys") %>
   <% else %>
-    <p class="outside-none mt-4 rounded-xl border border-dashed border-line px-6 py-10 text-center text-sm text-ink-3">
-      <%= @insights.scanned? ? t("public_keys.outside.none") : t("public_keys.outside.not_scanned") %>
-    </p>
+    <div class="outside-none card"><%= empty_state(@insights.scanned? ? t("public_keys.outside.none") : t("public_keys.outside.not_scanned"), icon: :key) %></div>
   <% end %>
 </section>

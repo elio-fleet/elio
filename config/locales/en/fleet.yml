@@ -1,21 +1,34 @@
 en:
   servers:
+    journal_card:
+      all: All
+      notes: Notes
+      events: Events
+      full_journal: "In the fleet journal →"
+      add_note: Add a note
+      timeline: Journal of the server
+      newer: "← Newer"
+      older: "Older →"
+      empty: Nothing yet
+      empty_text: The notes you add and what happens to the server (keys, ports, alerts…) will show here.
+    docker_pill:
+      fine: "Docker: nothing to report"
+      problems:
+        one: "Docker, %{count} problem: %{reasons}"
+        other: "Docker, %{count} problems: %{reasons}"
     tabs:
       overview: Overview
-      packages: Packages
+      packages: Updates
       vulnerabilities: Vulnerabilities
       services: Services
       docker: Docker
       schedules: Scheduled tasks
-      ports: Ports
       firewall: Firewall
       keys: SSH keys
-      history: History
+      journal: Journal
       server_sections: Server sections
-      section: Section
-      more: More
-      notes: Notes
     index:
+      all_groups: All groups
       check_every_server_answers: Check that every server answers
       read_again_system_health: Read again the system, health and services of every server
       read_keys_every_server: Read the keys of every server
@@ -31,6 +44,8 @@ en:
       all_states: All states
       unreachable: Unreachable
       without_inventory: Without inventory
+      docker_watch: Docker to watch
+      docker_critical: Docker critical
       state: State
       filter: Filter
       list: List
@@ -58,6 +73,8 @@ en:
       scan_keys_whole_fleet: Scan the keys of the whole fleet
       import_servers: Import servers
     show:
+      add_note: Add a note
+      see_keys: SSH keys of the server
       search_whole_fleet: Search the whole fleet
       activities: activities
       refresh_inventory: Refresh the inventory
@@ -86,6 +103,10 @@ en:
       answer: No answer
       inventory_yet: No inventory yet
     form:
+      connection: Connection
+      connection_help: How Elio reaches this server, over SSH. The user must be able to use sudo without a password for a full inventory.
+      addresses: Addresses
+      groups_help: To filter the list and choose the expected ports.
       name: Name
       web_production: Web production
       host_ip_domain_name: Host (IP or domain name)
@@ -99,8 +120,10 @@ en:
       ip_addresses_through_which: IP addresses through which this server is reached but that it does not see itself (NAT, failover IP…). The addresses of its interfaces are read by the inventory.
       groups: Groups
     new:
+      subtitle: Elio connects to it over SSH, read-only, with its key.
       servers: "← Servers"
     edit:
+      modify: Edit
       servers: "← Servers"
       delete_server: Delete the server
       edit_html: Edit “%{name_was}”
@@ -129,6 +152,14 @@ en:
     health_bar:
       port: Port %{port}
       ssh: SSH
+      docker: Docker
+      docker_ok: Nothing to report
+      docker_warn: To watch
+      docker_crit: Critical
+      docker_fine:
+        one: "%{running}/%{count} container running · no problem"
+        other: "%{running}/%{count} containers running · no problem"
+      docker_tab: Docker tab
     health_checking:
       checking: Checking…
     os:
@@ -146,16 +177,48 @@ en:
       whole_group: 'The whole group:'
   dashboard:
     index:
+      see_all: See all
+      critical_thresholds_exceeded: critical thresholds exceeded
+      including_unreachable:
+        one: including %{count} unreachable
+        other: including %{count} unreachable
+      welcome: Welcome to Elio
+      welcome_subtitle: No server yet. Follow the steps to get started.
+      no_server: No server
+      no_server_viewer: An administrator or an operator must add the servers of the fleet.
+      refresh_fleet: Refresh the fleet
+      unreachable:
+        one: "%{count} unreachable"
+        other: "%{count} unreachable"
+      critical_caption: critical thresholds, unreachable
+      serious_vulnerabilities: Serious vulnerabilities
+      fixable: fixable, in the servers' own packages
+      most_serious_first: most serious first
+      group_crit:
+        one: "Critical · %{count}"
+        other: "Critical · %{count}"
+      group_warn:
+        one: "To watch · %{count}"
+        other: "To watch · %{count}"
+      group_info:
+        one: "For information · %{count}"
+        other: "For information · %{count}"
+      nothing_to_report: Nothing to report
+      journal: "Journal →"
+      by_group: By group
+      group_critical:
+        one: "%{count} critical"
+        other: "%{count} critical"
+      group_watch:
+        one: "%{count} to watch"
+        other: "%{count} to watch"
+      group_fine: nothing to report
       online: Online
       answer_their_ssh_port: answer on their SSH port
       watch: To watch
       reboot_disk_service: reboot, disk, service…
       critical: Critical
-      critical_thresholds_exceeded: critical thresholds exceeded
-      run_key_scan: run a key scan
       nothing_report_servers_reachable: 'Nothing to report: servers reachable, health normal, every key is in the keyring.'
-      add_first_server_begin: Add a first server to begin.
-      see_all: See all
       key_deleted: Key deleted
       expired_being_removed: expired, being removed
       inventory_html: "· inventory %{last_inventory_at}"
@@ -165,17 +228,6 @@ en:
       activity_yet: No activity yet.
       temporary_access: Temporary access
       ongoing_html: "%{count} ongoing"
-      temporary_access_choose_duration: No temporary access. Choose a duration when adding a key on a server.
-      systems: Systems
-      systems_will_appear_after: The systems will appear after a first inventory.
-      items_by_severity:
-        one: "%{count} item · by severity"
-        other: "%{count} items · by severity"
-      including_unreachable:
-        one: including %{count} unreachable
-        other: including %{count} unreachable
-      outside_keyring: outside the keyring
-      unknown_keys: Unknown keys
     checklist:
       generate_key: Generate the key
       add_server: Add a server
@@ -207,6 +259,8 @@ en:
       groups: "← Groups"
       heading_html: Edit the group “%{group_name}”
     index:
+      no_group: No group
+      group_actions: Actions of the group “%{group_name}”
       servers: "← Servers"
       new_group: New group
       edit: Edit
@@ -278,13 +332,27 @@ en:
     add_key: Add a key to the keyring
     add_key_text: The public key of a team member or of a server.
   attention_list:
+    actions:
+      probes: See the probes
+      dns: See the DNS
+      hosting: See the hosting
+      connection: Test the connection
+      disks: See the disks
+      health: See the health
+      fixes: See the fixes
+      services: See the services
+      schedules: See the scheduled tasks
+      ports: See the ports
+      inventory: Run an inventory
+    see_docker: See Docker
+    see_images: See the images
     unreachable: No longer answers on its SSH port
     see: See
     key_refused: 'Elio''s key is refused: nothing can be read'
     install_key: Install the key
     see_keys: See the keys
     no_inventory: No inventory yet
-    see_packages: See the packages
+    see_packages: See the updates
     see_vulnerabilities: See the vulnerabilities
     unknown_keys:
       one: "%{count} key outside the keyring"

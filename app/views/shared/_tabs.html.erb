@@ -1,0 +1,39 @@
+<%# The one style of tabs (tabs helper): underlined, a count coloured by gravity;
+    those that do not fit go into "More" (overflow-tabs controller, the current
+    tab always visible), a drop-down list on small screens.
+    Locals: items [{ key:, label:, path:, count:, tone: }], current (key), label (accessible name), extra_class. %>
+<% select_id = "tabs-select-#{label.parameterize}" %>
+<nav class="tabs mb-4 border-b border-line text-sm <%= extra_class %>" aria-label="<%= label %>" data-controller="overflow-tabs">
+  <div class="pb-3 sm:hidden">
+    <label for="<%= select_id %>" class="sr-only"><%= label %></label>
+    <select id="<%= select_id %>" class="tabs-select input text-sm" data-action="change->overflow-tabs#visit">
+      <% items.each do |item| %>
+        <option value="<%= item[:path] %>" <%= "selected" if item[:key].to_s == current %>><%= item[:label] %><%= " (#{item[:count]})" if item[:count] %></option>
+      <% end %>
+    </select>
+  </div>
+  <div class="tabs-bar scrollbar-none hidden gap-5 overflow-x-auto sm:flex" data-overflow-tabs-target="bar">
+    <% items.each do |item| %>
+      <% active = item[:key].to_s == current %>
+      <%= link_to item[:path], aria: { current: (active ? "page" : nil) }, data: { tab: item[:key], overflow_tabs_target: "tab" },
+            class: "tab flex shrink-0 items-center gap-1.5 border-b-2 px-0.5 pb-2.5 whitespace-nowrap #{active ? "border-accent font-medium text-ink" : "border-transparent text-ink-3 hover:text-ink"}" do %>
+        <% if item[:icon] %><%= icon item[:icon], class: "h-4 w-4" %><% end %>
+        <%= item[:label] %><% unless item[:count].nil? %><%= tab_count(item[:count], item[:tone]) %><% end %>
+      <% end %>
+    <% end %>
+    <details class="tabs-more dropdown relative shrink-0" hidden data-overflow-tabs-target="more"
+             data-controller="dropdown" data-action="keydown->dropdown#keydown click->dropdown#chosen">
+      <summary class="flex cursor-pointer list-none items-center gap-1 border-b-2 border-transparent px-0.5 pb-2.5 text-ink-3 hover:text-ink [&::-webkit-details-marker]:hidden" aria-haspopup="menu">
+        <%= t("ui.more") %> <%= icon :chevron_down, class: "h-4 w-4" %>
+      </summary>
+      <div role="menu" aria-label="<%= t("ui.more") %>" class="dropdown-menu absolute right-0 z-30 mt-1 w-56 rounded-lg border border-line bg-surface py-1 shadow-lg">
+        <% items.each do |item| %>
+          <%= link_to item[:path], role: "menuitem", hidden: true, data: { tab: item[:key], overflow_tabs_target: "item" },
+                class: "dropdown-item flex items-center justify-between gap-2 px-3 py-2 text-sm text-ink-2 hover:bg-subtle hover:text-ink focus:bg-subtle focus:outline-none" do %>
+            <%= item[:label] %><% unless item[:count].nil? %><%= tab_count(item[:count], item[:tone]) %><% end %>
+          <% end %>
+        <% end %>
+      </div>
+    </details>
+  </div>
+</nav>

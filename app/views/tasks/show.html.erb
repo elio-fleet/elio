@@ -3,13 +3,9 @@
 <turbo-frame id="<%= dom_id(@task) %>" target="_top">
   <% if @task.unfinished? %><div data-controller="auto-refresh" hidden></div><% end %>
 
-  <nav class="text-sm text-ink-3" aria-label="<%= t(".breadcrumb") %>"><%= link_to t("nav.tasks"), tasks_path, class: "hover:text-ink" %> /</nav>
-  <div class="mt-1 flex flex-wrap items-center gap-3">
-    <h1 class="text-2xl font-bold tracking-tight"><%= @task.label %></h1>
-    <%= task_status_badge(@task.status, id: "task-status") %>
-  </div>
+  <%= page_header @task.label, crumbs: [ [ t("nav.journal"), activities_path ], [ t("nav.tasks"), tasks_path ], @task.label ], badges: task_status_badge(@task.status, id: "task-status") %>
 
-  <dl class="task-facts mt-4 grid grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
+  <dl class="task-facts card grid px-4 py-3 grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
     <div><dt class="text-xs text-ink-3">Type</dt><dd><%= @task.kind_label %><% if @task.automation && can?(:administer) %> · <%= link_to t(".manage"), settings_automations_path, class: "text-accent" %><% end %></dd></div>
     <div><dt class="text-xs text-ink-3"><%= t(".started") %></dt><dd><%= @task.author_name %></dd></div>
     <div><dt class="text-xs text-ink-3"><%= t(".started_2") %></dt><dd><%= relative_time_tag(@task.created_at) %></dd></div>
@@ -22,7 +18,7 @@
 
   <%= render "tasks/workers_warning", workers_running: @workers_running %>
 
-  <section class="card mt-6 overflow-x-auto">
+  <section class="card mt-4 overflow-x-auto">
     <div class="card-header">
       <h2 class="text-sm font-semibold"><%= t(".servers") %></h2>
       <%= render "tasks/progress", task: @task %>

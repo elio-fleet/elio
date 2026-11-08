@@ -56,6 +56,7 @@ class ServerShowTest < ApplicationSystemTestCase
   # own answer (it did, and the deletion confirmed next did nothing).
   test "a confirmation opened right after a cancelled one still waits for its answer" do
     visit server_path(servers(:backup))
+    find("#server-actions summary").click
     dismiss_app_confirm { first("button.delete-server").click }
 
     page.execute_script(<<~JS)
@@ -65,19 +66,21 @@ class ServerShowTest < ApplicationSystemTestCase
     JS
     accept_app_confirm("Supprimer le serveur") { }
 
-    assert_selector "h1", text: "Parc"
+    assert_selector "h1", text: "Serveurs"
     assert_text "Le serveur « Backup » a été supprimé d'Elio."
   end
 
   test "deleting a server from its page" do
     visit server_path(servers(:backup))
 
+    find("#server-actions summary").click
     dismiss_app_confirm { first("button.delete-server").click }
     assert_selector "h1", text: "Backup"
 
+    find("#server-actions summary").click unless page.has_selector?("#server-actions[open]", wait: 0)
     accept_app_confirm("Supprimer le serveur") { first("button.delete-server").click }
 
-    assert_selector "h1", text: "Parc"
+    assert_selector "h1", text: "Serveurs"
     assert_text "Le serveur « Backup » a été supprimé d'Elio."
     assert_no_selector "#servers", text: "Backup"
 

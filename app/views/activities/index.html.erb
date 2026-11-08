@@ -1,28 +1,24 @@
-<% content_for :title, t("title", page: t("nav.activity")) %>
+<% content_for :title, t("title", page: t("nav.journal")) %>
 
-<div class="flex flex-wrap items-end justify-between gap-4">
-  <div>
-    <h1 class="text-2xl font-bold tracking-tight"><%= t("nav.activity") %></h1>
-    <p class="mt-1 text-sm text-ink-3">
-      <%= (@server ? t(".history_on", server_name: @server.name) : t(".history")) %>.
-      <% if @server %><%= link_to t(".see_all"), activities_path(category: @category), class: "font-medium text-accent hover:text-accent" %><% end %>
-    </p>
-    <% if @kind %>
-      <p class="activity-kind-filter mt-2 inline-flex items-center gap-1 rounded-full bg-accent-soft px-2.5 py-0.5 text-xs text-accent">
-        <%= Activity::KINDS.fetch(@kind.to_sym).label %>
-        <%= link_to activities_path(category: @category, server_id: @server&.id), aria: { label: t(".remove_kind_filter") }, class: "hover:text-ink" do %><%= icon :x_mark, class: "h-3.5 w-3.5" %><% end %>
-      </p>
-    <% end %>
-  </div>
-</div>
+<% subtitle = safe_join([ (@server ? t(".history_on", server_name: @server.name) : t(".history")), ".",
+                          (safe_join([ " ", link_to(t(".see_all"), activities_path(category: @category), class: "font-medium text-accent hover:underline") ]) if @server) ].compact) %>
+<%= page_header t("nav.journal"), subtitle: subtitle %>
 
-<nav class="activity-filters mt-6 flex flex-wrap gap-2" aria-label="<%= t(".categories") %>">
+<%= render "activities/journal_tabs", current: "events" %>
+
+<nav class="activity-filters filter-bar mb-3 flex flex-wrap items-center gap-2" aria-label="<%= t(".categories") %>">
   <% [ [ t(".all"), nil ], *Activity::CATEGORIES.map { |key| [ Activity.category_label(key), key.to_s ] } ].each do |label, category| %>
-    <%= filter_pill label, activities_path(category: category, server_id: @server&.id), active: @category == category %>
+    <%= filter_chip label, activities_path(category: category, server_id: @server&.id), active: @category == category %>
+  <% end %>
+  <% if @kind %>
+    <span class="activity-kind-filter inline-flex items-center gap-1 rounded-full border border-ink bg-ink px-3 py-1 text-sm text-surface">
+      <%= Activity::KINDS.fetch(@kind.to_sym).label %>
+      <%= link_to activities_path(category: @category, server_id: @server&.id), aria: { label: t(".remove_kind_filter") }, class: "opacity-70 hover:opacity-100" do %><%= icon :x_mark, class: "h-3.5 w-3.5" %><% end %>
+    </span>
   <% end %>
 </nav>
 
-<section class="mt-6 rounded-xl border border-line bg-surface px-6 shadow-sm">
+<section class="card px-4">
   <% if @activities.any? %>
     <ul id="activities" class="divide-y divide-line">
       <%= render partial: "activities/activity", collection: @activities %>

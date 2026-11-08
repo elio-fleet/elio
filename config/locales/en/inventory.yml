@@ -46,6 +46,7 @@ en:
       other: "%{count} serious fixable vulnerabilities in the Docker images"
   servers:
     system_card:
+      machine: Machine
       system: System
       read_html: read %{collected_at}
       memory_html: "· %{human_bytes} of memory"
@@ -56,7 +57,13 @@ en:
       last_attempt_html: 'Last attempt %{checked_at}: %{message}'
       inventory_yet_elio_reads: 'No inventory yet: Elio reads the system, health and services of the server over SSH, read-only.'
       run_inventory: Run the inventory
+    attention_card:
+      do: To handle
+      points:
+        one: "%{count} point"
+        other: "%{count} points"
     health_card:
+      charts_24_h: Charts of the last 24 hours
       load_over_24_h: Load over 24 h
       synchronized: synchronized
       not_synchronized: not synchronized
@@ -85,6 +92,10 @@ en:
       scope: Scope
       added_hand: 'Added by hand:'
     services_card:
+      containers_in_docker_tab:
+        one: "%{count} container:"
+        other: "%{count} containers:"
+      see_docker_tab: see the Docker tab
       without_compose_project: Without Compose project
       stopped: stopped
       read_html: read %{collected_at}
@@ -102,6 +113,9 @@ en:
       failed: failed
       boot: at boot
     firewall_card:
+      all_listening_ports:
+        one: "The listening port, private and local ones included (%{count})"
+        other: "All the listening ports, private and local ones included (%{count})"
       elio_never_changes: Read from the last inventory and the extensions. Elio never changes a firewall.
       server_firewall: Firewall of the server
       needs_root: The firewall can be read only as root (or with password-less sudo).
@@ -114,7 +128,7 @@ en:
       ovh_ip: OVH %{ip}
       no_public_port: No public port.
       ovh_firewall: OVHcloud network firewall
-      ovh_tab: OVH tab
+      ovh_tab: Hosting
       ovh_not_read: The firewall of %{block} was not read (right missing on the OVH API key).
       no_ovh_rule: No rule.
       ipv6_column: IPv6
@@ -190,6 +204,8 @@ en:
       package_matches: No package matches.
   packages:
     index:
+      search_placeholder: Search an installed package (openssl, nginx, postgres…)
+      search: Search
       package_name: Package name
       which_servers_have_package: Which servers have a package, and in which version? From the last inventory of each server.
       packages_inventory_yet_html: "%{t} no packages inventory yet."

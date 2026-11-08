@@ -1,4 +1,6 @@
 fr:
+  settings_controller:
+    saved: Paramètres enregistrés.
   settings:
     language:
       title: Langue
@@ -11,8 +13,10 @@ fr:
         invalid: Cette langue n'est pas disponible.
     nav:
       title: Paramètres
+      subtitle: Réglages de toute l'application, pour les administrateurs.
       general: Général
       notifications: Notifications
+      automations: Automatisations
       users: Utilisateurs
       vulnerabilities: Vulnérabilités
       docker: Docker
@@ -20,6 +24,7 @@ fr:
       extensions: Extensions
     users:
       index:
+        actions_of: Actions de %{email}
         title: Utilisateurs
         invite: Inviter un utilisateur
         invite_intro:
