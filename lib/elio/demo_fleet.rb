@@ -175,6 +175,30 @@ module Elio
                             { "sequence" => 1, "action" => "permit", "protocol" => "tcp", "destinationPort" => "eq 443" },
                             { "sequence" => 19, "action" => "deny", "protocol" => "ipv4" } ] } },
                                   "mitigation" => { "198.51.100.20" => { "permanent" => false, "state" => "ok" } }, "reverse" => { "198.51.100.20" => "db-prod.example.internal" } })
+      build_coolify(web)
+    end
+
+    # Coolify: one instance, two teams (one connection each), what runs on web-prod-1.
+    def build_coolify(web)
+      coolify = Integration.find_or_initialize_by(kind: "coolify").tap { |integration| integration.update!(enabled: true, last_synced_at: 4.minutes.ago) }
+      tools, maps = [ [ "Outils internes", 3, 2, 6 ], [ "Cartographie", 1, 0, 2 ] ].map do |team, servers, attached, resources|
+        coolify.connections.create!(settings: { "url" => "https://coolify.example.internal" }, secrets: { "token" => "demo" }, last_synced_at: 4.minutes.ago,
+                                    state: { "team" => team, "version" => "4.6.0", "servers" => servers, "attached" => attached, "resources" => resources })
+      end
+      tools.update_columns(last_error: nil)
+      maps.update_columns(last_synced_at: 2.hours.ago, last_error: "Coolify a refusé l'accès (code 403) : vérifiez l'adresse d'Elio dans « Allowed API IPs »")
+      server = { "ip" => "198.51.100.10", "user" => "root", "port" => 22, "reachable" => true, "usable" => true, "docker_version" => "27.3.1", "proxy" => "TRAEFIK",
+                 "domains" => %w[api.example.com admin.example.com n8n.example.com] }
+      CoolifyResource.create!(connection: tools, kind: "server", uuid: "srvweb1", name: "web-prod-1", coolify_server_uuid: "srvweb1", server: web, matched_by: "address", data: server)
+      [ [ "application", "api-billing", "running:healthy", { "build_pack" => "dockerfile", "domains" => [ "api.example.com" ], "git_branch" => "main", "git_commit" => "623a4be", "health_check" => true } ],
+        [ "application", "back-office", "running:unknown", { "build_pack" => "dockercompose", "domains" => [ "admin.example.com" ], "git_branch" => "main", "git_commit" => "1c9e0d2" } ],
+        [ "service", "n8n", "exited", { "domains" => [ "n8n.example.com" ], "images" => [ "n8nio/n8n:1.82" ] } ],
+        [ "service", "uptime-relay", "running:unhealthy", { "images" => [ "louislam/uptime-kuma:2" ] } ],
+        [ "database", "pg-billing", "running:healthy", { "engine" => "postgresql", "image" => "postgres:17-alpine", "public" => false } ],
+        [ "database", "sessions-cache", "running:healthy", { "engine" => "redis", "image" => "redis:7.4-alpine", "public" => false } ] ].each_with_index do |(kind, name, status, data), index|
+        CoolifyResource.create!(connection: tools, kind: kind, uuid: "res#{index}", name: name, status: status, coolify_server_uuid: "srvweb1", server: web, matched_by: "address",
+                                data: data.merge("project" => (index < 2 || index == 4 ? "Billing" : "Tools"), "environment" => "production"))
+      end
     end
   end
 end

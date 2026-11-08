@@ -197,6 +197,30 @@ fr:
     sync_job:
       turned_off: 'Extension désactivée : rien à faire'
       internal_error: Erreur interne (%{class})
+    coolify:
+      description: Ce que Coolify fait tourner sur vos serveurs (applications, services, bases de données), rattaché aux serveurs du parc. Une connexion par équipe Coolify, autant d'instances que nécessaire.
+      url: Adresse de l'instance
+      token: Jeton d'API
+      token_hint: Un jeton avec la permission read seulement, créé dans l'équipe à suivre (voir ci-dessous).
+      unexpected: "Réponse inattendue de Coolify (l'adresse est-elle bien celle de l'instance ?)"
+      valid_token:
+        one: "équipe « %{team} », Coolify v%{version}, %{count} serveur"
+        other: "équipe « %{team} », Coolify v%{version}, %{count} serveurs"
+      sensitive_token: ". Attention : ce jeton lit aussi les secrets (permission read:sensitive ou root) ; Elio n'en a pas besoin, créez plutôt un jeton read."
+      summary:
+        one: "%{count} serveur (%{attached} dans le parc), %{resources} ressources"
+        other: "%{count} serveurs (%{attached} dans le parc), %{resources} ressources"
+      connection_summary:
+        one: "%{count} serveur, %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
+        other: "%{count} serveurs dont %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
+      help:
+        title: Créer un jeton en lecture seule
+        step1_html: 'Dans Coolify, <strong class="font-medium">Settings › Advanced</strong> : activez <strong class="font-medium">API access</strong> ; si « Allowed API IPs » est rempli, ajoutez-y l''adresse d''Elio.'
+        step2_html: Passez sur l'<strong class="font-medium">équipe</strong> à suivre (menu des équipes, en haut à gauche).
+        step3_html: '<strong class="font-medium">Keys &amp; Tokens › API Tokens</strong> → nouveau jeton, permission <strong class="font-medium">read</strong> seulement, une expiration au choix.'
+        step4_html: Ajoutez une connexion ici avec l'adresse de l'instance et ce jeton.
+        one_team_html: 'Un jeton Coolify ne voit <strong class="font-medium">qu''une équipe</strong>, et l''API ne dit pas lesquelles existent : ajoutez une connexion par équipe. Le serveur qui fait tourner Coolify appartient à l''équipe « Root ».'
+        reads: Elio lit les serveurs, les ressources, leurs domaines, projets et états. Jamais les variables d'environnement ni les secrets, et il ne déploie, n'arrête ni ne modifie rien.
     gandi:
       description: Les enregistrements A, AAAA et CNAME de vos domaines servis par Gandi LiveDNS, rattachés aux serveurs vers lesquels ils pointent, et vos domaines avec leur date d'expiration (alerte en option).
       api_token: Jeton d'accès personnel
@@ -278,6 +302,12 @@ fr:
       connection: Connexion
       alerts: Alertes
       resources: Ressources
+  coolify_resource:
+    kinds:
+      server: Serveur
+      application: Application
+      service: Service
+      database: Base de données
   integration:
     sync_label: Synchronisation %{label}
     required: "%{label} : obligatoire pour activer l'extension"

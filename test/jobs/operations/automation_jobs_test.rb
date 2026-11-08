@@ -70,7 +70,7 @@ class AutomationJobsTest < ActiveJob::TestCase
   test "on a new installation, the first tick creates the automations and starts the health check, the vulnerability feeds and the image checks" do
     RunDueAutomationsJob.perform_now
 
-    assert_equal 14, Automation.count
+    assert_equal 15, Automation.count
     assert_enqueued_with(job: RunAutomationJob, args: [ Automation.find_by!(kind: "health_check"), nil ])
     assert_enqueued_jobs 4, only: RunAutomationJob
     assert_equal [ "Mise à jour des vulnérabilités", "Notes de gravité des CVE", "Mises à jour des images Docker" ], BackgroundTask.order(:id).pluck(:label), "the quiet health check is not listed in the tasks"

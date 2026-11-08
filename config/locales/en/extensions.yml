@@ -197,6 +197,30 @@ en:
     sync_job:
       turned_off: 'Extension turned off: nothing to do'
       internal_error: Internal error (%{class})
+    coolify:
+      description: What Coolify runs on your servers (applications, services, databases), attached to the servers of the fleet. One connection per Coolify team, as many instances as needed.
+      url: Instance address
+      token: API token
+      token_hint: A token with the read permission only, created in the team to follow (see below).
+      unexpected: Unexpected answer from Coolify (is the address the one of the instance?)
+      valid_token:
+        one: "team “%{team}”, Coolify v%{version}, %{count} server"
+        other: "team “%{team}”, Coolify v%{version}, %{count} servers"
+      sensitive_token: ". Warning: this token also reads secrets (read:sensitive or root permission); Elio does not need them, create a read token instead."
+      summary:
+        one: "%{count} server (%{attached} in the fleet), %{resources} resources"
+        other: "%{count} servers (%{attached} in the fleet), %{resources} resources"
+      connection_summary:
+        one: "%{count} server, %{attached} in the fleet · %{resources} resources · Coolify v%{version}"
+        other: "%{count} servers, %{attached} in the fleet · %{resources} resources · Coolify v%{version}"
+      help:
+        title: Create a read-only token
+        step1_html: 'In Coolify, <strong class="font-medium">Settings › Advanced</strong>: turn <strong class="font-medium">API access</strong> on; if “Allowed API IPs” is filled in, add Elio''s address.'
+        step2_html: Switch to the <strong class="font-medium">team</strong> to follow (team menu, top left).
+        step3_html: '<strong class="font-medium">Keys &amp; Tokens › API Tokens</strong> → new token, <strong class="font-medium">read</strong> permission only, any expiry.'
+        step4_html: Add a connection here with the instance address and this token.
+        one_team_html: 'A Coolify token sees <strong class="font-medium">one team only</strong>, and the API does not say which teams exist: add one connection per team. The server running Coolify belongs to the “Root” team.'
+        reads: Elio reads the servers, the resources, their domains, projects and states. Never the environment variables nor the secrets, and it never deploys, stops or changes anything.
     gandi:
       description: The A, AAAA and CNAME records of your domains served by Gandi LiveDNS, attached to the servers they point to, and your domains with their expiry date (optional alert).
       api_token: Personal access token
@@ -278,6 +302,12 @@ en:
       connection: Connection
       alerts: Alerts
       resources: Resources
+  coolify_resource:
+    kinds:
+      server: Server
+      application: Application
+      service: Service
+      database: Database
   integration:
     sync_label: "%{label} sync"
     required: "%{label}: required to turn the extension on"
