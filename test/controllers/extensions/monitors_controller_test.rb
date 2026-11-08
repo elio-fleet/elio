@@ -41,7 +41,7 @@ class MonitorsControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.monitor-row", 2
     assert_select "tr.monitor-row[data-state=up] .monitor-server a[href=?]", server_path(servers(:web), tab: "monitors"), text: "Web"
     assert_select "tr.monitor-row[data-state=up] .monitor-server", text: /par son adresse IP/
-    assert_select "tr.monitor-row[data-state=up] .monitor-target", text: /via 10\.8\.0\.100 · wg0 \(WireGuard\)/
+    assert_select "tr.monitor-row[data-state=up] .monitor-target", text: /via 10\.8\.0\.100 · wg0 \(VPN\)/
     assert_select "tr.monitor-row[data-state=up] .monitor-uptime", text: /99,62\u00A0%/
     assert_select "tr.monitor-row a[href='https://uptime.example.test/dashboard/1'][target=_blank]", text: "[SRV] Web ping"
     assert_select "form.monitor-link-form", 0, "viewers cannot attach"

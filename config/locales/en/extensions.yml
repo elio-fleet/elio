@@ -24,7 +24,7 @@ en:
       self_signed_hint: only for an internal instance whose certificate you know.
       match_by_ip: By IP address
       section_matching: Attaching the monitors to the servers
-      match_by_ip_hint: the target of the monitor is an address of a server (public, local network, WireGuard…).
+      match_by_ip_hint: the target of the monitor is an address of a server (public, local network, VPN…).
       match_by_host: By host name
       match_by_host_hint: the host of the monitor or of its URL is the host name or the SSH host of a server.
       resolve_dns: Resolve the names in DNS
@@ -52,7 +52,7 @@ en:
         create_api_key: Create the API key
         step1_html: 'In Uptime Kuma: <em>Settings → API Keys → Generate</em> (without an expiry date, or remembering to renew it).'
         step2_html: Paste it below with the address of the instance, then <em>Test the connection</em>.
-        reads_html: 'Elio only reads the <code class="font-mono">/metrics</code> page (the key allows nothing else). Monitors are attached to the servers by their addresses: remember to run the system inventory to read the addresses of each server (local network, WireGuard…).'
+        reads_html: 'Elio only reads the <code class="font-mono">/metrics</code> page (the key allows nothing else). Monitors are attached to the servers by their addresses: remember to run the system inventory to read the addresses of each server (local network, VPN…).'
       link_form:
         server: "— No server —"
         server_monitor: Server of the monitor %{monitor_name}

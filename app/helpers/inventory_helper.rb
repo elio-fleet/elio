@@ -139,12 +139,23 @@ module InventoryHelper
 
   def network_kind_label(kind) = t("inventory.network_kinds.#{kind}", default: kind.to_s.capitalize)
 
-  # Reach of an address: public, private (LAN, VPN) or local.
-  def address_scope_badge(scope)
-    case scope
-    when "public" then status_badge(:warn, t("inventory_helper.scope.public"), icon: :globe, class: "address-scope")
-    when "private" then status_badge(:neutral, t("inventory_helper.scope.private"), class: "address-scope")
-    else status_badge(:neutral, t("inventory_helper.scope.local"), class: "address-scope")
+  def vpn_interface?(kind) = Inventory::Collectors::Network::VPN_KINDS.include?(kind)
+
+  # What the interface is, for people: "VPN" for every VPN kind (WireGuard,
+  # tun / tap, IP tunnels; the exact kind in network_kind_label), else its kind.
+  def interface_kind_label(kind) = vpn_interface?(kind) ? t("inventory_helper.vpn") : network_kind_label(kind)
+
+  # Reach of an address, as an icon (narrow column): a globe for public, a
+  # lock for private (LAN, VPN), a server for local. The word in a title and
+  # for screen readers.
+  SCOPE_ICONS = { "public" => [ :globe, "text-warn-ink" ], "private" => [ :lock_closed, "text-ink-3" ], "local" => [ :server_stack, "text-ink-3" ] }.freeze
+
+  def address_scope_icon(scope)
+    scope = SCOPE_ICONS.key?(scope) ? scope : "local"
+    name, color = SCOPE_ICONS.fetch(scope)
+    label = t("inventory_helper.scope.#{scope}")
+    tag.span(class: "address-scope inline-flex #{color}", title: t("inventory_helper.scope_hint.#{scope}"), data: { scope: scope }) do
+      safe_join([ icon(name, class: "h-4 w-4"), tag.span(label, class: "sr-only") ])
     end
   end
 

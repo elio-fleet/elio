@@ -91,6 +91,7 @@ fr:
       read_html: relevé %{collected_at}
       scope: Portée
       added_hand: 'Ajoutées à la main :'
+      vpn_hint: 'Interface VPN (%{kind}). VPN reconnus : WireGuard, OpenVPN et autres interfaces tun / tap (Tailscale…), tunnels IP.'
     services_card:
       containers_in_docker_tab:
         one: "%{count} conteneur :"
@@ -495,3 +496,8 @@ fr:
       public: publique
       private: privée
       local: locale
+    scope_hint:
+      public: 'Publique : joignable depuis Internet'
+      private: 'Privée : réseau local ou VPN'
+      local: 'Locale : cette machine seulement'
+    vpn: VPN
