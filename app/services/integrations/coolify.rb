@@ -50,5 +50,14 @@ class Integrations::Coolify < Integrations::Base
     end
 
     def help_partial = "integrations/coolify/help"
+
+    # A "Coolify" tab on the servers Coolify manages, with their resources; orange when one is stopped or unhealthy.
+    def server_tabs
+      [ { key: "coolify", label: "Coolify", visible: ->(server) { server.coolify_resources.any? },
+          count: ->(server) { server.coolify_resources.resources.size.nonzero? },
+          tone: ->(server) { :warn if server.coolify_resources.resources.any? { |resource| resource.stopped? || resource.unhealthy? } } } ]
+    end
+
+    def sidebar_links = [ { label: "Coolify", path: :coolify_path, icon: :cube, controller: "coolify", position: 4 } ]
   end
 end

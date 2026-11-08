@@ -61,6 +61,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "activities" => -> { get activities_path },
       "tasks" => -> { get tasks_path },
       "ovh" => -> { Integration.create!(kind: "ovh", enabled: true, settings: { "application_key" => "a" }, secrets: { "application_secret" => "s", "consumer_key" => "c" }) && get(ovh_path) },
+      "coolify" => -> { Integration.create!(kind: "coolify", enabled: true) && get(coolify_path) },
       "monitors" => -> { Integration.create!(kind: "uptime_kuma", enabled: true, settings: { "url" => "https://u.test" }, secrets: { "api_key" => "k" }) && get(monitors_path) },
       "dns records" => -> { Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" }) && get(dns_records_path) },
       "task page" => -> { get task_path(BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: [], user: nil)) },

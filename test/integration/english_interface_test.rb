@@ -184,6 +184,12 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english edit_settings_integration_path("coolify"), except: data + [ ".integration-connection p:first-child", ".list-divider" ]
     assert_english new_settings_integration_connection_path("coolify"), except: data
     assert_english edit_settings_integration_connection_path("coolify", connection), except: data + [ "h2" ]
+    CoolifyResource.create!(connection: connection, kind: "server", uuid: "s1", name: "web", server: servers(:web), data: { "reachable" => true, "usable" => true })
+    CoolifyResource.create!(connection: connection, kind: "application", uuid: "a1", name: "api", status: "running:unknown", server: servers(:web),
+                            data: { "domains" => [ "api.example.test" ], "git_branch" => "main", "project" => "Shop", "environment" => "production" })
+    coolify_data = data + [ ".coolify-resource td:first-child span.font-medium", "[data-status=team] .badge", "[data-status=instance] .badge" ]
+    assert_english coolify_path, except: coolify_data
+    assert_english server_path(servers(:web), tab: "coolify"), except: coolify_data
     assert_english settings_integrations_path, except: data
   end
 
