@@ -78,6 +78,9 @@ module Elio
 
       # db-prod: everything the server page shows.
       snapshot(db, "ports", Inventory::Collectors::Ports.parse(sections(FIX.join("ports/debian12.txt"))))
+      network = Inventory::Collectors::Network.parse(sections(FIX.join("network/debian13-wireguard.txt")))
+      snapshot(db, "network", network)
+      db.update_columns(Inventory::Collectors::Network.server_attributes(network))
       services = File.read(FIX.join("services/debian12.txt"))
       units = Inventory::Collectors::Services.parse_units(services.split("@@elio unit-files").first.sub("@@elio units\n", ""),
                                                           Inventory::Collectors::Services.parse_unit_files(services.split("@@elio unit-files\n").last.split("@@elio docker").first))

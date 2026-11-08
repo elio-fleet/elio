@@ -60,7 +60,7 @@
   <div class="prose-elio mt-6">
     <h2 id="servers"><%= t en: "Preparing your servers", fr: "Préparer vos serveurs" %></h2>
     <ol>
-      <li><%= t en: "In <em>Paramètres → Général</em>, generate Elio's SSH key (Ed25519, kept encrypted).", fr: "Dans <em>Paramètres → Général</em>, générez la clé SSH d'Elio (Ed25519, gardée chiffrée)." %></li>
+      <li><%= t en: "In <em>Settings → General</em>, generate Elio's SSH key (Ed25519, kept encrypted).", fr: "Dans <em>Paramètres → Général</em>, générez la clé SSH d'Elio (Ed25519, gardée chiffrée)." %></li>
       <li><%= t en: "Add its public key to <code>~/.ssh/authorized_keys</code> of the account Elio will use — the page gives the command.", fr: "Ajoutez sa clé publique au <code>~/.ssh/authorized_keys</code> du compte qu'Elio utilisera — la page donne la commande." %></li>
       <li><%= t en: "Add the server, or import many from a CSV file or your <code>~/.ssh/config</code>, then run an inventory.", fr: "Ajoutez le serveur, ou importez-en plusieurs depuis un CSV ou votre <code>~/.ssh/config</code>, puis lancez un inventaire." %></li>
     </ol>
@@ -79,9 +79,9 @@
     </ol>
     <h3>OVHcloud</h3>
     <ol>
-      <li><%= t en: "In Elio, tick the products to read (IPs, firewall, anti-DDoS, DNS zones, dedicated servers, VPS, Public Cloud), then click <em>Droits à donner à la clé API</em>: it lists the GET rights needed and opens OVH's token page already filled in.", fr: "Dans Elio, cochez les produits à lire (IP, firewall, anti-DDoS, zones DNS, serveurs dédiés, VPS, Public Cloud), puis cliquez sur <em>Droits à donner à la clé API</em> : la liste des droits GET nécessaires s'affiche et la page de création de jeton d'OVH s'ouvre déjà remplie." %></li>
+      <li><%= t en: "In Elio, tick the products to read (IPs, firewall, anti-DDoS, DNS zones, dedicated servers, VPS, Public Cloud), then click <em>Rights to give to the API key</em>: it lists the GET rights needed and opens OVH's token page already filled in.", fr: "Dans Elio, cochez les produits à lire (IP, firewall, anti-DDoS, zones DNS, serveurs dédiés, VPS, Public Cloud), puis cliquez sur <em>Droits à donner à la clé API</em> : la liste des droits GET nécessaires s'affiche et la page de création de jeton d'OVH s'ouvre déjà remplie." %></li>
       <li><%= t en: "Create the key there, with <strong>GET rights only</strong>, and paste the Application Key, Application Secret and Consumer Key into Elio.", fr: "Créez-y la clé, avec <strong>des droits GET seulement</strong>, et collez l'Application Key, l'Application Secret et la Consumer Key dans Elio." %></li>
-      <li><%= t en: "<em>Tester la connexion</em> reports the missing rights, and warns if the key could write (POST, PUT, DELETE): make a new one then. Elio itself only sends GET requests, but a key with fewer rights is safer if it leaks.", fr: "<em>Tester la connexion</em> signale les droits manquants, et prévient si la clé permet d'écrire (POST, PUT, DELETE) : refaites-en une dans ce cas. Elio n'envoie que des requêtes GET, mais une clé avec moins de droits est plus sûre si elle fuit." %></li>
+      <li><%= t en: "<em>Test the connection</em> reports the missing rights, and warns if the key could write (POST, PUT, DELETE): make a new one then. Elio itself only sends GET requests, but a key with fewer rights is safer if it leaks.", fr: "<em>Tester la connexion</em> signale les droits manquants, et prévient si la clé permet d'écrire (POST, PUT, DELETE) : refaites-en une dans ce cas. Elio n'envoie que des requêtes GET, mais une clé avec moins de droits est plus sûre si elle fuit." %></li>
     </ol>
 
     <h2 id="from-source"><%= t en: "From the sources", fr: "Depuis les sources" %></h2>

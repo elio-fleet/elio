@@ -24,7 +24,7 @@ fr:
       self_signed_hint: seulement pour une instance interne dont vous connaissez le certificat.
       match_by_ip: Par adresse IP
       section_matching: Rattachement des sondes aux serveurs
-      match_by_ip_hint: la cible de la sonde est une adresse d'un serveur (publique, réseau local, WireGuard…).
+      match_by_ip_hint: la cible de la sonde est une adresse d'un serveur (publique, réseau local, VPN…).
       match_by_host: Par nom d'hôte
       match_by_host_hint: l'hôte de la sonde ou de son URL est le hostname ou l'hôte SSH d'un serveur.
       resolve_dns: Résoudre les noms en DNS
@@ -52,7 +52,7 @@ fr:
         create_api_key: Créer la clé API
         step1_html: 'Dans Uptime Kuma : <em>Paramètres → Clés API → Générer</em> (sans date d''expiration, ou en pensant à la renouveler).'
         step2_html: Collez-la ci-dessous avec l'adresse de l'instance, puis <em>Tester la connexion</em>.
-        reads_html: 'Elio lit seulement la page <code class="font-mono">/metrics</code> (la clé ne permet rien d''autre). Les sondes sont rattachées aux serveurs par leurs adresses : pensez à lancer l''inventaire du système pour relever les adresses de chaque serveur (réseau local, WireGuard…).'
+        reads_html: 'Elio lit seulement la page <code class="font-mono">/metrics</code> (la clé ne permet rien d''autre). Les sondes sont rattachées aux serveurs par leurs adresses : pensez à lancer l''inventaire du système pour relever les adresses de chaque serveur (réseau local, VPN…).'
       link_form:
         server: "— Aucun serveur —"
         server_monitor: Serveur de la sonde %{monitor_name}
