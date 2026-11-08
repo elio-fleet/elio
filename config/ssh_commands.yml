@@ -113,9 +113,9 @@ inventory:
       echo "@@elio docker"; if command -v docker >/dev/null 2>&1; then echo present; fi
 
   docker_containers:
-    description: "Docker containers with their Compose project (labels set by Docker Compose; needs the docker group or root)."
+    description: "Docker containers with their Compose project (labels set by Docker Compose; needs the docker group or root). No {{.State}}: it only exists since Docker 20.10, the state is read from {{.Status}}."
     run_as: root
-    default: "docker ps -a --no-trunc --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.State}}\t{{.Status}}\t{{.Ports}}\t{{.Label \"com.docker.compose.project\"}}\t{{.Label \"com.docker.compose.project.working_dir\"}}\t{{.Label \"com.docker.compose.project.config_files\"}}\t{{.Label \"com.docker.compose.service\"}}'"
+    default: "docker ps -a --no-trunc --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Label \"com.docker.compose.project\"}}\t{{.Label \"com.docker.compose.project.working_dir\"}}\t{{.Label \"com.docker.compose.project.config_files\"}}\t{{.Label \"com.docker.compose.service\"}}'"
 
   docker:
     description: "Docker: containers (state, health check, restarts, Compose project; never their environment), their CPU / memory, images (tags, digests, age, size), disk usage, scanners installed (Trivy, Grype). Needs the docker group or root."

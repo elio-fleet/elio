@@ -44,13 +44,23 @@ class Inventory::Collectors::Services < Inventory::Collector
 
   def self.parse_containers(text)
     text.lines.filter_map do |line|
-      id, name, image, state, status, ports, project, working_dir, config_files, service = line.chomp.split("\t", -1)
+      id, name, image, status, ports, project, working_dir, config_files, service = line.chomp.split("\t", -1)
       next if name.blank?
 
-      { "id" => id.to_s.first(12), "name" => name, "image" => image, "state" => state, "status" => status, "ports" => ports.presence,
+      { "id" => id.to_s.first(12), "name" => name, "image" => image, "state" => state(status), "status" => status, "ports" => ports.presence,
         "project" => project.presence, "working_dir" => working_dir.presence,
         "config_files" => config_files.to_s.split(",").map(&:strip).presence, "service" => service.presence }.compact
     end
+  end
+
+  # The state of `docker ps` ({{.State}} only exists since Docker 20.10), from
+  # its status: "Up 3 days (healthy)", "Up 5 minutes (Paused)", "Restarting (1)
+  # 4 seconds ago", "Exited (0) 2 days ago", "Created", "Removal In Progress", "Dead".
+  STATES = { /\AUp\b.*\(Paused\)/ => "paused", /\AUp\b/ => "running", /\ARestarting\b/ => "restarting", /\AExited\b/ => "exited",
+             /\ACreated\b/ => "created", /\ARemoval\b/ => "removing", /\ADead\b/ => "dead" }.freeze
+
+  def self.state(status)
+    STATES.find { |pattern, _state| pattern.match?(status.to_s.strip) }&.last
   end
 
   def self.changes(previous, data)
