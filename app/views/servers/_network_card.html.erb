@@ -13,7 +13,7 @@
   <% interfaces = Array(data["interfaces"]).select { |interface| interface["addresses"].present? } %>
   <% if snapshot&.collected? && interfaces.any? %>
     <table class="table-dense">
-      <thead><tr><th class="pl-4"><%= t("words.interface") %></th><th><%= t("words.address") %></th><th class="pr-4"><%= t(".scope") %></th></tr></thead>
+      <thead><tr><th class="pl-4"><%= t("words.interface") %></th><th><%= t("words.address") %></th><th class="w-px pr-4 text-right"><%= t(".scope") %></th></tr></thead>
       <tbody>
         <% interfaces.each do |interface| %>
           <% interface["addresses"].each_with_index do |address, index| %>
@@ -21,19 +21,20 @@
               <td class="pl-4 whitespace-nowrap">
                 <% if index.zero? %>
                   <span class="font-mono text-xs font-medium"><%= interface["name"] %></span>
-                  <% if Inventory::Collectors::Network::VPN_KINDS.include?(interface["kind"]) %>
-                    <%= status_badge :accent, network_kind_label(interface["kind"]), icon: :shield_check, class: "interface-kind ml-1" %>
+                  <% if vpn_interface?(interface["kind"]) %>
+                    <%= status_badge :accent, interface_kind_label(interface["kind"]), icon: :shield_check, class: "interface-kind ml-1",
+                                     title: t(".vpn_hint", kind: network_kind_label(interface["kind"])), data: { kind: interface["kind"] } %>
                   <% else %>
                     <span class="interface-kind ml-1 text-xs text-ink-3"><%= network_kind_label(interface["kind"]) %></span>
                   <% end %>
                   <% unless interface["up"] %><%= status_badge :neutral, t(".off"), class: "ml-1" %><% end %>
                 <% end %>
               </td>
-              <td class="font-mono text-xs">
+              <td class="font-mono text-xs break-all">
                 <%= address["address"] %><span class="text-ink-3">/<%= address["prefix"] %></span>
                 <% if address["temporary"] %><span class="ml-1 font-sans text-ink-3"><%= t("words.temporary") %></span><% end %>
               </td>
-              <td class="pr-4 text-xs"><%= address_scope_badge(address["scope"]) %></td>
+              <td class="pr-4 text-right"><%= address_scope_icon(address["scope"]) %></td>
             </tr>
           <% end %>
         <% end %>

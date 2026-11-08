@@ -12,7 +12,7 @@ class ServerNetworkTest < ActionDispatch::IntegrationTest
 
   setup { sign_in users(:one) }
 
-  test "the overview tab shows the interfaces, WireGuard highlighted, and the addresses added by hand" do
+  test "the overview tab shows the interfaces, a VPN highlighted, the scope as an icon, and the addresses added by hand" do
     record_network(servers(:web))
     servers(:web).update!(extra_addresses_text: "203.0.113.4")
 
@@ -20,9 +20,14 @@ class ServerNetworkTest < ActionDispatch::IntegrationTest
 
     assert_select "#server-network" do
       assert_select "tr.network-address", 4
-      assert_select "tr.network-address[data-interface=wg0] .interface-kind", text: /WireGuard/
+      assert_select "tr.network-address[data-interface=wg0] .interface-kind[data-kind=wireguard]", text: "VPN"
+      assert_select "tr.network-address[data-interface=wg0] .interface-kind[title*=WireGuard]"
+      assert_select "tr.network-address", text: /WireGuard/, count: 0
       assert_select "tr.network-address[data-interface=wg0]", text: %r{10\.8\.0\.48/24}
-      assert_select "tr.network-address[data-interface=ens18] .address-scope", text: "publique"
+      assert_select "tr.network-address[data-interface=ens18] .address-scope[data-scope=public][title^=Publique] svg"
+      assert_select "tr.network-address[data-interface=ens18] .address-scope .sr-only", text: "publique"
+      assert_select "tr.network-address[data-interface=wg0] .address-scope[data-scope=private]", text: "privée"
+      assert_select "tr.network-address .badge.address-scope", 0
       assert_select ".extra-addresses", text: /203\.0\.113\.4/
     end
   end

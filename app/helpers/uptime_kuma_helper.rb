@@ -16,7 +16,7 @@ module UptimeKumaHelper
     tag.span(text, class: "tabular-nums #{percent < 99 ? "text-warn-ink" : ""}")
   end
 
-  # Which address of the server the probe reaches: "10.8.0.100 · wg0 (WireGuard)".
+  # Which address of the server the probe reaches: "10.8.0.100 · wg0 (VPN)".
   def monitor_via(monitor)
     return unless monitor.server
 
@@ -24,7 +24,7 @@ module UptimeKumaHelper
     interface = address && Array(monitor.server.inventory("network")&.data&.dig("addresses")).find { |entry| entry["address"] == address }
     return if address.nil? || (interface.nil? && address == monitor.hostname) # (nothing more than the target)
 
-    [ address, (interface && "#{interface["interface"]} (#{network_kind_label(interface["kind"])})") ].compact.join(" · ")
+    [ address, (interface && "#{interface["interface"]} (#{interface_kind_label(interface["kind"])})") ].compact.join(" · ")
   end
 
   def monitor_match_label(monitor) = monitor.matched_by.presence && t("uptime_kuma_monitor.matches.#{monitor.matched_by}", default: "")
