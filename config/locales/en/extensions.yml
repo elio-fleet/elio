@@ -229,7 +229,10 @@ en:
       alert_stale_key: Alert when the key of Coolify is on a server Coolify does not manage
       alert_stale_key_hint: a forgotten access to remove, or a server to add in Coolify
       key_detail: "team %{team} · %{instance}"
+      alert_public_database: Alert when a database is made public in Coolify
+      alert_public_database_hint: "“Make it publicly available” option: the database can be reached from the Internet on its port"
       health:
+        public_database: "Coolify: the database %{name} can be reached from the Internet (port %{port})"
         stale_key: "Coolify: the key “%{name}” (%{detail}) is on this server, which Coolify does not manage"
         dns_elsewhere: "Coolify: %{domain} is served here, but its DNS points to %{targets}"
         dns_missing: "Coolify: %{domain} is served here, but has no DNS record"
@@ -653,6 +656,7 @@ en:
       local: local only
     manual_address: added by hand in Elio
     coolify:
+      port: "Coolify: %{name} (%{kind})"
       health_check_on: "Coolify health check: %{path}"
       health_check_off: no health check in Coolify
       monitored: "existing monitor: %{name}"

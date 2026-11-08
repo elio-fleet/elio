@@ -89,6 +89,17 @@ module CoolifyHelper
     resources = server.coolify_resources.resources.to_a
     return ->(_container) { nil } if resources.empty?
 
-    ->(container) { resources.find { |resource| [ container["name"], container["project"] ].compact.any? { |value| value.include?(resource.uuid) } } }
+    ->(container) { CoolifyResource.for_container(resources, container) }
   end
+
+  # "[Coolify] n8n" for a port published by a container of a Coolify resource, else nil.
+  def coolify_port_owner(port, server)
+    return unless port.container && coolify_enabled?
+
+    @coolify_finders ||= {}
+    resource = (@coolify_finders[server.id] ||= coolify_resource_finder(server)).call("name" => port.container)
+    safe_join([ source_tag("Coolify"), " ", tag.span(resource.name, class: "coolify-port-owner", title: port.container) ]) if resource
+  end
+
+  def coolify_enabled? = defined?(@coolify_enabled) ? @coolify_enabled : (@coolify_enabled = Integration.enabled?(:coolify))
 end

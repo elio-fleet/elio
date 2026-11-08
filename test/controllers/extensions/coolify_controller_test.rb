@@ -4,6 +4,7 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include StubHelpers
   include CoolifyHelpers
+  include PortHelpers
 
   setup do
     sign_in users(:viewer)
@@ -95,5 +96,14 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.docker-container-row[data-name=postgresql-svcn8n0000000000000000003] .coolify-container", "n8n › postgresql"
     assert_select "tr.docker-container-row[data-name=web-appback000000000000000002-0451] .coolify-container", "back-office › web"
     assert_select "tr.docker-container-row[data-name=coolify-proxy] .coolify-container", 0
+  end
+
+  test "the Firewall tab and the Ports page name the Coolify resource that publishes a port" do
+    record_ports(servers(:web))
+    record_containers(servers(:web), [ { "name" => "n8n-svcn8n0000000000000000003", "state" => "running", "ports" => "0.0.0.0:9100->5678/tcp" } ])
+    get server_path(servers(:web), tab: "firewall")
+    assert_select ".coolify-port-owner[title=n8n-svcn8n0000000000000000003]", "n8n"
+    get ports_path
+    assert_select ".coolify-port-owner", "n8n"
   end
 end

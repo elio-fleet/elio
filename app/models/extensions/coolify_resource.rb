@@ -14,6 +14,14 @@ class CoolifyResource < ApplicationRecord
   scope :attached, -> { where.not(server_id: nil) }
   scope :ordered, -> { order(:name, :id) }
 
+  # The resource behind a container ({ "name", "project" }) among `resources`:
+  # Coolify puts the resource's uuid in the container name ("<uuid>-<timestamp>",
+  # "<uuid>", "<part>-<service uuid>") or uses it as the Compose project.
+  def self.for_container(resources, container)
+    values = [ container["name"], container["project"] ].compact
+    resources.find { |resource| RESOURCE_KINDS.include?(resource.kind) && values.any? { |value| value.include?(resource.uuid) } }
+  end
+
   def kind_label = I18n.t("coolify_resource.kinds.#{kind}", default: kind.to_s)
 
   # "running:healthy" → ["running", "healthy"]; health nil when Coolify has none ("exited").

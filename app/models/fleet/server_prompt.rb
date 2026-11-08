@@ -102,7 +102,9 @@ class ServerPrompt
 
     ports = public_only ? analysis.public_ports : analysis.ports
     section(public_only ? :public_ports : :ports, ports.map do |port|
-      what = [ port.process, (port.unit if port.unit && port.unit != port.process), (t("in_container", container: port.container) if port.container) ].compact.uniq.join(", ")
+      coolify = port.container && CoolifyResource.for_container(coolify_resources, "name" => port.container)
+      what = [ port.process, (port.unit if port.unit && port.unit != port.process), (t("in_container", container: port.container) if port.container),
+               (t("coolify.port", name: coolify.name, kind: coolify.kind_label.downcase) if coolify) ].compact.uniq.join(", ")
       [ "#{port.key} #{t("on", addresses: port.addresses.join(", "))} (#{t("scopes.#{port.scope}", default: port.scope)})",
         (what.presence && "— #{what}"), ("[#{t("unexpected")}]" if port.unexpected), ("[#{t("local_firewall.#{port.firewall}", default: port.firewall.to_s)}]" if public_only && port.firewall) ].compact.join(" ")
     end)
@@ -163,6 +165,8 @@ class ServerPrompt
     end
     section(:coolify, lines)
   end
+
+  def coolify_resources = @coolify_resources ||= (Integration.enabled?(:coolify) ? @server.coolify_resources.to_a : [])
 
   def url_host(url)
     URI.parse(url.to_s).host
