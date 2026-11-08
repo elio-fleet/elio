@@ -125,6 +125,30 @@ class Integrations::OvhTest < ActiveSupport::TestCase
     assert_equal [ [ "warn", "Firewall réseau OVH désactivé sur 203.0.113.10" ], [ "warn", "Reverse DNS de 203.0.113.10 (ns1234.ip-203-0-113.eu) ≠ hostname" ] ], reasons.call
   end
 
+  test "no firewall-disabled reason for an IPv6 block: OVH has no network firewall for IPv6" do
+    routes = ovh_account(renew_automatic: true)
+    routes["/ip"] += [ "2001:db8:305:2100::1:5a3c/128" ]
+    routes["/ip/2001%3Adb8%3A305%3A2100%3A%3A1%3A5a3c%2F128"] = { "ip" => "2001:db8:305:2100::1:5a3c/128", "type" => "dedicated",
+                                                                 "routedTo" => { "serviceName" => "ns1234.ip-203-0-113.eu" } }
+    routes["/ip/2001%3Adb8%3A305%3A2100%3A%3A1%3A5a3c%2F128/reverse"] = []
+    routes["/ip/2001%3Adb8%3A305%3A2100%3A%3A1%3A5a3c%2F128/firewall"] = []
+    routes["/ip/2001%3Adb8%3A305%3A2100%3A%3A1%3A5a3c%2F128/mitigation"] = []
+    routes["/dedicated/server/ns1234.ip-203-0-113.eu/ips"] += [ "2001:db8:305:2100::1:5a3c/128" ]
+    fake_ovh(routes)
+    @integration.update!(settings: @integration.settings.merge("alert_firewall_disabled" => true))
+    @integration.sync!
+
+    blocks = servers(:web).reload.ovh_resources.select { |resource| resource.kind == "ip" }.map(&:name)
+    assert_includes blocks, "2001:db8:305:2100::1:5a3c/128", "the IPv6 block is attached to the server"
+    texts = Integrations::Ovh.health_reasons(@integration.reload, servers(:web)).map(&:text)
+    assert_not texts.any? { |text| text.include?("Firewall réseau OVH désactivé") }, texts.inspect
+
+    fake_ovh(routes.merge("/ip/203.0.113.10%2F32/firewall/203.0.113.10" => { "enabled" => false }))
+    @integration.sync!
+    assert_includes Integrations::Ovh.health_reasons(@integration.reload, servers(:web).reload).map(&:text), "Firewall réseau OVH désactivé sur 203.0.113.10",
+                    "an IPv4 still warns"
+  end
+
   test "health reason for the ports reachable in IPv6 without the OVH firewall, only when enabled in the settings" do
     extend PortHelpers
     fake_ovh
