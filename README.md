@@ -30,7 +30,7 @@
 
 Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are healthy, what runs on them, which packages are vulnerable and how to fix them, who has an SSH key on them. Nothing to install on the servers: Elio logs in with its own SSH key and runs a short list of **read-only commands**, all written in one file you can review — [`config/ssh_commands.yml`](config/ssh_commands.yml).
 
-> **Beta.** Elio is young (`v0.4.0-beta`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
+> **Beta.** Elio is young (`v0.4.1-beta`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
 
 ## Features
 
@@ -154,7 +154,7 @@ Elio can read what your other tools know and show it next to each server. Enable
 - **Setup**: the API endpoint (EU, CA, US), an Application Key, an Application Secret and a Consumer Key **limited to GET requests**. *Rights to give to the API key* lists the exact rights for the products you check and opens OVH's token page already filled in. *Test the connection* reports missing rights, and **warns if the key could write** — make a new one then.
 - Each product is a checkbox: IPs and reverse DNS, network firewall, anti-DDoS, DNS zones (all or some), dedicated servers, VPS, Public Cloud instances (all projects or some).
 - A **Hosting** card on the overview of each server: the OVH service (offer, datacenter, expiration), its IPs and reverse; the network firewall rules, **whether they let each public port through** and the anti-DDoS are in the [Firewall tab](#the-firewall-tab). A **Hosting** page: services, IPs, resources attached to no server. Its DNS records go to the [DNS of the fleet](#dns-of-the-fleet).
-- Optional alerts: service about to expire (automatic renewal taken into account), network firewall disabled, reverse DNS that does not match, OVH service not followed by Elio.
+- Optional alerts: service about to expire (automatic renewal taken into account), network firewall disabled (IPv4 blocks: OVHcloud has no network firewall for IPv6), reverse DNS that does not match, OVH service not followed by Elio.
 
 The OVH client of Elio only knows the GET method: it cannot write, whatever the key allows.
 

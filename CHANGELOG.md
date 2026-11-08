@@ -4,6 +4,25 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.4.1-beta] — 2026-11-08
+
+Three fixes after 0.4.0-beta: Docker older than 20.10, the OVHcloud firewall warning for IPv6 blocks, and the Network card of the server page.
+
+### Upgrading from 0.4.0-beta
+
+- No migration. The health of every server is recomputed at the first automation tick, which removes the "OVH network firewall disabled" warnings of IPv6 blocks.
+- One command on the servers changes: the `docker ps` format no longer asks for `{{.State}}` (the state is read from `{{.Status}}`). Nothing to change if you did not override it in `config/ssh_commands.yml`.
+
+### Changed
+
+- **Server page, Network card**: the scope of each address is an icon (a globe for public, a lock for private), with its meaning on hover, so the card no longer overflows with long IPv6 addresses; long addresses wrap.
+- **VPN interfaces** are shown as "VPN" (WireGuard, OpenVPN and other tun / tap interfaces, IP tunnels), the exact kind on hover; the Uptime Kuma probes say "via 10.8.0.100 · wg0 (VPN)".
+
+### Fixed
+
+- **Services**: the containers of a server running Docker older than 20.10 (e.g. 19.03) are read again instead of "Docker containers unreadable: Template parsing error … can't evaluate field State". Their state now comes from the status that every Docker version prints.
+- **OVHcloud**: the "OVH network firewall disabled" health warning no longer shows for IPv6 blocks. OVHcloud has no network firewall for IPv6, so these blocks always came back without one; the health of every server is computed again after the upgrade, so the warning goes away by itself. The ports reachable in IPv6 are still reported by the optional "IPv6 not covered" warning.
+
 ## [0.4.0-beta] — 2026-11-08
 
 A new interface, the same on every page, and Docker with a state of its own. From this version on, versions are numbered 0.4.0-beta, 0.5.0-beta… (a fix: 0.4.1-beta); the beta ends with 1.0.0.
@@ -214,7 +233,8 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.4.0-beta...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.4.1-beta...HEAD
+[0.4.1-beta]: https://github.com/elio-fleet/elio/compare/v0.4.0-beta...v0.4.1-beta
 [0.4.0-beta]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4.1...v0.4.0-beta
 [0.1.0-beta.4.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4...v0.1.0-beta.4.1
 [0.1.0-beta.4]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3.1...v0.1.0-beta.4
