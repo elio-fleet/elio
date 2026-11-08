@@ -4,6 +4,41 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.4.0-beta] — 2026-11-08
+
+A new interface, the same on every page, and Docker with a state of its own. From this version on, versions are numbered 0.4.0-beta, 0.5.0-beta… (a fix: 0.4.1-beta); the beta ends with 1.0.0.
+
+### Upgrading from 0.1.0-beta.4.1
+
+- Migrations run at start-up. The health of every server is recomputed at the first automation tick: the Docker reasons leave the health and become the Docker state. Notification channels that received the health changes also receive the Docker changes.
+- Pages and menus are renamed (Fleet → Servers, Packages → Updates, Keyring → SSH keys, OVHcloud → Hosting, Activity and Tasks → Journal) and have new addresses: `/ssh-keys`, `/updates`, `/hosting`, `/journal`, `/journal/runs`. The former addresses (`/keys`, `/packages`, `/ovh`, `/activities`, `/tasks`) redirect to them, so bookmarks and links in past notifications keep working.
+- Server page: the former tabs redirect (`?tab=ports` → Firewall, `?tab=notes` and `?tab=history` → Journal, `?tab=ovh` → the Hosting card of the overview).
+- No new command on the servers.
+
+### Added
+
+- **Docker has its own state, apart from the server's health.** A server whose packages are up to date is no longer "to watch" because of its Docker images: unhealthy or looping containers make Docker critical; serious fixable CVEs in the images and images to update make it "to watch". The whale shows next to the health badge (red or orange with the number of Docker problems, grey when Docker is fine), on the server page and in the server list (filters "Docker to watch", "Docker critical"). Each change is logged and can be notified ("Docker to watch", "Docker in critical state", "Docker healthy again").
+- Settings → Docker: an alert for the **vulnerabilities of the images** (on by default, same severity as the server's vulnerabilities).
+- **Design system**: shared components for every page (page header with a "⋯" menu, clickable tiles, one-line filters, tabs, panels, "to handle" lists, journal entries, empty states, form sections, a single Save bar). The `/design` page (outside production) shows each of them with its rule; a system test checks the rules on every main page (one title, at most one primary action, no sideways scroll at 1024 and 1280 px).
+
+### Changed
+
+- **Sidebar in blocks**: Overview and Servers; "Across the fleet" (Vulnerabilities, Updates, Docker, Ports, Scheduled tasks); "Access" (SSH keys); "Extensions" (Probes, DNS, Hosting, only those enabled); Journal and Settings at the bottom. A count is coloured only when something needs attention. Server groups left the sidebar: they are a filter of the server list.
+- **Overview**: the tiles open the matching list; "To handle" is grouped by gravity (Docker included), each line naming its action ("See the disks", "Test the connection", "See the fixes"…) and the servers concerned; on the right, the recent activity, the groups and their servers to handle, the temporary accesses while there are some. An empty fleet shows only the getting started guide.
+- **Server list**: one line of filters (search, group, system, state chips with their count), clickable tiles, the group under the name, no probe column, long notes cut with the full text on hover; the fleet actions (inventory, key scan, import, groups) in the "⋯" menu.
+- **Server page**: a compact overview (the machine, its addresses and its hosting on the left; what to handle, each reason with its action, and the health with 24-hour trends on the right); port, SSH and Docker on one line; Delete in the "⋯" menu. **Tabs by function, in the order of the menu**: Overview · Vulnerabilities (system only) · Updates · Services (systemd only) · Docker (Containers, Images and Vulnerabilities sections) · Firewall (with the ports) · Scheduled tasks · SSH keys · Probes (with their source) · DNS · Journal (notes and history on one timeline). The OVHcloud service and IP blocks are in a Hosting card of the overview.
+- **Fleet pages** (Vulnerabilities, Updates, Docker, Ports, Scheduled tasks): the common header, tiles that filter, one filter bar, the same tabs. Vulnerabilities in two tabs, Systems and Docker images; the page of a CVE has a breadcrumb. Docker lists the images with fixable CVEs first, with their severity. Updates searches an installed package.
+- **Extensions** (Probes, DNS, Hosting), **SSH keys** and **Journal** (events and runs as two tabs) on the same layout; one style of filter chips everywhere.
+- **Settings**: a menu on the left, **one Save per page** (a bar that appears when a field changes): General (language, health thresholds, AI instructions together), Automations (every automation at once, as a table), Vulnerabilities (alerts and score colours). Dangerous actions (regenerating Elio's key, deactivating a user…) are in "⋯" menus, behind a confirmation. The role of a user saves when it is changed.
+- **Forms, My account and the sign-in pages** use the same header, cards and sections; the sign-in pages show the logo and the version.
+- The Docker icon is the Docker whale.
+
+### Fixed
+
+- The table of scheduled tasks fits the page (the state comes first, long schedules wrap, long commands are cut).
+- An image without a tag is shown by its short digest (`sha256:` + 12 characters) instead of the whole digest overflowing the next column.
+- Hosting without any OVHcloud service says the account has none, instead of "No resource matches".
+
 ## [0.1.0-beta.4.1] — 2026-11-07
 
 ### Upgrading from 0.1.0-beta.4
@@ -179,7 +214,8 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4.1...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.4.0-beta...HEAD
+[0.4.0-beta]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4.1...v0.4.0-beta
 [0.1.0-beta.4.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4...v0.1.0-beta.4.1
 [0.1.0-beta.4]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3.1...v0.1.0-beta.4
 [0.1.0-beta.3.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.3...v0.1.0-beta.3.1

@@ -120,7 +120,7 @@ class ReadmeScreenshots < ApplicationSystemTestCase
       shoot.("score-providers", settings_vulnerabilities_path) { find("#score-providers").scroll_to(:top) }
       shoot.("automations", settings_automations_path)
       shoot.("uptime-kuma-monitors", monitors_path)
-      shoot.("ovh", server_path(db))
+      shoot.("ovh", server_path(db)) { find("#server-hosting").scroll_to(:top) }
       shoot.("dns", dns_records_path)
       shoot.("notes", server_path(db, tab: "journal"))
       shoot.("docker-cves", docker_path(tab: "cves")) { first("section.image-vulnerabilities details summary").click }
