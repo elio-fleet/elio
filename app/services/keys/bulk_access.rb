@@ -1,4 +1,5 @@
-# Adds several keyring keys to several servers (on the login user of each),
+# Adds several keyring keys to several servers (on the login user of each, or
+# on the account named `unix_user` through root),
 # a few servers at a time (BoundedParallel), the keys of one server one after
 # the other. Used by the keyring key page.
 # Never raises: each (server, public_key) outcome is returned as a Result, in
@@ -8,12 +9,12 @@ class Keys::BulkAccess
     def error? = status == :error
   end
 
-  def self.grant(public_keys, servers, duration: nil)
-    BoundedParallel.map(servers) { |server| grant_on(server, public_keys, duration) }.flatten
+  def self.grant(public_keys, servers, duration: nil, unix_user: nil)
+    BoundedParallel.map(servers) { |server| grant_on(server, public_keys, duration, unix_user) }.flatten
   end
 
-  def self.grant_on(server, public_keys, duration)
-    account = AuthorizedKeysAccount.login(server)
+  def self.grant_on(server, public_keys, duration, unix_user)
+    account = AuthorizedKeysAccount.for(server, unix_user) || AuthorizedKeysAccount.login(server)
     results = public_keys.map do |public_key|
       outcome = Keys::AccessGrant.call(server, public_key, account: account, duration: duration)
       message = if outcome.added? then duration ? I18n.t("keys.bulk_access.added_for", label_for: (TemporaryAccess.label_for(duration))) : I18n.t("keys.bulk_access.added")
@@ -28,6 +29,8 @@ class Keys::BulkAccess
   private_class_method :grant_on
 
   def self.refresh_snapshot(server, account)
+    return Keys::ServerScan.call(server) unless account.login?
+
     read = Keys::AuthorizedKeysReader.call(server, account: account)
     AccountSnapshot.record!(server, account, read.keys) if read.success?
   end

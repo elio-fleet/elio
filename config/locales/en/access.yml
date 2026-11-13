@@ -11,6 +11,9 @@ en:
       known_access_add_below: No known access. Add it below, or run a scan if keys were added by hand.
       seen_html: Seen %{time}
     bulk_form:
+      account: Account
+      account_placeholder: Elio's own
+      account_hint: Empty = Elio's login account on each server; another account needs root.
       duration: Duration
       permanent: Permanent
       add_server: Add a server
@@ -110,6 +113,13 @@ en:
       key_will_be_removed_from: The key “%{nom}” will be removed from the %{account} account of “%{server_name}”. It will no longer be able to log in to that account.
   servers:
     add_key_dialog:
+      account: Unix account
+      login_account: "%{user} (Elio's login)"
+      other_account: Another account…
+      other_account_name: Account name
+      account_hint: An account other than Elio's needs root; its ~/.ssh is created if missing, never the account.
+      other_accounts_need_root: "Elio has no root on this server: only its own account."
+      subtitle: In the ~/.ssh/authorized_keys file of the chosen account.
       keyring: From the keyring
       new_key: New key
       keyring_key: Keyring key
@@ -155,6 +165,13 @@ en:
       forbidden_details: 'Elio''s key cannot be deleted: the application would lose access to the server.'
       root_needed_title: Root needed
       root_needed_details: Elio needs root (or sudo without a password) to change the keys of the %{account} account.
+    public_key_authorization:
+      root_needed_title: Root needed
+      root_needed_details: Elio needs root (or passwordless sudo) to add a key to the account %{account}.
+      unknown_account_title: Unknown account
+      unknown_account_details: The account %{account} does not exist on this server (or has no home directory). Elio never creates an account.
+      not_owned_title: File refused
+      not_owned_details: The ~/.ssh directory or the authorized_keys file of %{account} is a link or is not owned by this account; Elio does not write there as root.
     bulk_access:
       added_for: added for %{label_for}
       added: added
@@ -191,6 +208,7 @@ en:
     updated: The key “%{public_key_name}” has been updated.
     deleted: The key “%{public_key_name}” has been removed from the keyring.
   server_authorizations_controller:
+    invalid_account: 'Invalid account name: lowercase letters, digits, "_", "-" or ".", 32 characters at most.'
     not_saved: 'Key not saved: %{full_messages_to_sentence}'
     target: "“%{server_name}”"
     added_for: "%{name} is added on %{target} for %{label_for}, until %{date}."

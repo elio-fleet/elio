@@ -28,7 +28,7 @@ class TemporaryAccess < ApplicationRecord
   # [label, value] of the duration select.
   def self.options = DURATIONS.map { |value, duration| [ label_for(duration), value ] }
 
-  def account = AuthorizedKeysAccount.login(server)
+  def account = AuthorizedKeysAccount.for(server, unix_user) || AuthorizedKeysAccount.login(server)
 
   def active? = ended_at.nil?
 
