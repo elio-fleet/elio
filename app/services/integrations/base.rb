@@ -24,8 +24,9 @@ class Integrations::Base
     # Reads the external service and stores what it found; returns a summary.
     def sync(_integration) = raise(NotImplementedError)
 
-    # Tabs added to the server page: [{ key:, label:, count: ->(server) {} }], rendered with
-    # the partial "integrations/<key>/server_tab".
+    # Tabs added to the server page: [{ key:, label:, count: ->(server) {}, tone: ->(server) {},
+    # visible: ->(server) {} }] (tone and visible optional), rendered with the partial
+    # "integrations/<key>/server_tab".
     def server_tabs = []
 
     # Links added to the sidebar: [{ label:, path: (helper name), icon: }].
@@ -39,6 +40,11 @@ class Integrations::Base
 
     # Does this extension feed the DNS of the fleet (DnsRecord, Dns)?
     def dns_source?(_integration) = false
+
+    # SSH keys the service puts on servers (Coolify's key): { fingerprint =>
+    # { "source" => "Coolify", "name" => …, "detail" => … } }. They are not
+    # "outside the keyring" (no unknown-key alert) and are named in the keys tab.
+    def known_keys(_integration) = {}
 
     # Several connections (IntegrationConnection): the fields of ONE
     # connection (URL, token…). Empty = a single connection, in `fields`.

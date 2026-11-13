@@ -289,9 +289,162 @@
    "name": "coolify-master",
    "description": null,
    "private_key": null,
-   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElioTestCoolifyKey coolify",
+   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVl coolify",
    "fingerprint": "SHA256:elioTestCoolifyFingerprint",
    "is_git_related": false
+  },
+  {
+   "uuid": "key0000000000000000000002",
+   "name": "github-app-deploy",
+   "private_key": null,
+   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm deploy",
+   "fingerprint": "x",
+   "is_git_related": true
   }
- ]
+ ],
+ "/databases/dbpg000000000000000000004/backups": [
+  {
+   "id": 3,
+   "uuid": "bkp00000000000000000001",
+   "team_id": 6,
+   "description": null,
+   "enabled": true,
+   "save_s3": true,
+   "frequency": "0 3 * * *",
+   "database_backup_retention_amount_locally": 7,
+   "database_type": "App\\Models\\StandalonePostgresql",
+   "database_id": 4,
+   "s3_storage_id": 1,
+   "created_at": "2026-01-10T10:00:00.000000Z",
+   "last_execution_at": "2026-11-07T03:00:12.000000Z",
+   "s3_storage_uuid": "s3a",
+   "s3_storage_uuids": [
+    "s3a"
+   ],
+   "executions": [
+    {
+     "uuid": "exe0000000000000000000003",
+     "status": "success",
+     "message": null,
+     "size": 1288490188,
+     "filename": "/data/coolify/backups/pg-dump.dmp",
+     "created_at": "2026-11-07T03:00:00.000000Z",
+     "finished_at": "2026-11-07T03:00:12.000000Z",
+     "s3_uploaded": true
+    },
+    {
+     "uuid": "exe0000000000000000000002",
+     "status": "failed",
+     "message": null,
+     "size": 0,
+     "filename": null,
+     "created_at": "2026-11-06T03:00:00.000000Z",
+     "finished_at": "2026-11-06T03:00:04.000000Z",
+     "s3_uploaded": false
+    },
+    {
+     "uuid": "exe0000000000000000000001",
+     "status": "success",
+     "message": null,
+     "size": 1280000000,
+     "filename": "/data/coolify/backups/pg-dump.dmp",
+     "created_at": "2026-11-05T03:00:00.000000Z",
+     "finished_at": "2026-11-05T03:00:11.000000Z",
+     "s3_uploaded": true
+    }
+   ]
+  }
+ ],
+ "/deployments/applications/appapi000000000000000001": {
+  "count": 42,
+  "deployments": [
+   {
+    "id": 1,
+    "application_id": "1",
+    "deployment_uuid": "dep0000000000000000000002",
+    "pull_request_id": 0,
+    "force_rebuild": false,
+    "commit": "623a4be87f327f1bdba283631e4747cc83c4a19",
+    "status": "finished",
+    "is_webhook": true,
+    "is_api": false,
+    "created_at": "2026-11-06T09:21:57.000000Z",
+    "updated_at": "2026-11-06T09:23:31.000000Z",
+    "finished_at": "2026-11-06T09:23:31.000000Z",
+    "logs": null,
+    "current_process_id": null,
+    "restart_only": false,
+    "git_type": null,
+    "server_id": 1,
+    "application_name": "api-facturation",
+    "server_name": "utils-1",
+    "deployment_url": "/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001/deployment/dep0000000000000000000002",
+    "destination_id": "1",
+    "only_this_server": false,
+    "rollback": false,
+    "commit_message": "chore: 0.5.15\n\nCo-Authored-By: Someone <x@example.com>"
+   },
+   {
+    "id": 1,
+    "application_id": "1",
+    "deployment_uuid": "dep0000000000000000000001",
+    "pull_request_id": 0,
+    "force_rebuild": false,
+    "commit": "1c9e0d2aa",
+    "status": "failed",
+    "is_webhook": false,
+    "is_api": false,
+    "created_at": "2026-11-05T09:00:00.000000Z",
+    "updated_at": "2026-11-05T09:02:10.000000Z",
+    "finished_at": "2026-11-05T09:02:10.000000Z",
+    "logs": null,
+    "current_process_id": null,
+    "restart_only": false,
+    "git_type": null,
+    "server_id": 1,
+    "application_name": "api-facturation",
+    "server_name": "utils-1",
+    "deployment_url": "/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001/deployment/dep0000000000000000000001",
+    "destination_id": "1",
+    "only_this_server": false,
+    "rollback": false,
+    "commit_message": "feat: export CSV"
+   }
+  ]
+ },
+ "/deployments/applications/appback000000000000000002": {
+  "count": 3,
+  "deployments": [
+   {
+    "id": 1,
+    "application_id": "1",
+    "deployment_uuid": "dep0000000000000000000013",
+    "pull_request_id": 0,
+    "force_rebuild": false,
+    "commit": "HEAD",
+    "status": "failed",
+    "is_webhook": true,
+    "is_api": false,
+    "created_at": "2026-11-07T13:58:00.000000Z",
+    "updated_at": "2026-11-07T14:00:10.000000Z",
+    "finished_at": "2026-11-07T14:00:10.000000Z",
+    "logs": null,
+    "current_process_id": null,
+    "restart_only": false,
+    "git_type": null,
+    "server_id": 1,
+    "application_name": "back-office",
+    "server_name": "utils-1",
+    "deployment_url": "/project/projbilling00000000000001/environment/envprod0000000000000001/application/appback000000000000000002/deployment/dep0000000000000000000013",
+    "destination_id": "1",
+    "only_this_server": false,
+    "rollback": false,
+    "commit_message": "fix: login"
+   }
+  ]
+ },
+ "/deployments/applications/apptiles00000000000000005": {
+  "count": 0,
+  "deployments": []
+ }
 }

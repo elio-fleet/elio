@@ -82,5 +82,9 @@
    ]
   }
  ],
- "/security/keys": []
+ "/security/keys": [],
+ "/deployments/applications/appatlas00000000000000001": {
+  "count": 0,
+  "deployments": []
+ }
 }
