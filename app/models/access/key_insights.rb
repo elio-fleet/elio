@@ -11,7 +11,7 @@ class KeyInsights
   def initialize(snapshots: AccountSnapshot.includes(:server).to_a, app_key: SshKey.app_keys)
     @snapshots = snapshots
     @app_key = app_key
-    @public_key_fingerprints = PublicKey.pluck(:fingerprint).to_set
+    @public_key_fingerprints = PublicKey.pluck(:fingerprint).to_set + Integration.known_keys.keys
   end
 
   def scanned? = @snapshots.any?

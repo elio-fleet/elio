@@ -5,7 +5,7 @@
 # Compose files, secrets (a `read` token gets them redacted anyway).
 class Integrations::Coolify::Fetch
   Record = Data.define(:kind, :uuid, :name, :status, :coolify_server_uuid, :data)
-  Result = Data.define(:team, :version, :records)
+  Result = Data.define(:team, :version, :records, :keys)
 
   def initialize(client)
     @client = client
@@ -16,13 +16,27 @@ class Integrations::Coolify::Fetch
     environments = environments_by_id
     servers = @client.servers.map { |server| server_record(server) }
     resources = @client.resources.filter_map { |resource| resource_record(resource, environments) }
-    Result.new(team: { "id" => team["id"], "name" => team["name"] }.compact, version: @client.version, records: servers + resources)
+    Result.new(team: { "id" => team["id"], "name" => team["name"] }.compact, version: @client.version, records: servers + resources, keys: keys)
   end
 
   # "https://a.example.com,http://b.example.com:8080" → ["a.example.com", "b.example.com:8080"]
   def self.domains(fqdn) = fqdn.to_s.split(",").filter_map { |url| url.strip.sub(%r{\Ahttps?://}i, "").chomp("/").presence }.uniq
 
   private
+
+  # The SSH keys of the team (the ones Coolify connects to servers with):
+  # name and fingerprint, computed from the public key like Elio does for
+  # authorized keys. Never the private key (redacted for a read token anyway).
+  def keys
+    @client.private_keys.filter_map do |key|
+      blob = key["public_key"].to_s.split[1].to_s
+      next if blob.empty?
+
+      { "name" => key["name"].to_s.presence || key["uuid"], "fingerprint" => Ssh::KeyGenerator.fingerprint(Base64.strict_decode64(blob)), "git" => (true if key["is_git_related"]) }.compact
+    rescue ArgumentError
+      nil
+    end
+  end
 
   def server_record(server)
     settings = server["settings"] || {}

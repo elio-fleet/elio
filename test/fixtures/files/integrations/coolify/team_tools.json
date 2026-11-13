@@ -289,9 +289,17 @@
    "name": "coolify-master",
    "description": null,
    "private_key": null,
-   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIElioTestCoolifyKey coolify",
+   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVl coolify",
    "fingerprint": "SHA256:elioTestCoolifyFingerprint",
    "is_git_related": false
+  },
+  {
+   "uuid": "key0000000000000000000002",
+   "name": "github-app-deploy",
+   "private_key": null,
+   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm deploy",
+   "fingerprint": "x",
+   "is_git_related": true
   }
  ],
  "/databases/dbpg000000000000000000004/backups": [

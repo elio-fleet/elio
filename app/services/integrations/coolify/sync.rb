@@ -33,7 +33,8 @@ class Integrations::Coolify::Sync
 
     resources = @result.records.count { |record| record.kind != "server" }
     @connection.update!(state: @connection.state.merge("team" => @result.team["name"], "team_id" => @result.team["id"], "version" => @result.version,
-                                                       "servers" => servers.size, "attached" => matches.values.count(&:present?), "resources" => resources).compact)
+                                                       "servers" => servers.size, "attached" => matches.values.count(&:present?), "resources" => resources,
+                                                       "keys" => @result.keys).compact)
     I18n.t("integrations.coolify.summary", count: servers.size, attached: matches.values.count(&:present?), resources: resources)
   end
 
