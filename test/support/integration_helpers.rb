@@ -42,6 +42,40 @@ class DemoIntegration < Integrations::Base
   end
 end
 
+# A demo extension with several connections (like Coolify: one per team),
+# for the tests of IntegrationConnection and its settings pages.
+class DemoMultiIntegration < Integrations::Base
+  self.key = "demo_multi"
+  self.label = "Démo multiple"
+  self.description = "Extension de démonstration à plusieurs connexions."
+
+  def self.fields = [ Field.new(key: :alert, label: "Alerter", type: :boolean, default: false, section: "Alertes") ]
+
+  def self.connection_fields
+    [
+      Field.new(key: :url, label: "URL", type: :url, required: true, placeholder: "https://demo.example"),
+      Field.new(key: :token, label: "Jeton", secret: true, required: true)
+    ]
+  end
+
+  def self.test_connection(connection)
+    raise Integrations::Error, "hôte injoignable" if connection.value(:url).to_s.include?("bad")
+
+    "équipe #{connection.value(:url).to_s[/team-\w+/] || "Démo"}"
+  end
+
+  def self.sync_connection(connection)
+    raise Integrations::Error, "refusé (401)" if connection.value(:url).to_s.include?("bad")
+
+    connection.update!(state: { "team" => connection.value(:url).to_s[/team-\w+/] })
+    "2 éléments"
+  end
+
+  def self.connection_label(connection) = connection.state["team"]
+  def self.connection_group(connection) = URI.parse(connection.value(:url).to_s).host
+  def self.connection_summary(_connection) = "2 éléments"
+end
+
 module IntegrationHelpers
   def with_integrations(registry = { "demo" => "DemoIntegration" })
     previous = Integration.registry
@@ -50,6 +84,13 @@ module IntegrationHelpers
     yield
   ensure
     Integration.registry = previous
+  end
+
+  def enable_demo_multi(*urls)
+    Integration.find_or_initialize_by(kind: "demo_multi").tap do |integration|
+      integration.update!(enabled: true)
+      urls.each { |url| integration.connections.create!(settings: { "url" => url }, secrets: { "token" => "secret-token" }) }
+    end
   end
 
   def enable_demo(url: "https://demo.example", **settings)

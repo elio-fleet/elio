@@ -281,6 +281,12 @@ en:
   integration:
     sync_label: "%{label} sync"
     required: "%{label}: required to turn the extension on"
+    url_expected: "%{label}: an http(s) address is expected (e.g. https://uptime.example.com)"
+    no_connection: no connection
+    connection_failed: "failed (%{error})"
+  integration_connection:
+    required: "%{label}: required"
+    default_label: "Connection #%{id}"
   uptime_kuma_monitor:
     matches:
       ip: by its IP address
@@ -364,6 +370,17 @@ en:
       field:
         leave_empty_keep: "•••••••• (leave empty to keep it)"
         optional: "(optional)"
+      connections:
+        title: Connections
+        add: Add a connection
+        none: No connection
+        none_text: Add a connection for the extension to read its service.
+        failed: Failed
+        synchronized_html: synchronized %{at}
+        never: not synchronized yet
+        edit: Edit
+        delete: Delete the connection
+        delete_confirm: "Delete the connection “%{label}” and everything it read?"
       test_result:
         succeeded: 'Connection succeeded: '
         failed: 'Failed: '
@@ -384,6 +401,22 @@ en:
         not_synchronized_yet: Not synchronized yet
         extension_available: No extension available.
         intro_html: 'Extensions connect Elio to your other tools, <strong class="font-medium text-ink-2">read-only</strong>: Elio creates, changes and deletes nothing there. A turned off extension appears nowhere in the interface.'
+    integration_connections:
+      form:
+        name: Name
+        name_hint: Left empty, Elio uses the name read from the service (the Coolify team…).
+        test: Test the connection
+        save: Save
+      new:
+        title: New connection
+        intro: Each connection is read separately; the alerts of the extension apply to all of them.
+      edit:
+        title: Connection
+        intro: A token left empty keeps the stored one.
+  integration_connections_controller:
+    created: Connection “%{label}” added.
+    updated: Connection “%{label}” saved.
+    deleted: Connection “%{label}” deleted.
   monitor_links_controller:
     attached: Monitor “%{monitor_name}” attached to “%{server_name}”.
     detached: Monitor “%{monitor_name}” attached to no server.

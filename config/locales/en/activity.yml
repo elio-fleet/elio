@@ -202,6 +202,12 @@ en:
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
+      integration_connection_added:
+        label: "Extension connection added"
+        description: "An administrator added a connection to an extension (a Coolify team…)."
+      integration_connection_removed:
+        label: "Extension connection removed"
+        description: "An administrator removed a connection of an extension, and what it had read."
       server_note_added:
         label: Note added
         description: Someone left a note on a server (Notes tab).
@@ -322,6 +328,8 @@ en:
       integration_enabled: Extension %{integration} turned on
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
+      integration_connection_added: '%{integration}: connection “%{connection}” added'
+      integration_connection_removed: '%{integration}: connection “%{connection}” removed'
       automation_run: "%{automation}: %{result}"
       server_note_added: 'Note on “%{server}” by %{author}: %{excerpt}'
       dns_record_conflict: "%{record} differs between %{sources}"
