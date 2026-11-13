@@ -17,6 +17,7 @@ class AttentionList
     "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "server-health-details" ], "load" => [ :health, nil, "server-health-details" ],
     "vulnerability" => [ :fixes, "vulnerabilities" ], "vulnerabilities" => [ :fixes, "vulnerabilities" ],
     "service_failed" => [ :services, "services" ], "services_failed" => [ :services, "services" ],
+    "units_failed" => [ :services, "services" ], "units_failed_more" => [ :services, "services" ],
     "timer_failed" => [ :schedules, "schedules" ], "timers_failed" => [ :schedules, "schedules" ], "timer_late" => [ :schedules, "schedules" ], "timers_late" => [ :schedules, "schedules" ],
     "port_unexpected" => [ :ports, "ports" ], "ports_unexpected" => [ :ports, "ports" ]
   }.freeze

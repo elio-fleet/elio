@@ -12,6 +12,10 @@ fr:
     services_failed:
       one: "%{count} service en échec"
       other: "%{count} services en échec"
+    units_failed: "%{names} en échec"
+    units_failed_more:
+      one: "%{first_names} et %{count} autre en échec"
+      other: "%{first_names} et %{count} autres en échec"
     clock: Horloge non synchronisée
     unsupported: "%{name} n'est plus supporté"
     timer_failed: Tâche planifiée %{name} en échec
@@ -113,6 +117,9 @@ fr:
     systemd_unit:
       failed: en échec
       boot: au démarrage
+      failed_since_html: a échoué %{time}
+      seen_by_health_html: vu au relevé de santé %{time}
+      seen_by_health_hint: Pas un service (montage, socket…), ou en échec depuis le dernier inventaire des services ; le relevé de santé, plus fréquent, l'a vu.
     firewall_card:
       all_listening_ports:
         one: "Le port en écoute, privés et locaux compris (%{count})"

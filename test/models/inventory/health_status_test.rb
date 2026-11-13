@@ -38,8 +38,19 @@ class Inventory::HealthStatusTest < ActiveSupport::TestCase
     result = evaluate
 
     assert_equal "warn", result.state
-    assert_equal [ "Inodes / à 85\u00A0%", "Charge 9,3 pour 4 processeurs", "Redémarrage requis", "2 services en échec", "Horloge non synchronisée" ],
+    assert_equal [ "Inodes / à 85\u00A0%", "Charge 9,3 pour 4 processeurs", "Redémarrage requis", "a et b en échec", "Horloge non synchronisée" ],
                  result.reasons.map(&:text)
+  end
+
+  test "failed units by name, the others counted beyond three, in the reader's language" do
+    health(:minimal, failed_units: %w[nginx.service mnt-backup.mount php8.3-fpm.service])
+    reason = evaluate.reasons.sole
+    assert_equal "nginx, mnt-backup.mount et php8.3-fpm en échec", reason.text
+    assert_equal "nginx, mnt-backup.mount, and php8.3-fpm failed", I18n.with_locale(:en) { Inventory::HealthStatus.text(reason.to_h.deep_stringify_keys) }
+
+    servers(:web).inventory_snapshots.where(category: "health").delete_all
+    health(:minimal, failed_units: %w[a.service b.socket c.service d.service e.service])
+    assert_equal [ "a, b.socket et 3 autres en échec" ], evaluate.reasons.map(&:text)
   end
 
   test "ok when every value is below the thresholds" do
