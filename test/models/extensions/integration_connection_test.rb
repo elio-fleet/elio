@@ -61,6 +61,7 @@ class IntegrationConnectionTest < ActiveSupport::TestCase
     summary = integration.sync!
     assert_equal "team-a : 2 éléments · Connexion n° #{integration.connections.last.id} : échec (refusé (401))", summary
     assert_nil integration.reload.last_error
+    I18n.with_locale(:en) { assert_match(/\Ateam-a: /, integration.sync!, "no French spacing in English") }
 
     integration.connections.first.update!(settings: { "url" => "https://bad.example" })
     error = assert_raises(Integrations::Error) { integration.sync! }
