@@ -22,6 +22,10 @@ class Integrations::Coolify::Fetch
   # "https://a.example.com,http://b.example.com:8080" → ["a.example.com", "b.example.com:8080"]
   def self.domains(fqdn) = fqdn.to_s.split(",").filter_map { |url| url.strip.sub(%r{\Ahttps?://}i, "").chomp("/").presence }.uniq
 
+  # The URLs as Coolify serves them, scheme included ("http://…" when the
+  # domain is not served over TLS), for a monitor that targets the right one.
+  def self.urls(fqdn) = fqdn.to_s.split(",").filter_map { |url| url.strip.chomp("/").presence if url.strip.match?(%r{\Ahttps?://}i) }.uniq
+
   private
 
   # The SSH keys of the team (the ones Coolify connects to servers with):
@@ -67,10 +71,15 @@ class Integrations::Coolify::Fetch
     end
   end
 
+  # An application deployed from an image (build pack "dockerimage") still
+  # carries Coolify's placeholder git fields (coollabsio/coolify, main, HEAD):
+  # they are left out, the image says what runs.
   def application_data(app)
     image = [ app["docker_registry_image_name"], app["docker_registry_image_tag"] ].compact_blank.join(":").presence
-    { "build_pack" => app["build_pack"], "domains" => self.class.domains(app["fqdn"]), "git_repository" => app["git_repository"].presence,
-      "git_branch" => app["git_branch"].presence, "git_commit" => app["git_commit_sha"].presence, "image" => image,
+    git = app["build_pack"] != "dockerimage"
+    { "build_pack" => app["build_pack"], "domains" => self.class.domains(app["fqdn"]), "urls" => self.class.urls(app["fqdn"]).presence,
+      "git_repository" => (app["git_repository"].presence if git), "git_branch" => (app["git_branch"].presence if git),
+      "git_commit" => (app["git_commit_sha"].presence unless !git || app["git_commit_sha"] == "HEAD"), "image" => image,
       "health_check" => app["health_check_enabled"], "health_check_path" => app["health_check_path"].presence,
       "ports_exposes" => app["ports_exposes"].presence, "ports_mappings" => app["ports_mappings"].presence }.merge(deployments(app["uuid"]))
   end
@@ -84,7 +93,7 @@ class Integrations::Coolify::Fetch
     list = @client.deployments(uuid, take: DEPLOYMENTS_KEPT).sort_by { |deployment| deployment["created_at"].to_s }.reverse
     path = list.filter_map { |deployment| deployment["deployment_url"].to_s[%r{\A(/project/[\w-]+/environment/[\w-]+/application/[\w-]+)/deployment/}, 1] }.first
     { "coolify_path" => path, "deployments" => list.map do |deployment|
-      { "uuid" => deployment["deployment_uuid"], "status" => deployment["status"], "commit" => deployment["commit"].to_s.first(40).presence,
+      { "uuid" => deployment["deployment_uuid"], "status" => deployment["status"], "commit" => (deployment["commit"].to_s.first(40).presence unless deployment["commit"] == "HEAD"),
         "message" => deployment["commit_message"].to_s.lines.first.to_s.strip.truncate(120).presence, "at" => deployment["created_at"],
         "finished_at" => deployment["finished_at"], "webhook" => (true if deployment["is_webhook"]), "restart" => (true if deployment["restart_only"]),
         "rollback" => (true if deployment["rollback"]), "pull_request" => deployment["pull_request_id"].to_i.nonzero? }.compact
@@ -94,6 +103,7 @@ class Integrations::Coolify::Fetch
   def service_data(service)
     applications = Array(service["applications"])
     { "service_type" => service["service_type"].presence, "domains" => applications.flat_map { |app| self.class.domains(app["fqdn"]) }.uniq,
+      "urls" => applications.flat_map { |app| self.class.urls(app["fqdn"]) }.uniq.presence,
       "images" => (applications + Array(service["databases"])).filter_map { |part| part["image"].presence }.uniq,
       "parts" => (applications + Array(service["databases"])).filter_map { |part| { "name" => part["name"], "status" => part["status"] }.compact if part["name"] } }
   end

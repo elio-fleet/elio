@@ -92,7 +92,8 @@ class ServerPrompt
 
     section(:containers, containers.sort_by { |container| container["name"].to_s }.map do |container|
       [ container["name"], t("container", image: container["image"], state: container["state"]),
-        (t("published", ports: container["ports"]) if container["ports"]), (t("compose", project: container["project"]) if container["project"]) ].compact.join(", ")
+        (t("published", ports: container["ports"]) if container["ports"]), (t("compose", project: container["project"]) if container["project"]),
+        (CoolifyResource.for_container(coolify_resources, container)&.then { |coolify| t("coolify.port", name: coolify.name, kind: coolify.kind_label.downcase) }) ].compact.join(", ")
     end)
   end
 
@@ -153,13 +154,15 @@ class ServerPrompt
 
     monitors = UptimeKumaMonitor.all.to_a
     lines = resources.flat_map do |resource|
+      urls = Array(resource.data["urls"])
       resource.domains.map do |domain|
         host = Integrations::Coolify::DomainCheck.host(domain)
+        url = urls.find { |candidate| candidate.sub(%r{\Ahttps?://}i, "").casecmp?(domain) } || "https://#{domain}"
         monitor = monitors.find { |candidate| [ candidate.hostname, url_host(candidate.url) ].any? { |value| value.to_s.casecmp?(host.to_s) } }
         health = if resource.kind == "application"
           resource.data["health_check"] ? t("coolify.health_check_on", path: resource.data["health_check_path"] || "/") : t("coolify.health_check_off")
         end
-        [ "https://#{domain} (#{[ resource.name, resource.kind_label.downcase, resource.state ].compact.join(", ")})", health,
+        [ "#{url} (#{[ resource.name, resource.kind_label.downcase, resource.state ].compact.join(", ")})", health,
           (monitor ? t("coolify.monitored", name: monitor.name) : t("coolify.not_monitored")) ].compact.join(" — ")
       end
     end
