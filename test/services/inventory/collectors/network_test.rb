@@ -23,6 +23,23 @@ class Inventory::Collectors::NetworkTest < ActiveSupport::TestCase
     assert_not addresses.key?("172.17.0.1"), "Docker bridge left out"
   end
 
+  test "inside a container (an LXC on Proxmox), eth0 is a veth: kept as the server's ethernet" do
+    data = Inventory::Collectors::Network.parse(sections("container-veth"))
+
+    eth0 = data["interfaces"].find { |interface| interface["name"] == "eth0" }
+    assert_equal "ethernet", eth0["kind"]
+    assert_equal [ "172.24.0.2" ], eth0["addresses"].map { |address| address["address"] }
+    assert_equal [ "172.24.0.2" ], Inventory::Collectors::Network.server_attributes(data)[:ip_addresses]
+  end
+
+  test "the host side of veth pairs stays left out" do
+    addr = [ { "ifname" => "veth7e76454", "link_type" => "ether", "addr_info" => [ { "family" => "inet", "local" => "10.9.9.9", "prefixlen" => 24, "scope" => "global" } ] },
+             { "ifname" => "veth100i0", "link_type" => "ether", "addr_info" => [ { "family" => "inet", "local" => "10.9.9.8", "prefixlen" => 24, "scope" => "global" } ] } ]
+    links = addr.map { |entry| entry.slice("ifname", "link_type").merge("linkinfo" => { "info_kind" => "veth" }) }
+
+    assert_empty Inventory::Collectors::Network.parse({ "addr" => addr.to_json, "link" => links.to_json })["interfaces"]
+  end
+
   test "server summary: every address, public first" do
     attributes = Inventory::Collectors::Network.server_attributes(Inventory::Collectors::Network.parse(sections))
     assert_equal "2001:db8:868:4c00:be24:11ff:fed4:6200", attributes[:ip_addresses].first
