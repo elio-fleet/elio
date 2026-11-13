@@ -65,6 +65,7 @@ class Activity < ApplicationRecord
     Kind.new(:two_factor_disabled, :security, :critical),
     Kind.new(:two_factor_backup_code_used, :security, :warning),
     Kind.new(:public_key_created, :configuration, :info),
+    Kind.new(:public_key_owner_changed, :keys, :info),
     Kind.new(:public_key_deleted, :configuration, :info),
     Kind.new(:ssh_key_generated, :security, :critical),
     Kind.new(:ssh_key_rotation_started, :security, :warning),

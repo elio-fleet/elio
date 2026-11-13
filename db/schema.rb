@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_08_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_13_180000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -382,8 +382,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_150000) do
     t.datetime "updated_at", null: false
     t.string "kind", default: "person", null: false
     t.text "description"
+    t.bigint "user_id"
     t.index "lower((name)::text)", name: "index_public_keys_on_lower_name", unique: true
     t.index ["fingerprint"], name: "index_public_keys_on_fingerprint", unique: true
+    t.index ["user_id"], name: "index_public_keys_on_user_id"
   end
 
   create_table "score_providers", force: :cascade do |t|
@@ -614,6 +616,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_08_150000) do
   add_foreign_key "key_rotations", "users", column: "started_by_id", on_delete: :nullify
   add_foreign_key "notification_batches", "notification_channels", on_delete: :cascade
   add_foreign_key "ovh_resources", "servers", on_delete: :nullify
+  add_foreign_key "public_keys", "users", on_delete: :nullify
   add_foreign_key "server_group_memberships", "server_groups", on_delete: :cascade
   add_foreign_key "server_group_memberships", "servers", on_delete: :cascade
   add_foreign_key "server_notes", "servers", on_delete: :cascade

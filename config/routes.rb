@@ -5,6 +5,7 @@ Rails.application.routes.draw do
     patch :password
     patch :locale
   end
+  resources :account_keys, only: %i[create destroy], path: "account/keys"
   resource :two_factor, only: %i[new create destroy], path: "account/two_factor", controller: "two_factor_settings" do
     post :backup_codes
   end
@@ -27,6 +28,7 @@ Rails.application.routes.draw do
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
     resource :authorized_key, only: :destroy, controller: "server_authorized_keys"
     resources :authorizations, only: :create, controller: "server_authorizations"
+    resources :my_key_accesses, only: %i[create destroy], path: "my-key"
     resources :notes, only: %i[create edit update destroy], controller: "server_notes" do
       post :preview, on: :collection
     end
