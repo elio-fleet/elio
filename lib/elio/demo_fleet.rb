@@ -175,11 +175,12 @@ module Elio
                             { "sequence" => 1, "action" => "permit", "protocol" => "tcp", "destinationPort" => "eq 443" },
                             { "sequence" => 19, "action" => "deny", "protocol" => "ipv4" } ] } },
                                   "mitigation" => { "198.51.100.20" => { "permanent" => false, "state" => "ok" } }, "reverse" => { "198.51.100.20" => "db-prod.example.internal" } })
-      build_coolify(web)
+      build_coolify(web, db)
     end
 
-    # Coolify: one instance, two teams (one connection each), what runs on web-prod-1.
-    def build_coolify(web)
+    # Coolify: one instance, two teams (one connection each), what runs on
+    # web-prod-1, and the "shop" Compose application of db-prod (its containers in the Docker tab).
+    def build_coolify(web, db)
       coolify = Integration.find_or_initialize_by(kind: "coolify").tap { |integration| integration.update!(enabled: true, last_synced_at: 4.minutes.ago) }
       tools, maps = [ [ "Outils internes", 3, 2, 6 ], [ "Cartographie", 1, 0, 2 ] ].map do |team, servers, attached, resources|
         coolify.connections.create!(settings: { "url" => "https://coolify.example.internal" }, secrets: { "token" => "demo" }, last_synced_at: 4.minutes.ago,
@@ -199,6 +200,11 @@ module Elio
         CoolifyResource.create!(connection: tools, kind: kind, uuid: "res#{index}", name: name, status: status, coolify_server_uuid: "srvweb1", server: web, matched_by: "address",
                                 data: data.merge("project" => (index < 2 || index == 4 ? "Billing" : "Tools"), "environment" => "production"))
       end
+      CoolifyResource.create!(connection: tools, kind: "server", uuid: "srvdb", name: "db-prod", coolify_server_uuid: "srvdb", server: db, matched_by: "address",
+                              data: server.merge("ip" => "198.51.100.20", "domains" => [ "shop.example.com" ]))
+      CoolifyResource.create!(connection: tools, kind: "application", uuid: "shop", name: "shop", status: "running:unhealthy", coolify_server_uuid: "srvdb", server: db,
+                              matched_by: "address", data: { "build_pack" => "dockercompose", "domains" => [ "shop.example.com" ], "git_branch" => "main", "git_commit" => "8f2a1b7",
+                                                             "project" => "Shop", "environment" => "production" })
     end
   end
 end

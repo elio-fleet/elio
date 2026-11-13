@@ -1,0 +1,46 @@
+<%# "Coolify" tab of a server: each Coolify server it is (one per team / instance that manages it) with what Coolify says of it, then its resources. Locals: server, integration. %>
+<% coolify_servers = server.coolify_resources.servers.includes(:connection).order(:name).to_a %>
+<% resources = server.coolify_resources.resources.ordered.to_a %>
+<div id="server-coolify" class="space-y-4">
+  <% coolify_servers.each do |coolify_server| %>
+    <% connection = coolify_server.connection %>
+    <% data = coolify_server.data %>
+    <%= status_line [
+          { key: "instance", label: t("integrations.coolify.server_tab.instance"), tone: :neutral, text: [ connection.group, ("v#{connection.state["version"]}" if connection.state["version"]) ].compact.join(" · ") },
+          { key: "team", label: t("integrations.coolify.server_tab.team"), tone: :neutral, text: connection.label },
+          { key: "reachable", label: t("integrations.coolify.server_tab.reachable"), tone: (data["reachable"] && data["usable"] ? :good : :crit),
+            text: t(data["reachable"] && data["usable"] ? "integrations.coolify.server_tab.reachable_yes" : "integrations.coolify.server_tab.reachable_no") },
+          ({ key: "docker", label: "Docker", tone: :neutral, text: data["docker_version"] } if data["docker_version"]),
+          ({ key: "proxy", label: t("integrations.coolify.server_tab.proxy"), tone: :neutral, text: data["proxy"].to_s.capitalize } if data["proxy"].present?)
+        ].compact, class: "coolify-server", data: { uuid: coolify_server.uuid } do %>
+      <span class="text-xs text-ink-3"><%= t("integrations.coolify.server_tab.synchronized_html", at: relative_time_tag(connection.last_synced_at)) if connection.last_synced_at %></span>
+    <% end %>
+  <% end %>
+
+  <%= panel t("integrations.coolify.server_tab.resources"), meta: t("integrations.coolify.server_tab.count", count: resources.size), icon: :cube, id: "coolify-resources",
+            link: [ t("integrations.coolify.server_tab.all"), coolify_path ] do %>
+    <% if resources.any? %>
+      <div class="overflow-x-auto">
+        <table class="table-dense">
+          <thead><tr><th class="pl-4"><%= t("integrations.coolify.server_tab.resource") %></th><th><%= t("integrations.coolify.server_tab.project") %></th><th><%= t("integrations.coolify.server_tab.domains") %></th><th class="col-secondary"><%= t("integrations.coolify.server_tab.version") %></th><th class="pr-4"><%= t("integrations.coolify.server_tab.state") %></th></tr></thead>
+          <tbody>
+            <% resources.each do |resource| %>
+              <tr class="coolify-resource" data-uuid="<%= resource.uuid %>" data-kind="<%= resource.kind %>">
+                <td class="pl-4"><span class="font-medium"><%= resource.name %></span><span class="block text-xs text-ink-3"><%= coolify_kind_detail(resource) %></span></td>
+                <td class="text-xs text-ink-2"><%= [ resource.data["project"], resource.data["environment"] ].compact.join(" / ").presence || "—" %></td>
+                <td class="text-xs"><%= coolify_domain_links(resource) %></td>
+                <td class="col-secondary col-truncate font-mono text-xs text-ink-2" title="<%= coolify_version(resource) %>"><%= coolify_version(resource) || "—" %></td>
+                <td class="pr-4"><%= coolify_state_badge(resource) %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+      <% if resources.any? { |resource| resource.running? && resource.health.in?([ nil, "unknown" ]) } %>
+        <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t("integrations.coolify.server_tab.no_health_check") %></p>
+      <% end %>
+    <% else %>
+      <%= empty_state t("integrations.coolify.server_tab.none"), t("integrations.coolify.server_tab.none_text"), icon: :cube %>
+    <% end %>
+  <% end %>
+</div>

@@ -44,7 +44,7 @@
                   [ "firewall", t("servers.tabs.firewall"), (Inventory::PortAnalysis.new(@server).unexpected_ports.size.nonzero? if ports&.collected?), :warn ],
                   [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],
                   [ "keys", t("servers.tabs.keys"), (snapshots.sum { |snapshot| snapshot.keys.size } if snapshots.any?) ],
-                  *@integration_tabs.map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server) ] },
+                  *@integration_tabs.filter_map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server), tab[:tone]&.call(@server) ] if tab[:visible].nil? || tab[:visible].call(@server) },
                   [ "journal", t("servers.tabs.journal"), nil ] ] %>
   <%= tabs tab_list.map { |key, label, count, tone| { key: key, label: label, count: count, tone: (tone if count), path: server_path(@server, tab: (key unless key == "overview")) } },
            current: @tab, label: t("servers.tabs.server_sections"), class: "server-tabs" %>
