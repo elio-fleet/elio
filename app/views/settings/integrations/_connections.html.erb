@@ -1,9 +1,9 @@
 <%# Connections of an extension that accepts several (IntegrationConnection), grouped under their group (a Coolify instance), with their sync state. Locals: integration. %>
 <% connections = integration.connections.to_a %>
-<% add = link_to new_settings_integration_connection_path(integration.kind), class: "btn btn-secondary add-connection" do %><%= icon :plus, class: "h-4 w-4" %> <%= t("settings.integrations.connections.add") %><% end %>
-<%= panel t("settings.integrations.connections.title"), id: "integration-connections", class: "mt-5", header: (add if connections.any?) do %>
+<% add = link_to new_settings_integration_connection_path(integration.kind), class: "btn btn-secondary add-connection" do %><%= icon :plus, class: "h-4 w-4" %> <%= integration_text(integration.kind, "settings.integrations.connections.add") %><% end %>
+<%= panel integration_text(integration.kind, "settings.integrations.connections.title"), id: "integration-connections", class: "mt-5", header: (add if connections.any?) do %>
   <% if connections.empty? %>
-    <%= empty_state t("settings.integrations.connections.none"), t("settings.integrations.connections.none_text"), icon: :signal do %><%= add %><% end %>
+    <%= empty_state integration_text(integration.kind, "settings.integrations.connections.none"), integration_text(integration.kind, "settings.integrations.connections.none_text"), icon: :signal do %><%= add %><% end %>
   <% else %>
     <ul>
       <% connections.group_by(&:group).each do |group, list| %>
@@ -27,8 +27,8 @@
             <div class="flex items-center gap-1">
               <%= link_to t("settings.integrations.connections.edit"), edit_settings_integration_connection_path(integration.kind, connection), class: "btn btn-ghost" %>
               <%= actions_menu do %>
-                <%= menu_item t("settings.integrations.connections.delete"), settings_integration_connection_path(integration.kind, connection), icon: :trash, method: :delete, danger: true,
-                      confirm: t("settings.integrations.connections.delete_confirm", label: connection.label) %>
+                <%= menu_item integration_text(integration.kind, "settings.integrations.connections.delete"), settings_integration_connection_path(integration.kind, connection), icon: :trash, method: :delete, danger: true,
+                      confirm: integration_text(integration.kind, "settings.integrations.connections.delete_confirm", label: connection.label) %>
               <% end %>
             </div>
           </li>

@@ -2,12 +2,12 @@
 
 <% sources = capture do %>
     <ul class="dns-sources mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-ink-3">
-      <% @sources.each do |integration| %>
-        <li data-source="<%= integration.kind %>">
-          <%= dns_source_badge(integration.kind) %>
-          <% if integration.last_synced_at %><%= t("dns_records.index.synchronized_html", time: relative_time_tag(integration.last_synced_at)) %><% else %><%= t("dns_records.index.not_synchronized_yet") %><% end %>
-          <% if integration.last_error %><span class="text-crit-ink"><%= t("dns_records.index.last_sync_failed", error: integration.last_error) %></span><% end %>
-          <% if can?(:administer) %>· <%= link_to t("dns_records.index.settings"), edit_settings_integration_path(integration.kind), class: "text-accent hover:underline" %><% end %>
+      <% @sources.each do |source| %>
+        <li data-source="<%= source.key %>">
+          <%= dns_source_badge(source.key) %>
+          <% if source.last_synced_at %><%= t("dns_records.index.synchronized_html", time: relative_time_tag(source.last_synced_at)) %><% else %><%= t("dns_records.index.not_synchronized_yet") %><% end %>
+          <% if source.last_error %><span class="text-crit-ink"><%= t("dns_records.index.last_sync_failed", error: source.last_error) %></span><% end %>
+          <% if can?(:administer) %>· <%= link_to t("dns_records.index.settings"), edit_settings_integration_path(source.integration.kind), class: "text-accent hover:underline" %><% end %>
         </li>
       <% end %>
     </ul>
@@ -32,7 +32,7 @@
   <%= form_with url: dns_records_path, method: :get, data: search_form_data, class: "ml-auto flex flex-wrap items-center gap-2" do |f| %>
     <%= hidden_field_tag :filter, @filter if @filter %>
     <% if @sources.size > 1 %>
-      <%= f.select :source, [ [ t("dns_records.index.all_sources"), "" ], *@sources.map { |integration| [ DnsRecord.source_label(integration.kind), integration.kind ] } ], { selected: @source },
+      <%= f.select :source, [ [ t("dns_records.index.all_sources"), "" ], *@sources.map { |source| [ source.label, source.key ] } ], { selected: @source },
             aria: { label: t("dns_records.index.source") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
     <% end %>
     <% if @zones.size > 1 %>

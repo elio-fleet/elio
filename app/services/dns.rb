@@ -10,6 +10,23 @@ module Dns
 
   def self.enabled? = source_integrations.any?
 
+  # Every source of records, one per extension and one per manual source
+  # (Integrations::ManualDns connection): its DnsRecord.source, its label,
+  # its synchronization state and the extension it belongs to.
+  Source = Data.define(:key, :label, :last_synced_at, :last_error, :integration)
+
+  def self.sources
+    source_integrations.flat_map do |integration|
+      if integration.kind == Integrations::ManualDns.key
+        integration.connections.sort_by(&:label).map do |connection|
+          Source.new(Integrations::ManualDns.source(connection), connection.label, connection.last_synced_at, connection.last_error, integration)
+        end
+      else
+        [ Source.new(integration.kind, DnsRecord.source_label(integration.kind), integration.last_synced_at, integration.last_error, integration) ]
+      end
+    end
+  end
+
   # "No DNS name" when the alert is on (Settings → Extensions → DNS), once a
   # source has been synchronized, for a server no record of any source
   # points to (its groups can be ignored).

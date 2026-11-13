@@ -98,6 +98,7 @@ module Activity::Summaries
     gandi_domain_expiring: proc { Activity::Summaries.t(:gandi_domain_expiring, domain: data["domain"], count: data["days"].to_i) },
     dns_record_outside_fleet: proc { Activity::Summaries.t(:dns_record_outside_fleet, record: data["record"], target: data["target"]) },
     dns_record_conflict: proc { Activity::Summaries.t(:dns_record_conflict, record: data["record"], sources: Array(data["sources"]).join(", ")) },
+    dns_manual_updated: proc { Activity::Summaries.t(:dns_manual_updated, source: data["source"], count: data["count"].to_i, added: data["added"].to_i, removed: data["removed"].to_i) },
     ovh_service_unmanaged: proc { Activity::Summaries.t(:ovh_service_unmanaged, kind: data["kind_label"], service: data["service"]) },
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },

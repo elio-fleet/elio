@@ -6,18 +6,18 @@
   <%= render "shared/form_errors", record: connection %>
 
   <div class="integration-field" data-field="name">
-    <%= label_tag "connection_name", class: "label" do %><%= t("settings.integration_connections.form.name") %> <span class="font-normal text-ink-3"><%= t("settings.integrations.field.optional") %></span><% end %>
+    <%= label_tag "connection_name", class: "label" do %><%= integration_text(@integration.kind, "settings.integration_connections.form.name") %> <span class="font-normal text-ink-3"><%= t("settings.integrations.field.optional") %></span><% end %>
     <%= text_field_tag "connection[name]", connection.name, id: "connection_name", class: "input mt-1", autocomplete: "off", maxlength: 80 %>
-    <p class="mt-1 text-xs text-ink-3"><%= t("settings.integration_connections.form.name_hint") %></p>
+    <p class="mt-1 text-xs text-ink-3"><%= integration_text(@integration.kind, "settings.integration_connections.form.name_hint") %></p>
   </div>
   <%= render partial: "settings/integrations/field", collection: connection.fields, as: :field, locals: { integration: connection, scope: "connection" } %>
 
   <div class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
     <%= f.button type: "submit", class: "btn btn-secondary test-connection",
           formaction: (persisted ? test_settings_integration_connection_path(integration.kind, connection) : test_settings_integration_connections_path(integration.kind)) do %>
-      <%= icon :signal_slash, class: "h-4 w-4" %> <%= t("settings.integration_connections.form.test") %>
+      <%= icon :signal_slash, class: "h-4 w-4" %> <%= integration_text(@integration.kind, "settings.integration_connections.form.test") %>
     <% end %>
     <%= f.submit t("settings.integration_connections.form.save"), class: "btn btn-primary" %>
   </div>
-  <%= render "settings/integrations/test_result", result: @test_result %>
+  <%= render "settings/integrations/test_result", result: @test_result, kind: @integration.kind %>
 <% end %>

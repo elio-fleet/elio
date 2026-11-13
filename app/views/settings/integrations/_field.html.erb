@@ -34,6 +34,8 @@
       <%= select_tag name, options_for_select(field.options, value), id: id, class: "input mt-1 w-auto" %>
     <% elsif field.type == :number %>
       <%= number_field_tag name, value, id: id, step: "any", class: "input mt-1 w-32", placeholder: field.placeholder %>
+    <% elsif field.type == :textarea %>
+      <%= text_area_tag name, value, id: id, rows: 12, class: "input mt-1 w-full font-mono text-xs", placeholder: field.placeholder, autocomplete: "off", spellcheck: false %>
     <% elsif field.type == :list %>
       <%= text_field_tag name, Array(value).join(", "), id: id, class: "input mt-1 font-mono text-xs", placeholder: field.placeholder %>
     <% else %>

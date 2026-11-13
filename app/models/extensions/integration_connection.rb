@@ -12,6 +12,7 @@ class IntegrationConnection < ApplicationRecord
   normalizes :name, with: ->(value) { value.squish.presence }
   validates :name, length: { maximum: 80 }
   validate :connection_fields_valid
+  after_destroy_commit { definition.connection_removed(self) }
 
   delegate :definition, to: :integration
 
