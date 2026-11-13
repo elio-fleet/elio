@@ -19,6 +19,14 @@ class Integrations::Coolify::Client
   def project(uuid) = get("/projects/#{segment(uuid)}")
   def server_domains(uuid) = list("/servers/#{segment(uuid)}/domains")
   def private_keys = list("/security/keys")
+  # The last deployments of an application: { "count", "deployments" => […] }.
+  def deployments(uuid, take: 10)
+    result = get("/deployments/applications/#{segment(uuid)}", skip: 0, take: take)
+    raise Integrations::Error, I18n.t("integrations.coolify.unexpected") unless result.is_a?(Hash)
+
+    Array(result["deployments"])
+  end
+
   # The backup schedules of a standalone database, each with its executions.
   def database_backups(uuid) = list("/databases/#{segment(uuid)}/backups")
 

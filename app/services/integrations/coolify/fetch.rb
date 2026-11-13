@@ -58,7 +58,23 @@ class Integrations::Coolify::Fetch
     { "build_pack" => app["build_pack"], "domains" => self.class.domains(app["fqdn"]), "git_repository" => app["git_repository"].presence,
       "git_branch" => app["git_branch"].presence, "git_commit" => app["git_commit_sha"].presence, "image" => image,
       "health_check" => app["health_check_enabled"], "health_check_path" => app["health_check_path"].presence,
-      "ports_exposes" => app["ports_exposes"].presence, "ports_mappings" => app["ports_mappings"].presence }
+      "ports_exposes" => app["ports_exposes"].presence, "ports_mappings" => app["ports_mappings"].presence }.merge(deployments(app["uuid"]))
+  end
+
+  DEPLOYMENTS_KEPT = 10
+
+  # The last deployments (newest first): status, commit, the first line of
+  # its message, how it was started, dates; and the application's page in
+  # Coolify (its deployment URLs are "/project/…/application/<uuid>/deployment/<uuid>").
+  def deployments(uuid)
+    list = @client.deployments(uuid, take: DEPLOYMENTS_KEPT).sort_by { |deployment| deployment["created_at"].to_s }.reverse
+    path = list.filter_map { |deployment| deployment["deployment_url"].to_s[%r{\A(/project/[\w-]+/environment/[\w-]+/application/[\w-]+)/deployment/}, 1] }.first
+    { "coolify_path" => path, "deployments" => list.map do |deployment|
+      { "uuid" => deployment["deployment_uuid"], "status" => deployment["status"], "commit" => deployment["commit"].to_s.first(40).presence,
+        "message" => deployment["commit_message"].to_s.lines.first.to_s.strip.truncate(120).presence, "at" => deployment["created_at"],
+        "finished_at" => deployment["finished_at"], "webhook" => (true if deployment["is_webhook"]), "restart" => (true if deployment["restart_only"]),
+        "rollback" => (true if deployment["rollback"]), "pull_request" => deployment["pull_request_id"].to_i.nonzero? }.compact
+    end }.compact
   end
 
   def service_data(service)

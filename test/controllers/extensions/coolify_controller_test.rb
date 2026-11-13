@@ -68,6 +68,11 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] td.font-mono", "main @ 623a4be"
     assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] td.font-mono", "main"
     assert_select "#coolify-resources", text: /pas de health check/
+    assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] a[href=?]",
+                  "https://coolify.example.com/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001", text: "api-facturation"
+    assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] .deploy-failed", "échec"
+    assert_equal %w[failed finished failed], css_select("#coolify-deployments li.coolify-deployment").map { |item| item["data-status"] }
+    assert_select "#coolify-deployments li.coolify-deployment", text: /chore: 0.5.15.*webhook git/m
     assert_select "#coolify-backups li.coolify-backup[data-uuid=dbpg000000000000000000004][data-state=late]" do
       assert_select ".backup-state", "en retard"
       assert_equal %w[success failed success], css_select(".backup-execution").map { |square| square["data-status"] }

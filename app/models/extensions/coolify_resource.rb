@@ -27,6 +27,13 @@ class CoolifyResource < ApplicationRecord
   # Domains served (application fqdn, service applications), without the scheme.
   def domains = Array(data["domains"])
 
+  FINAL_DEPLOYMENTS = %w[finished failed cancelled-by-user].freeze
+
+  # Deployments of an application (Integrations::Coolify::Fetch#deployments), newest first.
+  def deployments = Array(data["deployments"])
+  def last_deployment = deployments.find { |deployment| FINAL_DEPLOYMENTS.include?(deployment["status"]) }
+  def deploy_failed? = last_deployment&.dig("status") == "failed"
+
   # Backups of a database (Integrations::Coolify::Fetch#backups): the enabled
   # schedules, their executions newest first.
   def backups = Array(data["backups"]).select { |backup| backup["enabled"] }

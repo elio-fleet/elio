@@ -217,7 +217,10 @@ fr:
       alert_backups_hint: les sauvegardes planifiées dans Coolify, base par base
       backup_max_age_hours: "En retard : aucune sauvegarde réussie depuis (heures)"
       alert_no_backup: Alerter quand une base n'a aucune sauvegarde planifiée
+      alert_deploy_failed: Alerter quand le dernier déploiement d'une application a échoué
+      alert_deploy_failed_hint: jusqu'au prochain déploiement réussi
       health:
+        deploy_failed: "Déploiement Coolify de %{application} en échec"
         backup_failed: "Sauvegarde Coolify de %{database} en échec"
         backup_late:
           one: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heure"
@@ -257,6 +260,20 @@ fr:
         project: Projet / environnement
         domains: Domaines
         version: Version déployée
+        last_deploy: Dernier déploiement
+        deploy_failed: échec
+        deployments: Déploiements récents
+        open_in_coolify: ouvrir dans Coolify
+        deploy_kinds:
+          webhook: webhook git
+          restart: redémarrage
+          rollback: retour arrière
+        deploy_statuses:
+          finished: réussi
+          failed: échec
+          in_progress: en cours
+          queued: en attente
+          cancelled-by-user: annulé
         state: État
         no_health_check: "« En cours » sans « sain » : la ressource n'a pas de health check dans Coolify, qui ne sait donc pas si elle répond."
         none: Aucune ressource

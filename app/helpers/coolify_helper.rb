@@ -38,6 +38,22 @@ module CoolifyHelper
     (Array(data["images"]).first || data["image"]).presence
   end
 
+  # The application's page in its Coolify instance, or nil.
+  def coolify_url(resource)
+    path = resource.data["coolify_path"] or return
+    base = resource.connection.value(:url).to_s.chomp("/")
+    "#{base}#{path}" if Integration.http_url?(base) && path.match?(%r{\A/[\w/-]+\z})
+  end
+
+  # "il y a 5 h" + a "failed" badge, for the last deployment of an application.
+  def coolify_last_deploy(resource)
+    deployment = resource.last_deployment or return tag.span("—", class: "text-ink-3")
+
+    at = deployment["finished_at"] || deployment["at"]
+    safe_join([ (relative_time_tag(Time.zone.parse(at)) if at),
+                (status_badge(:crit, t("integrations.coolify.server_tab.deploy_failed"), class: "ml-1 deploy-failed") if deployment["status"] == "failed") ].compact)
+  end
+
   def coolify_domain_links(resource, limit: 2)
     domains = resource.domains
     return tag.span(t("coolify_helper.no_domain"), class: "text-ink-3") if domains.empty?
