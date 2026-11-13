@@ -120,6 +120,8 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     Activity.record!(:server_unreachable, server: servers(:web))
     assert_english activities_path, except: data
     assert_english tasks_path, except: data
+    assert_english activities_path(q: "web", from: "2026-01-01"), except: data
+    assert_english tasks_path(q: "web"), except: data
     assert_english settings_automations_path, except: data
     assert_english settings_notifications_path, except: data
     assert_english new_settings_notification_channel_path, except: data
@@ -191,6 +193,12 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english coolify_path, except: coolify_data
     assert_english server_path(servers(:web), tab: "coolify"), except: coolify_data
     assert_english settings_integrations_path, except: data
+
+    manual = Integration.find_or_initialize_by(kind: "manual_dns").tap { |integration| integration.update!(enabled: true) }
+    office = manual.connections.create!(name: "Office", settings: { "records" => "name,type,value\nwww.example.test,A,203.0.113.10" })
+    assert_english edit_settings_integration_path("manual_dns"), except: data
+    assert_english new_settings_integration_connection_path("manual_dns"), except: data
+    assert_english edit_settings_integration_connection_path("manual_dns", office), except: data + [ "h2", "textarea" ]
   end
 
   test "the check finds French" do

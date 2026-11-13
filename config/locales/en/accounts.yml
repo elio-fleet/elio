@@ -156,8 +156,6 @@ en:
       mandatory_operators: Two-factor authentication is mandatory for operators.
       mandatory_both: Two-factor authentication is mandatory for administrators and operators.
       optional: Two-factor authentication is optional for everyone.
-  account_keys:
-    create:
-      claimed: "“%{name}” is your key."
-    destroy:
-      released: "“%{name}” is no longer your key."
+  account_keys_controller:
+    claimed: "“%{name}” is your key."
+    released: "“%{name}” is no longer your key."

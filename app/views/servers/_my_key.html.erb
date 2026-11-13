@@ -3,7 +3,7 @@
 <% my_keys = current_user.public_keys.to_a %>
 <% active = my_keys.any? ? server.temporary_accesses.active.where(public_key: my_keys).order(:expires_at).first : nil %>
 <% dialog_id = dom_id(server, :my_key) %>
-<% other_accounts = AccountSnapshot.where(server: server).where.not(unix_user: server.username).pluck(:unix_user).sort_by { |user| [ user == "root" ? 0 : 1, user ] } %>
+<% other_accounts = AuthorizedKeysAccount.others(server) %>
 <% accounts = [ [ t(".login_account", user: server.username), server.username ], *(other_accounts.map { |user| [ user, user ] } unless server.privilege == "none") ] %>
 
 <% if my_keys.empty? %>

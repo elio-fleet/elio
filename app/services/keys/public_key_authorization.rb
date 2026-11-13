@@ -23,9 +23,10 @@ class Keys::PublicKeyAuthorization
       if account.login?
         ssh.run_command!(replace ? "keys.replace" : "keys.append", line: line, blob: key.key).stdout
       elsif ssh.privileged?
-        result = ssh.run_command(replace ? "keys.replace_in_account" : "keys.append_to_account", user: account.unix_user, line: line, blob: key.key)
+        command = replace ? "keys.replace_in_account" : "keys.append_to_account"
+        result = ssh.run_command(command, user: account.unix_user, line: line, blob: key.key)
         next ACCOUNT_REFUSALS.fetch(result.exit_status) if ACCOUNT_REFUSALS.key?(result.exit_status)
-        raise Ssh::Connection::CommandError.new("keys.append_to_account", result) unless result.success?
+        raise Ssh::Connection::CommandError.new(command, result) unless result.success?
 
         result.stdout
       else
@@ -52,5 +53,4 @@ class Keys::PublicKeyAuthorization
   # The command sent (config/ssh_commands.yml: keys.append / keys.replace),
   # also run locally by the tests.
   def self.command(line, blob, replace: false) = Ssh::Commands.render(replace ? "keys.replace" : "keys.append", line: line, blob: blob)
-  def self.account_command(user, line, blob, replace: false) = Ssh::Commands.render(replace ? "keys.replace_in_account" : "keys.append_to_account", user: user, line: line, blob: blob)
 end

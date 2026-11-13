@@ -8,13 +8,13 @@ class AccountKeysController < ApplicationController
     public_key = PublicKey.of_kind("person").unowned.find(params.expect(:public_key_id))
     public_key.update!(user: current_user)
     Activity.record!(:public_key_owner_changed, public_key: public_key, fingerprint: public_key.fingerprint, owner: current_user.email)
-    redirect_to account_path(anchor: "my-keys"), notice: t(".claimed", name: public_key.name), status: :see_other
+    redirect_to account_path(anchor: "my-keys"), notice: t("account_keys_controller.claimed", name: public_key.name), status: :see_other
   end
 
   def destroy
     public_key = current_user.public_keys.find(params[:id])
     public_key.update!(user: nil)
     Activity.record!(:public_key_owner_changed, public_key: public_key, fingerprint: public_key.fingerprint, owner: nil)
-    redirect_to account_path(anchor: "my-keys"), notice: t(".released", name: public_key.name), status: :see_other
+    redirect_to account_path(anchor: "my-keys"), notice: t("account_keys_controller.released", name: public_key.name), status: :see_other
   end
 end

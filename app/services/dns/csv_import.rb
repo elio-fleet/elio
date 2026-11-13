@@ -31,12 +31,13 @@ module Dns::CsvImport
     rows, refused, seen = [], [], Set.new
     columns = COLUMNS
     lines = text.to_s.each_line.first(MAX_LINES)
+    header_line = first_line(lines)
     lines.each.with_index(1) do |raw, number|
       line = raw.strip
       next if line.empty? || line.start_with?("#")
 
       cells = cells(line)
-      if number == first_line(lines) && header?(cells)
+      if number == header_line && header?(cells)
         columns = cells.map(&:downcase)
         next
       end

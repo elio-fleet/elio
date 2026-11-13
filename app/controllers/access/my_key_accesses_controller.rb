@@ -10,19 +10,17 @@ class MyKeyAccessesController < ApplicationController
 
   def create
     public_key = current_user.public_keys.find_by(id: params[:public_key_id]) || current_user.public_keys.first
-    return redirect_to(account_path(anchor: "my-keys"), alert: t(".no_key"), status: :see_other) unless public_key
+    return redirect_to(account_path(anchor: "my-keys"), alert: t("my_key_accesses_controller.no_key"), status: :see_other) unless public_key
 
     account = AuthorizedKeysAccount.for(@server, params[:account]) or return back_with(:alert, t("server_authorizations_controller.invalid_account"))
-    duration = TemporaryAccess.duration_for(params[:duration].presence || DEFAULT_DURATION)
+    duration = requested_duration
     result = Keys::AccessGrant.call(@server, public_key, account: account, duration: duration)
 
     if result.success?
-      back_with(:notice, t(".added", name: public_key.name, account: account.unix_user, label: TemporaryAccess.label_for(duration), time: l(duration.from_now, format: :short)))
+      back_with(:notice, t("my_key_accesses_controller.added", name: public_key.name, account: account.unix_user, label: TemporaryAccess.label_for(duration), time: l(duration.from_now, format: :short)))
     else
-      back_with(:alert, t(".failed", error_title: result.error_title, error_details: result.error_details))
+      back_with(:alert, t("my_key_accesses_controller.add_failed", error_title: result.error_title, error_details: result.error_details))
     end
-  rescue ArgumentError
-    raise ActionController::BadRequest, "Invalid duration"
   end
 
   def destroy
@@ -31,13 +29,20 @@ class MyKeyAccessesController < ApplicationController
 
     if result.success?
       access.end!
-      back_with(:notice, t(".removed", name: access.public_key&.name, account: access.unix_user))
+      back_with(:notice, t("my_key_accesses_controller.removed", name: access.public_key&.name, account: access.unix_user))
     else
-      back_with(:alert, t(".failed", error_title: result.error_title, error_details: result.error_details))
+      back_with(:alert, t("my_key_accesses_controller.remove_failed", error_title: result.error_title, error_details: result.error_details))
     end
   end
 
   private
+
+  # One of TemporaryAccess::DURATIONS, an hour by default.
+  def requested_duration
+    TemporaryAccess.duration_for(params[:duration].presence || DEFAULT_DURATION)
+  rescue ArgumentError
+    raise ActionController::BadRequest, "Invalid duration"
+  end
 
   def set_server
     @server = Server.find(params[:server_id])
