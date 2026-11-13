@@ -26,6 +26,8 @@ class Integrations::Coolify < Integrations::Base
         Integrations::Field.new(key: :alert_resources, label: I18n.t("integrations.coolify.alert_resources"), type: :boolean, default: true, section: section,
                                 hint: I18n.t("integrations.coolify.alert_resources_hint", count: STOPPED_FOR_DAYS)),
         Integrations::Field.new(key: :alert_server_unreachable, label: I18n.t("integrations.coolify.alert_server_unreachable"), type: :boolean, default: true, section: section),
+        Integrations::Field.new(key: :alert_dns, label: I18n.t("integrations.coolify.alert_dns"), type: :boolean, default: true, section: section,
+                                hint: I18n.t("integrations.coolify.alert_dns_hint")),
         Integrations::Field.new(key: :alert_no_health_check, label: I18n.t("integrations.coolify.alert_no_health_check"), type: :boolean, default: false, section: section,
                                 hint: I18n.t("integrations.coolify.alert_no_health_check_hint"))
       ]
@@ -82,7 +84,7 @@ class Integrations::Coolify < Integrations::Base
       servers = resources.select { |resource| resource.kind == "server" }
       unreachable = integration.value(:alert_server_unreachable) ? servers.reject { |coolify| coolify.data["reachable"] != false && coolify.data["usable"] != false } : []
       unreachable.map { |coolify| reason("crit", :server_unreachable, team: coolify.connection.label) } +
-        resource_reasons(integration, resources) + deploys + resources.select { |resource| resource.kind == "database" }.filter_map do |database|
+        resource_reasons(integration, resources) + dns_reasons(integration, server) + deploys + resources.select { |resource| resource.kind == "database" }.filter_map do |database|
         case database.backup_state(max_age)
         when :failed then reason("crit", :backup_failed, database: database.name) if integration.value(:alert_backups)
         when :late then reason("warn", :backup_late, database: database.name, count: max_age.round) if integration.value(:alert_backups)
@@ -111,6 +113,16 @@ class Integrations::Coolify < Integrations::Base
                  .each { |application| reasons << reason("warn", :no_health_check, name: application.name) }
       end
       reasons
+    end
+
+    # A domain served here whose DNS points elsewhere, or has no record in a
+    # zone Elio reads (with a DNS extension: OVHcloud, Technitium, Gandi).
+    def dns_reasons(integration, server)
+      return [] unless integration.value(:alert_dns) && Dns.enabled?
+
+      Integrations::Coolify::DomainCheck.new(server).problems.map do |domain|
+        domain.state == :missing ? reason("warn", :dns_missing, domain: domain.name) : reason("warn", :dns_elsewhere, domain: domain.name, targets: domain.targets.first(3).join(", "))
+      end
     end
 
     def reason(tone, key, **params) = Inventory::HealthStatus.reason(tone, "integrations.coolify.health.#{key}", **params)

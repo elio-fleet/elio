@@ -68,6 +68,7 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] td.font-mono", "main @ 623a4be"
     assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] td.font-mono", "main"
     assert_select "#coolify-resources", text: /pas de health check/
+    assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] .coolify-domain[data-dns]", 0, "no DNS source: not checked"
     assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] a[href=?]",
                   "https://coolify.example.com/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001", text: "api-facturation"
     assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] .deploy-failed", "échec"
