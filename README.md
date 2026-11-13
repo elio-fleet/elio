@@ -123,7 +123,7 @@ Supported: **Debian and Ubuntu** (others get health and system only), Docker, sn
 | For | Commands (read-only) |
 |---|---|
 | System, network | `/etc/os-release`, `uname`, `hostname`, `systemd-detect-virt`, `/proc`, `timedatectl`, `ip -j addr`, `ip -j link` |
-| Health | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed`, `apt-get -s dist-upgrade` (simulation) |
+| Health | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (and `show` of the failed units), `apt-get -s dist-upgrade` (simulation) |
 | Packages | `dpkg-query -W`, `apt list --upgradable`, `snap list` |
 | Services, scheduled tasks | `systemctl list-units`, `list-unit-files`, `show` of the timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (state, health, restarts — **never the environment variables**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` if installed, `docker cp` of `os-release` and the dpkg status |

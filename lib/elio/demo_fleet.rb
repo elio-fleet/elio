@@ -70,7 +70,11 @@ module Elio
       seed("web-prod-2", "198.51.100.11", "deploy", "ubuntu2404", groups: [ production ],
            health: { "reboot_required" => false, "ntp_synchronized" => true, "updates" => { "total" => 3, "security" => 0 } }.merge(disk("/", 52.0, 50.gigabytes)))
       db = seed("db-prod", "198.51.100.20", "admin", "debian12", groups: [ production ])
-      seed("worker-1", "198.51.100.30", "deploy", "ubuntu2204", groups: [ production ], health: { "ntp_synchronized" => true }.merge(disk("/", 61.0, 80.gigabytes)))
+      seed("worker-1", "198.51.100.30", "deploy", "ubuntu2204", groups: [ production ],
+           health: { "ntp_synchronized" => true, "failed_units" => %w[queue-consumer.service mnt-archive.mount],
+                     "failed_units_details" => [ { "name" => "queue-consumer.service", "description" => "Queue consumer", "result" => "exit-code", "since" => 3.hours.ago.utc.iso8601 },
+                                                 { "name" => "mnt-archive.mount", "description" => "Archive share", "result" => "exit-code", "since" => 2.days.ago.utc.iso8601 } ] }
+                     .merge(disk("/", 61.0, 80.gigabytes)))
       backup = seed("backup", "198.51.100.40", "root", "debian12", groups: [ infra ], health: { "failed_units" => [] }.merge(disk("/srv/backup", 83.0, 2.terabytes)))
       seed("monitoring", "198.51.100.50", "root", "debian12", groups: [ infra ],
            health: { "failed_units" => [], "updates" => { "total" => 2, "security" => 0 } }.merge(disk("/", 38.0, 100.gigabytes)))
