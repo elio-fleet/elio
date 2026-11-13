@@ -219,13 +219,22 @@ en:
       alert_no_backup: Alert when a database has no scheduled backup
       alert_deploy_failed: Alert when the last deployment of an application failed
       alert_deploy_failed_hint: until the next successful deployment
+      alert_resources: Alert when a resource is stopped or unhealthy
+      alert_resources_hint: "except the ones stopped for more than %{count} days (probably on purpose)"
+      alert_server_unreachable: Alert when Coolify can no longer reach or use a server
+      alert_no_health_check: Alert when an application has no health check
+      alert_no_health_check_hint: "“running” then does not say whether it answers"
       health:
-        deploy_failed: "Coolify deployment of %{application} failed"
-        backup_failed: "Coolify backup of %{database} failed"
+        stopped: "Coolify: %{name} stopped (%{kind})"
+        unhealthy: "Coolify: %{name} unhealthy (%{kind})"
+        server_unreachable: "Coolify: can no longer reach or use this server (team %{team})"
+        no_health_check: "Coolify: application %{name} has no health check"
+        deploy_failed: "Coolify: deployment of %{application} failed"
+        backup_failed: "Coolify: backup of %{database} failed"
         backup_late:
-          one: "Coolify backup of %{database}: none succeeded for %{count} hour"
-          other: "Coolify backup of %{database}: none succeeded for %{count} hours"
-        no_backup: "Coolify database %{database} has no scheduled backup"
+          one: "Coolify: no backup of %{database} succeeded for %{count} hour"
+          other: "Coolify: no backup of %{database} succeeded for %{count} hours"
+        no_backup: "Coolify: database %{database} has no scheduled backup"
       backups:
         title: Database backups
         count:
