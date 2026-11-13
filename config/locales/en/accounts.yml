@@ -1,5 +1,15 @@
 en:
   accounts:
+    my_keys:
+      title: My SSH keys
+      intro: The keyring keys that are yours. The "Add my key temporarily" button of a server uses them.
+      none: No key is yours yet.
+      keyring_key: A keyring key
+      claim: It's my key
+      release: Not my key
+      release_confirm: "“%{name}” will no longer be your key. It stays in the keyring and on the servers."
+      missing_html: Your key is not in the keyring? %{link}, then come back here.
+      add_to_keyring: Add it
     language:
       title: Language
       hint: The language of the interface for you. Automatic follows your browser, else the language of this Elio.
@@ -146,3 +156,8 @@ en:
       mandatory_operators: Two-factor authentication is mandatory for operators.
       mandatory_both: Two-factor authentication is mandatory for administrators and operators.
       optional: Two-factor authentication is optional for everyone.
+  account_keys:
+    create:
+      claimed: "“%{name}” is your key."
+    destroy:
+      released: "“%{name}” is no longer your key."

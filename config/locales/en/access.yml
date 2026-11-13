@@ -26,6 +26,9 @@ en:
       delete_2: Delete %{public_key_name}
       key_will_removed_keyring: The key “%{public_key_name}” will be removed from the keyring. Where it is already installed, it stays in place.
     form:
+      owner: Owner
+      nobody: Nobody
+      owner_hint: The person whose key it is; they can add it to a server temporarily in one click. Everyone can also claim their keys from "My account".
       name: Name
       alice: Alice
       team_member: a team member
@@ -58,6 +61,7 @@ en:
       back_server: "← Back to the server"
       key_found_server_already: 'The key found on the server is already filled in: just choose a name.'
     show:
+      owner: "Key of %{email}"
       delete: Delete
       none: None
       added_keyring_html: "· added to the keyring %{created_at}"

@@ -39,6 +39,14 @@
     <%= f.text_field :description, placeholder: t(".work_laptop_github_actions"), class: input_class %>
   </div>
 
+  <% if can?(:administer) %>
+    <div class="public-key-owner">
+      <%= f.label :user_id, class: label_class do %><%= t(".owner") %> <span class="font-normal text-ink-3"><%= t(".optional") %></span><% end %>
+      <%= f.select :user_id, User.active.order(:email).map { |user| [ user.email, user.id ] }, { include_blank: t(".nobody") }, class: "#{input_class} sm:w-80" %>
+      <p class="mt-1 text-xs text-ink-3"><%= t(".owner_hint") %></p>
+    </div>
+  <% end %>
+
   <div class="flex items-center justify-end gap-3 pt-2">
     <%= link_to t(".cancel"), local_assigns[:return_to] || (public_key.persisted? ? public_key_path(public_key) : public_keys_path), class: "btn btn-ghost" %>
     <%= f.submit public_key.persisted? ? t(".save") : t(".add_keyring"), class: "btn btn-primary" %>

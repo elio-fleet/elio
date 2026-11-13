@@ -3,7 +3,8 @@
 
 <div class="max-w-5xl">
   <% subtitle = safe_join([ tag.span(@public_key.kind_label, class: "key-kind font-medium text-ink-2"), " ", t(".added_keyring_html", created_at: relative_time_tag(@public_key.created_at)),
-                            (tag.span(@public_key.description, class: "key-description block text-ink-2") if @public_key.description) ].compact) %>
+                            (tag.span(@public_key.description, class: "key-description block text-ink-2") if @public_key.description),
+                            (tag.span(t(".owner", email: @public_key.user.email), class: "key-owner block text-ink-2") if @public_key.user) ].compact) %>
   <%= page_header @public_key.name, crumbs: [ [ t("nav.keyring"), public_keys_path ], @public_key.name ], subtitle: subtitle do %>
     <% if can?(:operate) %>
       <%= link_to edit_public_key_path(@public_key), class: "btn btn-secondary" do %><%= icon :pencil_square %> <%= t(".edit") %><% end %>

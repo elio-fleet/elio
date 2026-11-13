@@ -76,7 +76,8 @@ class PublicKeysController < ApplicationController
     @public_key = PublicKey.find(params[:id])
   end
 
+  # The owner ("my key") is chosen by an administrator; users claim their own keys on their account page.
   def public_key_params
-    params.expect(public_key: [ :name, :kind, :content, :description ])
+    params.expect(public_key: [ :name, :kind, :content, :description, *(:user_id if can?(:administer)) ])
   end
 end

@@ -26,6 +26,9 @@ fr:
       delete_2: Supprimer %{public_key_name}
       key_will_removed_keyring: La clé « %{public_key_name} » sera retirée du trousseau. Là où elle est déjà installée, elle reste en place.
     form:
+      owner: Propriétaire
+      nobody: Personne
+      owner_hint: La personne dont c'est la clé ; elle pourra l'ajouter temporairement sur un serveur en un clic. Chacun peut aussi déclarer ses clés depuis « Mon compte ».
       name: Nom
       alice: Alice
       team_member: un membre de l'équipe
@@ -58,6 +61,7 @@ fr:
       back_server: "← Retour au serveur"
       key_found_server_already: 'La clé trouvée sur le serveur est déjà remplie : choisissez simplement un nom.'
     show:
+      owner: "Clé de %{email}"
       delete: Supprimer
       none: Aucun
       added_keyring_html: "· ajoutée au trousseau %{created_at}"
