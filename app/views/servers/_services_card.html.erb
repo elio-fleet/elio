@@ -1,6 +1,14 @@
 <%# Services of the server from its last inventory (Inventory::Collectors::Services): the systemd units; the containers are in the Docker tab. %>
 <% snapshot = server.inventory("services") %>
 <% data = snapshot&.collected? ? snapshot.data : nil %>
+<%# The health reading (more frequent, every kind of unit) knows since when a unit failed, and the failed units
+    that are not services (mount, socket…) or that failed after the services inventory. %>
+<% health = server.inventory("health") %>
+<% health_data = health&.collected? ? health.data : {} %>
+<% details = Array(health_data["failed_units_details"]).index_by { |detail| detail["name"] } %>
+<% health_failed = Array(health_data["failed_units"]).map do |name|
+     { "name" => name, "active" => "failed", "description" => details.dig(name, "description"), "since" => details.dig(name, "since"), "seen_at" => health.collected_at }
+   end %>
 <section id="server-services" class="card">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :list_bullet, class: "h-4 w-4 text-ink-3" %> Services</h2>
@@ -13,15 +21,8 @@
   <% if data && snapshot.status != "unsupported" %>
     <% units = Array(data["units"]) %>
     <% failed = units.select { |unit| unit["active"] == "failed" } %>
-    <%# The health reading (more frequent, every kind of unit) knows since when a unit failed, and the failed units
-        that are not services (mount, socket…) or that failed after this inventory. %>
-    <% health = server.inventory("health") %>
-    <% health_data = health&.collected? ? health.data : {} %>
-    <% details = Array(health_data["failed_units_details"]).index_by { |detail| detail["name"] } %>
     <% failed = failed.map { |unit| details[unit["name"]] ? unit.merge("since" => details[unit["name"]]["since"]) : unit } %>
-    <% failed += (Array(health_data["failed_units"]) - failed.map { |unit| unit["name"] }).map do |name|
-         { "name" => name, "active" => "failed", "description" => details.dig(name, "description"), "since" => details.dig(name, "since"), "seen_at" => health.collected_at }
-       end %>
+    <% failed += health_failed.reject { |unit| failed.any? { |listed| listed["name"] == unit["name"] } } %>
     <% active = units.select { |unit| unit["active"] == "active" } %>
     <% others = units.reject { |unit| unit["active"].in?(%w[failed active]) } %>
     <% containers = Array(data["containers"]) %>
@@ -57,6 +58,9 @@
         <%= link_to t(".see_docker_tab"), server_path(server, tab: "docker"), class: "font-medium text-accent hover:underline" %>
       </p>
     <% end %>
+  <% elsif health_failed.any? %>
+    <ul class="divide-y divide-line border-b border-line"><%= render partial: "servers/systemd_unit", collection: health_failed, as: :unit %></ul>
+    <p class="services-empty px-4 py-3 text-sm text-ink-3"><%= snapshot&.failed? || snapshot&.status == "unsupported" ? snapshot.message : t(".services_inventory_yet") %></p>
   <% elsif snapshot&.status == "unsupported" %>
     <p class="services-empty px-4 py-4 text-sm text-ink-3"><%= snapshot.message %></p>
   <% elsif snapshot&.failed? %>

@@ -50,6 +50,17 @@ class ServerServicesCardTest < ActionDispatch::IntegrationTest
     assert_select "a.tab", text: /Services\s*2/
   end
 
+  test "without a services inventory, the failed units of the health reading are listed anyway" do
+    servers(:web).inventory_snapshots.create!(category: "health", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                              data: { "failed_units" => %w[mnt-archive.mount] })
+    sign_in users(:viewer)
+
+    get server_path(servers(:web), tab: "services")
+
+    assert_select "#server-services li.systemd-unit[data-state=failed]", text: /mnt-archive\.mount.*vu au relevé de santé/m
+    assert_select "#server-services .services-empty", "Pas encore d'inventaire des services."
+  end
+
   test "explains unreadable containers" do
     collect(parsed.merge("docker" => "unreadable", "containers" => []), status: "partial", message: "Conteneurs Docker illisibles : permission denied")
     sign_in users(:viewer)
