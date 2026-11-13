@@ -36,14 +36,14 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 
 | | |
 |---|---|
-| **Santé** | Charge, mémoire, swap, disques et inodes, redémarrage requis, services en échec, horloge, mises à jour en attente — avec vos seuils et 30 jours d'historique. |
+| **Santé** | Charge, mémoire, swap, disques et inodes, redémarrage requis, unités en échec (par leur nom, depuis quand), horloge, mises à jour en attente — avec vos seuils et 30 jours d'historique. |
 | **Inventaire** | Système et date de fin de support, adresses réseau (WireGuard compris), paquets (dpkg, snap), services systemd, **Docker** (conteneurs, images, projets Compose), **tâches planifiées** (cron, timers systemd), ports en écoute, et un onglet **Firewall** : le firewall du serveur (ufw, nftables, iptables) et celui d'OVHcloud côte à côte pour chaque port public, avec des règles ufw à copier — SSH ouvert seulement aux sources que vous listez, IPv6 entrant bloqué si vous le voulez. |
 | **Vulnérabilités** | Les CVE de chaque paquet, d'après le Debian Security Tracker et les données OSV d'Ubuntu, rapprochées de l'inventaire — aucune commande de plus sur les serveurs ; les paquets signés (grub, shim, noyau, fwupd) comparés au code qu'ils signent. Regroupées **par paquet, avec la mise à jour à faire**, celles du serveur à part de celles de ses images Docker, et **les commandes pour corriger une CVE** (`apt-get install --only-upgrade …`, ou `docker compose pull` et `up -d` pour une image) — à copier, jamais lancées par Elio. Notes de NVD, Red Hat et CVE.org (ou de vos propres fournisseurs), exploitation d'après EPSS et le catalogue CISA KEV. |
 | **Docker** | Conteneurs en mauvaise santé ou qui redémarrent en boucle, un **état Docker** par serveur, à part de sa santé, images par serveur, **nouvelles versions publiées sur les registres** (Docker Hub, GHCR, Quay, registres privés), vulnérabilités des images (Trivy ou Grype s'ils sont installés, sinon le rapprochement d'Elio) dans un onglet **CVE** : par image, avec les serveurs et conteneurs qui l'utilisent. |
-| **Clés SSH** | Un trousseau commun (personnes et machines), des clés ajoutées ou retirées d'un serveur en un clic, des **accès temporaires** qui expirent tout seuls, **les clés de tous les comptes** d'un serveur (avec root), les clés inconnues signalées et réunies dans une liste **Hors trousseau**, la rotation de la clé d'Elio sans coupure. |
-| **Alertes** | Ce qui demande votre attention, par gravité, sur la vue d'ensemble, chacun avec quoi faire ; un journal des événements ; notifications Slack, Discord, email ou webhook signé, regroupées par type (les critiques tout de suite) ; résumé quotidien. |
+| **Clés SSH** | Un trousseau commun (personnes et machines), des clés ajoutées ou retirées d'un serveur en un clic — sur le compte d'Elio ou, avec root, **n'importe quel compte** —, des **accès temporaires** qui expirent tout seuls, **« Ajouter ma clé »** : votre propre clé sur un serveur pour une heure en un clic, **les clés de tous les comptes** d'un serveur (avec root), les clés inconnues signalées et réunies dans une liste **Hors trousseau**, la rotation de la clé d'Elio sans coupure. |
+| **Alertes** | Ce qui demande votre attention, par gravité, sur la vue d'ensemble, chacun avec quoi faire ; un **journal des événements avec une recherche** (texte et période) ; notifications Slack, Discord, email ou webhook signé, regroupées par type (les critiques tout de suite) ; résumé quotidien. |
 | **Automatisations** | Chaque collecte tourne à la fréquence voulue, sur tout le parc ou par groupe, suivie en direct dans l'onglet *Exécutions* du *Journal*. |
-| **Extensions** | **Uptime Kuma** (sondes rattachées à chaque serveur), **OVHcloud** (IP, firewall réseau, enregistrements DNS, services), **Technitium DNS** (zones et enregistrements) et **Gandi** (enregistrements LiveDNS, domaines et leur expiration), en lecture seule, avec **un DNS du parc** et des **prompts pour une IA** (sondes à créer, règles de firewall) qui se terminent par vos propres consignes. |
+| **Extensions** | **Uptime Kuma** (sondes rattachées à chaque serveur), **OVHcloud** (IP, firewall réseau, enregistrements DNS, services), **Technitium DNS** (zones et enregistrements), **Gandi** (enregistrements LiveDNS, domaines et leur expiration), **Coolify** (ce qu'il fait tourner sur chaque serveur, déploiements, sauvegardes ; une connexion par équipe) et des **sources DNS manuelles** (enregistrements collés en CSV), en lecture seule, avec **un DNS du parc** et des **prompts pour une IA** (sondes à créer, règles de firewall) qui se terminent par vos propres consignes. |
 | **Équipe** | Rôles (admin, opérateur, lecture), invitations, double authentification obligatoire, **des notes sur chaque serveur** (Markdown) dans son journal, recherche ⌘K partout, thèmes clair et sombre, la même mise en page partout (un seul Enregistrer par page de paramètres, les actions dangereuses derrière un menu et une confirmation). |
 
 | | |
@@ -123,12 +123,12 @@ Pris en charge : **Debian et Ubuntu** (les autres systèmes : santé et système
 | Pour | Commandes (lecture seule) |
 |---|---|
 | Système, réseau | `/etc/os-release`, `uname`, `hostname`, `systemd-detect-virt`, `/proc`, `timedatectl`, `ip -j addr`, `ip -j link` |
-| Santé | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed`, `apt-get -s dist-upgrade` (simulation) |
+| Santé | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (et `show` des unités en échec), `apt-get -s dist-upgrade` (simulation) |
 | Paquets | `dpkg-query -W`, `apt list --upgradable`, `snap list` |
 | Services, tâches planifiées | `systemctl list-units`, `list-unit-files`, `show` des timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (état, santé, redémarrages — **jamais les variables d'environnement**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` s'ils sont installés, `docker cp` de `os-release` et de l'état dpkg |
 | Ports | `ss -tulpn`, `/proc/<pid>/cgroup`, `ufw status verbose`, `nft list ruleset`, `iptables -S INPUT` |
-| Clés SSH | lecture de `~/.ssh/authorized_keys` (avec root, de chaque compte qui a un shell — jamais à travers un lien, ni un fichier qui n'appartient pas au compte) ; **écriture seulement** quand vous ajoutez une clé (au compte d'Elio) ou en retirez une |
+| Clés SSH | lecture de `~/.ssh/authorized_keys` (avec root, de chaque compte qui a un shell — jamais à travers un lien, ni un fichier qui n'appartient pas au compte) ; **écriture seulement** quand vous ajoutez une clé (au compte d'Elio, ou avec root à un autre compte existant : son `~/.ssh` est créé s'il manque, jamais le compte) ou en retirez une |
 
 Elio **ne modifie jamais le firewall** et n'installe rien : les règles ufw suggérées et les commandes de mise à jour sont à relire et à lancer vous-même.
 
@@ -160,7 +160,7 @@ Le client OVH d'Elio ne connaît que la méthode GET : il ne peut pas écrire, q
 
 ### DNS du parc
 
-Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS, Gandi) alimentent **un seul DNS du parc** :
+Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS, Gandi) et les [sources manuelles](#dns-manuel) alimentent **un seul DNS du parc** :
 - chaque enregistrement A, AAAA et CNAME est rattaché à son serveur de la même façon, quelle que soit sa source : un rattachement manuel **par nom** (valable pour toutes les sources), l'IP d'un enregistrement A / AAAA, ou un CNAME vers un nom de n'importe quelle source ;
 - un seul onglet **DNS** sur chaque serveur et une seule page **DNS** (filtres par source, zone, *hors du parc*, *non rattachés*, *diffère selon la source*), avec la source de chaque enregistrement ;
 - un nom dont les enregistrements diffèrent selon la source (une IP publique chez OVH, une IP privée dans Technitium) est signalé *diffère selon la source* ;
@@ -179,6 +179,29 @@ Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS,
 - **Réglage** : un **jeton d'accès personnel** créé dans l'admin Gandi (*Organisations → Jetons d'accès personnels*) avec **seulement les droits de voir les domaines et leurs enregistrements DNS** (LiveDNS), et une expiration que vous renouvellerez ; en option l'ID de l'organisation propriétaire des domaines (sinon Gandi ne liste que ceux de votre organisation personnelle). *Tester la connexion* donne les domaines lisibles et ceux sur LiveDNS.
 - Toutes les heures, Elio lit les enregistrements **A, AAAA et CNAME** des domaines servis par LiveDNS (tous, ou ceux que vous listez) et les envoie au [DNS du parc](#dns-du-parc) ; la page de réglages liste vos domaines avec leur date d'expiration et leur renouvellement automatique, et une alerte en option signale un domaine qui va expirer.
 - Elio n'envoie que des requêtes `GET` à `https://api.gandi.net/v5/`, le jeton dans un en-tête `Authorization: Bearer`.
+
+### Coolify
+
+- **Mise en place** : une **connexion par équipe Coolify** — un jeton d'API Coolify ne voit que son équipe, et l'API ne permet pas de lister les autres. Pour chaque équipe : dans Coolify, *Settings → Advanced* active *API access* (ajoutez l'adresse d'Elio dans *Allowed API IPs* si ce champ est rempli) ; passez sur l'équipe, puis *Keys & Tokens → API Tokens*, un jeton avec la seule permission **`read`**. Dans Elio, *Paramètres → Extensions → Coolify → Ajouter une connexion* : l'adresse de l'instance et le jeton. Les connexions d'une même instance sont regroupées ; plusieurs instances sont possibles. *Tester la connexion* donne l'équipe, la version et les serveurs, et **prévient si le jeton peut lire les secrets** (`read:sensitive` ou `root`) — créez alors un jeton `read`.
+- Toutes les 15 minutes, Elio lit chaque connexion : les **serveurs** (rattachés aux serveurs du parc par adresse, nom d'hôte ou nom ; le serveur qui héberge Coolify par le nom d'hôte de l'instance), chaque **application, service et base de données** avec son projet, son environnement, ses domaines, la version déployée et son état, les **derniers déploiements**, les **sauvegardes planifiées** des bases avec leurs dernières exécutions, et les **clés SSH** de l'équipe (partie publique seulement).
+- Un onglet **Coolify** sur chaque serveur que Coolify gère (ressources, déploiements récents, sauvegardes ; chaque application mène à sa page dans Coolify) et une page **Coolify** pour tout le parc. Dans l'**onglet Docker**, un conteneur créé par Coolify montre le nom de sa ressource au lieu de son nom généré ; un port qu'il publie montre sa ressource dans l'onglet Firewall, la page Ports et les prompts. Les déploiements vont dans le **journal du serveur** quand ils se terminent. La clé SSH de Coolify est nommée dans l'onglet des clés au lieu de *hors du trousseau*. Le prompt des sondes liste les domaines que Coolify sert, avec leur health check et leur sonde existante.
+- Alertes au choix : sauvegarde de base en échec ou en retard (26 heures par défaut), base sans sauvegarde planifiée, dernier déploiement en échec, ressource arrêtée (sauf depuis plus de 30 jours) ou en mauvaise santé, serveur que Coolify ne joint plus ou ne peut plus utiliser, base rendue publique, domaine servi par Coolify dont le DNS pointe ailleurs ou n'a pas d'enregistrement (avec une extension DNS), clé de Coolify sur un serveur qu'il ne gère pas, et application sans health check (désactivée par défaut).
+- Elio n'envoie que des requêtes `GET` à `<instance>/api/v1/`, le jeton dans un en-tête `Authorization: Bearer`. Il ne lit jamais les variables d'environnement, les fichiers Compose ni les journaux de sauvegarde (un jeton `read` les reçoit masqués de toute façon). Essayé sur une vraie instance Coolify 4.6.0 avec deux équipes.
+
+### DNS manuel
+
+- Pour un DNS qui n'a pas d'extension (un résolveur interne, un registrar qu'Elio ne lit pas) : *Paramètres → Extensions → DNS manuel → Ajouter une source*, donnez-lui un nom et collez **tous ses enregistrements en CSV** :
+
+  ```csv
+  name,type,value,ttl
+  www.example.com,A,203.0.113.10,3600
+  www.example.com,AAAA,2001:db8::10
+  shop.example.com,CNAME,www.example.com
+  ```
+
+  `,` `;` ou une tabulation entre les colonnes ; l'en-tête est facultative (colonnes `name`, `type`, `value`, `ttl`, `zone`, dans n'importe quel ordre) ; A, AAAA et CNAME ; lignes vides et commençant par `#` ignorées. Sans colonne `zone`, la zone est formée des deux derniers niveaux du nom.
+- *Aperçu* montre ce qui sera lu et chaque ligne refusée avec sa raison, sans rien enregistrer. **Chaque enregistrement remplace tous ceux de la source** : collez à nouveau toute la liste pour la mettre à jour. Supprimer la source supprime ses enregistrements.
+- Ses enregistrements vont dans le [DNS du parc](#dns-du-parc), sous le nom de la source ; chaque changement est noté dans le journal.
 
 ## Sécurité
 

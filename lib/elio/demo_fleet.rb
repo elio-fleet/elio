@@ -142,6 +142,13 @@ module Elio
         { zone: "example.org", name: "api.example.org", record_type: "A", value: "198.51.100.10" },
         { zone: "example.org", name: "n8n.example.org", record_type: "A", value: "192.0.2.80" }
       ])
+      # A manual DNS source (the office's internal names), pasted as CSV.
+      manual = Integration.find_or_initialize_by(kind: "manual_dns").tap { |integration| integration.update!(enabled: true) }
+      office = manual.connections.find_or_initialize_by(name: "Office")
+      office.assign_form("records" => "name,type,value\nworker.office.example.internal,A,198.51.100.30\nprinter.office.example.internal,A,192.0.2.80\n" \
+                                      "jobs.office.example.internal,CNAME,worker.office.example.internal")
+      office.save!
+      office.sync!
       # Firewall: SSH only from Elio and the office (the Production group), an IPv6 not covered by the OVH firewall.
       elio_source = SshSource.create!(name: "Elio", cidr: "198.51.100.250", position: 0)
       SshSource.create!(name: "Office", cidr: "192.0.2.0/24", position: 1)
