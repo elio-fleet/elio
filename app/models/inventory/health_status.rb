@@ -50,7 +50,8 @@ class Inventory::HealthStatus
   # 2: Docker (containers, images and their CVEs) moved to Inventory::DockerStatus.
   # 3: no "OVH firewall disabled" reason for IPv6 blocks (OVH has no firewall for IPv6).
   # 4: Coolify backups (integrations.coolify.health.*).
-  VERSION = 4
+  # 5: failed units named (health.units_failed / units_failed_more).
+  VERSION = 5
 
   def self.refresh_outdated!
     setting = AppSetting.current
