@@ -8,5 +8,7 @@
   <span class="w-24 shrink-0"><%= status_badge tone, label %></span>
   <span class="font-mono text-xs"><%= unit["name"].delete_suffix(".service") %></span>
   <% if unit["enabled"] == "enabled" %><span class="badge bg-subtle text-ink-3"><%= t(".boot") %></span><% end %>
+  <% if unit["since"] %><span class="unit-failed-since text-xs text-crit-ink"><%= t(".failed_since_html", time: relative_time_tag(Time.zone.parse(unit["since"]))) %></span><% end %>
+  <% if unit["seen_at"] %><span class="unit-seen-by-health text-xs text-ink-3" title="<%= t(".seen_by_health_hint") %>"><%= t(".seen_by_health_html", time: relative_time_tag(unit["seen_at"])) %></span><% end %>
   <span class="ml-auto truncate text-xs text-ink-3"><%= unit["description"] %></span>
 </li>

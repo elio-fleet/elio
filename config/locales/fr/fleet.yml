@@ -81,7 +81,7 @@ fr:
       edit: Modifier
       server_sections: Sections du serveur
       authorized_ssh_keys: Clés SSH autorisées
-      public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur, sur chaque compte qu'Elio peut lire. Les clés s'ajoutent au compte de connexion d'Elio.
+      public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur, sur chaque compte qu'Elio peut lire. Les clés s'ajoutent au compte de connexion d'Elio, ou à un autre compte si Elio a root.
       activity_server_yet: Aucune activité sur ce serveur pour le moment.
     row:
       load_over_24_h: Charge sur 24 h (en % des processeurs)
@@ -337,6 +337,7 @@ fr:
       dns: Voir le DNS
       hosting: Voir l'hébergement
       coolify: Voir Coolify
+      keys: Voir les clés
       connection: Tester la connexion
       disks: Voir les disques
       health: Voir la santé

@@ -11,6 +11,8 @@ class ActivitiesController < ApplicationController
     scope = scope.in_category(@category) if @category
     scope = scope.where(server: @server) if @server
     scope = scope.of_kind(@kind) if @kind
+    @search = JournalSearch.new(params)
+    scope = @search.apply(scope, Activity)
     @pager = paginate(scope, per_page: PER_PAGE)
     @activities = @pager.records
   end

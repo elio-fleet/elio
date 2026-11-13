@@ -28,6 +28,19 @@ class PublicKeyAccessesControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to new_user_session_path
   end
 
+  test "grants the public_key on another account of each server, the account name checked" do
+    sign_in users(:one)
+    stub_method_until_teardown(Keys::ServerScan, :call, ->(*, **) { Keys::ServerScan::Result.new(error_title: nil) })
+
+    stub_method(Keys::AccessGrant, :call, granter) do
+      post public_key_accesses_path(@public_key), params: { server_ids: [ servers(:web).id, servers(:db).id ], unix_user: "www-app" }, as: :turbo_stream
+      post public_key_accesses_path(@public_key), params: { server_ids: [ servers(:web).id ], unix_user: "../root" }
+    end
+
+    assert_equal [ [ "Database", "Alice", "www-app", nil ], [ "Web", "Alice", "www-app", nil ] ], @grants
+    assert_match "Nom de compte invalide", flash[:alert]
+  end
+
   test "grants the public_key on each selected server's login user" do
     sign_in users(:one)
 

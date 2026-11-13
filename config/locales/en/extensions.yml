@@ -264,12 +264,35 @@ en:
       alert_backups_hint: the backups scheduled in Coolify, database by database
       backup_max_age_hours: "Late: no successful backup for (hours)"
       alert_no_backup: Alert when a database has no scheduled backup
+      alert_deploy_failed: Alert when the last deployment of an application failed
+      alert_deploy_failed_hint: until the next successful deployment
+      alert_resources: Alert when a resource is stopped or unhealthy
+      alert_resources_hint: "except the ones stopped for more than %{count} days (probably on purpose)"
+      alert_server_unreachable: Alert when Coolify can no longer reach or use a server
+      alert_no_health_check: Alert when an application has no health check
+      alert_no_health_check_hint: "“running” then does not say whether it answers"
+      alert_dns: Alert when a domain served by Coolify does not point to its server
+      alert_dns_hint: from the DNS extensions (OVHcloud, Technitium, Gandi); a domain of a zone Elio does not read is not checked
+      alert_stale_key: Alert when the key of Coolify is on a server Coolify does not manage
+      alert_stale_key_hint: a forgotten access to remove, or a server to add in Coolify
+      key_detail: "team %{team} · %{instance}"
+      alert_public_database: Alert when a database is made public in Coolify
+      alert_public_database_hint: "“Make it publicly available” option: the database can be reached from the Internet on its port"
       health:
-        backup_failed: "Coolify backup of %{database} failed"
+        public_database: "Coolify: the database %{name} can be reached from the Internet (port %{port})"
+        stale_key: "Coolify: the key “%{name}” (%{detail}) is on this server, which Coolify does not manage"
+        dns_elsewhere: "Coolify: %{domain} is served here, but its DNS points to %{targets}"
+        dns_missing: "Coolify: %{domain} is served here, but has no DNS record"
+        stopped: "Coolify: %{name} stopped (%{kind})"
+        unhealthy: "Coolify: %{name} unhealthy (%{kind})"
+        server_unreachable: "Coolify: can no longer reach or use this server (team %{team})"
+        no_health_check: "Coolify: application %{name} has no health check"
+        deploy_failed: "Coolify: deployment of %{application} failed"
+        backup_failed: "Coolify: backup of %{database} failed"
         backup_late:
-          one: "Coolify backup of %{database}: none succeeded for %{count} hour"
-          other: "Coolify backup of %{database}: none succeeded for %{count} hours"
-        no_backup: "Coolify database %{database} has no scheduled backup"
+          one: "Coolify: no backup of %{database} succeeded for %{count} hour"
+          other: "Coolify: no backup of %{database} succeeded for %{count} hours"
+        no_backup: "Coolify: database %{database} has no scheduled backup"
       backups:
         title: Database backups
         count:
@@ -304,6 +327,20 @@ en:
         project: Project / environment
         domains: Domains
         version: Deployed version
+        last_deploy: Last deployment
+        deploy_failed: failed
+        deployments: Recent deployments
+        open_in_coolify: open in Coolify
+        deploy_kinds:
+          webhook: git webhook
+          restart: restart
+          rollback: rollback
+        deploy_statuses:
+          finished: succeeded
+          failed: failed
+          in_progress: in progress
+          queued: queued
+          cancelled-by-user: cancelled
         state: State
         no_health_check: "“Running” without “healthy”: the resource has no health check in Coolify, which does not know whether it answers."
         none: No resource
@@ -449,6 +486,8 @@ en:
       keydb: KeyDB
       dragonfly: Dragonfly
       clickhouse: ClickHouse
+    dns_elsewhere: "The DNS points to %{targets}, not to this server"
+    dns_missing: No DNS record for this domain
     no_domain: none
   coolify_resource:
     kinds:
@@ -649,6 +688,7 @@ en:
       ovh_firewall: OVHcloud network firewall (per IP)
       ssh_sources: Sources allowed to reach SSH
       dns_names: DNS names pointing to it
+      coolify: Domains served by Coolify on this server
     fields:
       name: 'Name in Elio: %{value}'
       hostname: 'Hostname: %{value}'
@@ -662,6 +702,12 @@ en:
       private: private / VPN
       local: local only
     manual_address: added by hand in Elio
+    coolify:
+      port: "Coolify: %{name} (%{kind})"
+      health_check_on: "Coolify health check: %{path}"
+      health_check_off: no health check in Coolify
+      monitored: "existing monitor: %{name}"
+      not_monitored: no monitor
     container: image %{image}, %{state}
     published: ports %{ports}
     compose: Compose project %{project}

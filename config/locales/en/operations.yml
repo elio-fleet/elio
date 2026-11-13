@@ -53,6 +53,17 @@ en:
       i360: Every 6 hours
       i1440: Every day
   activities:
+    journal_search:
+      label: Search the journal
+      placeholder: Server, key, service, package, CVE…
+      from: From
+      to: to
+      clear: Clear the search
+      nothing: Nothing matches this search.
+      count:
+        zero: No result
+        one: 1 result
+        other: "%{count} results"
     severity:
       information: Information
       warning: Warning

@@ -53,6 +53,17 @@ fr:
       i360: Toutes les 6 heures
       i1440: Tous les jours
   activities:
+    journal_search:
+      label: Rechercher dans le journal
+      placeholder: Serveur, clé, service, paquet, CVE…
+      from: Du
+      to: au
+      clear: Effacer la recherche
+      nothing: Rien ne correspond à cette recherche.
+      count:
+        zero: Aucun résultat
+        one: 1 résultat
+        other: "%{count} résultats"
     severity:
       information: Information
       warning: Avertissement

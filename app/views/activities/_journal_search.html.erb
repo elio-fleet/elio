@@ -1,0 +1,14 @@
+<%# The Journal's search (both tabs): a text sent while typing, and a period. Locals: search (JournalSearch), url, hidden ({ name => value } kept, e.g. the filter). %>
+<% hidden ||= {} %>
+<%= form_with url: url, method: :get, data: search_form_data, class: "journal-search ml-auto flex flex-wrap items-center gap-2", role: "search" do |f| %>
+  <% hidden.compact_blank.each do |name, value| %><%= hidden_field_tag name, value, id: nil %><% end %>
+  <%= f.search_field :q, value: search.text, placeholder: t("activities.journal_search.placeholder"), aria: { label: t("activities.journal_search.label") },
+        data: { action: "input->auto-submit#submitLater" }, class: "input w-64 py-1.5" %>
+  <label class="flex items-center gap-1.5 text-xs text-ink-3"><%= t("activities.journal_search.from") %>
+    <%= f.date_field :from, value: search.from, max: Date.current, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1" %></label>
+  <label class="flex items-center gap-1.5 text-xs text-ink-3"><%= t("activities.journal_search.to") %>
+    <%= f.date_field :to, value: search.to, max: Date.current, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1" %></label>
+  <% if search.any? %>
+    <%= link_to t("activities.journal_search.clear"), [ url, hidden.compact_blank.to_query.presence ].compact.join("?"), class: "journal-search-clear text-xs font-medium text-accent hover:underline", data: { turbo_frame: "_top" } %>
+  <% end %>
+<% end %>

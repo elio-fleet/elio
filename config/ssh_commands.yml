@@ -60,7 +60,7 @@ inventory:
       echo "@@elio link"; ip -d -j link 2>/dev/null || true
 
   health:
-    description: "Health: load, memory, disks (space and inodes), reboot required, failed units, pending updates, clock sync."
+    description: "Health: load, memory, disks (space and inodes), reboot required, failed units (name, description, result, since when), pending updates, clock sync."
     shell: true
     debian: |
       excluded="-x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs -x ramfs -x nsfs"
@@ -71,6 +71,7 @@ inventory:
       echo "@@elio inodes"; df -P -T -i $excluded 2>/dev/null
       echo "@@elio reboot"; if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi
       echo "@@elio failed"; systemctl --failed --no-legend --plain 2>/dev/null || true
+      echo "@@elio failed_details"; units=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{ print $1 }'); [ -z "$units" ] || systemctl show --timestamp=unix -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || systemctl show -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || true
       echo "@@elio updates"; apt-get -s -o Debug::NoLocking=true dist-upgrade 2>/dev/null | grep '^Inst ' || true
       echo "@@elio ntp"; timedatectl show -p NTPSynchronized --value 2>/dev/null || true
     default: |
@@ -82,6 +83,7 @@ inventory:
       echo "@@elio inodes"; df -P -T -i $excluded 2>/dev/null
       echo "@@elio reboot"; if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi
       echo "@@elio failed"; systemctl --failed --no-legend --plain 2>/dev/null || true
+      echo "@@elio failed_details"; units=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{ print $1 }'); [ -z "$units" ] || systemctl show --timestamp=unix -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || systemctl show -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || true
       echo "@@elio updates"; echo unsupported
       echo "@@elio ntp"; timedatectl show -p NTPSynchronized --value 2>/dev/null || true
 
@@ -191,9 +193,9 @@ inventory:
       echo "@@elio iptables"; if command -v iptables >/dev/null 2>&1; then iptables -S INPUT 2>&1; else echo absent; fi
 
 # The only commands that change something: the authorized_keys file of the
-# account Elio logs in as (~/.ssh/authorized_keys), when a key is added,
-# replaced or removed from Elio. Other lines are kept byte for byte, the file
-# keeps its owner and permissions.
+# account Elio logs in as (~/.ssh/authorized_keys), or of another account
+# through root, when a key is added, replaced or removed from Elio. Other
+# lines are kept byte for byte, the file keeps its owner and permissions.
 keys:
   read:
     description: "Reads ~/.ssh/authorized_keys (a missing file means no keys)."
@@ -270,6 +272,54 @@ keys:
         fi
         cat "$home/.ssh/authorized_keys" 2>/dev/null || printf '@@elio unreadable\n'
       done
+
+  append_to_account:
+    description: "Adds a key line to the authorized_keys of another account unless its key is already there (creates its ~/.ssh in 700 and the file in 600, owned by the account). Needs root; refuses a link, an unknown account, or a directory or file the account does not own. Prints present or added."
+    writes: true
+    run_as: root
+    shell: true
+    default: |
+      set -e
+      home=$(getent passwd @{user} | cut -d: -f6)
+      if [ -z "$home" ] || [ ! -d "$home" ]; then echo "unknown user" >&2; exit 3; fi
+      # Written as root: never through a link, nor in a directory or file the user does not own.
+      if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then echo "not owned by the account" >&2; exit 4; fi
+      if [ ! -e "$home/.ssh" ]; then mkdir -m 700 "$home/.ssh"; chown @{user}: "$home/.ssh"; fi
+      if [ "$(ls -ld "$home/.ssh" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
+      file="$home/.ssh/authorized_keys"
+      if [ ! -e "$file" ]; then (umask 077; : > "$file"); chown @{user}: "$file"; fi
+      if [ "$(ls -ld "$file" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
+      if grep -qF -- @{blob} "$file"; then
+        echo present
+      else
+        if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
+        printf '%s\n' @{line} >> "$file"
+        echo added
+      fi
+
+  replace_in_account:
+    description: "Replaces the lines of a key by a new line in the authorized_keys of another account (changes or removes a temporary access expiry). Needs root; same refusals as append_to_account. Prints added."
+    writes: true
+    run_as: root
+    shell: true
+    default: |
+      set -e
+      home=$(getent passwd @{user} | cut -d: -f6)
+      if [ -z "$home" ] || [ ! -d "$home" ]; then echo "unknown user" >&2; exit 3; fi
+      # Written as root: never through a link, nor in a directory or file the user does not own.
+      if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then echo "not owned by the account" >&2; exit 4; fi
+      if [ ! -e "$home/.ssh" ]; then mkdir -m 700 "$home/.ssh"; chown @{user}: "$home/.ssh"; fi
+      if [ "$(ls -ld "$home/.ssh" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
+      file="$home/.ssh/authorized_keys"
+      if [ ! -e "$file" ]; then (umask 077; : > "$file"); chown @{user}: "$file"; fi
+      if [ "$(ls -ld "$file" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
+      tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
+      trap 'rm -f "$tmp"' EXIT
+      awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) next; print }' "$file" > "$tmp"
+      cat "$tmp" > "$file"
+      if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
+      printf '%s\n' @{line} >> "$file"
+      echo added
 
   remove_from_account:
     description: "Removes every line whose key is the given one from the authorized_keys of another account (keeps its owner and rights). Needs root; refuses a link or a file the account does not own. Prints absent or removed."

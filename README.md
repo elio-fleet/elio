@@ -43,7 +43,7 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | **SSH keys** | A shared keyring (people and machines), keys added to or removed from a server in one click, **temporary access** that expires on its own, **the keys of every account** of a server (with root), unknown keys flagged and gathered in an **Outside the keyring** list, rotation of Elio's own key without downtime. |
 | **Alerts** | What needs attention, by severity, on the overview, each with what to do; a journal of events; notifications to Slack, Discord, email or a signed webhook, grouped by type (critical ones right away); daily digest. |
 | **Automation** | Every collection runs on schedule, on the whole fleet or per group, followed live in the *Runs* tab of the *Journal*. |
-| **Extensions** | **Uptime Kuma** (monitors attached to each server), **OVHcloud** (IPs, network firewall, DNS records, services), **Technitium DNS** (zones and records) and **Gandi** (LiveDNS records, domains and their expiry), read-only, with **one DNS of the fleet** and **prompts for an AI assistant** (monitors to create, firewall rules) that end with your own instructions. |
+| **Extensions** | **Uptime Kuma** (monitors attached to each server), **OVHcloud** (IPs, network firewall, DNS records, services), **Technitium DNS** (zones and records), **Gandi** (LiveDNS records, domains and their expiry) and **Coolify** (what it runs on each server, deployments, backups; one connection per team), read-only, with **one DNS of the fleet** and **prompts for an AI assistant** (monitors to create, firewall rules) that end with your own instructions. |
 | **Team** | Roles (admin, operator, read-only), invitations, mandatory two-factor authentication, **notes on each server** (Markdown) in its journal, ⌘K search everywhere, light and dark themes, the same layout on every page (one Save per settings page, dangerous actions behind a menu and a confirmation). |
 
 | | |
@@ -123,12 +123,12 @@ Supported: **Debian and Ubuntu** (others get health and system only), Docker, sn
 | For | Commands (read-only) |
 |---|---|
 | System, network | `/etc/os-release`, `uname`, `hostname`, `systemd-detect-virt`, `/proc`, `timedatectl`, `ip -j addr`, `ip -j link` |
-| Health | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed`, `apt-get -s dist-upgrade` (simulation) |
+| Health | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (and `show` of the failed units), `apt-get -s dist-upgrade` (simulation) |
 | Packages | `dpkg-query -W`, `apt list --upgradable`, `snap list` |
 | Services, scheduled tasks | `systemctl list-units`, `list-unit-files`, `show` of the timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (state, health, restarts — **never the environment variables**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` if installed, `docker cp` of `os-release` and the dpkg status |
 | Ports | `ss -tulpn`, `/proc/<pid>/cgroup`, `ufw status verbose`, `nft list ruleset`, `iptables -S INPUT` |
-| SSH keys | reading `~/.ssh/authorized_keys` (with root, of every account with a login shell — never through a link, nor a file the account does not own); **writing only** when you add a key (to Elio's account) or remove one |
+| SSH keys | reading `~/.ssh/authorized_keys` (with root, of every account with a login shell — never through a link, nor a file the account does not own); **writing only** when you add a key (to Elio's account, or with root to another existing account: its `~/.ssh` is created if missing, never the account) or remove one |
 
 Elio **never changes the firewall** nor installs anything: suggested ufw rules and update commands are for you to review and run.
 
@@ -180,19 +180,27 @@ The extensions that read DNS (OVHcloud with its DNS product, Technitium DNS, Gan
 - Every hour, Elio reads the **A, AAAA and CNAME** records of the domains served by LiveDNS (all, or those you list) and sends them to the [DNS of the fleet](#dns-of-the-fleet); the settings page lists your domains with their expiry date and auto renewal, and an optional alert reports a domain about to expire.
 - Elio only sends `GET` requests to `https://api.gandi.net/v5/`, the token in an `Authorization: Bearer` header.
 
+### Coolify
+
+- **Setup**: one **connection per Coolify team** — a Coolify API token only sees its own team, and the API cannot list the others. For each team: in Coolify, *Settings → Advanced* turns *API access* on (add Elio's address to *Allowed API IPs* if it is filled in); switch to the team, then *Keys & Tokens → API Tokens*, a token with the **`read`** permission only. In Elio, *Settings → Extensions → Coolify → Add a connection*: the instance address and the token. Connections of one instance are grouped; several instances are fine. *Test the connection* gives the team, the version and the servers, and **warns if the token can read secrets** (`read:sensitive` or `root`) — make a `read` one then.
+- Every 15 minutes, Elio reads each connection: the **servers** (attached to the servers of the fleet by address, host name or name; the server hosting Coolify by the instance's host name), every **application, service and database** with its project, environment, domains, deployed version and state, the **last deployments**, the **backup schedules** of the databases with their last runs, and the team's **SSH keys** (public part only).
+- A **Coolify** tab on each server Coolify manages (resources, recent deployments, backups; each application links to its page in Coolify) and a **Coolify** page for the whole fleet. In the **Docker tab**, a container created by Coolify shows the name of its resource instead of its generated name; a port it publishes shows its resource on the Firewall tab, the Ports page and the prompts. Deployments go to the **server's journal** as they end. Coolify's SSH key is named in the keys tab instead of *outside the keyring*. The monitors prompt lists the domains Coolify serves, with their health check and existing monitor.
+- Optional alerts: database backup failed or late (26 hours by default), database without a scheduled backup, failed last deployment, resource stopped (unless for more than 30 days) or unhealthy, server Coolify can no longer reach or use, database made public, domain served by Coolify whose DNS points elsewhere or has no record (with a DNS extension), Coolify's key on a server it does not manage, and application without a health check (off by default).
+- Elio only sends `GET` requests to `<instance>/api/v1/`, the token in an `Authorization: Bearer` header. It never reads environment variables, Compose files or backup logs (a `read` token gets them redacted anyway). Tried on a real Coolify 4.6.0 instance with two teams.
+
 ## Security
 
 - Elio's SSH key, API keys, webhooks and 2FA secrets are **encrypted in the database** and never sent back to the browser.
 - Two-factor authentication (TOTP and backup codes), mandatory by default for administrators and operators; roles; invitations only (no public sign-up); rate-limited sign-in and lockout; strict Content Security Policy.
 - Servers' host keys are pinned on first connection; a change blocks the connection until an administrator accepts it.
-- **Outbound connections** of Elio: the vulnerability feeds and score providers (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — only the releases and CVEs of your fleet), the Docker registries (manifest `HEAD` requests), and the extensions you enable (your Uptime Kuma instance, the OVH API, your Technitium DNS Server, the Gandi API — read-only, see [Extensions](#extensions)). Nothing else, no telemetry. In a closed network, the feeds can be imported by hand.
+- **Outbound connections** of Elio: the vulnerability feeds and score providers (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — only the releases and CVEs of your fleet), the Docker registries (manifest `HEAD` requests), and the extensions you enable (your Uptime Kuma instance, the OVH API, your Technitium DNS Server, the Gandi API, your Coolify instances — read-only, see [Extensions](#extensions)). Nothing else, no telemetry. In a closed network, the feeds can be imported by hand.
 - The Docker image is built on Debian 13 and takes the Debian security updates at every build; the CVEs Elio may list in its own container are those Debian has not fixed yet (see [SECURITY.md](SECURITY.md#the-docker-image)).
 - Found a vulnerability? Please report it privately: see [SECURITY.md](SECURITY.md).
 
 ## Known limits
 
 - Full inventory for **Debian and Ubuntu** only. Ubuntu has not been tried on a real server yet.
-- The Uptime Kuma, OVHcloud and Gandi extensions were built on recorded or documented API answers, not tried on a real account yet (Technitium DNS was tried on a real instance).
+- The Uptime Kuma, OVHcloud and Gandi extensions were built on recorded or documented API answers, not tried on a real account yet (Technitium DNS and Coolify were tried on real instances). Coolify: the databases inside a service (n8n's PostgreSQL…) are not followed yet, and the names of Coolify containers come from Coolify's source code.
 - Container image CVEs without Trivy or Grype: Debian and Ubuntu based images only (not Alpine). Trivy and Grype have not been tried on a real server yet.
 - Signed EFI packages (grub, shim, fwupd) were checked against real repository data, not on a real EFI server yet.
 - Debian rates few of its CVEs: the scores come from the providers you enable (NVD, Red Hat, CVE.org by default).

@@ -12,6 +12,10 @@ en:
     services_failed:
       one: "%{count} service failed"
       other: "%{count} services failed"
+    units_failed: "%{names} failed"
+    units_failed_more:
+      one: "%{first_names} and %{count} other failed"
+      other: "%{first_names} and %{count} others failed"
     clock: Clock not synchronized
     unsupported: "%{name} is no longer supported"
     timer_failed: Scheduled task %{name} failed
@@ -113,6 +117,9 @@ en:
     systemd_unit:
       failed: failed
       boot: at boot
+      failed_since_html: failed %{time}
+      seen_by_health_html: seen by the health reading %{time}
+      seen_by_health_hint: Not a service (mount, socket…), or failed after the last services inventory; the health reading, more frequent, saw it.
     firewall_card:
       all_listening_ports:
         one: "The listening port, private and local ones included (%{count})"

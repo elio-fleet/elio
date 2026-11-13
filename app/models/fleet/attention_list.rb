@@ -17,6 +17,7 @@ class AttentionList
     "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "server-health-details" ], "load" => [ :health, nil, "server-health-details" ],
     "vulnerability" => [ :fixes, "vulnerabilities" ], "vulnerabilities" => [ :fixes, "vulnerabilities" ],
     "service_failed" => [ :services, "services" ], "services_failed" => [ :services, "services" ],
+    "units_failed" => [ :services, "services" ], "units_failed_more" => [ :services, "services" ],
     "timer_failed" => [ :schedules, "schedules" ], "timers_failed" => [ :schedules, "schedules" ], "timer_late" => [ :schedules, "schedules" ], "timers_late" => [ :schedules, "schedules" ],
     "port_unexpected" => [ :ports, "ports" ], "ports_unexpected" => [ :ports, "ports" ]
   }.freeze
@@ -139,7 +140,8 @@ class AttentionList
   # Reasons raised by the extensions, by the start of their key.
   EXTENSION_ACTIONS = { "integrations.uptime_kuma." => [ :probes, "monitors" ], "dns." => [ :dns, "dns" ],
                         "integrations.ovh.health.expiring" => [ :hosting, "ovh" ], "integrations.ovh." => [ :ports, "firewall" ],
-                        "integrations.coolify." => [ :coolify, "coolify" ] }.freeze
+                        "integrations.coolify.health.dns" => [ :dns, "dns" ],
+                        "integrations.coolify.health.stale_key" => [ :keys, "keys" ], "integrations.coolify." => [ :coolify, "coolify" ] }.freeze
 
   def reason_action(server, reason) = self.class.action_for(server, reason, @routes)
 end

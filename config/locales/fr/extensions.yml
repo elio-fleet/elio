@@ -264,12 +264,35 @@ fr:
       alert_backups_hint: les sauvegardes planifiées dans Coolify, base par base
       backup_max_age_hours: "En retard : aucune sauvegarde réussie depuis (heures)"
       alert_no_backup: Alerter quand une base n'a aucune sauvegarde planifiée
+      alert_deploy_failed: Alerter quand le dernier déploiement d'une application a échoué
+      alert_deploy_failed_hint: jusqu'au prochain déploiement réussi
+      alert_resources: Alerter quand une ressource est arrêtée ou en mauvaise santé
+      alert_resources_hint: "sauf celles arrêtées depuis plus de %{count} jours (sans doute volontairement)"
+      alert_server_unreachable: Alerter quand Coolify ne peut plus joindre ou utiliser un serveur
+      alert_no_health_check: Alerter quand une application n'a pas de health check
+      alert_no_health_check_hint: "« en cours » ne dit pas alors si elle répond"
+      alert_dns: Alerter quand un domaine servi par Coolify ne pointe pas vers son serveur
+      alert_dns_hint: d'après les extensions DNS (OVHcloud, Technitium, Gandi) ; un domaine d'une zone qu'Elio ne lit pas n'est pas vérifié
+      alert_stale_key: Alerter quand la clé de Coolify est sur un serveur que Coolify ne gère pas
+      alert_stale_key_hint: un accès oublié à retirer, ou un serveur à ajouter dans Coolify
+      key_detail: "équipe %{team} · %{instance}"
+      alert_public_database: Alerter quand une base de données est rendue publique dans Coolify
+      alert_public_database_hint: "option « Make it publicly available » : la base est joignable depuis Internet sur son port"
       health:
-        backup_failed: "Sauvegarde Coolify de %{database} en échec"
+        public_database: "Coolify : la base %{name} est joignable depuis Internet (port %{port})"
+        stale_key: "Coolify : la clé « %{name} » (%{detail}) est sur ce serveur, que Coolify ne gère pas"
+        dns_elsewhere: "Coolify : %{domain} est servi ici, mais son DNS pointe vers %{targets}"
+        dns_missing: "Coolify : %{domain} est servi ici, mais n'a aucun enregistrement DNS"
+        stopped: "Coolify : %{name} à l'arrêt (%{kind})"
+        unhealthy: "Coolify : %{name} en mauvaise santé (%{kind})"
+        server_unreachable: "Coolify : ne peut plus joindre ou utiliser ce serveur (équipe %{team})"
+        no_health_check: "Coolify : application %{name} sans health check"
+        deploy_failed: "Coolify : déploiement de %{application} en échec"
+        backup_failed: "Coolify : sauvegarde de %{database} en échec"
         backup_late:
-          one: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heure"
-          other: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heures"
-        no_backup: "Base Coolify %{database} sans sauvegarde planifiée"
+          one: "Coolify : aucune sauvegarde de %{database} réussie depuis %{count} heure"
+          other: "Coolify : aucune sauvegarde de %{database} réussie depuis %{count} heures"
+        no_backup: "Coolify : base %{database} sans sauvegarde planifiée"
       backups:
         title: Sauvegardes de bases
         count:
@@ -304,6 +327,20 @@ fr:
         project: Projet / environnement
         domains: Domaines
         version: Version déployée
+        last_deploy: Dernier déploiement
+        deploy_failed: échec
+        deployments: Déploiements récents
+        open_in_coolify: ouvrir dans Coolify
+        deploy_kinds:
+          webhook: webhook git
+          restart: redémarrage
+          rollback: retour arrière
+        deploy_statuses:
+          finished: réussi
+          failed: échec
+          in_progress: en cours
+          queued: en attente
+          cancelled-by-user: annulé
         state: État
         no_health_check: "« En cours » sans « sain » : la ressource n'a pas de health check dans Coolify, qui ne sait donc pas si elle répond."
         none: Aucune ressource
@@ -449,6 +486,8 @@ fr:
       keydb: KeyDB
       dragonfly: Dragonfly
       clickhouse: ClickHouse
+    dns_elsewhere: "Le DNS pointe vers %{targets}, pas vers ce serveur"
+    dns_missing: Aucun enregistrement DNS pour ce domaine
     no_domain: aucun
   coolify_resource:
     kinds:
@@ -649,6 +688,7 @@ fr:
       ovh_firewall: Firewall réseau OVHcloud (par IP)
       ssh_sources: Sources autorisées pour le SSH
       dns_names: Noms DNS qui pointent vers lui
+      coolify: Domaines servis par Coolify sur ce serveur
     fields:
       name: 'Nom dans Elio : %{value}'
       hostname: 'Nom d''hôte : %{value}'
@@ -662,6 +702,12 @@ fr:
       private: privée / VPN
       local: locale uniquement
     manual_address: ajoutée à la main dans Elio
+    coolify:
+      port: "Coolify : %{name} (%{kind})"
+      health_check_on: "health check Coolify : %{path}"
+      health_check_off: pas de health check dans Coolify
+      monitored: "sonde existante : %{name}"
+      not_monitored: aucune sonde
     container: image %{image}, %{state}
     published: ports %{ports}
     compose: projet Compose %{project}

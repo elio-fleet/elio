@@ -28,15 +28,32 @@ class Integrations::Coolify::Sync
     end
 
     log_failed_backups(previous)
+    log_deployments(previous)
     Server.where(id: touched + CoolifyResource.where(integration_connection_id: @connection.id).where.not(server_id: nil).pluck(:server_id)).find_each(&:refresh_health!)
 
     resources = @result.records.count { |record| record.kind != "server" }
     @connection.update!(state: @connection.state.merge("team" => @result.team["name"], "team_id" => @result.team["id"], "version" => @result.version,
-                                                       "servers" => servers.size, "attached" => matches.values.count(&:present?), "resources" => resources).compact)
+                                                       "servers" => servers.size, "attached" => matches.values.count(&:present?), "resources" => resources,
+                                                       "keys" => @result.keys).compact)
     I18n.t("integrations.coolify.summary", count: servers.size, attached: matches.values.count(&:present?), resources: resources)
   end
 
   private
+
+  # The deployments that ended since the last sync, in the journal of the
+  # server (failed ones as warnings); never on the first sync of an application.
+  def log_deployments(previous)
+    CoolifyResource.where(integration_connection_id: @connection.id, kind: "application").find_each do |application|
+      old = previous[[ "application", application.uuid ]] or next
+      ended = old.deployments.select { |deployment| CoolifyResource::FINAL_DEPLOYMENTS.include?(deployment["status"]) }.map { |deployment| deployment["uuid"] }
+      application.deployments.reverse_each do |deployment|
+        next unless deployment["status"].in?(%w[finished failed]) && ended.exclude?(deployment["uuid"])
+
+        Activity.record!(deployment["status"] == "failed" ? :coolify_deploy_failed : :coolify_deployed, server: application.server, user: nil,
+                         application: application.name, commit: deployment["commit"].to_s.first(7).presence, message: deployment["message"])
+      end
+    end
+  end
 
   # A backup execution that failed since the last sync (never on the first
   # sync of a database: its old failures are history).

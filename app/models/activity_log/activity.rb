@@ -84,6 +84,8 @@ class Activity < ApplicationRecord
     Kind.new(:integration_disabled, :configuration, :info),
     Kind.new(:integration_sync_failed, :configuration, :warning),
     Kind.new(:coolify_backup_failed, :servers, :warning),
+    Kind.new(:coolify_deployed, :servers, :info),
+    Kind.new(:coolify_deploy_failed, :servers, :warning),
     Kind.new(:integration_connection_added, :configuration, :info),
     Kind.new(:integration_connection_removed, :configuration, :info)
   ].index_by(&:key).freeze
@@ -98,6 +100,17 @@ class Activity < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
   scope :of_kind, ->(kind) { where(kind: kind.to_s) }
+  # Text search: the names copied into the data (server, key, service,
+  # package, CVE…), the server, the user, the key, the Unix account, and the
+  # kinds whose label matches ("clé ajoutée").
+  def self.search(text)
+    plain = ->(value) { I18n.transliterate(value.to_s).downcase }
+    kinds = KINDS.values.select { |kind| plain.(kind.label).include?(plain.(text)) }.map { |kind| kind.key.to_s }
+    left_joins(:server, :user, :public_key)
+      .where("activities.data::text ILIKE :q OR servers.name ILIKE :q OR users.email ILIKE :q OR public_keys.name ILIKE :q " \
+             "OR activities.unix_user ILIKE :q OR activities.kind IN (:kinds)", q: JournalSearch.like(text), kinds: kinds.presence || [ "" ])
+  end
+
   scope :in_category, ->(category) { where(kind: KINDS.values.select { |kind| kind.category == category.to_sym }.map { |kind| kind.key.to_s }) }
 
   # Records an activity; the author defaults to the signed-in user (Current.user).

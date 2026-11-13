@@ -5,7 +5,7 @@
 # Compose files, secrets (a `read` token gets them redacted anyway).
 class Integrations::Coolify::Fetch
   Record = Data.define(:kind, :uuid, :name, :status, :coolify_server_uuid, :data)
-  Result = Data.define(:team, :version, :records)
+  Result = Data.define(:team, :version, :records, :keys)
 
   def initialize(client)
     @client = client
@@ -16,13 +16,31 @@ class Integrations::Coolify::Fetch
     environments = environments_by_id
     servers = @client.servers.map { |server| server_record(server) }
     resources = @client.resources.filter_map { |resource| resource_record(resource, environments) }
-    Result.new(team: { "id" => team["id"], "name" => team["name"] }.compact, version: @client.version, records: servers + resources)
+    Result.new(team: { "id" => team["id"], "name" => team["name"] }.compact, version: @client.version, records: servers + resources, keys: keys)
   end
 
   # "https://a.example.com,http://b.example.com:8080" → ["a.example.com", "b.example.com:8080"]
   def self.domains(fqdn) = fqdn.to_s.split(",").filter_map { |url| url.strip.sub(%r{\Ahttps?://}i, "").chomp("/").presence }.uniq
 
+  # The URLs as Coolify serves them, scheme included ("http://…" when the
+  # domain is not served over TLS), for a monitor that targets the right one.
+  def self.urls(fqdn) = fqdn.to_s.split(",").filter_map { |url| url.strip.chomp("/").presence if url.strip.match?(%r{\Ahttps?://}i) }.uniq
+
   private
+
+  # The SSH keys of the team (the ones Coolify connects to servers with):
+  # name and fingerprint, computed from the public key like Elio does for
+  # authorized keys. Never the private key (redacted for a read token anyway).
+  def keys
+    @client.private_keys.filter_map do |key|
+      blob = key["public_key"].to_s.split[1].to_s
+      next if blob.empty?
+
+      { "name" => key["name"].to_s.presence || key["uuid"], "fingerprint" => Ssh::KeyGenerator.fingerprint(Base64.strict_decode64(blob)), "git" => (true if key["is_git_related"]) }.compact
+    rescue ArgumentError
+      nil
+    end
+  end
 
   def server_record(server)
     settings = server["settings"] || {}
@@ -53,17 +71,39 @@ class Integrations::Coolify::Fetch
     end
   end
 
+  # An application deployed from an image (build pack "dockerimage") still
+  # carries Coolify's placeholder git fields (coollabsio/coolify, main, HEAD):
+  # they are left out, the image says what runs.
   def application_data(app)
     image = [ app["docker_registry_image_name"], app["docker_registry_image_tag"] ].compact_blank.join(":").presence
-    { "build_pack" => app["build_pack"], "domains" => self.class.domains(app["fqdn"]), "git_repository" => app["git_repository"].presence,
-      "git_branch" => app["git_branch"].presence, "git_commit" => app["git_commit_sha"].presence, "image" => image,
+    git = app["build_pack"] != "dockerimage"
+    { "build_pack" => app["build_pack"], "domains" => self.class.domains(app["fqdn"]), "urls" => self.class.urls(app["fqdn"]).presence,
+      "git_repository" => (app["git_repository"].presence if git), "git_branch" => (app["git_branch"].presence if git),
+      "git_commit" => (app["git_commit_sha"].presence unless !git || app["git_commit_sha"] == "HEAD"), "image" => image,
       "health_check" => app["health_check_enabled"], "health_check_path" => app["health_check_path"].presence,
-      "ports_exposes" => app["ports_exposes"].presence, "ports_mappings" => app["ports_mappings"].presence }
+      "ports_exposes" => app["ports_exposes"].presence, "ports_mappings" => app["ports_mappings"].presence }.merge(deployments(app["uuid"]))
+  end
+
+  DEPLOYMENTS_KEPT = 10
+
+  # The last deployments (newest first): status, commit, the first line of
+  # its message, how it was started, dates; and the application's page in
+  # Coolify (its deployment URLs are "/project/…/application/<uuid>/deployment/<uuid>").
+  def deployments(uuid)
+    list = @client.deployments(uuid, take: DEPLOYMENTS_KEPT).sort_by { |deployment| deployment["created_at"].to_s }.reverse
+    path = list.filter_map { |deployment| deployment["deployment_url"].to_s[%r{\A(/project/[\w-]+/environment/[\w-]+/application/[\w-]+)/deployment/}, 1] }.first
+    { "coolify_path" => path, "deployments" => list.map do |deployment|
+      { "uuid" => deployment["deployment_uuid"], "status" => deployment["status"], "commit" => (deployment["commit"].to_s.first(40).presence unless deployment["commit"] == "HEAD"),
+        "message" => deployment["commit_message"].to_s.lines.first.to_s.strip.truncate(120).presence, "at" => deployment["created_at"],
+        "finished_at" => deployment["finished_at"], "webhook" => (true if deployment["is_webhook"]), "restart" => (true if deployment["restart_only"]),
+        "rollback" => (true if deployment["rollback"]), "pull_request" => deployment["pull_request_id"].to_i.nonzero? }.compact
+    end }.compact
   end
 
   def service_data(service)
     applications = Array(service["applications"])
     { "service_type" => service["service_type"].presence, "domains" => applications.flat_map { |app| self.class.domains(app["fqdn"]) }.uniq,
+      "urls" => applications.flat_map { |app| self.class.urls(app["fqdn"]) }.uniq.presence,
       "images" => (applications + Array(service["databases"])).filter_map { |part| part["image"].presence }.uniq,
       "parts" => (applications + Array(service["databases"])).filter_map { |part| { "name" => part["name"], "status" => part["status"] }.compact if part["name"] } }
   end
