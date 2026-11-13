@@ -197,6 +197,95 @@ fr:
     sync_job:
       turned_off: 'Extension désactivée : rien à faire'
       internal_error: Erreur interne (%{class})
+    coolify:
+      description: Ce que Coolify fait tourner sur vos serveurs (applications, services, bases de données), rattaché aux serveurs du parc. Une connexion par équipe Coolify, autant d'instances que nécessaire.
+      url: Adresse de l'instance
+      token: Jeton d'API
+      token_hint: Un jeton avec la permission read seulement, créé dans l'équipe à suivre (voir plus haut).
+      unexpected: "Réponse inattendue de Coolify (l'adresse est-elle bien celle de l'instance ?)"
+      valid_token:
+        one: "équipe « %{team} », Coolify v%{version}, %{count} serveur"
+        other: "équipe « %{team} », Coolify v%{version}, %{count} serveurs"
+      sensitive_token: ". Attention : ce jeton lit aussi les secrets (permission read:sensitive ou root) ; Elio n'en a pas besoin, créez plutôt un jeton read."
+      summary:
+        one: "%{count} serveur (%{attached} dans le parc), %{resources} ressources"
+        other: "%{count} serveurs (%{attached} dans le parc), %{resources} ressources"
+      connection_summary:
+        one: "%{count} serveur, %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
+        other: "%{count} serveurs dont %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
+      alert_backups: Alerter quand une sauvegarde de base échoue ou est en retard
+      alert_backups_hint: les sauvegardes planifiées dans Coolify, base par base
+      backup_max_age_hours: "En retard : aucune sauvegarde réussie depuis (heures)"
+      alert_no_backup: Alerter quand une base n'a aucune sauvegarde planifiée
+      alert_deploy_failed: Alerter quand le dernier déploiement d'une application a échoué
+      alert_deploy_failed_hint: jusqu'au prochain déploiement réussi
+      health:
+        deploy_failed: "Déploiement Coolify de %{application} en échec"
+        backup_failed: "Sauvegarde Coolify de %{database} en échec"
+        backup_late:
+          one: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heure"
+          other: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heures"
+        no_backup: "Base Coolify %{database} sans sauvegarde planifiée"
+      backups:
+        title: Sauvegardes de bases
+        count:
+          one: "%{count} base"
+          other: "%{count} bases"
+        schedule: "%{frequency}%{s3}"
+        to_s3: " · vers S3"
+        last_success_html: dernière réussie %{at}
+        never: aucune réussie
+        last: "%{count} dernières, la plus récente à droite"
+        states:
+          ok: à jour
+          failed: dernière en échec
+          late: en retard
+          none: aucune sauvegarde planifiée
+        none_hint: Si elle garde des données utiles, planifiez une sauvegarde dans Coolify (onglet Backups de la base).
+        services_note: Les bases des services Coolify (n8n, etc.) ne sont pas encore suivies.
+      server_tab:
+        instance: Instance
+        team: Équipe
+        reachable: Pour Coolify
+        reachable_yes: joignable
+        reachable_no: injoignable ou inutilisable
+        proxy: Proxy
+        synchronized_html: synchronisé %{at}
+        resources: Ressources Coolify
+        count:
+          one: "%{count} ressource"
+          other: "%{count} ressources"
+        all: Tout le parc
+        resource: Ressource
+        project: Projet / environnement
+        domains: Domaines
+        version: Version déployée
+        last_deploy: Dernier déploiement
+        deploy_failed: échec
+        deployments: Déploiements récents
+        open_in_coolify: ouvrir dans Coolify
+        deploy_kinds:
+          webhook: webhook git
+          restart: redémarrage
+          rollback: retour arrière
+        deploy_statuses:
+          finished: réussi
+          failed: échec
+          in_progress: en cours
+          queued: en attente
+          cancelled-by-user: annulé
+        state: État
+        no_health_check: "« En cours » sans « sain » : la ressource n'a pas de health check dans Coolify, qui ne sait donc pas si elle répond."
+        none: Aucune ressource
+        none_text: Coolify gère ce serveur mais n'y fait rien tourner pour l'instant.
+      help:
+        title: Créer un jeton en lecture seule
+        step1_html: 'Dans Coolify, <strong class="font-medium">Settings › Advanced</strong> : activez <strong class="font-medium">API access</strong> ; si « Allowed API IPs » est rempli, ajoutez-y l''adresse d''Elio.'
+        step2_html: Passez sur l'<strong class="font-medium">équipe</strong> à suivre (menu des équipes, en haut à gauche).
+        step3_html: '<strong class="font-medium">Keys &amp; Tokens › API Tokens</strong> → nouveau jeton, permission <strong class="font-medium">read</strong> seulement, une expiration au choix.'
+        step4_html: Ajoutez une connexion ici avec l'adresse de l'instance et ce jeton.
+        one_team_html: 'Un jeton Coolify ne voit <strong class="font-medium">qu''une équipe</strong>, et l''API ne dit pas lesquelles existent : ajoutez une connexion par équipe. Le serveur qui fait tourner Coolify appartient à l''équipe « Root ».'
+        reads: Elio lit les serveurs, les ressources, leurs domaines, projets et états. Jamais les variables d'environnement ni les secrets, et il ne déploie, n'arrête ni ne modifie rien.
     gandi:
       description: Les enregistrements A, AAAA et CNAME de vos domaines servis par Gandi LiveDNS, rattachés aux serveurs vers lesquels ils pointent, et vos domaines avec leur date d'expiration (alerte en option).
       api_token: Jeton d'accès personnel
@@ -278,6 +367,65 @@ fr:
       connection: Connexion
       alerts: Alertes
       resources: Ressources
+  coolify:
+    index:
+      subtitle:
+        one: "ce que Coolify fait tourner sur le parc, %{count} connexion."
+        other: "ce que Coolify fait tourner sur le parc, %{count} connexions (équipes et instances)."
+      connections_failed:
+        one: "Connexion en échec : %{names}."
+        other: "Connexions en échec : %{names}."
+      resources: Ressources
+      attention: À traiter
+      attention_caption: arrêtées, en mauvaise santé
+      outside: Hors du parc
+      outside_caption:
+        one: "%{count} serveur Coolify sans serveur Elio"
+        other: "%{count} serveurs Coolify sans serveur Elio"
+      all: Tout
+      applications: Applications
+      services: Services
+      databases: Bases
+      search: Chercher une ressource
+      search_placeholder: Nom ou domaine
+      server: Serveur
+      team_project: Équipe / projet
+      not_in_fleet: hors du parc
+      no_result: Aucune ressource
+      no_result_text: Aucune ressource ne correspond à ce filtre ou à cette recherche.
+      empty: Aucune ressource Coolify
+      empty_text: Les connexions ne voient encore aucune application, aucun service ni aucune base.
+      not_synchronized: Coolify n'a pas encore été synchronisé.
+  coolify_helper:
+    states:
+      healthy: En cours · sain
+      running: En cours
+      unhealthy: En mauvaise santé
+      restarting: Redémarre
+      stopped: Arrêté
+      other: Inconnu
+    build_packs:
+      dockerfile: Dockerfile
+      dockercompose: Compose
+      dockerimage: Image Docker
+      nixpacks: Nixpacks
+      static: Statique
+    engines:
+      postgresql: PostgreSQL
+      mysql: MySQL
+      mariadb: MariaDB
+      mongodb: MongoDB
+      redis: Redis
+      keydb: KeyDB
+      dragonfly: Dragonfly
+      clickhouse: ClickHouse
+    no_domain: aucun
+  coolify_resource:
+    kinds:
+      server: Serveur
+      application: Application
+      service: Service
+      database: Base de données
   integration:
     sync_label: Synchronisation %{label}
     required: "%{label} : obligatoire pour activer l'extension"

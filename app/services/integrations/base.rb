@@ -24,8 +24,9 @@ class Integrations::Base
     # Reads the external service and stores what it found; returns a summary.
     def sync(_integration) = raise(NotImplementedError)
 
-    # Tabs added to the server page: [{ key:, label:, count: ->(server) {} }], rendered with
-    # the partial "integrations/<key>/server_tab".
+    # Tabs added to the server page: [{ key:, label:, count: ->(server) {}, tone: ->(server) {},
+    # visible: ->(server) {} }] (tone and visible optional), rendered with the partial
+    # "integrations/<key>/server_tab".
     def server_tabs = []
 
     # Links added to the sidebar: [{ label:, path: (helper name), icon: }].

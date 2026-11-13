@@ -202,6 +202,15 @@ en:
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
+      coolify_deployed:
+        label: Coolify deployment
+        description: Coolify finished deploying an application on a server.
+      coolify_deploy_failed:
+        label: Coolify deployment failed
+        description: A Coolify deployment failed (the previous version usually still runs).
+      coolify_backup_failed:
+        label: Coolify backup failed
+        description: A database backup scheduled in Coolify failed.
       integration_connection_added:
         label: "Extension connection added"
         description: "An administrator added a connection to an extension (a Coolify team…)."
@@ -328,6 +337,10 @@ en:
       integration_enabled: Extension %{integration} turned on
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
+      coolify_deployed: "Coolify: %{application} deployed%{commit}"
+      coolify_deploy_failed: "Coolify: deployment of %{application} failed%{commit}"
+      quoted: "“%{text}”"
+      coolify_backup_failed: "Coolify backup of %{database} failed (team %{team})"
       integration_connection_added: '%{integration}: connection “%{connection}” added'
       integration_connection_removed: '%{integration}: connection “%{connection}” removed'
       automation_run: "%{automation}: %{result}"
