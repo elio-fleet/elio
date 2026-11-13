@@ -75,6 +75,7 @@ module Activity::Summaries
     two_factor_disabled: proc { data["reset_by"] ? Activity::Summaries.t(:two_factor_reset, email: data["email"], by: data["reset_by"]) : Activity::Summaries.t(:two_factor_disabled, email: data["email"]) },
     two_factor_backup_code_used: proc { Activity::Summaries.t(:two_factor_backup_code_used, email: data["email"], count: data["left"].to_i) },
     public_key_created: proc { Activity::Summaries.t(:public_key_created, name: public_key_name) },
+    public_key_owner_changed: proc { data["owner"] ? Activity::Summaries.t(:public_key_owner_set, name: public_key_name, owner: data["owner"]) : Activity::Summaries.t(:public_key_owner_removed, name: public_key_name) },
     public_key_deleted: proc { Activity::Summaries.t(:public_key_deleted, name: public_key_name) },
     ssh_key_generated: proc { Activity::Summaries.t(data["regenerated"] ? :ssh_key_regenerated : :ssh_key_generated) },
     ssh_key_rotation_started: proc { Activity::Summaries.t(:ssh_key_rotation_started, count: data["servers"].to_i) },

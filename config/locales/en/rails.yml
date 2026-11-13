@@ -60,6 +60,8 @@ en:
               invalid: must be a single public key, for example “ssh-ed25519 AAAA… alice@laptop”
               private_key: 'looks like a private key: paste the public key (.pub file)'
               app_key: is Elio's key and cannot be added to the keyring
+            user:
+              server_key: "is a server's key: only a person's key has an owner"
             fingerprint:
               taken: is already in the keyring
         user:

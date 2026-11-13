@@ -4,6 +4,10 @@
 class PublicKey < ApplicationRecord
   KINDS = %w[person server].freeze
 
+  # Its owner ("my key", see AccountKeysController): a person's key, one
+  # owner at most.
+  belongs_to :user, optional: true
+
   normalizes :name, with: ->(value) { value.squish }
   normalizes :content, with: ->(value) { value.strip }
   normalizes :description, with: ->(value) { value.strip.presence }
@@ -15,9 +19,11 @@ class PublicKey < ApplicationRecord
   validates :content, presence: true
   validate :content_must_be_a_single_public_key
   validate :content_must_not_be_the_app_key
+  validate :owner_only_for_a_person
   validates :fingerprint, uniqueness: true, if: :authorized_key
 
   scope :of_kind, ->(kind) { where(kind: kind) }
+  scope :unowned, -> { where(user_id: nil) }
 
   def kind_label = self.class.kind_label(kind)
 
@@ -45,6 +51,10 @@ class PublicKey < ApplicationRecord
     else
       errors.add(:content, :invalid)
     end
+  end
+
+  def owner_only_for_a_person
+    errors.add(:user, :server_key) if user_id && server?
   end
 
   def content_must_not_be_the_app_key

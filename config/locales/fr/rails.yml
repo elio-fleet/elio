@@ -60,6 +60,8 @@ fr:
               invalid: doit être une seule clé publique, par exemple « ssh-ed25519 AAAA… alice@laptop »
               private_key: 'ressemble à une clé privée : collez la clé publique (fichier .pub)'
               app_key: est la clé d'Elio et ne peut pas être ajoutée au trousseau
+            user:
+              server_key: "est une clé de serveur : seule la clé d'une personne a un propriétaire"
             fingerprint:
               taken: est déjà dans le trousseau
         user:

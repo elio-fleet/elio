@@ -154,6 +154,9 @@ fr:
       public_key_created:
         label: Clé ajoutée au trousseau
         description: Une clé a été ajoutée au trousseau.
+      public_key_owner_changed:
+        label: Propriétaire d'une clé
+        description: Une clé du trousseau a été attribuée à un utilisateur (« ma clé »), ou ne l'est plus.
       public_key_deleted:
         label: Clé retirée du trousseau
         description: Une clé a été retirée du trousseau (elle reste sur les serveurs).
@@ -299,6 +302,8 @@ fr:
         one: "%{email} s'est connecté avec un code de secours (%{count} restant)"
         other: "%{email} s'est connecté avec un code de secours (%{count} restants)"
       public_key_created: Clé « %{name} » ajoutée au trousseau
+      public_key_owner_set: Clé « %{name} » attribuée à %{owner}
+      public_key_owner_removed: Clé « %{name} » attribuée à personne
       public_key_deleted: Clé « %{name} » retirée du trousseau
       ssh_key_generated: Clé Elio générée
       ssh_key_regenerated: Clé Elio régénérée
