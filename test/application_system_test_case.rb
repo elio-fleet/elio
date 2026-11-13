@@ -52,6 +52,13 @@ class ApplicationSystemTestCase < ActionDispatch::SystemTestCase
     page.document.assert_no_selector "#confirm-dialog[open]"
   end
 
+  # Closes the flash toasts: one paused under the mouse (toast#pause on
+  # mouseenter) never goes away and can cover the actions menu next to it.
+  def dismiss_toasts
+    all(".toast button[data-action='toast#dismiss']").each(&:click)
+    assert_no_selector ".toast"
+  end
+
   def dismiss_app_confirm
     yield
     page.document.find("#confirm-dialog[open]").find_button("Annuler").execute_script("this.click()")

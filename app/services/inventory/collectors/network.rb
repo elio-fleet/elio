@@ -4,8 +4,10 @@ require "json"
 # prefix, public / private / local) and its kind (ethernet, WireGuard,
 # bridge, VLAN, tunnel…), from `ip -j` (iproute2), read-only, without root.
 # Loopback and link-local addresses, and the interfaces of containers
-# (Docker bridges, veth), are left out: they say nothing about how to reach
-# the server. The addresses feed the matching of external resources
+# (Docker bridges, the host side of veth pairs) are left out: they say
+# nothing about how to reach the server. Inside a container (an LXC on
+# Proxmox), eth0 is itself a veth: it is the server's network card, kept as
+# ethernet. The addresses feed the matching of external resources
 # (Uptime Kuma probes, OVH IPs) with the servers.
 class Inventory::Collectors::Network < Inventory::Collector
   KINDS = %w[wireguard ethernet wifi bridge vlan bond tun tap tunnel vxlan other].freeze # labels: inventory.network_kinds.*
@@ -29,7 +31,9 @@ class Inventory::Collectors::Network < Inventory::Collector
     interfaces = JSON.parse(sections["addr"].to_s.presence || "[]").filter_map do |entry|
       name = entry["ifname"].to_s
       kind = kinds[name] || kind_from_link_type(entry["link_type"])
-      next if entry["link_type"] == "loopback" || kind == "veth" || name.match?(CONTAINER_INTERFACE)
+      next if entry["link_type"] == "loopback" || name.match?(CONTAINER_INTERFACE)
+
+      kind = "ethernet" if kind == "veth"
 
       addresses = Array(entry["addr_info"]).filter_map do |info|
         next unless %w[inet inet6].include?(info["family"]) && info["local"]

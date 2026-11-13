@@ -1,0 +1,57 @@
+<% content_for :title, t("title", page: "Coolify") %>
+<% failed = @connections.select(&:last_error) %>
+<% subtitle = safe_join([ source_tag("Coolify"), " ", t(".subtitle", count: @connections.size),
+                          (tag.span(t(".connections_failed", count: failed.size, names: failed.map(&:label).to_sentence), class: "ml-1 text-crit-ink") if failed.any?) ].compact) %>
+<%= page_header "Coolify", subtitle: subtitle do %>
+  <% if can?(:administer) %>
+    <%= actions_menu do %><%= menu_item t("ui.extension_settings"), edit_settings_integration_path(@integration.kind), icon: :cog %><% end %>
+  <% end %>
+<% end %>
+
+<%= stat_tiles do %>
+  <%= stat_tile t(".resources"), @counts[:total], nil, icon: :cube, id: "stat-coolify-resources", href: coolify_path, active: @filter.nil? %>
+  <%= stat_tile t(".attention"), @counts[:attention], t(".attention_caption"), tone: (@counts[:attention].positive? ? :warn : nil), icon: :exclamation_triangle,
+                id: "stat-coolify-attention", href: coolify_path(filter: "attention"), active: @filter == "attention" %>
+  <% if @counts[:unattached].positive? || @counts[:servers_outside].positive? %>
+    <%= stat_tile t(".outside"), @counts[:unattached], t(".outside_caption", count: @counts[:servers_outside]), icon: :server_stack,
+                  id: "stat-coolify-unattached", href: coolify_path(filter: "unattached"), active: @filter == "unattached" %>
+  <% end %>
+<% end %>
+
+<%= filter_bar do %>
+  <% [ [ t(".all"), nil ], [ t(".attention"), "attention" ], [ t(".applications"), "applications" ], [ t(".services"), "services" ], [ t(".databases"), "databases" ] ].each do |label, filter| %>
+    <%= filter_chip label, coolify_path(filter: filter, q: @q.presence), active: @filter == filter, data: { filter: filter || "all" } %>
+  <% end %>
+  <%= filter_bar_end do %>
+    <%= form_with url: coolify_path, method: :get, data: search_form_data do |f| %>
+      <%= hidden_field_tag :filter, @filter if @filter %>
+      <%= f.search_field :q, value: @q, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1.5" %>
+    <% end %>
+  <% end %>
+<% end %>
+
+<%= search_results_frame do %>
+  <% if @pager.records.any? %>
+    <div class="card overflow-x-auto">
+      <table id="coolify-resources" class="table-dense">
+        <thead><tr><th class="pl-4"><%= t("integrations.coolify.server_tab.resource") %></th><th><%= t(".server") %></th><th><%= t(".team_project") %></th><th class="col-secondary"><%= t("integrations.coolify.server_tab.domains") %></th><th class="pr-4"><%= t("integrations.coolify.server_tab.state") %></th></tr></thead>
+        <tbody>
+          <% @pager.records.each do |resource| %>
+            <tr class="coolify-resource" data-uuid="<%= resource.uuid %>">
+              <td class="pl-4"><span class="font-medium"><%= resource.name %></span><span class="block text-xs text-ink-3"><%= coolify_kind_detail(resource) %></span></td>
+              <td><%= resource.server ? server_chip(resource.server.name, server_path(resource.server, tab: "coolify")) : tag.span(t(".not_in_fleet"), class: "text-xs text-ink-3") %></td>
+              <td class="text-xs text-ink-2"><%= resource.connection.label %><span class="block text-ink-3"><%= [ resource.data["project"], resource.data["environment"] ].compact.join(" / ") %></span></td>
+              <td class="col-secondary text-xs"><%= coolify_domain_links(resource) %></td>
+              <td class="pr-4"><%= coolify_state_badge(resource) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= render "shared/pagination", pager: @pager, noun: t("nouns.resources") %>
+  <% elsif @filter || @q.present? %>
+    <div class="card"><%= empty_state t(".no_result"), t(".no_result_text"), icon: :magnifying_glass %></div>
+  <% else %>
+    <div class="card"><%= empty_state t(".empty"), (@integration.last_synced_at ? t(".empty_text") : t(".not_synchronized")), icon: :cube %></div>
+  <% end %>
+<% end %>

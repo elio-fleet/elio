@@ -38,7 +38,7 @@
                 <td class="font-mono text-xs text-ink-2"><%= port.addresses.join(", ") %></td>
                 <td><span class="badge <%= { "public" => "bg-crit-soft text-crit-ink", "private" => "bg-subtle text-ink-2", "local" => "bg-subtle text-ink-3" }.fetch(port.scope, "bg-subtle") %>"><%= { "public" => "public", "private" => t(".private"), "local" => "local" }.fetch(port.scope, port.scope) %></span></td>
                 <td class="font-mono text-xs"><%= port.process || tag.span(t("words.unknown"), class: "text-ink-3") %></td>
-                <td class="text-xs text-ink-2"><%= port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || "—" %></td>
+                <td class="text-xs text-ink-2"><%= coolify_port_owner(port, server) || (port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || "—") %></td>
                 <td class="pr-4 text-xs"><%= render "servers/port_firewall", port: port %></td>
               </tr>
             <% end %>

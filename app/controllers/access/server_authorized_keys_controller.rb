@@ -11,6 +11,7 @@ class ServerAuthorizedKeysController < ApplicationController
     record_ssh_status
     @app_key = SshKey.app_keys
     @public_keys_by_fingerprint = PublicKey.where(fingerprint: @result.keys.map(&:fingerprint)).index_by(&:fingerprint)
+    @integration_keys = Integration.known_keys
     @temporary_accesses = TemporaryAccess.active.where(server: @server).index_by { |access| [ access.unix_user, access.fingerprint ] }
   end
 

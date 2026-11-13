@@ -10,6 +10,11 @@ class DesignSystemTest < ApplicationSystemTestCase
   setup do
     sign_in users(:one)
     record_ports(servers(:web))
+    connection = Integration.create!(kind: "coolify", enabled: true).connections.create!(settings: { "url" => "https://coolify.example.com" }, secrets: { "token" => "t" })
+    CoolifyResource.create!(connection: connection, kind: "server", uuid: "s1", name: "web", server: servers(:web), data: { "reachable" => true, "usable" => true })
+    CoolifyResource.create!(connection: connection, kind: "application", uuid: "a1", name: "a-rather-long-application-name", status: "running:healthy", server: servers(:web),
+                            data: { "domains" => %w[a-long-domain-name.example.com another-long-domain.example.com third.example.com], "git_branch" => "main", "git_commit" => "623a4be",
+                                    "project" => "A long project name", "environment" => "production" })
   end
 
   teardown { page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride") }
@@ -22,7 +27,7 @@ class DesignSystemTest < ApplicationSystemTestCase
       public_keys_path, new_public_key_path, public_key_path(public_keys(:alice)), activities_path, tasks_path,
       settings_path, settings_users_path, settings_notifications_path, settings_automations_path, settings_vulnerabilities_path,
       settings_docker_path, settings_firewall_path, settings_integrations_path, edit_settings_integration_path("coolify"),
-      new_settings_integration_connection_path("coolify"), account_path ]
+      new_settings_integration_connection_path("coolify"), coolify_path, server_path(web, tab: "coolify"), account_path ]
   end
 
   [ 1024, 1280 ].each do |width|

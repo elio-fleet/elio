@@ -26,6 +26,7 @@ class PublicKeysTest < ApplicationSystemTestCase
     click_on "Enregistrer"
     assert_text "La clé « Bob Martin » a été modifiée."
 
+    dismiss_toasts
     find(".page-actions details.actions-menu summary").click
     accept_app_confirm { click_on "Supprimer" }
     assert_text "La clé « Bob Martin » a été retirée du trousseau."

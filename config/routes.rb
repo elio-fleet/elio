@@ -117,6 +117,7 @@ Rails.application.routes.draw do
     resource :link, only: %i[create destroy], controller: "dns_links"
   end
   get "hosting", to: "ovh#index", as: :ovh
+  get "coolify", to: "coolify#index", as: :coolify
   resources :ovh_resources, only: [], path: "hosting/resources" do
     resource :link, only: %i[create destroy], controller: "ovh_links"
   end

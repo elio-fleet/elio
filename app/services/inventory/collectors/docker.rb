@@ -44,6 +44,10 @@ class Inventory::Collectors::Docker < Inventory::Collector
   # The vulnerability rows are not kept in the snapshot (ServerVulnerability).
   def self.snapshot_data(data) = data.except("image_vulnerabilities")
 
+  # A compose label, nil when absent: Docker 26 prints "<no value>" for a
+  # missing key of `index .Config.Labels` (older versions print nothing).
+  def self.label(value) = (value.presence unless value == "<no value>")
+
   # "<id>\t/<name>\t<image>\t<image id>\t<state>\t<restarts>\t<health>\t<started>\t<finished>\t<exit>\t<policy>\t<created>\t<project>\t<service>"
   def self.parse_containers(text, now:)
     text.to_s.lines.filter_map do |line|
@@ -54,7 +58,7 @@ class Inventory::Collectors::Docker < Inventory::Collector
       container = { "id" => id.first(12), "name" => name.delete_prefix("/"), "image" => image, "image_id" => image_id, "state" => state,
                     "restarts" => restarts.to_i, "health" => health.presence, "started_at" => started_at&.iso8601, "finished_at" => finished_at&.iso8601,
                     "exit_code" => exit_code.to_i, "restart_policy" => policy.presence, "created_at" => time(created)&.iso8601,
-                    "project" => project.presence, "service" => service.presence }.compact
+                    "project" => label(project), "service" => label(service) }.compact
       container["looping"] = true if state == "restarting" || (container["restarts"] >= LOOP_RESTARTS && started_at && started_at > now - LOOP_WINDOW)
       container["stopped_long"] = true if state == "exited" && finished_at && finished_at < now - STOPPED_LONG
       container
