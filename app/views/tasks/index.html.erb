@@ -14,12 +14,17 @@
 
   <%= render "tasks/workers_warning", workers_running: @workers_running %>
 
-  <nav class="task-filters filter-bar mb-3 flex flex-wrap gap-2" aria-label="<%= t(".status") %>">
+  <div class="filter-bar mb-3 flex flex-wrap items-center gap-2">
+  <nav class="task-filters flex flex-wrap gap-2" aria-label="<%= t(".status") %>">
     <% [ [ t(".all"), nil ], [ t(".queued"), "queued" ], [ t(".running"), "running" ], [ t(".done"), "succeeded" ], [ t(".failed"), "failed" ] ].each do |label, filter| %>
-      <%= filter_chip label, tasks_path(status: filter), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
+      <%= filter_chip label, tasks_path(status: filter, **@search.to_params), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
     <% end %>
   </nav>
+  <%= render "activities/journal_search", search: @search, url: tasks_path, hidden: { status: @filter } %>
+  </div>
 
+  <%= search_results_frame do %>
+  <% if @search.any? %><p class="journal-search-count mb-2 text-xs text-ink-3"><%= t("activities.journal_search.count", count: @pager.total) %></p><% end %>
   <section class="card overflow-x-auto">
     <% if @tasks.any? %>
       <table id="background-tasks" class="table-dense w-full">
@@ -43,11 +48,12 @@
         </tbody>
       </table>
     <% else %>
-      <p class="py-10 text-center text-sm text-ink-3"><%= (@filter ? t(".none_in_category") : t(".none")) %>.</p>
+      <p class="py-10 text-center text-sm text-ink-3"><%= @search.any? ? t("activities.journal_search.nothing") : "#{@filter ? t(".none_in_category") : t(".none")}." %></p>
     <% end %>
   </section>
 
   <%= render "shared/pagination", pager: @pager, noun: t(".tasks") %>
+  <% end %>
 
   <section id="upcoming-automations" class="card mt-5">
     <div class="card-header">

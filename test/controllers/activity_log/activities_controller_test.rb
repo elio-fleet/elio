@@ -98,4 +98,45 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
     assert_select "nav.journal-tabs a.tab[aria-current=page][data-tab=runs]"
     assert_select "nav.main-nav a[aria-current=page]", text: "Journal"
   end
+
+  test "searches the text (data, server, key, kind label without accents) and the period, within the filters, kept in the links" do
+    travel_to(Time.zone.parse("2026-11-02 10:00")) { Activity.record!(:service_failed, server: servers(:web), service: "nginx.service") }
+    travel_to(Time.zone.parse("2026-11-10 10:00")) { Activity.record!(:service_failed, server: servers(:db), service: "postgresql.service") }
+    travel_to(Time.zone.parse("2026-11-12 10:00")) { Activity.record!(:key_added, server: servers(:web), public_key: public_keys(:alice), unix_user: "deploy", user: users(:one)) }
+    sign_in users(:one)
+
+    get activities_path(q: "nginx")
+    assert_select "#activities li.activity", 1
+    assert_select ".journal-search-count", "1 résultat"
+    assert_select ".journal-search input[name=q][value=nginx]"
+
+    get activities_path(q: "alice")
+    assert_select "#activities li.activity[data-kind=key_added]", 1
+
+    get activities_path(q: "cle ajoutee")
+    assert_select "#activities li.activity[data-kind=key_added]", 1
+
+    get activities_path(q: servers(:db).name)
+    assert_select "#activities li.activity", 1
+
+    get activities_path(q: "service", from: "2026-11-05", to: "2026-11-11")
+    assert_select "#activities li.activity", 1
+    assert_select "#activities li.activity p", text: /postgresql/
+
+    get activities_path(q: "nginx", category: "keys")
+    assert_select "#activities li.activity", 0
+    assert_select "#search-results p", text: "Rien ne correspond à cette recherche."
+    assert_select ".activity-filters a[href=?]", activities_path(q: "nginx"), text: "Tout"
+    assert_select ".journal-search input[type=hidden][name=category][value=keys]"
+    assert_select "a.journal-search-clear[href=?]", activities_path(category: "keys")
+  end
+
+  test "an invalid date or a text with LIKE wildcards is harmless" do
+    Activity.record!(:server_created, server: servers(:web))
+    sign_in users(:one)
+
+    get activities_path(q: "%_", from: "nope", to: "2026-13-45")
+    assert_response :success
+    assert_select "#activities li.activity", 0
+  end
 end
