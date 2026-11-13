@@ -49,7 +49,7 @@ class AccountSnapshot < ApplicationRecord
 
   def log_changes(previous_keys)
     known = previous_keys.to_a.map(&:fingerprint).to_set
-    orphans = unknown_keys(known_fingerprints: PublicKey.pluck(:fingerprint).to_set, app_key: SshKey.app_keys)
+    orphans = unknown_keys(known_fingerprints: PublicKey.pluck(:fingerprint).to_set + Integration.known_keys.keys, app_key: SshKey.app_keys)
 
     orphans.reject { |key| known.include?(key.fingerprint) }.uniq(&:fingerprint).each do |key|
       Activity.record!(:unknown_key_detected, server: server, unix_user: unix_user, key_name: key.name, fingerprint: key.fingerprint)

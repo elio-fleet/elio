@@ -7,6 +7,12 @@ module Activity::Summaries
   def self.t(key, **options) = I18n.t("activity.summaries.#{key}", **options)
 
   # " (a, b)" or "".
+  # " (623a4be « fix: export »)", " (623a4be)" or "".
+  def self.coolify_commit(data)
+    parts = [ data["commit"], (I18n.t("activity.summaries.quoted", text: data["message"]) if data["message"].present?) ].compact
+    parts.any? ? " (#{parts.join(" ")})" : ""
+  end
+
   def self.list(values) = Array(values).any? ? " (#{Array(values).join(", ")})" : ""
 
   BY_KIND = {
@@ -96,6 +102,9 @@ module Activity::Summaries
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },
     integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) },
+    coolify_deployed: proc { Activity::Summaries.t(:coolify_deployed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
+    coolify_deploy_failed: proc { Activity::Summaries.t(:coolify_deploy_failed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
+    coolify_backup_failed: proc { Activity::Summaries.t(:coolify_backup_failed, database: data["database"], team: data["team"]) },
     integration_connection_added: proc { Activity::Summaries.t(:integration_connection_added, integration: data["integration_label"], connection: data["connection"]) },
     integration_connection_removed: proc { Activity::Summaries.t(:integration_connection_removed, integration: data["integration_label"], connection: data["connection"]) }
   }.freeze

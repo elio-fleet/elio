@@ -4,6 +4,7 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include StubHelpers
   include CoolifyHelpers
+  include PortHelpers
 
   setup do
     sign_in users(:viewer)
@@ -68,6 +69,16 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] td.font-mono", "main @ 623a4be"
     assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] td.font-mono", "main"
     assert_select "#coolify-resources", text: /pas de health check/
+    assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] .coolify-domain[data-dns]", 0, "no DNS source: not checked"
+    assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] a[href=?]",
+                  "https://coolify.example.com/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001", text: "api-facturation"
+    assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] .deploy-failed", "échec"
+    assert_equal %w[failed finished failed], css_select("#coolify-deployments li.coolify-deployment").map { |item| item["data-status"] }
+    assert_select "#coolify-deployments li.coolify-deployment", text: /chore: 0.5.15.*webhook git/m
+    assert_select "#coolify-backups li.coolify-backup[data-uuid=dbpg000000000000000000004][data-state=late]" do
+      assert_select ".backup-state", "en retard"
+      assert_equal %w[success failed success], css_select(".backup-execution").map { |square| square["data-status"] }
+    end
 
     get server_path(servers(:backup))
     assert_select ".server-tabs a", text: /Coolify/, count: 0
@@ -85,5 +96,14 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.docker-container-row[data-name=postgresql-svcn8n0000000000000000003] .coolify-container", "n8n › postgresql"
     assert_select "tr.docker-container-row[data-name=web-appback000000000000000002-0451] .coolify-container", "back-office › web"
     assert_select "tr.docker-container-row[data-name=coolify-proxy] .coolify-container", 0
+  end
+
+  test "the Firewall tab and the Ports page name the Coolify resource that publishes a port" do
+    record_ports(servers(:web))
+    record_containers(servers(:web), [ { "name" => "n8n-svcn8n0000000000000000003", "state" => "running", "ports" => "0.0.0.0:9100->5678/tcp" } ])
+    get server_path(servers(:web), tab: "firewall")
+    assert_select ".coolify-port-owner[title=n8n-svcn8n0000000000000000003]", "n8n"
+    get ports_path
+    assert_select ".coolify-port-owner", "n8n"
   end
 end

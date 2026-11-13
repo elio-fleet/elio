@@ -70,7 +70,11 @@ module Elio
       seed("web-prod-2", "198.51.100.11", "deploy", "ubuntu2404", groups: [ production ],
            health: { "reboot_required" => false, "ntp_synchronized" => true, "updates" => { "total" => 3, "security" => 0 } }.merge(disk("/", 52.0, 50.gigabytes)))
       db = seed("db-prod", "198.51.100.20", "admin", "debian12", groups: [ production ])
-      seed("worker-1", "198.51.100.30", "deploy", "ubuntu2204", groups: [ production ], health: { "ntp_synchronized" => true }.merge(disk("/", 61.0, 80.gigabytes)))
+      seed("worker-1", "198.51.100.30", "deploy", "ubuntu2204", groups: [ production ],
+           health: { "ntp_synchronized" => true, "failed_units" => %w[queue-consumer.service mnt-archive.mount],
+                     "failed_units_details" => [ { "name" => "queue-consumer.service", "description" => "Queue consumer", "result" => "exit-code", "since" => 3.hours.ago.utc.iso8601 },
+                                                 { "name" => "mnt-archive.mount", "description" => "Archive share", "result" => "exit-code", "since" => 2.days.ago.utc.iso8601 } ] }
+                     .merge(disk("/", 61.0, 80.gigabytes)))
       backup = seed("backup", "198.51.100.40", "root", "debian12", groups: [ infra ], health: { "failed_units" => [] }.merge(disk("/srv/backup", 83.0, 2.terabytes)))
       seed("monitoring", "198.51.100.50", "root", "debian12", groups: [ infra ],
            health: { "failed_units" => [], "updates" => { "total" => 2, "security" => 0 } }.merge(disk("/", 38.0, 100.gigabytes)))
@@ -134,7 +138,9 @@ module Elio
       Dns::Store.replace("gandi", [
         { zone: "example.org", name: "example.org", record_type: "A", value: "198.51.100.10" },
         { zone: "example.org", name: "www.example.org", record_type: "CNAME", value: "example.org" },
-        { zone: "shop.example", name: "shop.example", record_type: "A", value: "198.51.100.20" }
+        { zone: "shop.example", name: "shop.example", record_type: "A", value: "198.51.100.20" },
+        { zone: "example.org", name: "api.example.org", record_type: "A", value: "198.51.100.10" },
+        { zone: "example.org", name: "n8n.example.org", record_type: "A", value: "192.0.2.80" }
       ])
       # Firewall: SSH only from Elio and the office (the Production group), an IPv6 not covered by the OVH firewall.
       elio_source = SshSource.create!(name: "Elio", cidr: "198.51.100.250", position: 0)
@@ -178,6 +184,12 @@ module Elio
       build_coolify(web, db)
     end
 
+    # A nightly backup to S3, 14 nights, one failed.
+    def demo_backups
+      executions = (0...14).map { |night| { "uuid" => "exe#{night}", "status" => (night == 4 ? "failed" : "success"), "size" => 1_288_490_188, "at" => (night.days.ago.beginning_of_day + 3.hours).iso8601 } }
+      [ { "uuid" => "bkp1", "enabled" => true, "frequency" => "0 3 * * *", "s3" => true, "created_at" => 60.days.ago.iso8601, "executions" => executions } ]
+    end
+
     # Coolify: one instance, two teams (one connection each), what runs on
     # web-prod-1, and the "shop" Compose application of db-prod (its containers in the Docker tab).
     def build_coolify(web, db)
@@ -189,21 +201,27 @@ module Elio
       tools.update_columns(last_error: nil)
       maps.update_columns(last_synced_at: 2.hours.ago, last_error: "Coolify a refusé l'accès (code 403) : vérifiez l'adresse d'Elio dans « Allowed API IPs »")
       server = { "ip" => "198.51.100.10", "user" => "root", "port" => 22, "reachable" => true, "usable" => true, "docker_version" => "27.3.1", "proxy" => "TRAEFIK",
-                 "domains" => %w[api.example.com admin.example.com n8n.example.com] }
+                 "domains" => %w[api.example.org admin.example.org n8n.example.org] }
       CoolifyResource.create!(connection: tools, kind: "server", uuid: "srvweb1", name: "web-prod-1", coolify_server_uuid: "srvweb1", server: web, matched_by: "address", data: server)
-      [ [ "application", "api-billing", "running:healthy", { "build_pack" => "dockerfile", "domains" => [ "api.example.com" ], "git_branch" => "main", "git_commit" => "623a4be", "health_check" => true } ],
-        [ "application", "back-office", "running:unknown", { "build_pack" => "dockercompose", "domains" => [ "admin.example.com" ], "git_branch" => "main", "git_commit" => "1c9e0d2" } ],
-        [ "service", "n8n", "exited", { "domains" => [ "n8n.example.com" ], "images" => [ "n8nio/n8n:1.82" ] } ],
+      deploys = ->(*list) { list.map.with_index { |(status, hours, commit, message), index| { "uuid" => "dep#{commit}#{index}", "status" => status, "commit" => commit, "message" => message, "at" => hours.hours.ago.iso8601, "finished_at" => (hours.hours.ago + 2.minutes).iso8601, "webhook" => true } } }
+      [ [ "application", "api-billing", "running:healthy", { "build_pack" => "dockerfile", "domains" => [ "api.example.org" ], "git_branch" => "main", "git_commit" => "623a4be", "health_check" => true,
+                                                              "deployments" => deploys.([ "finished", 46, "623a4be", "chore: 0.5.15" ], [ "finished", 150, "8d1e2f0", "feat: invoices in PDF" ]) } ],
+        [ "application", "back-office", "running:unknown", { "build_pack" => "dockercompose", "domains" => [ "admin.example.org" ], "git_branch" => "main", "git_commit" => "1c9e0d2",
+                                                             "deployments" => deploys.([ "failed", 5, "1c9e0d2", "feat: CSV export of the invoices" ], [ "finished", 30, "77ab3c1", "fix: login redirect" ]) } ],
+        [ "service", "n8n", "exited", { "domains" => [ "n8n.example.org" ], "images" => [ "n8nio/n8n:1.82" ] } ],
         [ "service", "uptime-relay", "running:unhealthy", { "images" => [ "louislam/uptime-kuma:2" ] } ],
-        [ "database", "pg-billing", "running:healthy", { "engine" => "postgresql", "image" => "postgres:17-alpine", "public" => false } ],
-        [ "database", "sessions-cache", "running:healthy", { "engine" => "redis", "image" => "redis:7.4-alpine", "public" => false } ] ].each_with_index do |(kind, name, status, data), index|
+        [ "database", "pg-billing", "running:healthy", { "engine" => "postgresql", "image" => "postgres:17-alpine", "public" => false, "backups" => demo_backups } ],
+        [ "database", "sessions-cache", "running:healthy", { "engine" => "redis", "image" => "redis:7.4-alpine", "public" => false, "backups" => [] } ] ].each_with_index do |(kind, name, status, data), index|
         CoolifyResource.create!(connection: tools, kind: kind, uuid: "res#{index}", name: name, status: status, coolify_server_uuid: "srvweb1", server: web, matched_by: "address",
                                 data: data.merge("project" => (index < 2 || index == 4 ? "Billing" : "Tools"), "environment" => "production"))
       end
+      [ [ :coolify_deploy_failed, "back-office", "1c9e0d2", "feat: CSV export of the invoices", 5 ], [ :coolify_deployed, "api-billing", "623a4be", "chore: 0.5.15", 46 ] ].each do |kind, application, commit, message, hours|
+        Activity.record!(kind, server: web, user: nil, application: application, commit: commit, message: message).update_columns(created_at: hours.hours.ago)
+      end
       CoolifyResource.create!(connection: tools, kind: "server", uuid: "srvdb", name: "db-prod", coolify_server_uuid: "srvdb", server: db, matched_by: "address",
-                              data: server.merge("ip" => "198.51.100.20", "domains" => [ "shop.example.com" ]))
+                              data: server.merge("ip" => "198.51.100.20", "domains" => [ "shop.example" ]))
       CoolifyResource.create!(connection: tools, kind: "application", uuid: "shop", name: "shop", status: "running:unhealthy", coolify_server_uuid: "srvdb", server: db,
-                              matched_by: "address", data: { "build_pack" => "dockercompose", "domains" => [ "shop.example.com" ], "git_branch" => "main", "git_commit" => "8f2a1b7",
+                              matched_by: "address", data: { "build_pack" => "dockercompose", "domains" => [ "shop.example" ], "git_branch" => "main", "git_commit" => "8f2a1b7",
                                                              "project" => "Shop", "environment" => "production" })
     end
   end

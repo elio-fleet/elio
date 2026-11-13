@@ -39,6 +39,9 @@ class Integration < ApplicationRecord
       links.sort_by { |link| link.fetch(:position, 9) }
     end
 
+    # SSH keys the enabled extensions know (Integrations::Base.known_keys), by fingerprint.
+    def known_keys = enabled_kinds.each_with_object({}) { |integration, keys| keys.merge!(integration.definition.known_keys(integration)) { |_fingerprint, first, _| first } }
+
     # Health reasons the enabled extensions raise for a server.
     def health_reasons(server) = enabled_kinds.flat_map { |integration| integration.definition.health_reasons(integration, server) } + Dns.health_reasons(server)
   end

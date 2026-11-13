@@ -6,7 +6,8 @@ class TasksController < ApplicationController
 
   def index
     @filter = params[:status].presence_in(BackgroundTask::FILTERS.keys)
-    @pager = paginate(BackgroundTask.filtered(@filter).recent.includes(:user), per_page: PER_PAGE)
+    @search = JournalSearch.new(params)
+    @pager = paginate(@search.apply(BackgroundTask.filtered(@filter).recent.includes(:user), BackgroundTask), per_page: PER_PAGE)
     @tasks = @pager.records
     @counts = BackgroundTask.group(:status).count
     @upcoming_automations = Automation.where(enabled: true).select(&:available?).sort_by(&:next_run_at)
