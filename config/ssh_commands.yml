@@ -60,7 +60,7 @@ inventory:
       echo "@@elio link"; ip -d -j link 2>/dev/null || true
 
   health:
-    description: "Health: load, memory, disks (space and inodes), reboot required, failed units, pending updates, clock sync."
+    description: "Health: load, memory, disks (space and inodes), reboot required, failed units (name, description, result, since when), pending updates, clock sync."
     shell: true
     debian: |
       excluded="-x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs -x ramfs -x nsfs"
@@ -71,6 +71,7 @@ inventory:
       echo "@@elio inodes"; df -P -T -i $excluded 2>/dev/null
       echo "@@elio reboot"; if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi
       echo "@@elio failed"; systemctl --failed --no-legend --plain 2>/dev/null || true
+      echo "@@elio failed_details"; units=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{ print $1 }'); [ -z "$units" ] || systemctl show --timestamp=unix -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || systemctl show -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || true
       echo "@@elio updates"; apt-get -s -o Debug::NoLocking=true dist-upgrade 2>/dev/null | grep '^Inst ' || true
       echo "@@elio ntp"; timedatectl show -p NTPSynchronized --value 2>/dev/null || true
     default: |
@@ -82,6 +83,7 @@ inventory:
       echo "@@elio inodes"; df -P -T -i $excluded 2>/dev/null
       echo "@@elio reboot"; if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi
       echo "@@elio failed"; systemctl --failed --no-legend --plain 2>/dev/null || true
+      echo "@@elio failed_details"; units=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{ print $1 }'); [ -z "$units" ] || systemctl show --timestamp=unix -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || systemctl show -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || true
       echo "@@elio updates"; echo unsupported
       echo "@@elio ntp"; timedatectl show -p NTPSynchronized --value 2>/dev/null || true
 

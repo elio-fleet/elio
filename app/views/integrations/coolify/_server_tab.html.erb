@@ -1,6 +1,7 @@
 <%# "Coolify" tab of a server: each Coolify server it is (one per team / instance that manages it) with what Coolify says of it, then its resources. Locals: server, integration. %>
 <% coolify_servers = server.coolify_resources.servers.includes(:connection).order(:name).to_a %>
 <% resources = server.coolify_resources.resources.ordered.to_a %>
+<% dns_check = Integrations::Coolify::DomainCheck.new(server) if Dns.enabled? %>
 <div id="server-coolify" class="space-y-4">
   <% coolify_servers.each do |coolify_server| %>
     <% connection = coolify_server.connection %>
@@ -22,14 +23,15 @@
     <% if resources.any? %>
       <div class="overflow-x-auto">
         <table class="table-dense">
-          <thead><tr><th class="pl-4"><%= t("integrations.coolify.server_tab.resource") %></th><th><%= t("integrations.coolify.server_tab.project") %></th><th><%= t("integrations.coolify.server_tab.domains") %></th><th class="col-secondary"><%= t("integrations.coolify.server_tab.version") %></th><th class="pr-4"><%= t("integrations.coolify.server_tab.state") %></th></tr></thead>
+          <thead><tr><th class="pl-4"><%= t("integrations.coolify.server_tab.resource") %></th><th><%= t("integrations.coolify.server_tab.project") %></th><th><%= t("integrations.coolify.server_tab.domains") %></th><th class="col-secondary"><%= t("integrations.coolify.server_tab.version") %></th><th class="col-secondary"><%= t("integrations.coolify.server_tab.last_deploy") %></th><th class="pr-4"><%= t("integrations.coolify.server_tab.state") %></th></tr></thead>
           <tbody>
             <% resources.each do |resource| %>
               <tr class="coolify-resource" data-uuid="<%= resource.uuid %>" data-kind="<%= resource.kind %>">
-                <td class="pl-4"><span class="font-medium"><%= resource.name %></span><span class="block text-xs text-ink-3"><%= coolify_kind_detail(resource) %></span></td>
+                <td class="pl-4"><% if (url = coolify_url(resource)) %><%= link_to resource.name, url, class: "font-medium hover:underline", target: "_blank", rel: "noopener", title: t("integrations.coolify.server_tab.open_in_coolify") %><% else %><span class="font-medium"><%= resource.name %></span><% end %><span class="block text-xs text-ink-3"><%= coolify_kind_detail(resource) %></span></td>
                 <td class="text-xs text-ink-2"><%= [ resource.data["project"], resource.data["environment"] ].compact.join(" / ").presence || "—" %></td>
-                <td class="text-xs"><%= coolify_domain_links(resource) %></td>
+                <td class="text-xs"><%= coolify_domain_links(resource, check: dns_check) %></td>
                 <td class="col-secondary col-truncate font-mono text-xs text-ink-2" title="<%= coolify_version(resource) %>"><%= coolify_version(resource) || "—" %></td>
+                <td class="col-secondary text-xs whitespace-nowrap"><%= resource.kind == "application" ? coolify_last_deploy(resource) : "—" %></td>
                 <td class="pr-4"><%= coolify_state_badge(resource) %></td>
               </tr>
             <% end %>
@@ -41,6 +43,71 @@
       <% end %>
     <% else %>
       <%= empty_state t("integrations.coolify.server_tab.none"), t("integrations.coolify.server_tab.none_text"), icon: :cube %>
+    <% end %>
+  <% end %>
+
+  <% deployments = resources.select { |resource| resource.kind == "application" }
+                           .flat_map { |application| application.deployments.map { |deployment| [ application, deployment ] } }
+                           .sort_by { |_application, deployment| deployment["at"].to_s }.reverse.first(8) %>
+  <% if deployments.any? %>
+    <%= panel t("integrations.coolify.server_tab.deployments"), icon: :arrow_path, id: "coolify-deployments", link: [ t("servers.tabs.journal"), server_path(server, tab: "journal") ] do %>
+      <ul>
+        <% deployments.each do |application, deployment| %>
+          <% tone = { "finished" => :good, "failed" => :crit, "in_progress" => :neutral, "queued" => :neutral }.fetch(deployment["status"], :neutral) %>
+          <li class="coolify-deployment flex items-start gap-3 border-t border-line px-4 py-2.5 first:border-t-0" data-status="<%= deployment["status"] %>">
+            <%= status_badge tone, t("integrations.coolify.server_tab.deploy_statuses.#{deployment["status"]}", default: deployment["status"].to_s) %>
+            <div class="min-w-0 text-sm">
+              <span class="font-medium"><%= application.name %></span>
+              <% if deployment["commit"].present? && deployment["commit"] != "HEAD" %><span class="font-mono text-xs text-ink-3"><%= deployment["commit"].first(7) %></span><% end %>
+              <p class="truncate text-xs text-ink-3" title="<%= deployment["message"] %>">
+                <%= safe_join([ deployment["message"], (relative_time_tag(Time.zone.parse(deployment["at"])) if deployment["at"]),
+                                *%w[webhook restart rollback].select { |key| deployment[key] }.map { |key| t("integrations.coolify.server_tab.deploy_kinds.#{key}") } ].compact, " · ") %>
+              </p>
+            </div>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
+  <% end %>
+
+  <% databases = resources.select { |resource| resource.kind == "database" } %>
+  <% if databases.any? %>
+    <% max_age = integration.value(:backup_max_age_hours).to_f.nonzero? || 26 %>
+    <%= panel t("integrations.coolify.backups.title"), meta: t("integrations.coolify.backups.count", count: databases.size), icon: :clock, id: "coolify-backups" do %>
+      <ul>
+        <% databases.each do |database| %>
+          <% state = database.backup_state(max_age) %>
+          <li class="coolify-backup border-t border-line px-4 py-3 first:border-t-0" data-uuid="<%= database.uuid %>" data-state="<%= state %>">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="font-medium"><%= database.name %> <span class="text-xs font-normal text-ink-3"><%= coolify_kind_detail(database) %></span></span>
+              <%= status_badge({ ok: :good, failed: :crit, late: :warn, none: :warn }.fetch(state), t("integrations.coolify.backups.states.#{state}"), class: "backup-state") %>
+            </div>
+            <% if state == :none %>
+              <p class="mt-1 text-xs text-ink-3"><%= t("integrations.coolify.backups.none_hint") %></p>
+            <% else %>
+              <p class="mt-1 text-xs text-ink-3">
+                <% database.backups.each do |backup| %>
+                  <span class="font-mono"><%= backup["frequency"] %></span><%= t("integrations.coolify.backups.to_s3") if backup["s3"] %> ·
+                <% end %>
+                <% if (success = database.last_success_at) %><%= t("integrations.coolify.backups.last_success_html", at: relative_time_tag(success)) %><% else %><%= t("integrations.coolify.backups.never") %><% end %>
+              </p>
+              <% executions = database.executions.first(14).reverse %>
+              <% if executions.any? %>
+                <div class="mt-2 flex gap-0.5" role="img" aria-label="<%= t("integrations.coolify.backups.last", count: executions.size) %>" title="<%= t("integrations.coolify.backups.last", count: executions.size) %>">
+                  <% executions.each do |execution| %>
+                    <% color = { "success" => "bg-good", "failed" => "bg-crit" }.fetch(execution["status"], "bg-track") %>
+                    <span class="backup-execution inline-block h-3.5 w-2.5 rounded-sm <%= color %>" data-status="<%= execution["status"] %>"
+                          title="<%= [ execution["status"], (l(Time.zone.parse(execution["at"]), format: :short) if execution["at"]), (human_bytes(execution["size"]) if execution["size"].to_i.positive?) ].compact.join(" · ") %>"></span>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <% if resources.any? { |resource| resource.kind == "service" } %>
+        <p class="border-t border-line px-4 py-2 text-xs text-ink-3"><%= t("integrations.coolify.backups.services_note") %></p>
+      <% end %>
     <% end %>
   <% end %>
 </div>

@@ -141,4 +141,25 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_select "nav.main-nav a#sidebar-tasks[href=?]", activities_path, text: /Journal\s*1/
   end
+
+  test "searches the tasks by label, server and item message, with the period" do
+    inventory = enqueue("Inventaire du parc", servers: [ servers(:web) ])
+    inventory.items.first.finish!(:failed, "Connexion refusée par le pare-feu")
+    travel_to(10.days.ago) { enqueue("Scan des clés", servers: [ servers(:db) ]) }
+    sign_in users(:viewer)
+
+    get tasks_path(q: "pare-feu")
+    assert_select "#background-tasks tr.background-task", 1
+    assert_select "#background-tasks a[href=?]", task_path(inventory)
+
+    get tasks_path(q: servers(:db).name)
+    assert_select "#background-tasks tr.background-task", text: /Scan des clés/
+
+    get tasks_path(q: "Scan", from: 2.days.ago.to_date.iso8601)
+    assert_select "#background-tasks tr.background-task", 0
+    assert_select "#search-results p", text: "Rien ne correspond à cette recherche."
+
+    get tasks_path(q: "inventaire", status: "failed")
+    assert_select ".task-filters a[href=?]", tasks_path(q: "inventaire")
+  end
 end

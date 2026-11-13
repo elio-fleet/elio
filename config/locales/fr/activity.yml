@@ -205,6 +205,15 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      coolify_deployed:
+        label: Déploiement Coolify
+        description: Coolify a fini de déployer une application sur un serveur.
+      coolify_deploy_failed:
+        label: Déploiement Coolify en échec
+        description: Un déploiement Coolify a échoué (l'ancienne version tourne en général toujours).
+      coolify_backup_failed:
+        label: Sauvegarde Coolify en échec
+        description: Une sauvegarde de base planifiée dans Coolify a échoué.
       integration_connection_added:
         label: "Connexion d'extension ajoutée"
         description: "Un administrateur a ajouté une connexion à une extension (une équipe Coolify…)."
@@ -333,6 +342,10 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      coolify_deployed: "Coolify : %{application} déployée%{commit}"
+      coolify_deploy_failed: "Coolify : déploiement de %{application} en échec%{commit}"
+      quoted: "« %{text} »"
+      coolify_backup_failed: "Coolify : sauvegarde de %{database} en échec (équipe %{team})"
       integration_connection_added: '%{integration} : connexion « %{connection} » ajoutée'
       integration_connection_removed: '%{integration} : connexion « %{connection} » supprimée'
       automation_run: "%{automation} : %{result}"

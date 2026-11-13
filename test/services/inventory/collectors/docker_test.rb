@@ -138,6 +138,15 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
     assert_empty Collector.changes(data, data)
   end
 
+  test "a container outside compose: Docker 26 prints <no value> for the missing labels" do
+    line = "74d64c3fc8ab0000\t/coolify-sentinel\tdocker.io/coollabsio/sentinel:1.1.3\tsha256:95683c70\trunning\t0\thealthy\t2026-11-13T17:14:04Z\t0001-01-01T00:00:00Z\t0\tunless-stopped\t2026-11-13T17:14:04Z\t<no value>\t<no value>\n"
+    container = Collector.parse_containers(line, now: NOW).sole
+
+    assert_equal "coolify-sentinel", container["name"]
+    assert_nil container["project"]
+    assert_nil container["service"]
+  end
+
   test "real output of DB-3 (Docker 26, Debian 13): containers without health check are listed too" do
     data = Collector.parse(Collector.sections(output(:"debian13-real")), now: Time.zone.parse("2026-11-01 13:22:30"))
     containers = data["containers"].index_by { |container| container["name"] }

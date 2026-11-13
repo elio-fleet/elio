@@ -3,6 +3,9 @@
 # token, the shape of a real Coolify 4.6.0 answer, anonymized); never the network.
 module CoolifyHelpers
   TOKENS = { "tok-tools" => "team_tools", "tok-maps" => "team_maps" }.freeze
+  # The public key of the "coolify-master" key of team_tools, and its fingerprint.
+  COOLIFY_KEY = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVl coolify".freeze
+  COOLIFY_FINGERPRINT = "SHA256:PsQx8FoCDC9xlSGr7lQhquiYQKnRROwgWo4o7trZh1g".freeze
 
   def enable_coolify(*tokens, url: "https://coolify.example.com")
     tokens = [ "tok-tools" ] if tokens.empty?
