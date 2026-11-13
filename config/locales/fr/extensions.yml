@@ -43,8 +43,8 @@ fr:
         other: "%{count} enregistrements · %{refused} ligne(s) refusée(s)"
       help:
         title: Une source manuelle
-        step1_html: "<strong>Ajouter une connexion</strong> : donnez-lui un nom (le DNS qu'elle décrit, par exemple « Bureau » ou « DNS interne »)."
-        step2_html: Collez tous ses enregistrements en CSV, puis <strong>Tester</strong> pour voir ce qui sera lu et les lignes refusées, sans rien enregistrer.
+        step1_html: "<strong>Ajouter une source</strong> : donnez-lui un nom (le DNS qu'elle décrit, par exemple « Bureau » ou « DNS interne »)."
+        step2_html: Collez tous ses enregistrements en CSV, puis <strong>Aperçu</strong> pour voir ce qui sera lu et les lignes refusées, sans rien enregistrer.
         step3_html: "<strong>Enregistrer</strong> : les enregistrements remplacent ceux de la source et sont rattachés aux serveurs ; collez à nouveau tout le CSV pour la mettre à jour."
         rules_html: "Types lus : A, AAAA et CNAME. En-tête facultative (colonnes <code>name</code>, <code>type</code>, <code>value</code>, <code>ttl</code>, <code>zone</code>, dans n'importe quel ordre). Sans colonne <code>zone</code>, la zone est la fin du nom (deux derniers niveaux). Lignes vides et commençant par # ignorées."
     uptime_kuma:

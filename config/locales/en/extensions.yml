@@ -43,8 +43,8 @@ en:
         other: "%{count} records · %{refused} refused line(s)"
       help:
         title: A manual source
-        step1_html: "<strong>Add a connection</strong>: give it a name (the DNS it describes, e.g. \"Office\" or \"Internal DNS\")."
-        step2_html: Paste all its records as CSV, then <strong>Test</strong> to see what will be read and the refused lines, without saving anything.
+        step1_html: "<strong>Add a source</strong>: give it a name (the DNS it describes, e.g. \"Office\" or \"Internal DNS\")."
+        step2_html: Paste all its records as CSV, then <strong>Preview</strong> to see what will be read and the refused lines, without saving anything.
         step3_html: "<strong>Save</strong>: the records replace the source's and are attached to the servers; paste the whole CSV again to update it."
         rules_html: "Types read: A, AAAA and CNAME. Optional header (columns <code>name</code>, <code>type</code>, <code>value</code>, <code>ttl</code>, <code>zone</code>, in any order). Without a <code>zone</code> column, the zone is the end of the name (last two levels). Blank lines and lines starting with # are skipped."
     uptime_kuma:
