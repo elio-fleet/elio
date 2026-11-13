@@ -14,6 +14,12 @@
                 id: "bulk_duration", class: select_class %>
         </div>
         <div>
+          <%= label_tag :bulk_unix_user, t(".account"), class: "label" %>
+          <%= text_field_tag :unix_user, nil, id: "bulk_unix_user", placeholder: t(".account_placeholder"), pattern: "[a-z_][a-z0-9_.\\-]{0,31}\\$?",
+                autocomplete: "off", spellcheck: false, class: "#{select_class} w-52 font-mono text-sm" %>
+          <p class="mt-1 max-w-xs text-xs text-ink-3"><%= t(".account_hint") %></p>
+        </div>
+        <div>
           <%= f.button type: "submit", class: "btn btn-primary group" do %>
             <%= icon :arrow_path, class: "hidden h-4 w-4 animate-spin group-disabled:block" %>
             <span class="group-disabled:hidden"><%= t(".add") %></span>

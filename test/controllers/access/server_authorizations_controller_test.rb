@@ -118,4 +118,44 @@ class ServerAuthorizationsControllerTest < ActionDispatch::IntegrationTest
     post server_authorizations_path(servers(:web)), params: { public_key_id: public_keys(:alice).id, duration: "5" }
     assert_response :bad_request
   end
+
+  test "adds the key to the account chosen, a listed one or another one typed in" do
+    sign_in users(:one)
+    accounts = []
+    stub_method(Keys::AccessGrant, :call, ->(_server, _key, account:, **) { accounts << account.unix_user; result(:added) }) do
+      post server_authorizations_path(servers(:web)), params: { public_key_id: public_keys(:alice).id, account: "root" }, as: :turbo_stream
+      assert_turbo_stream action: :update, target: "flash" do
+        assert_select "div", text: /ajoutée sur « Web \(root\) »/
+      end
+      post server_authorizations_path(servers(:web)), params: { public_key_id: public_keys(:alice).id, account: "other", other_account: " www-app " }, as: :turbo_stream
+      post server_authorizations_path(servers(:web)), params: { public_key_id: public_keys(:alice).id }, as: :turbo_stream
+    end
+    assert_equal %w[root www-app deploy], accounts
+  end
+
+  test "refuses an invalid account name without connecting" do
+    sign_in users(:one)
+    stub_method(Keys::AccessGrant, :call, ->(*) { flunk "no grant" }) do
+      post server_authorizations_path(servers(:web)), params: { public_key_id: public_keys(:alice).id, account: "other", other_account: "bob; rm -rf /" }
+    end
+    assert_redirected_to server_path(servers(:web), tab: "keys")
+    assert_match "Nom de compte invalide", flash[:alert]
+  end
+
+  test "the dialog offers the accounts Elio read, the other ones disabled without root" do
+    AccountSnapshot.create!(server: servers(:web), unix_user: "root", content: "", read_at: Time.current)
+    AccountSnapshot.create!(server: servers(:web), unix_user: "bob", content: "", read_at: Time.current)
+    sign_in users(:one)
+
+    get server_path(servers(:web), tab: "keys")
+    assert_select ".add-key-account select[name=account] option", 4
+    assert_select ".add-key-account select[name=account] option[selected][value=deploy]", text: "deploy (connexion d'Elio)"
+    assert_select ".add-key-account select[name=account] option:not([disabled])", 4
+    assert_select ".add-key-account input[name=other_account]"
+
+    servers(:web).update!(privilege: "none")
+    get server_path(servers(:web), tab: "keys")
+    assert_select ".add-key-account select[name=account] option[disabled]", 3
+    assert_select ".add-key-account p", text: /n'a pas root/
+  end
 end
