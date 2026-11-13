@@ -39,7 +39,7 @@
   <% tab_list = [ [ "overview", t("servers.tabs.overview"), nil ],
                   [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.host.fixable.distinct.count(:cve).nonzero?, (:crit if @server.health_reasons.any? { |reason| reason["key"].to_s.start_with?("health.vulnerabilit") }) ],
                   [ "packages", t("servers.tabs.packages"), health_data.dig("updates", "total").to_i.nonzero?, (:warn if health_data.dig("updates", "security").to_i.positive?) ],
-                  [ "services", t("servers.tabs.services"), (Array(services["units"]).count { |unit| unit["active"] == "failed" }.nonzero? if services["units"]), :crit ],
+                  [ "services", t("servers.tabs.services"), (Array(services["units"]).select { |unit| unit["active"] == "failed" }.map { |unit| unit["name"] } | Array(health_data["failed_units"])).size.nonzero?, :crit ],
                   *([ docker_tab(@server, docker) ] if docker["docker"].in?(%w[ok unreadable])),
                   [ "firewall", t("servers.tabs.firewall"), (Inventory::PortAnalysis.new(@server).unexpected_ports.size.nonzero? if ports&.collected?), :warn ],
                   [ "schedules", t("servers.tabs.schedules"), (Array(schedules["timers"]).size + Array(schedules["cron"]).size if schedules.any?) ],

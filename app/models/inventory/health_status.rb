@@ -32,6 +32,8 @@ class Inventory::HealthStatus
     when "percent" then ActiveSupport::NumberHelper.number_to_percentage(value, precision: 0, locale: I18n.locale)
     when "ratio" then ActiveSupport::NumberHelper.number_to_percentage(value, precision: 2, locale: I18n.locale)
     when "load" then ActiveSupport::NumberHelper.number_to_rounded(value, precision: 1, strip_insignificant_zeros: true, locale: I18n.locale)
+    when "names" then Array(value).to_sentence(locale: I18n.locale)
+    when "first_names" then Array(value).join(", ")
     else value
     end
   end
@@ -106,13 +108,24 @@ class Inventory::HealthStatus
   def system_reasons
     reasons = []
     reasons << self.class.reason("warn", :reboot_required) if data["reboot_required"]
-    failed = Array(data["failed_units"])
-    reasons << (failed.one? ? self.class.reason("warn", :service_failed, name: failed.first.delete_suffix(".service")) : self.class.reason("warn", :services_failed, count: failed.size)) if failed.any?
+    reasons << failed_units_reason(Array(data["failed_units"])) if Array(data["failed_units"]).any?
     reasons << self.class.reason("warn", :clock) if data["ntp_synchronized"] == false
     if @os&.collected? && Inventory::EndOfLife.status(@os.data["id"], @os.data["version_id"]).ended?
       reasons << self.class.reason("warn", :unsupported, name: @os.data["name"])
     end
     reasons
+  end
+
+  # The failed units by name ("nginx", "mnt-backup.mount"): all of them up to
+  # FAILED_UNITS_NAMED, else the first ones and how many more.
+  FAILED_UNITS_NAMED = 3
+
+  def failed_units_reason(units)
+    names = units.map { |unit| unit.delete_suffix(".service") }
+    return self.class.reason("warn", :service_failed, name: names.first) if names.one?
+    return self.class.reason("warn", :units_failed, names: names) if names.size <= FAILED_UNITS_NAMED
+
+    self.class.reason("warn", :units_failed_more, first_names: names.first(FAILED_UNITS_NAMED - 1), count: names.size - (FAILED_UNITS_NAMED - 1))
   end
 
   def scheduled_task_reasons

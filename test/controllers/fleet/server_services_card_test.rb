@@ -31,6 +31,25 @@ class ServerServicesCardTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the health reading adds since when a unit failed, and the failed units the services inventory does not list" do
+    collect(parsed)
+    servers(:web).inventory_snapshots.create!(category: "health", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                              data: { "failed_units" => %w[fail2ban.service mnt-backup.mount],
+                                                      "failed_units_details" => [ { "name" => "fail2ban.service", "since" => 2.hours.ago.utc.iso8601 },
+                                                                                  { "name" => "mnt-backup.mount", "description" => "Backup share", "since" => 3.hours.ago.utc.iso8601 } ] })
+    sign_in users(:viewer)
+
+    get server_path(servers(:web), tab: "services")
+
+    assert_select "#server-services" do
+      assert_select ".services-summary", text: /· 2 en échec/
+      assert_select "li.systemd-unit[data-state=failed]", 2
+      assert_select "li.systemd-unit[data-state=failed]", text: /fail2ban.*a échoué il y a 2 heures/m
+      assert_select "li.systemd-unit[data-state=failed]", text: /mnt-backup\.mount.*a échoué il y a 3 heures.*vu au relevé de santé.*Backup share/m
+    end
+    assert_select "a.tab", text: /Services\s*2/
+  end
+
   test "explains unreadable containers" do
     collect(parsed.merge("docker" => "unreadable", "containers" => []), status: "partial", message: "Conteneurs Docker illisibles : permission denied")
     sign_in users(:viewer)

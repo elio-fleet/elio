@@ -18,6 +18,30 @@ class Inventory::Collectors::HealthTest < ActiveSupport::TestCase
                  data.values_at("reboot_required", "failed_units", "updates", "ntp_synchronized")
   end
 
+  test "the failed units with their description, result and since when (systemctl show, both timestamp formats)" do
+    output = file_fixture("inventory/health/debian12.txt").read + <<~TEXT
+      @@elio failed_details
+      Result=exit-code
+      Id=billing-worker.service
+      Description=Billing worker
+      StateChangeTimestamp=@1763055156
+
+      Id=mnt-backup.mount
+      Description=Backup share
+      Result=exit-code
+      StateChangeTimestamp=Fri 2026-11-13 17:32:36 UTC
+
+      Id=odd.service
+      StateChangeTimestamp=n/a
+    TEXT
+    details = Inventory::Collectors::Health.parse(output)["failed_units_details"]
+
+    assert_equal [ { "name" => "billing-worker.service", "description" => "Billing worker", "result" => "exit-code", "since" => "2025-11-13T17:32:36Z" },
+                   { "name" => "mnt-backup.mount", "description" => "Backup share", "result" => "exit-code", "since" => "2026-11-13T17:32:36Z" },
+                   { "name" => "odd.service" } ], details
+    assert_nil parse(:debian12)["failed_units_details"]
+  end
+
   test "parses an Ubuntu server: mount points with spaces, no swap, reboot required, clock not synchronized" do
     data = parse(:ubuntu2404)
 
