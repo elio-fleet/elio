@@ -1,5 +1,23 @@
 en:
   servers:
+    my_key:
+      add_my_key: Add my key
+      no_key_hint: First say which key is yours on "My account".
+      active_until: My key until %{time}
+      title: Add my key temporarily
+      intro: Your key, on an account of this server, for a limited time. It is removed by itself at the end.
+      active_title: My key on this server
+      active_intro: "“%{name}” on the account %{account}, until %{time}."
+      close: Close
+      key: Key
+      key_html: Key %{name}
+      account: Unix account
+      login_account: "%{user} (Elio's login)"
+      duration: For
+      extend_for: Extend by (from now)
+      add: Add
+      extend: Extend
+      remove: Remove now
     journal_card:
       all: All
       notes: Notes
@@ -406,3 +424,11 @@ en:
     added: Note added.
     updated: Note updated.
     deleted: Note deleted.
+  my_key_accesses:
+    create:
+      no_key: "No key is yours: pick it first in “My SSH keys”."
+      added: "“%{name}” added to the account %{account} for %{label}, until %{time}."
+      failed: "Key not added: %{error_title} — %{error_details}"
+    destroy:
+      removed: "“%{name}” removed from the account %{account}."
+      failed: "Key not removed: %{error_title} — %{error_details}"

@@ -79,6 +79,7 @@ en:
   time:
     formats:
       short: "%b %d %H:%M"
+      hour_minute: "%H:%M"
   number:
     percentage:
       format:

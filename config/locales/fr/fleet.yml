@@ -1,5 +1,23 @@
 fr:
   servers:
+    my_key:
+      add_my_key: Ajouter ma clé
+      no_key_hint: Déclarez d'abord votre clé dans « Mon compte ».
+      active_until: Ma clé jusqu'à %{time}
+      title: Ajouter ma clé temporairement
+      intro: Votre clé, sur un compte de ce serveur, pour un temps limité. Elle est retirée toute seule à la fin.
+      active_title: Ma clé sur ce serveur
+      active_intro: "« %{name} » sur le compte %{account}, jusqu'au %{time}."
+      close: Fermer
+      key: Clé
+      key_html: Clé %{name}
+      account: Compte Unix
+      login_account: "%{user} (connexion d'Elio)"
+      duration: Pendant
+      extend_for: Prolonger de (à partir de maintenant)
+      add: Ajouter
+      extend: Prolonger
+      remove: Retirer maintenant
     journal_card:
       all: Tout
       notes: Notes
@@ -406,3 +424,11 @@ fr:
     added: Note ajoutée.
     updated: Note modifiée.
     deleted: Note supprimée.
+  my_key_accesses:
+    create:
+      no_key: "Aucune clé n'est à vous : choisissez-la d'abord dans « Mes clés SSH »."
+      added: "« %{name} » ajoutée sur le compte %{account} pendant %{label}, jusqu'à %{time}."
+      failed: "Clé non ajoutée : %{error_title} — %{error_details}"
+    destroy:
+      removed: "« %{name} » retirée du compte %{account}."
+      failed: "Clé non retirée : %{error_title} — %{error_details}"

@@ -16,6 +16,7 @@
                           (t("count.processors", count: os["cpus"]) if os["cpus"]), (human_bytes(os["memory_bytes"]) if os["memory_bytes"]) ].compact.join(" · "), class: "server-summary font-mono") %>
   <%= page_header @server.name, crumbs: crumbs, badges: badges, subtitle: summary do %>
     <% if can?(:operate) %>
+      <%= render "servers/my_key", server: @server %>
       <%= button_to server_inventory_path(@server), form: { class: "refresh-inventory" }, class: "btn btn-secondary" do %>
         <%= icon :arrow_path %> <%= t(".refresh_inventory") %>
       <% end %>
