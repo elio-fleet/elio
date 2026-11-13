@@ -1,0 +1,450 @@
+{
+ "/team": {
+  "id": 6,
+  "name": "Outils internes",
+  "personal_team": false,
+  "members": []
+ },
+ "/version": "4.6.0",
+ "/servers": [
+  {
+   "uuid": "srvutils0000000000000001",
+   "name": "utils-1",
+   "description": null,
+   "ip": "203.0.113.21",
+   "user": "root",
+   "port": 22,
+   "is_reachable": true,
+   "is_usable": true,
+   "is_coolify_host": false,
+   "proxy": {
+    "type": "TRAEFIK",
+    "status": "running"
+   },
+   "settings": {
+    "is_build_server": false,
+    "docker_version": "29.9.2",
+    "sentinel_token": null,
+    "is_reachable": true,
+    "is_usable": true
+   }
+  },
+  {
+   "uuid": "srvtiles0000000000000002",
+   "name": "TILES-FR",
+   "description": null,
+   "ip": "tiles-fr.example.com",
+   "user": "root",
+   "port": 22,
+   "is_reachable": true,
+   "is_usable": true,
+   "is_coolify_host": false,
+   "proxy": {
+    "type": "TRAEFIK",
+    "status": "running"
+   },
+   "settings": {
+    "is_build_server": false,
+    "docker_version": "29.9.2",
+    "sentinel_token": null,
+    "is_reachable": true,
+    "is_usable": true
+   }
+  },
+  {
+   "uuid": "srvhost00000000000000003",
+   "name": "localhost",
+   "description": null,
+   "ip": "host.docker.internal",
+   "user": "root",
+   "port": 22,
+   "is_reachable": true,
+   "is_usable": true,
+   "is_coolify_host": true,
+   "proxy": {
+    "type": "TRAEFIK",
+    "status": "running"
+   },
+   "settings": {
+    "is_build_server": false,
+    "docker_version": "29.9.2",
+    "sentinel_token": null,
+    "is_reachable": true,
+    "is_usable": true
+   }
+  }
+ ],
+ "/resources": [
+  {
+   "uuid": "appapi000000000000000001",
+   "name": "api-facturation",
+   "type": "application",
+   "status": "running:healthy",
+   "environment_id": 11,
+   "destination": {
+    "id": 1,
+    "uuid": "dstutils0000000000000001",
+    "name": "coolify",
+    "network": "coolify",
+    "server_id": 1,
+    "server": {
+     "uuid": "srvutils0000000000000001",
+     "name": "utils-1",
+     "ip": "x",
+     "is_coolify_host": false
+    }
+   },
+   "fqdn": "https://api.example.com",
+   "git_repository": "acme/api-facturation",
+   "git_branch": "main",
+   "git_commit_sha": "623a4be",
+   "build_pack": "dockerfile",
+   "health_check_enabled": true,
+   "health_check_path": "/up",
+   "ports_exposes": "3000",
+   "ports_mappings": null,
+   "restart_count": 0,
+   "last_online_at": "2026-11-08 12:50:09",
+   "docker_compose_raw": null,
+   "manual_webhook_secret_github": null,
+   "description": null
+  },
+  {
+   "uuid": "appback000000000000000002",
+   "name": "back-office",
+   "type": "application",
+   "status": "running:unknown",
+   "environment_id": 11,
+   "destination": {
+    "id": 1,
+    "uuid": "dstutils0000000000000001",
+    "name": "coolify",
+    "network": "coolify",
+    "server_id": 1,
+    "server": {
+     "uuid": "srvutils0000000000000001",
+     "name": "utils-1",
+     "ip": "x",
+     "is_coolify_host": false
+    }
+   },
+   "fqdn": "https://admin.example.com,http://admin.example.dev/",
+   "git_repository": "acme/back-office",
+   "git_branch": "main",
+   "git_commit_sha": "HEAD",
+   "build_pack": "dockercompose",
+   "health_check_enabled": false,
+   "health_check_path": "/",
+   "ports_exposes": "80",
+   "ports_mappings": null,
+   "restart_count": 2,
+   "description": "Admin"
+  },
+  {
+   "uuid": "svcn8n0000000000000000003",
+   "name": "n8n",
+   "type": "service",
+   "status": "exited",
+   "environment_id": 12,
+   "server": {
+    "uuid": "srvutils0000000000000001",
+    "name": "utils-1"
+   },
+   "service_type": null,
+   "applications": [
+    {
+     "name": "n8n",
+     "fqdn": "https://n8n.example.com",
+     "image": "n8nio/n8n:1.82",
+     "status": "exited"
+    }
+   ],
+   "databases": [
+    {
+     "name": "postgresql",
+     "image": "postgres:16-alpine",
+     "status": "exited"
+    }
+   ],
+   "docker_compose_raw": null
+  },
+  {
+   "uuid": "dbpg000000000000000000004",
+   "name": "pg-facturation",
+   "type": "standalone-postgresql",
+   "status": "running:healthy",
+   "environment_id": 11,
+   "destination": {
+    "id": 1,
+    "uuid": "dstutils0000000000000001",
+    "name": "coolify",
+    "network": "coolify",
+    "server_id": 1,
+    "server": {
+     "uuid": "srvutils0000000000000001",
+     "name": "utils-1",
+     "ip": "x",
+     "is_coolify_host": false
+    }
+   },
+   "image": "postgres:17-alpine",
+   "is_public": false,
+   "public_port": null,
+   "ports_mappings": null
+  },
+  {
+   "uuid": "apptiles00000000000000005",
+   "name": "tiles",
+   "type": "application",
+   "status": "running:unknown",
+   "environment_id": 13,
+   "destination": {
+    "id": 1,
+    "uuid": "dsttiles0000000000000002",
+    "name": "coolify",
+    "network": "coolify",
+    "server_id": 1,
+    "server": {
+     "uuid": "srvtiles0000000000000002",
+     "name": "TILES-FR",
+     "ip": "x",
+     "is_coolify_host": false
+    }
+   },
+   "fqdn": "https://tiles.example.com",
+   "git_repository": "acme/tiles",
+   "git_branch": "main",
+   "git_commit_sha": "8f2a1b7",
+   "build_pack": "dockerfile",
+   "health_check_enabled": false
+  },
+  {
+   "uuid": "oddthing00000000000000006",
+   "name": "unknown kind",
+   "type": "something-new",
+   "status": "running"
+  }
+ ],
+ "/projects": [
+  {
+   "uuid": "projbilling00000000000001",
+   "name": "Facturation",
+   "description": null
+  },
+  {
+   "uuid": "projtools0000000000000002",
+   "name": "Outils",
+   "description": null
+  }
+ ],
+ "/projects/projbilling00000000000001": {
+  "uuid": "projbilling00000000000001",
+  "name": "Facturation",
+  "environments": [
+   {
+    "id": 11,
+    "name": "production",
+    "uuid": "e1"
+   }
+  ]
+ },
+ "/projects/projtools0000000000000002": {
+  "uuid": "projtools0000000000000002",
+  "name": "Outils",
+  "environments": [
+   {
+    "id": 12,
+    "name": "production",
+    "uuid": "e2"
+   },
+   {
+    "id": 13,
+    "name": "staging",
+    "uuid": "e3"
+   }
+  ]
+ },
+ "/servers/srvutils0000000000000001/domains": [
+  {
+   "ip": "203.0.113.21",
+   "domains": [
+    "api.example.com",
+    "admin.example.com",
+    "n8n.example.com"
+   ]
+  }
+ ],
+ "/servers/srvtiles0000000000000002/domains": [
+  {
+   "ip": "198.51.100.30",
+   "domains": [
+    "tiles.example.com"
+   ]
+  }
+ ],
+ "/servers/srvhost00000000000000003/domains": [],
+ "/security/keys": [
+  {
+   "uuid": "key0000000000000000000001",
+   "name": "coolify-master",
+   "description": null,
+   "private_key": null,
+   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVlZWVl coolify",
+   "fingerprint": "SHA256:elioTestCoolifyFingerprint",
+   "is_git_related": false
+  },
+  {
+   "uuid": "key0000000000000000000002",
+   "name": "github-app-deploy",
+   "private_key": null,
+   "public_key": "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZmZm deploy",
+   "fingerprint": "x",
+   "is_git_related": true
+  }
+ ],
+ "/databases/dbpg000000000000000000004/backups": [
+  {
+   "id": 3,
+   "uuid": "bkp00000000000000000001",
+   "team_id": 6,
+   "description": null,
+   "enabled": true,
+   "save_s3": true,
+   "frequency": "0 3 * * *",
+   "database_backup_retention_amount_locally": 7,
+   "database_type": "App\\Models\\StandalonePostgresql",
+   "database_id": 4,
+   "s3_storage_id": 1,
+   "created_at": "2026-01-10T10:00:00.000000Z",
+   "last_execution_at": "2026-11-07T03:00:12.000000Z",
+   "s3_storage_uuid": "s3a",
+   "s3_storage_uuids": [
+    "s3a"
+   ],
+   "executions": [
+    {
+     "uuid": "exe0000000000000000000003",
+     "status": "success",
+     "message": null,
+     "size": 1288490188,
+     "filename": "/data/coolify/backups/pg-dump.dmp",
+     "created_at": "2026-11-07T03:00:00.000000Z",
+     "finished_at": "2026-11-07T03:00:12.000000Z",
+     "s3_uploaded": true
+    },
+    {
+     "uuid": "exe0000000000000000000002",
+     "status": "failed",
+     "message": null,
+     "size": 0,
+     "filename": null,
+     "created_at": "2026-11-06T03:00:00.000000Z",
+     "finished_at": "2026-11-06T03:00:04.000000Z",
+     "s3_uploaded": false
+    },
+    {
+     "uuid": "exe0000000000000000000001",
+     "status": "success",
+     "message": null,
+     "size": 1280000000,
+     "filename": "/data/coolify/backups/pg-dump.dmp",
+     "created_at": "2026-11-05T03:00:00.000000Z",
+     "finished_at": "2026-11-05T03:00:11.000000Z",
+     "s3_uploaded": true
+    }
+   ]
+  }
+ ],
+ "/deployments/applications/appapi000000000000000001": {
+  "count": 42,
+  "deployments": [
+   {
+    "id": 1,
+    "application_id": "1",
+    "deployment_uuid": "dep0000000000000000000002",
+    "pull_request_id": 0,
+    "force_rebuild": false,
+    "commit": "623a4be87f327f1bdba283631e4747cc83c4a19",
+    "status": "finished",
+    "is_webhook": true,
+    "is_api": false,
+    "created_at": "2026-11-06T09:21:57.000000Z",
+    "updated_at": "2026-11-06T09:23:31.000000Z",
+    "finished_at": "2026-11-06T09:23:31.000000Z",
+    "logs": null,
+    "current_process_id": null,
+    "restart_only": false,
+    "git_type": null,
+    "server_id": 1,
+    "application_name": "api-facturation",
+    "server_name": "utils-1",
+    "deployment_url": "/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001/deployment/dep0000000000000000000002",
+    "destination_id": "1",
+    "only_this_server": false,
+    "rollback": false,
+    "commit_message": "chore: 0.5.15\n\nCo-Authored-By: Someone <x@example.com>"
+   },
+   {
+    "id": 1,
+    "application_id": "1",
+    "deployment_uuid": "dep0000000000000000000001",
+    "pull_request_id": 0,
+    "force_rebuild": false,
+    "commit": "1c9e0d2aa",
+    "status": "failed",
+    "is_webhook": false,
+    "is_api": false,
+    "created_at": "2026-11-05T09:00:00.000000Z",
+    "updated_at": "2026-11-05T09:02:10.000000Z",
+    "finished_at": "2026-11-05T09:02:10.000000Z",
+    "logs": null,
+    "current_process_id": null,
+    "restart_only": false,
+    "git_type": null,
+    "server_id": 1,
+    "application_name": "api-facturation",
+    "server_name": "utils-1",
+    "deployment_url": "/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001/deployment/dep0000000000000000000001",
+    "destination_id": "1",
+    "only_this_server": false,
+    "rollback": false,
+    "commit_message": "feat: export CSV"
+   }
+  ]
+ },
+ "/deployments/applications/appback000000000000000002": {
+  "count": 3,
+  "deployments": [
+   {
+    "id": 1,
+    "application_id": "1",
+    "deployment_uuid": "dep0000000000000000000013",
+    "pull_request_id": 0,
+    "force_rebuild": false,
+    "commit": "HEAD",
+    "status": "failed",
+    "is_webhook": true,
+    "is_api": false,
+    "created_at": "2026-11-07T13:58:00.000000Z",
+    "updated_at": "2026-11-07T14:00:10.000000Z",
+    "finished_at": "2026-11-07T14:00:10.000000Z",
+    "logs": null,
+    "current_process_id": null,
+    "restart_only": false,
+    "git_type": null,
+    "server_id": 1,
+    "application_name": "back-office",
+    "server_name": "utils-1",
+    "deployment_url": "/project/projbilling00000000000001/environment/envprod0000000000000001/application/appback000000000000000002/deployment/dep0000000000000000000013",
+    "destination_id": "1",
+    "only_this_server": false,
+    "rollback": false,
+    "commit_message": "fix: login"
+   }
+  ]
+ },
+ "/deployments/applications/apptiles00000000000000005": {
+  "count": 0,
+  "deployments": []
+ }
+}

@@ -1,0 +1,39 @@
+<%# Connections of an extension that accepts several (IntegrationConnection), grouped under their group (a Coolify instance), with their sync state. Locals: integration. %>
+<% connections = integration.connections.to_a %>
+<% add = link_to new_settings_integration_connection_path(integration.kind), class: "btn btn-secondary add-connection" do %><%= icon :plus, class: "h-4 w-4" %> <%= t("settings.integrations.connections.add") %><% end %>
+<%= panel t("settings.integrations.connections.title"), id: "integration-connections", class: "mt-5", header: (add if connections.any?) do %>
+  <% if connections.empty? %>
+    <%= empty_state t("settings.integrations.connections.none"), t("settings.integrations.connections.none_text"), icon: :signal do %><%= add %><% end %>
+  <% else %>
+    <ul>
+      <% connections.group_by(&:group).each do |group, list| %>
+        <% if group %><%= list_divider group %><% end %>
+        <% list.each do |connection| %>
+          <li class="integration-connection flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-line px-4 py-3 first:border-t-0" data-id="<%= connection.id %>">
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium"><%= connection.label %></p>
+              <% if (summary = integration.definition.connection_summary(connection)) %><p class="text-xs text-ink-3"><%= summary %></p><% end %>
+            </div>
+            <div class="text-xs">
+              <% if connection.last_error %>
+                <%= status_badge :crit, t("settings.integrations.connections.failed"), title: connection.last_error, class: "connection-state" %>
+                <p class="mt-1 max-w-xs text-crit-ink"><%= connection.last_error.truncate(120) %></p>
+              <% elsif connection.last_synced_at %>
+                <span class="connection-state text-ink-3"><%= t("settings.integrations.connections.synchronized_html", at: relative_time_tag(connection.last_synced_at)) %></span>
+              <% else %>
+                <span class="connection-state text-ink-3"><%= t("settings.integrations.connections.never") %></span>
+              <% end %>
+            </div>
+            <div class="flex items-center gap-1">
+              <%= link_to t("settings.integrations.connections.edit"), edit_settings_integration_connection_path(integration.kind, connection), class: "btn btn-ghost" %>
+              <%= actions_menu do %>
+                <%= menu_item t("settings.integrations.connections.delete"), settings_integration_connection_path(integration.kind, connection), icon: :trash, method: :delete, danger: true,
+                      confirm: t("settings.integrations.connections.delete_confirm", label: connection.label) %>
+              <% end %>
+            </div>
+          </li>
+        <% end %>
+      <% end %>
+    </ul>
+  <% end %>
+<% end %>

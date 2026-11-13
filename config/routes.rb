@@ -94,6 +94,10 @@ Rails.application.routes.draw do
         match :test, via: %i[post patch] # (the button shares the settings form, sent as PATCH)
         post :sync
       end
+      resources :connections, controller: "integration_connections", only: %i[new create edit update destroy] do
+        post :test, on: :collection # (an unsaved connection)
+        match :test, on: :member, via: %i[post patch]
+      end
     end
   end
   resources :activities, only: :index, path: "journal"
@@ -113,6 +117,7 @@ Rails.application.routes.draw do
     resource :link, only: %i[create destroy], controller: "dns_links"
   end
   get "hosting", to: "ovh#index", as: :ovh
+  get "coolify", to: "coolify#index", as: :coolify
   resources :ovh_resources, only: [], path: "hosting/resources" do
     resource :link, only: %i[create destroy], controller: "ovh_links"
   end

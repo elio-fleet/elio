@@ -1,0 +1,90 @@
+{
+ "/team": {
+  "id": 4,
+  "name": "Cartographie",
+  "personal_team": false,
+  "members": []
+ },
+ "/version": "4.6.0",
+ "/servers": [
+  {
+   "uuid": "srvgis000000000000000001",
+   "name": "gis-1",
+   "description": null,
+   "ip": "192.0.2.40",
+   "user": "root",
+   "port": 22,
+   "is_reachable": true,
+   "is_usable": true,
+   "is_coolify_host": false,
+   "proxy": {
+    "type": "TRAEFIK",
+    "status": "running"
+   },
+   "settings": {
+    "is_build_server": false,
+    "docker_version": "29.9.2",
+    "sentinel_token": null,
+    "is_reachable": true,
+    "is_usable": true
+   }
+  }
+ ],
+ "/resources": [
+  {
+   "uuid": "appatlas00000000000000001",
+   "name": "atlas",
+   "type": "application",
+   "status": "running:unknown",
+   "environment_id": 21,
+   "destination": {
+    "id": 1,
+    "uuid": "dstgis000000000000000001",
+    "name": "coolify",
+    "network": "coolify",
+    "server_id": 1,
+    "server": {
+     "uuid": "srvgis000000000000000001",
+     "name": "gis-1",
+     "ip": "x",
+     "is_coolify_host": false
+    }
+   },
+   "fqdn": "https://atlas.example.com",
+   "git_repository": "acme/atlas",
+   "git_branch": "master",
+   "git_commit_sha": "HEAD",
+   "build_pack": "dockerfile",
+   "health_check_enabled": false
+  }
+ ],
+ "/projects": [
+  {
+   "uuid": "projatlas0000000000000001",
+   "name": "Atlas"
+  }
+ ],
+ "/projects/projatlas0000000000000001": {
+  "uuid": "projatlas0000000000000001",
+  "name": "Atlas",
+  "environments": [
+   {
+    "id": 21,
+    "name": "production"
+   }
+  ]
+ },
+ "/servers/srvgis000000000000000001/domains": [
+  {
+   "ip": "192.0.2.40",
+   "domains": [
+    "atlas.example.com"
+   ]
+  }
+ ],
+ "/security/keys": [],
+ "/deployments/applications/appatlas00000000000000001": {
+  "count": 0,
+  "deployments": []
+ }
+}

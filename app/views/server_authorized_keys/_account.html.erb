@@ -1,6 +1,6 @@
 <%# The keys of one account of a server (Keys::AuthorizedKeysReader::AccountKeys). %>
 <% account = entry.account %>
-<% orphans = entry.keys.reject { |key| key.matches?(@app_key) || @public_keys_by_fingerprint.key?(key.fingerprint) } %>
+<% orphans = entry.keys.reject { |key| key.matches?(@app_key) || @public_keys_by_fingerprint.key?(key.fingerprint) || @integration_keys.key?(key.fingerprint) } %>
 <section class="authorized-keys-account" data-account="<%= account.unix_user %>">
   <% if show_header %>
     <h3 class="mb-2 flex flex-wrap items-center gap-2 text-sm font-medium">
@@ -39,6 +39,10 @@
                 <% if key.named? && key.name != public_key.name %>
                   <span class="key-comment truncate text-xs text-ink-3"><%= key.name %></span>
                 <% end %>
+              <% elsif (known = @integration_keys[key.fingerprint]) %>
+                <span class="key-name key-integration truncate text-sm font-medium text-ink"><%= known["name"] %></span>
+                <%= source_tag known["source"] %>
+                <% if known["detail"] %><span class="key-comment truncate text-xs text-ink-3"><%= known["detail"] %></span><% end %>
               <% else %>
                 <span class="key-name truncate text-sm font-medium <%= key.named? ? "text-ink" : "italic text-ink-3" %>">
                   <%= key.named? ? key.name : t("server_authorized_keys.index.unnamed") %>
