@@ -19,6 +19,8 @@ class Integrations::Coolify::Client
   def project(uuid) = get("/projects/#{segment(uuid)}")
   def server_domains(uuid) = list("/servers/#{segment(uuid)}/domains")
   def private_keys = list("/security/keys")
+  # The backup schedules of a standalone database, each with its executions.
+  def database_backups(uuid) = list("/databases/#{segment(uuid)}/backups")
 
   def get(path, params = {})
     JSON.parse(request(path, params))

@@ -213,6 +213,33 @@ en:
       connection_summary:
         one: "%{count} server, %{attached} in the fleet · %{resources} resources · Coolify v%{version}"
         other: "%{count} servers, %{attached} in the fleet · %{resources} resources · Coolify v%{version}"
+      alert_backups: Alert when a database backup fails or is late
+      alert_backups_hint: the backups scheduled in Coolify, database by database
+      backup_max_age_hours: "Late: no successful backup for (hours)"
+      alert_no_backup: Alert when a database has no scheduled backup
+      health:
+        backup_failed: "Coolify backup of %{database} failed"
+        backup_late:
+          one: "Coolify backup of %{database}: none succeeded for %{count} hour"
+          other: "Coolify backup of %{database}: none succeeded for %{count} hours"
+        no_backup: "Coolify database %{database} has no scheduled backup"
+      backups:
+        title: Database backups
+        count:
+          one: "%{count} database"
+          other: "%{count} databases"
+        schedule: "%{frequency}%{s3}"
+        to_s3: " · to S3"
+        last_success_html: last successful %{at}
+        never: none succeeded
+        last: "%{count} last ones, the newest on the right"
+        states:
+          ok: up to date
+          failed: last one failed
+          late: late
+          none: no scheduled backup
+        none_hint: If it keeps useful data, schedule a backup in Coolify (Backups tab of the database).
+        services_note: The databases of Coolify services (n8n…) are not followed yet.
       server_tab:
         instance: Instance
         team: Team

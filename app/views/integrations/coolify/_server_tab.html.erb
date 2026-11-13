@@ -43,4 +43,45 @@
       <%= empty_state t("integrations.coolify.server_tab.none"), t("integrations.coolify.server_tab.none_text"), icon: :cube %>
     <% end %>
   <% end %>
+
+  <% databases = resources.select { |resource| resource.kind == "database" } %>
+  <% if databases.any? %>
+    <% max_age = integration.value(:backup_max_age_hours).to_f.nonzero? || 26 %>
+    <%= panel t("integrations.coolify.backups.title"), meta: t("integrations.coolify.backups.count", count: databases.size), icon: :clock, id: "coolify-backups" do %>
+      <ul>
+        <% databases.each do |database| %>
+          <% state = database.backup_state(max_age) %>
+          <li class="coolify-backup border-t border-line px-4 py-3 first:border-t-0" data-uuid="<%= database.uuid %>" data-state="<%= state %>">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="font-medium"><%= database.name %> <span class="text-xs font-normal text-ink-3"><%= coolify_kind_detail(database) %></span></span>
+              <%= status_badge({ ok: :good, failed: :crit, late: :warn, none: :warn }.fetch(state), t("integrations.coolify.backups.states.#{state}"), class: "backup-state") %>
+            </div>
+            <% if state == :none %>
+              <p class="mt-1 text-xs text-ink-3"><%= t("integrations.coolify.backups.none_hint") %></p>
+            <% else %>
+              <p class="mt-1 text-xs text-ink-3">
+                <% database.backups.each do |backup| %>
+                  <span class="font-mono"><%= backup["frequency"] %></span><%= t("integrations.coolify.backups.to_s3") if backup["s3"] %> ·
+                <% end %>
+                <% if (success = database.last_success_at) %><%= t("integrations.coolify.backups.last_success_html", at: relative_time_tag(success)) %><% else %><%= t("integrations.coolify.backups.never") %><% end %>
+              </p>
+              <% executions = database.executions.first(14).reverse %>
+              <% if executions.any? %>
+                <div class="mt-2 flex gap-0.5" role="img" aria-label="<%= t("integrations.coolify.backups.last", count: executions.size) %>" title="<%= t("integrations.coolify.backups.last", count: executions.size) %>">
+                  <% executions.each do |execution| %>
+                    <% color = { "success" => "bg-good", "failed" => "bg-crit" }.fetch(execution["status"], "bg-track") %>
+                    <span class="backup-execution inline-block h-3.5 w-2.5 rounded-sm <%= color %>" data-status="<%= execution["status"] %>"
+                          title="<%= [ execution["status"], (l(Time.zone.parse(execution["at"]), format: :short) if execution["at"]), (human_bytes(execution["size"]) if execution["size"].to_i.positive?) ].compact.join(" · ") %>"></span>
+                  <% end %>
+                </div>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+      <% if resources.any? { |resource| resource.kind == "service" } %>
+        <p class="border-t border-line px-4 py-2 text-xs text-ink-3"><%= t("integrations.coolify.backups.services_note") %></p>
+      <% end %>
+    <% end %>
+  <% end %>
 </div>

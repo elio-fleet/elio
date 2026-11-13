@@ -26,4 +26,25 @@ class CoolifyResource < ApplicationRecord
 
   # Domains served (application fqdn, service applications), without the scheme.
   def domains = Array(data["domains"])
+
+  # Backups of a database (Integrations::Coolify::Fetch#backups): the enabled
+  # schedules, their executions newest first.
+  def backups = Array(data["backups"]).select { |backup| backup["enabled"] }
+  def executions = backups.flat_map { |backup| Array(backup["executions"]) }.sort_by { |execution| execution["at"].to_s }.reverse
+  def last_success_at = executions.find { |execution| execution["status"] == "success" }&.then { |execution| Time.zone.parse(execution["at"].to_s) }
+
+  # :none (no enabled schedule), :failed (the last finished one failed),
+  # :late (no success for max_age_hours, once a schedule has had time to
+  # run), :ok — nil for anything else than a database.
+  def backup_state(max_age_hours)
+    return unless kind == "database"
+    return :none if backups.empty?
+
+    finished = executions.reject { |execution| execution["status"] == "running" }
+    return :failed if finished.first&.dig("status") == "failed"
+
+    oldest_schedule = backups.filter_map { |backup| backup["created_at"] && Time.zone.parse(backup["created_at"]) }.min
+    since = last_success_at || oldest_schedule
+    since && since < max_age_hours.to_f.hours.ago ? :late : :ok
+  end
 end

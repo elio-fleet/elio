@@ -213,6 +213,33 @@ fr:
       connection_summary:
         one: "%{count} serveur, %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
         other: "%{count} serveurs dont %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
+      alert_backups: Alerter quand une sauvegarde de base échoue ou est en retard
+      alert_backups_hint: les sauvegardes planifiées dans Coolify, base par base
+      backup_max_age_hours: "En retard : aucune sauvegarde réussie depuis (heures)"
+      alert_no_backup: Alerter quand une base n'a aucune sauvegarde planifiée
+      health:
+        backup_failed: "Sauvegarde Coolify de %{database} en échec"
+        backup_late:
+          one: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heure"
+          other: "Sauvegarde Coolify de %{database} : aucune réussie depuis %{count} heures"
+        no_backup: "Base Coolify %{database} sans sauvegarde planifiée"
+      backups:
+        title: Sauvegardes de bases
+        count:
+          one: "%{count} base"
+          other: "%{count} bases"
+        schedule: "%{frequency}%{s3}"
+        to_s3: " · vers S3"
+        last_success_html: dernière réussie %{at}
+        never: aucune réussie
+        last: "%{count} dernières, la plus récente à droite"
+        states:
+          ok: à jour
+          failed: dernière en échec
+          late: en retard
+          none: aucune sauvegarde planifiée
+        none_hint: Si elle garde des données utiles, planifiez une sauvegarde dans Coolify (onglet Backups de la base).
+        services_note: Les bases des services Coolify (n8n, etc.) ne sont pas encore suivies.
       server_tab:
         instance: Instance
         team: Équipe

@@ -178,6 +178,12 @@ module Elio
       build_coolify(web, db)
     end
 
+    # A nightly backup to S3, 14 nights, one failed.
+    def demo_backups
+      executions = (0...14).map { |night| { "uuid" => "exe#{night}", "status" => (night == 4 ? "failed" : "success"), "size" => 1_288_490_188, "at" => (night.days.ago.beginning_of_day + 3.hours).iso8601 } }
+      [ { "uuid" => "bkp1", "enabled" => true, "frequency" => "0 3 * * *", "s3" => true, "created_at" => 60.days.ago.iso8601, "executions" => executions } ]
+    end
+
     # Coolify: one instance, two teams (one connection each), what runs on
     # web-prod-1, and the "shop" Compose application of db-prod (its containers in the Docker tab).
     def build_coolify(web, db)
@@ -195,8 +201,8 @@ module Elio
         [ "application", "back-office", "running:unknown", { "build_pack" => "dockercompose", "domains" => [ "admin.example.com" ], "git_branch" => "main", "git_commit" => "1c9e0d2" } ],
         [ "service", "n8n", "exited", { "domains" => [ "n8n.example.com" ], "images" => [ "n8nio/n8n:1.82" ] } ],
         [ "service", "uptime-relay", "running:unhealthy", { "images" => [ "louislam/uptime-kuma:2" ] } ],
-        [ "database", "pg-billing", "running:healthy", { "engine" => "postgresql", "image" => "postgres:17-alpine", "public" => false } ],
-        [ "database", "sessions-cache", "running:healthy", { "engine" => "redis", "image" => "redis:7.4-alpine", "public" => false } ] ].each_with_index do |(kind, name, status, data), index|
+        [ "database", "pg-billing", "running:healthy", { "engine" => "postgresql", "image" => "postgres:17-alpine", "public" => false, "backups" => demo_backups } ],
+        [ "database", "sessions-cache", "running:healthy", { "engine" => "redis", "image" => "redis:7.4-alpine", "public" => false, "backups" => [] } ] ].each_with_index do |(kind, name, status, data), index|
         CoolifyResource.create!(connection: tools, kind: kind, uuid: "res#{index}", name: name, status: status, coolify_server_uuid: "srvweb1", server: web, matched_by: "address",
                                 data: data.merge("project" => (index < 2 || index == 4 ? "Billing" : "Tools"), "environment" => "production"))
       end
