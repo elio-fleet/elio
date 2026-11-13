@@ -68,7 +68,7 @@ class Inventory::PortAnalysis
     public_ports.reject { |entry| entry.port == ssh_port && entry.proto == "tcp" }.each do |entry|
       label = comment_for(entry)
       lines << if entry.container
-        I18n.t("inventory.port_analysis.docker", key: entry.key, container: entry.container)
+        I18n.t("inventory.port_analysis.docker", key: entry.key, container: container_label(entry.container))
       elsif entry.unexpected
         I18n.t("inventory.port_analysis.unexpected", key: entry.key, label: label)
       else
@@ -151,7 +151,16 @@ class Inventory::PortAnalysis
   end
 
   # Process or unit name, limited to safe characters for a ufw comment.
+  # "Coolify billing-db" for a container of a Coolify resource (its own name
+  # is the resource's uuid), else the container's name.
+  def container_label(container)
+    resource = CoolifyResource.for_container(coolify_resources, "name" => container)
+    resource ? "Coolify #{resource.name}" : container
+  end
+
+  def coolify_resources = @coolify_resources ||= (Integration.enabled?(:coolify) ? server.coolify_resources.to_a : [])
+
   def comment_for(entry)
-    (entry.container || entry.unit&.delete_suffix(".service") || entry.process || I18n.t("inventory.port_analysis.port", port: entry.port)).gsub(/[^\w .@-]/, "").first(40)
+    ((entry.container && container_label(entry.container)) || entry.unit&.delete_suffix(".service") || entry.process || I18n.t("inventory.port_analysis.port", port: entry.port)).gsub(/[^\w .@-]/, "").first(40)
   end
 end
