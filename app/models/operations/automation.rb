@@ -31,7 +31,8 @@ class Automation < ApplicationRecord
     Definition.new(key: :uptime_kuma_sync, default_interval: 15, default_enabled: true, quiet: true, integration: "uptime_kuma"),
     Definition.new(key: :ovh_sync, default_interval: 360, default_enabled: true, integration: "ovh"),
     Definition.new(key: :technitium_sync, default_interval: 60, default_enabled: true, quiet: true, integration: "technitium"),
-    Definition.new(key: :gandi_sync, default_interval: 60, default_enabled: true, quiet: true, integration: "gandi")
+    Definition.new(key: :gandi_sync, default_interval: 60, default_enabled: true, quiet: true, integration: "gandi"),
+    Definition.new(key: :coolify_sync, default_interval: 15, default_enabled: true, quiet: true, integration: "coolify")
   ].index_by(&:key).freeze
 
   INTERVALS = [ 5, 15, 60, 360, 1440 ].freeze

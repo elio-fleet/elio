@@ -24,6 +24,10 @@
   <%= render help, integration: @integration %>
 <% end %>
 
+<% if @integration.multiple_connections? %>
+  <%= render "settings/integrations/connections", integration: @integration %>
+<% end %>
+
 <%= form_with model: @integration, scope: :integration, url: settings_integration_path(@integration.kind), method: :patch, class: "card mt-5 space-y-6 p-5" do |f| %>
   <%= render "shared/form_errors", record: @integration %>
 
@@ -41,8 +45,10 @@
   <% end %>
 
   <div class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
-    <%= f.button type: "submit", formaction: test_settings_integration_path(@integration.kind), class: "btn btn-secondary test-connection" do %>
-      <%= icon :signal_slash, class: "h-4 w-4" %> <%= t(".test_connection") %>
+    <% unless @integration.multiple_connections? %>
+      <%= f.button type: "submit", formaction: test_settings_integration_path(@integration.kind), class: "btn btn-secondary test-connection" do %>
+        <%= icon :signal_slash, class: "h-4 w-4" %> <%= t(".test_connection") %>
+      <% end %>
     <% end %>
     <%= f.submit t(".save"), class: "btn btn-primary" %>
   </div>

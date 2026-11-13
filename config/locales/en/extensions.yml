@@ -197,6 +197,108 @@ en:
     sync_job:
       turned_off: 'Extension turned off: nothing to do'
       internal_error: Internal error (%{class})
+    coolify:
+      description: What Coolify runs on your servers (applications, services, databases), attached to the servers of the fleet. One connection per Coolify team, as many instances as needed.
+      url: Instance address
+      token: API token
+      token_hint: A token with the read permission only, created in the team to follow (see above).
+      unexpected: Unexpected answer from Coolify (is the address the one of the instance?)
+      valid_token:
+        one: "team “%{team}”, Coolify v%{version}, %{count} server"
+        other: "team “%{team}”, Coolify v%{version}, %{count} servers"
+      sensitive_token: ". Warning: this token also reads secrets (read:sensitive or root permission); Elio does not need them, create a read token instead."
+      summary:
+        one: "%{count} server (%{attached} in the fleet), %{resources} resources"
+        other: "%{count} servers (%{attached} in the fleet), %{resources} resources"
+      connection_summary:
+        one: "%{count} server, %{attached} in the fleet · %{resources} resources · Coolify v%{version}"
+        other: "%{count} servers, %{attached} in the fleet · %{resources} resources · Coolify v%{version}"
+      alert_backups: Alert when a database backup fails or is late
+      alert_backups_hint: the backups scheduled in Coolify, database by database
+      backup_max_age_hours: "Late: no successful backup for (hours)"
+      alert_no_backup: Alert when a database has no scheduled backup
+      alert_deploy_failed: Alert when the last deployment of an application failed
+      alert_deploy_failed_hint: until the next successful deployment
+      alert_resources: Alert when a resource is stopped or unhealthy
+      alert_resources_hint: "except the ones stopped for more than %{count} days (probably on purpose)"
+      alert_server_unreachable: Alert when Coolify can no longer reach or use a server
+      alert_no_health_check: Alert when an application has no health check
+      alert_no_health_check_hint: "“running” then does not say whether it answers"
+      alert_dns: Alert when a domain served by Coolify does not point to its server
+      alert_dns_hint: from the DNS extensions (OVHcloud, Technitium, Gandi); a domain of a zone Elio does not read is not checked
+      health:
+        dns_elsewhere: "Coolify: %{domain} is served here, but its DNS points to %{targets}"
+        dns_missing: "Coolify: %{domain} is served here, but has no DNS record"
+        stopped: "Coolify: %{name} stopped (%{kind})"
+        unhealthy: "Coolify: %{name} unhealthy (%{kind})"
+        server_unreachable: "Coolify: can no longer reach or use this server (team %{team})"
+        no_health_check: "Coolify: application %{name} has no health check"
+        deploy_failed: "Coolify: deployment of %{application} failed"
+        backup_failed: "Coolify: backup of %{database} failed"
+        backup_late:
+          one: "Coolify: no backup of %{database} succeeded for %{count} hour"
+          other: "Coolify: no backup of %{database} succeeded for %{count} hours"
+        no_backup: "Coolify: database %{database} has no scheduled backup"
+      backups:
+        title: Database backups
+        count:
+          one: "%{count} database"
+          other: "%{count} databases"
+        schedule: "%{frequency}%{s3}"
+        to_s3: " · to S3"
+        last_success_html: last successful %{at}
+        never: none succeeded
+        last: "%{count} last ones, the newest on the right"
+        states:
+          ok: up to date
+          failed: last one failed
+          late: late
+          none: no scheduled backup
+        none_hint: If it keeps useful data, schedule a backup in Coolify (Backups tab of the database).
+        services_note: The databases of Coolify services (n8n…) are not followed yet.
+      server_tab:
+        instance: Instance
+        team: Team
+        reachable: For Coolify
+        reachable_yes: reachable
+        reachable_no: unreachable or unusable
+        proxy: Proxy
+        synchronized_html: synchronized %{at}
+        resources: Coolify resources
+        count:
+          one: "%{count} resource"
+          other: "%{count} resources"
+        all: Whole fleet
+        resource: Resource
+        project: Project / environment
+        domains: Domains
+        version: Deployed version
+        last_deploy: Last deployment
+        deploy_failed: failed
+        deployments: Recent deployments
+        open_in_coolify: open in Coolify
+        deploy_kinds:
+          webhook: git webhook
+          restart: restart
+          rollback: rollback
+        deploy_statuses:
+          finished: succeeded
+          failed: failed
+          in_progress: in progress
+          queued: queued
+          cancelled-by-user: cancelled
+        state: State
+        no_health_check: "“Running” without “healthy”: the resource has no health check in Coolify, which does not know whether it answers."
+        none: No resource
+        none_text: Coolify manages this server but runs nothing on it yet.
+      help:
+        title: Create a read-only token
+        step1_html: 'In Coolify, <strong class="font-medium">Settings › Advanced</strong>: turn <strong class="font-medium">API access</strong> on; if “Allowed API IPs” is filled in, add Elio''s address.'
+        step2_html: Switch to the <strong class="font-medium">team</strong> to follow (team menu, top left).
+        step3_html: '<strong class="font-medium">Keys &amp; Tokens › API Tokens</strong> → new token, <strong class="font-medium">read</strong> permission only, any expiry.'
+        step4_html: Add a connection here with the instance address and this token.
+        one_team_html: 'A Coolify token sees <strong class="font-medium">one team only</strong>, and the API does not say which teams exist: add one connection per team. The server running Coolify belongs to the “Root” team.'
+        reads: Elio reads the servers, the resources, their domains, projects and states. Never the environment variables nor the secrets, and it never deploys, stops or changes anything.
     gandi:
       description: The A, AAAA and CNAME records of your domains served by Gandi LiveDNS, attached to the servers they point to, and your domains with their expiry date (optional alert).
       api_token: Personal access token
@@ -278,9 +380,76 @@ en:
       connection: Connection
       alerts: Alerts
       resources: Resources
+  coolify:
+    index:
+      subtitle:
+        one: "what Coolify runs on the fleet, %{count} connection."
+        other: "what Coolify runs on the fleet, %{count} connections (teams and instances)."
+      connections_failed:
+        one: "Connection failed: %{names}."
+        other: "Connections failed: %{names}."
+      resources: Resources
+      attention: To handle
+      attention_caption: stopped, unhealthy
+      outside: Outside the fleet
+      outside_caption:
+        one: "%{count} Coolify server with no Elio server"
+        other: "%{count} Coolify servers with no Elio server"
+      all: All
+      applications: Applications
+      services: Services
+      databases: Databases
+      search: Search a resource
+      search_placeholder: Name or domain
+      server: Server
+      team_project: Team / project
+      not_in_fleet: outside the fleet
+      no_result: No resource
+      no_result_text: No resource matches this filter or this search.
+      empty: No Coolify resource
+      empty_text: The connections see no application, service or database yet.
+      not_synchronized: Coolify has not been synchronized yet.
+  coolify_helper:
+    states:
+      healthy: Running · healthy
+      running: Running
+      unhealthy: Unhealthy
+      restarting: Restarting
+      stopped: Stopped
+      other: Unknown
+    build_packs:
+      dockerfile: Dockerfile
+      dockercompose: Compose
+      dockerimage: Docker image
+      nixpacks: Nixpacks
+      static: Static
+    engines:
+      postgresql: PostgreSQL
+      mysql: MySQL
+      mariadb: MariaDB
+      mongodb: MongoDB
+      redis: Redis
+      keydb: KeyDB
+      dragonfly: Dragonfly
+      clickhouse: ClickHouse
+    dns_elsewhere: "The DNS points to %{targets}, not to this server"
+    dns_missing: No DNS record for this domain
+    no_domain: none
+  coolify_resource:
+    kinds:
+      server: Server
+      application: Application
+      service: Service
+      database: Database
   integration:
     sync_label: "%{label} sync"
     required: "%{label}: required to turn the extension on"
+    url_expected: "%{label}: an http(s) address is expected (e.g. https://uptime.example.com)"
+    no_connection: no connection
+    connection_failed: "failed (%{error})"
+  integration_connection:
+    required: "%{label}: required"
+    default_label: "Connection #%{id}"
   uptime_kuma_monitor:
     matches:
       ip: by its IP address
@@ -364,6 +533,17 @@ en:
       field:
         leave_empty_keep: "•••••••• (leave empty to keep it)"
         optional: "(optional)"
+      connections:
+        title: Connections
+        add: Add a connection
+        none: No connection
+        none_text: Add a connection for the extension to read its service.
+        failed: Failed
+        synchronized_html: synchronized %{at}
+        never: not synchronized yet
+        edit: Edit
+        delete: Delete the connection
+        delete_confirm: "Delete the connection “%{label}” and everything it read?"
       test_result:
         succeeded: 'Connection succeeded: '
         failed: 'Failed: '
@@ -384,6 +564,22 @@ en:
         not_synchronized_yet: Not synchronized yet
         extension_available: No extension available.
         intro_html: 'Extensions connect Elio to your other tools, <strong class="font-medium text-ink-2">read-only</strong>: Elio creates, changes and deletes nothing there. A turned off extension appears nowhere in the interface.'
+    integration_connections:
+      form:
+        name: Name
+        name_hint: Left empty, Elio uses the name read from the service (the Coolify team…).
+        test: Test the connection
+        save: Save
+      new:
+        title: New connection
+        intro: Each connection is read separately; the alerts of the extension apply to all of them.
+      edit:
+        title: Connection
+        intro: A token left empty keeps the stored one.
+  integration_connections_controller:
+    created: Connection “%{label}” added.
+    updated: Connection “%{label}” saved.
+    deleted: Connection “%{label}” deleted.
   monitor_links_controller:
     attached: Monitor “%{monitor_name}” attached to “%{server_name}”.
     detached: Monitor “%{monitor_name}” attached to no server.

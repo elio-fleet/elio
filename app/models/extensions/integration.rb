@@ -4,7 +4,7 @@
 # Integrations::Base, found through REGISTRY. A disabled extension leaves no
 # trace in the interface; its data is kept for when it is enabled again.
 class Integration < ApplicationRecord
-  REGISTRY = { "uptime_kuma" => "Integrations::UptimeKuma", "ovh" => "Integrations::Ovh", "technitium" => "Integrations::Technitium", "gandi" => "Integrations::Gandi" }.freeze
+  REGISTRY = { "uptime_kuma" => "Integrations::UptimeKuma", "ovh" => "Integrations::Ovh", "technitium" => "Integrations::Technitium", "gandi" => "Integrations::Gandi", "coolify" => "Integrations::Coolify" }.freeze
 
   class << self
     attr_writer :registry
@@ -50,10 +50,10 @@ class Integration < ApplicationRecord
     false
   end
 
-  serialize :secrets, coder: JSON
-  encrypts :secrets
+  include IntegrationValues
 
   has_many :links, class_name: "IntegrationLink", dependent: :delete_all
+  has_many :connections, -> { order(:id) }, class_name: "IntegrationConnection", dependent: :destroy, inverse_of: :integration
 
   validates :kind, presence: true, uniqueness: true
   validate :known_kind
@@ -62,45 +62,15 @@ class Integration < ApplicationRecord
 
   def definition = self.class.registry.fetch(kind).constantize
 
-  delegate :label, :description, :icon, :fields, to: :definition
-
-  def secrets = super || {}
-
-  # Value of a field: the secret, the setting, or its default.
-  def value(key)
-    field = fields.find { |candidate| candidate.key == key.to_s }
-    raise ArgumentError, "Unknown field #{key} for #{kind}" unless field
-
-    stored = field.secret ? secrets[field.key] : settings[field.key]
-    stored.nil? ? field.default : stored
-  end
-
-  def secret?(key) = secrets[key.to_s].present?
-
-  # Values of the settings form (strings). A blank secret keeps the stored one.
-  def assign_form(values)
-    values = values.to_h.stringify_keys
-    new_settings = settings.dup
-    new_secrets = secrets.dup
-    fields.each do |field|
-      next unless values.key?(field.key) || field.boolean? || field.type == :checkboxes
-
-      value = field.cast(values[field.key])
-      if field.secret
-        new_secrets[field.key] = value if value.present?
-      else
-        new_settings[field.key] = value
-      end
-    end
-    self.settings = new_settings
-    self.secrets = new_secrets
-  end
+  delegate :label, :description, :icon, :fields, :multiple_connections?, to: :definition
 
   # Runs the synchronization now (inside a job): remembers the date, or the
   # error (logged once until it is fixed). Returns the summary; raises
-  # Integrations::Error when the service cannot be read.
+  # Integrations::Error when the service cannot be read. An extension with
+  # several connections synchronizes each one (IntegrationConnection#sync!):
+  # it fails only when every connection fails.
   def sync!
-    result = definition.sync(self)
+    result = multiple_connections? ? sync_connections : definition.sync(self)
     update!(last_synced_at: Time.current, last_error: nil)
     result
   rescue Integrations::Error => e
@@ -121,26 +91,30 @@ class Integration < ApplicationRecord
 
   private
 
+  def sync_connections
+    return I18n.t("integration.no_connection") if connections.empty?
+
+    results = connections.map do |connection|
+      [ connection, connection.sync! ]
+    rescue Integrations::Error => e
+      [ connection, e ]
+    end
+    failed = results.select { |_connection, result| result.is_a?(Integrations::Error) }
+    raise Integrations::Error, failed.map { |connection, error| "#{connection.label} : #{error.message}" }.join(" · ") if failed.size == results.size
+
+    definition.after_connections_sync(self)
+    results.map { |connection, result| "#{connection.label} : #{result.is_a?(Integrations::Error) ? I18n.t("integration.connection_failed", error: result.message) : result}" }.join(" · ")
+  end
+
   def known_kind
     errors.add(:kind, :inclusion) unless self.class.registry.key?(kind.to_s)
   end
 
   def urls_are_http
-    return unless self.class.registry.key?(kind.to_s)
-
-    fields.select { |field| field.type == :url }.each do |field|
-      value = value(field.key)
-      next if value.blank? || self.class.http_url?(value)
-
-      errors.add(:base, "#{field.label} : adresse http(s) attendue (ex. https://uptime.example.com)")
-    end
+    validate_urls if self.class.registry.key?(kind.to_s)
   end
 
   def required_fields_when_enabled
-    return unless enabled? && self.class.registry.key?(kind.to_s)
-
-    fields.select(&:required).each do |field|
-      errors.add(:base, I18n.t("integration.required", label: field.label)) if value(field.key).blank?
-    end
+    validate_required if enabled? && self.class.registry.key?(kind.to_s)
   end
 end
