@@ -10,9 +10,9 @@ class DnsRecordsController < ApplicationController
   before_action { raise ActionController::RoutingError, "no DNS source" unless Dns.enabled? }
 
   def index
-    @sources = Dns.source_integrations
+    @sources = Dns.sources
     @filter = params[:filter].presence_in(FILTERS)
-    @source = params[:source].presence_in(DnsRecord::SOURCES.keys)
+    @source = params[:source].presence_in(@sources.map(&:key))
     @zones = DnsRecord.distinct.order(:zone).pluck(:zone)
     @zone = params[:zone].presence_in(@zones)
     @q = params[:q].to_s.strip.first(100)

@@ -62,5 +62,8 @@ class Integrations::Base
 
     # One line under a connection in the settings ("6 servers · Coolify v4.6.0"), or nil.
     def connection_summary(_connection) = nil
+
+    # After a connection was deleted (what it brought that is not cascaded).
+    def connection_removed(_connection) = nil
   end
 end

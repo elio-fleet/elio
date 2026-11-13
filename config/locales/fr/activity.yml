@@ -217,6 +217,9 @@ fr:
       dns_record_conflict:
         label: Nom DNS différent selon la source
         description: Un nom DNS a des enregistrements différents dans deux sources (OVHcloud, Technitium…).
+      dns_manual_updated:
+        label: Source DNS manuelle modifiée
+        description: Les enregistrements d'une source DNS manuelle ont changé.
     categories:
       keys: Clés SSH
       servers: Serveurs
@@ -337,6 +340,7 @@ fr:
       automation_run: "%{automation} : %{result}"
       server_note_added: 'Note sur « %{server} » par %{author} : %{excerpt}'
       dns_record_conflict: "%{record} diffère entre %{sources}"
+      dns_manual_updated: "Source DNS « %{source} » : %{count} enregistrements (+%{added} / −%{removed})"
     target_account: "« %{server_name} » (compte %{account})"
   automation:
     whole_fleet: Tout le parc

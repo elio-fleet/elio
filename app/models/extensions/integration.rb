@@ -4,7 +4,8 @@
 # Integrations::Base, found through REGISTRY. A disabled extension leaves no
 # trace in the interface; its data is kept for when it is enabled again.
 class Integration < ApplicationRecord
-  REGISTRY = { "uptime_kuma" => "Integrations::UptimeKuma", "ovh" => "Integrations::Ovh", "technitium" => "Integrations::Technitium", "gandi" => "Integrations::Gandi", "coolify" => "Integrations::Coolify" }.freeze
+  REGISTRY = { "uptime_kuma" => "Integrations::UptimeKuma", "ovh" => "Integrations::Ovh", "technitium" => "Integrations::Technitium", "gandi" => "Integrations::Gandi", "coolify" => "Integrations::Coolify",
+               "manual_dns" => "Integrations::ManualDns" }.freeze
 
   class << self
     attr_writer :registry

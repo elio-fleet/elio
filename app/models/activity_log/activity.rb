@@ -78,6 +78,7 @@ class Activity < ApplicationRecord
     Kind.new(:gandi_domain_expiring, :servers, :warning),
     Kind.new(:dns_record_outside_fleet, :security, :warning),
     Kind.new(:dns_record_conflict, :configuration, :info),
+    Kind.new(:dns_manual_updated, :configuration, :info),
     Kind.new(:ovh_service_unmanaged, :servers, :info),
     Kind.new(:integration_enabled, :configuration, :info),
     Kind.new(:integration_disabled, :configuration, :info),

@@ -1,5 +1,52 @@
 fr:
   integrations:
+    manual_dns:
+      wording:
+        settings:
+          integrations:
+            connections:
+              title: Sources
+              add: Ajouter une source
+              none: Aucune source
+              none_text: Ajoutez une source, donnez-lui un nom et collez ses enregistrements.
+              delete: Supprimer la source
+              delete_confirm: "Supprimer la source « %{label} » et tous ses enregistrements ?"
+            test_result:
+              succeeded: 'Aperçu : '
+          integration_connections:
+            form:
+              name: Nom de la source
+              name_hint: Le DNS qu'elle décrit (« Bureau », « DNS interne »…), affiché à côté de ses enregistrements.
+              test: Aperçu (sans enregistrer)
+            new:
+              title: Nouvelle source DNS
+              intro: Ses enregistrements remplaceront à chaque enregistrement ceux de la source.
+            edit:
+              title: Source DNS
+              intro: "Collez à nouveau tout le CSV : il remplace tous les enregistrements de la source."
+        integration_connections_controller:
+          created: Source « %{label} » ajoutée.
+          updated: Source « %{label} » enregistrée.
+          deleted: Source « %{label} » supprimée avec ses enregistrements.
+      label: DNS manuel
+      description: Des sources DNS saisies à la main (un CSV collé), pour un DNS qui n'a pas d'extension. Leurs enregistrements rejoignent le DNS du parc comme ceux d'OVHcloud, Technitium ou Gandi.
+      records: Enregistrements (CSV)
+      records_hint: "Une ligne par enregistrement : nom, type, valeur, TTL facultatif ; « , », « ; » ou tabulation. %{count} lignes au plus. Chaque enregistrement remplace tous ceux de cette source."
+      nothing: Aucun enregistrement dans le CSV.
+      unsaved: Enregistrez d'abord cette source.
+      refused_line: "Ligne %{line} refusée (%{reason}) : %{text}"
+      more_refused:
+        one: … et %{count} autre ligne refusée.
+        other: … et %{count} autres lignes refusées.
+      connection_summary:
+        one: "%{count} enregistrement · %{refused} ligne(s) refusée(s)"
+        other: "%{count} enregistrements · %{refused} ligne(s) refusée(s)"
+      help:
+        title: Une source manuelle
+        step1_html: "<strong>Ajouter une connexion</strong> : donnez-lui un nom (le DNS qu'elle décrit, par exemple « Bureau » ou « DNS interne »)."
+        step2_html: Collez tous ses enregistrements en CSV, puis <strong>Tester</strong> pour voir ce qui sera lu et les lignes refusées, sans rien enregistrer.
+        step3_html: "<strong>Enregistrer</strong> : les enregistrements remplacent ceux de la source et sont rattachés aux serveurs ; collez à nouveau tout le CSV pour la mettre à jour."
+        rules_html: "Types lus : A, AAAA et CNAME. En-tête facultative (colonnes <code>name</code>, <code>type</code>, <code>value</code>, <code>ttl</code>, <code>zone</code>, dans n'importe quel ordre). Sans colonne <code>zone</code>, la zone est la fin du nom (deux derniers niveaux). Lignes vides et commençant par # ignorées."
     uptime_kuma:
       health:
         no_monitor: Aucune sonde Uptime Kuma
@@ -716,5 +763,20 @@ fr:
     detached: "%{name} n'est rattaché à aucun serveur."
     automatic: "%{name} revient au rattachement automatique."
   dns:
+    csv_import:
+      summary:
+        one: "%{count} enregistrement lu, %{refused} ligne(s) refusée(s)"
+        other: "%{count} enregistrements lus, %{refused} ligne(s) refusée(s)"
+      reasons:
+        columns: il faut au moins nom, type et valeur
+        type: type non pris en charge (A, AAAA ou CNAME)
+        name: nom invalide
+        ttl: TTL invalide
+        zone: le nom n'est pas dans cette zone
+        ipv4: adresse IPv4 invalide
+        ipv6: adresse IPv6 invalide
+        cname: cible CNAME invalide
+        duplicate: déjà plus haut
+        too_long: au-delà de %{count} lignes, le reste est ignoré
     health:
       no_name: Aucun nom DNS

@@ -3,7 +3,7 @@
     <% tone, message = result %>
     <p class="integration-test-result mt-3 flex items-start gap-2 rounded-lg px-3 py-2 text-sm <%= tone == :good ? "bg-good-soft text-good-ink" : "bg-crit-soft text-crit-ink" %>" data-result="<%= tone %>">
       <%= icon(tone == :good ? :check_circle : :x_circle, class: "mt-0.5 h-4 w-4 shrink-0") %>
-      <span><%= tone == :good ? t(".succeeded") : t(".failed") %><%= message %></span>
+      <span class="whitespace-pre-line"><%= tone == :good ? (local_assigns[:kind] ? integration_text(kind, "settings.integrations.test_result.succeeded") : t(".succeeded")) : t(".failed") %><%= message %></span>
     </p>
   <% end %>
 </div>

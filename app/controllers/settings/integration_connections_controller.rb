@@ -18,7 +18,7 @@ module Settings
       if @connection.save
         Activity.record!(:integration_connection_added, integration: @integration.kind, integration_label: @integration.label, connection: @connection.label)
         @integration.enqueue_sync! if @integration.enabled?
-        redirect_to edit_settings_integration_path(@integration.kind), notice: t("integration_connections_controller.created", label: @connection.label)
+        redirect_to edit_settings_integration_path(@integration.kind), notice: wording("integration_connections_controller.created", label: @connection.label)
       else
         render :new, status: :unprocessable_entity
       end
@@ -32,7 +32,7 @@ module Settings
       @connection.assign_form(form_values)
       if @connection.save
         @integration.enqueue_sync! if @integration.enabled?
-        redirect_to edit_settings_integration_path(@integration.kind), notice: t("integration_connections_controller.updated", label: @connection.label)
+        redirect_to edit_settings_integration_path(@integration.kind), notice: wording("integration_connections_controller.updated", label: @connection.label)
       else
         render :edit, status: :unprocessable_entity
       end
@@ -42,7 +42,7 @@ module Settings
       label = @connection.label
       @connection.destroy!
       Activity.record!(:integration_connection_removed, integration: @integration.kind, integration_label: @integration.label, connection: label)
-      redirect_to edit_settings_integration_path(@integration.kind), notice: t("integration_connections_controller.deleted", label: label), status: :see_other
+      redirect_to edit_settings_integration_path(@integration.kind), notice: wording("integration_connections_controller.deleted", label: label), status: :see_other
     end
 
     # Tries the values of the form (a new connection or a saved one), without saving them.
@@ -57,7 +57,7 @@ module Settings
       end
 
       respond_to do |format|
-        format.turbo_stream { render turbo_stream: turbo_stream.replace("integration-test-result", partial: "settings/integrations/test_result", locals: { result: @test_result }) }
+        format.turbo_stream { render turbo_stream: turbo_stream.replace("integration-test-result", partial: "settings/integrations/test_result", locals: { result: @test_result, kind: @integration.kind }) }
         format.html { render(@connection.persisted? ? :edit : :new) }
       end
     end
@@ -76,6 +76,8 @@ module Settings
     end
 
     def name_param = params.dig(:connection, :name).to_s
+
+    def wording(key, **options) = helpers.integration_text(@integration.kind, key, **options)
 
     def form_values
       values = params.dig(:connection, :values)

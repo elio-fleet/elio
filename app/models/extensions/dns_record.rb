@@ -1,5 +1,6 @@
 # A DNS record (A, AAAA or CNAME) of the fleet's DNS, read from a source: the
-# OVHcloud extension (source "ovh") or Technitium DNS ("technitium"). Every
+# OVHcloud extension (source "ovh"), Technitium DNS ("technitium"), Gandi
+# ("gandi") or a manual source ("manual:<connection id>", Integrations::ManualDns). Every
 # source is attached to the servers the same way (Dns::Matcher): a manual
 # link by name (DnsLink, common to the sources), the IP of an A / AAAA record,
 # or, for a CNAME, a name already attached or a server's host name.
@@ -25,7 +26,13 @@ class DnsRecord < ApplicationRecord
 
   scope :conflicting, -> { where(name: conflicting_names) }
 
-  def self.source_label(source) = SOURCES.fetch(source.to_s, source.to_s)
+  def self.source_label(source)
+    return Integrations::ManualDns.source_label(source) if manual_source?(source)
+
+    SOURCES.fetch(source.to_s, source.to_s)
+  end
+
+  def self.manual_source?(source) = source.to_s.start_with?(Integrations::ManualDns::SOURCE_PREFIX)
 
   def source_label = self.class.source_label(source)
 

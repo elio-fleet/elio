@@ -1,0 +1,13 @@
+<div class="integration-help mt-4 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-2">
+  <p class="font-medium text-ink"><%= t("integrations.manual_dns.help.title") %></p>
+  <ol class="mt-1 list-decimal space-y-0.5 pl-5">
+    <li><%= t("integrations.manual_dns.help.step1_html") %></li>
+    <li><%= t("integrations.manual_dns.help.step2_html") %></li>
+    <li><%= t("integrations.manual_dns.help.step3_html") %></li>
+  </ol>
+  <pre class="mt-2 overflow-x-auto rounded-md bg-subtle px-3 py-2 font-mono text-xs text-ink-2">name,type,value,ttl
+www.example.com,A,203.0.113.10,3600
+www.example.com,AAAA,2001:db8::10
+shop.example.com,CNAME,www.example.com</pre>
+  <p class="mt-2 text-xs text-ink-3"><%= t("integrations.manual_dns.help.rules_html") %></p>
+</div>

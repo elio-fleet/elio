@@ -1,5 +1,52 @@
 en:
   integrations:
+    manual_dns:
+      wording:
+        settings:
+          integrations:
+            connections:
+              title: Sources
+              add: Add a source
+              none: No source
+              none_text: Add a source, give it a name and paste its records.
+              delete: Delete the source
+              delete_confirm: "Delete the source “%{label}” and all its records?"
+            test_result:
+              succeeded: 'Preview: '
+          integration_connections:
+            form:
+              name: Source name
+              name_hint: The DNS it describes ("Office", "Internal DNS"…), shown next to its records.
+              test: Preview (without saving)
+            new:
+              title: New DNS source
+              intro: Each save replaces the source's records.
+            edit:
+              title: DNS source
+              intro: "Paste the whole CSV again: it replaces all the records of the source."
+        integration_connections_controller:
+          created: Source “%{label}” added.
+          updated: Source “%{label}” saved.
+          deleted: Source “%{label}” deleted with its records.
+      label: Manual DNS
+      description: DNS sources typed in by hand (a pasted CSV), for a DNS that has no extension. Their records join the DNS of the fleet like OVHcloud's, Technitium's or Gandi's.
+      records: Records (CSV)
+      records_hint: "One line per record: name, type, value, optional TTL; \",\", \";\" or a tab. %{count} lines at most. Each save replaces all the records of this source."
+      nothing: No record in the CSV.
+      unsaved: Save this source first.
+      refused_line: "Line %{line} refused (%{reason}): %{text}"
+      more_refused:
+        one: … and %{count} more refused line.
+        other: … and %{count} more refused lines.
+      connection_summary:
+        one: "%{count} record · %{refused} refused line(s)"
+        other: "%{count} records · %{refused} refused line(s)"
+      help:
+        title: A manual source
+        step1_html: "<strong>Add a connection</strong>: give it a name (the DNS it describes, e.g. \"Office\" or \"Internal DNS\")."
+        step2_html: Paste all its records as CSV, then <strong>Test</strong> to see what will be read and the refused lines, without saving anything.
+        step3_html: "<strong>Save</strong>: the records replace the source's and are attached to the servers; paste the whole CSV again to update it."
+        rules_html: "Types read: A, AAAA and CNAME. Optional header (columns <code>name</code>, <code>type</code>, <code>value</code>, <code>ttl</code>, <code>zone</code>, in any order). Without a <code>zone</code> column, the zone is the end of the name (last two levels). Blank lines and lines starting with # are skipped."
     uptime_kuma:
       health:
         no_monitor: No Uptime Kuma monitor
@@ -716,5 +763,20 @@ en:
     detached: "%{name} is attached to no server."
     automatic: "%{name} goes back to the automatic attachment."
   dns:
+    csv_import:
+      summary:
+        one: "%{count} record read, %{refused} refused line(s)"
+        other: "%{count} records read, %{refused} refused line(s)"
+      reasons:
+        columns: name, type and value are needed
+        type: type not supported (A, AAAA or CNAME)
+        name: invalid name
+        ttl: invalid TTL
+        zone: the name is not in this zone
+        ipv4: invalid IPv4 address
+        ipv6: invalid IPv6 address
+        cname: invalid CNAME target
+        duplicate: already above
+        too_long: beyond %{count} lines, the rest is ignored
     health:
       no_name: No DNS name
