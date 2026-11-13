@@ -27,7 +27,7 @@
       <%= form_with url: account_keys_path, class: "mt-4 flex flex-wrap items-end gap-3" do |f| %>
         <div>
           <%= label_tag :public_key_id, t(".keyring_key"), class: "label" %>
-          <%= select_tag :public_key_id, options_from_collection_for_select(claimable, :id, :name), class: "input mt-1 w-auto" %>
+          <%= select_tag :public_key_id, options_from_collection_for_select(claimable, :id, :name), class: "input mt-1 w-auto min-w-52" %>
         </div>
         <%= f.submit t(".claim"), class: "btn btn-secondary" %>
       <% end %>
