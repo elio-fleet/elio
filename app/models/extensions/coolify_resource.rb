@@ -14,11 +14,28 @@ class CoolifyResource < ApplicationRecord
   scope :attached, -> { where.not(server_id: nil) }
   scope :ordered, -> { order(:name, :id) }
 
+  # The resource behind a container ({ "name", "project" }) among `resources`:
+  # Coolify puts the resource's uuid in the container name ("<uuid>-<timestamp>",
+  # "<uuid>", "<part>-<service uuid>") or uses it as the Compose project.
+  def self.for_container(resources, container)
+    values = [ container["name"], container["project"] ].compact
+    resources.find { |resource| RESOURCE_KINDS.include?(resource.kind) && values.any? { |value| value.include?(resource.uuid) } }
+  end
+
   def kind_label = I18n.t("coolify_resource.kinds.#{kind}", default: kind.to_s)
 
   # "running:healthy" → ["running", "healthy"]; health nil when Coolify has none ("exited").
   def state = status.to_s.split(":").first.presence
   def health = status.to_s.split(":")[1].presence
+
+  # Was it running after `time`? Coolify's last_online_at; true when unknown
+  # (a resource Coolify never saw online counts as recently stopped).
+  def online_since?(time)
+    at = data["last_online_at"].presence or return true
+    Time.find_zone("UTC").parse(at.to_s) >= time
+  rescue ArgumentError
+    true
+  end
 
   def running? = state == "running"
   def stopped? = state.in?(%w[exited stopped])

@@ -34,11 +34,11 @@ class Integrations::CoolifyDeploymentsTest < ActiveSupport::TestCase
   test "a failed last deployment is a health reason until the next success, if chosen" do
     @connection.sync!
     reasons = -> { Integrations::Coolify.health_reasons(@integration.reload, servers(:web).reload).map(&:text) }
-    assert_includes reasons.call, "Déploiement Coolify de back-office en échec"
+    assert_includes reasons.call, "Coolify : déploiement de back-office en échec"
     assert_not reasons.call.any? { |text| text.include?("api-facturation") }
 
     @integration.update!(settings: { "alert_deploy_failed" => false })
-    assert_not reasons.call.any? { |text| text.include?("Déploiement") }
+    assert_not reasons.call.any? { |text| text.include?("déploiement") }
   end
 
   test "deployments that ended since the last sync go to the server's journal, never on the first sync" do

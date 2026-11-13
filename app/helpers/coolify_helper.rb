@@ -54,11 +54,21 @@ module CoolifyHelper
                 (status_badge(:crit, t("integrations.coolify.server_tab.deploy_failed"), class: "ml-1 deploy-failed") if deployment["status"] == "failed") ].compact)
   end
 
-  def coolify_domain_links(resource, limit: 2)
+  # The domains, those whose DNS does not point here (DomainCheck) in orange with the reason in a title.
+  def coolify_domain_links(resource, limit: 2, check: nil)
     domains = resource.domains
     return tag.span(t("coolify_helper.no_domain"), class: "text-ink-3") if domains.empty?
 
-    links = domains.first(limit).map { |domain| link_to(domain, "https://#{domain}", class: "text-accent hover:underline", target: "_blank", rel: "noopener") }
+    states = check ? check.for(resource).index_by(&:name) : {}
+    links = domains.first(limit).map do |domain|
+      found = states[Integrations::Coolify::DomainCheck.host(domain)]
+      if found&.state.in?(%i[elsewhere missing])
+        title = found.state == :missing ? t("coolify_helper.dns_missing") : t("coolify_helper.dns_elsewhere", targets: found.targets.join(", "))
+        link_to(domain, "https://#{domain}", class: "coolify-domain text-warn-ink underline decoration-dotted", target: "_blank", rel: "noopener", title: title, data: { dns: found.state })
+      else
+        link_to(domain, "https://#{domain}", class: "coolify-domain text-accent hover:underline", target: "_blank", rel: "noopener", data: { dns: found&.state })
+      end
+    end
     links << tag.span("+#{domains.size - limit}", class: "text-ink-3", title: domains.drop(limit).join(", ")) if domains.size > limit
     safe_join(links, ", ")
   end
@@ -79,6 +89,17 @@ module CoolifyHelper
     resources = server.coolify_resources.resources.to_a
     return ->(_container) { nil } if resources.empty?
 
-    ->(container) { resources.find { |resource| [ container["name"], container["project"] ].compact.any? { |value| value.include?(resource.uuid) } } }
+    ->(container) { CoolifyResource.for_container(resources, container) }
   end
+
+  # "[Coolify] n8n" for a port published by a container of a Coolify resource, else nil.
+  def coolify_port_owner(port, server)
+    return unless port.container && coolify_enabled?
+
+    @coolify_finders ||= {}
+    resource = (@coolify_finders[server.id] ||= coolify_resource_finder(server)).call("name" => port.container)
+    safe_join([ source_tag("Coolify"), " ", tag.span(resource.name, class: "coolify-port-owner", title: port.container) ]) if resource
+  end
+
+  def coolify_enabled? = defined?(@coolify_enabled) ? @coolify_enabled : (@coolify_enabled = Integration.enabled?(:coolify))
 end

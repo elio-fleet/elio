@@ -41,6 +41,11 @@ class Integrations::Base
     # Does this extension feed the DNS of the fleet (DnsRecord, Dns)?
     def dns_source?(_integration) = false
 
+    # SSH keys the service puts on servers (Coolify's key): { fingerprint =>
+    # { "source" => "Coolify", "name" => …, "detail" => … } }. They are not
+    # "outside the keyring" (no unknown-key alert) and are named in the keys tab.
+    def known_keys(_integration) = {}
+
     # Several connections (IntegrationConnection): the fields of ONE
     # connection (URL, token…). Empty = a single connection, in `fields`.
     # With connections, `fields` keeps what they share (alerts), and
