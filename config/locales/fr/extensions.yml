@@ -229,7 +229,10 @@ fr:
       alert_stale_key: Alerter quand la clé de Coolify est sur un serveur que Coolify ne gère pas
       alert_stale_key_hint: un accès oublié à retirer, ou un serveur à ajouter dans Coolify
       key_detail: "équipe %{team} · %{instance}"
+      alert_public_database: Alerter quand une base de données est rendue publique dans Coolify
+      alert_public_database_hint: "option « Make it publicly available » : la base est joignable depuis Internet sur son port"
       health:
+        public_database: "Coolify : la base %{name} est joignable depuis Internet (port %{port})"
         stale_key: "Coolify : la clé « %{name} » (%{detail}) est sur ce serveur, que Coolify ne gère pas"
         dns_elsewhere: "Coolify : %{domain} est servi ici, mais son DNS pointe vers %{targets}"
         dns_missing: "Coolify : %{domain} est servi ici, mais n'a aucun enregistrement DNS"
@@ -653,6 +656,7 @@ fr:
       local: locale uniquement
     manual_address: ajoutée à la main dans Elio
     coolify:
+      port: "Coolify : %{name} (%{kind})"
       health_check_on: "health check Coolify : %{path}"
       health_check_off: pas de health check dans Coolify
       monitored: "sonde existante : %{name}"

@@ -26,6 +26,8 @@ class Integrations::Coolify < Integrations::Base
         Integrations::Field.new(key: :alert_resources, label: I18n.t("integrations.coolify.alert_resources"), type: :boolean, default: true, section: section,
                                 hint: I18n.t("integrations.coolify.alert_resources_hint", count: STOPPED_FOR_DAYS)),
         Integrations::Field.new(key: :alert_server_unreachable, label: I18n.t("integrations.coolify.alert_server_unreachable"), type: :boolean, default: true, section: section),
+        Integrations::Field.new(key: :alert_public_database, label: I18n.t("integrations.coolify.alert_public_database"), type: :boolean, default: true, section: section,
+                                hint: I18n.t("integrations.coolify.alert_public_database_hint")),
         Integrations::Field.new(key: :alert_dns, label: I18n.t("integrations.coolify.alert_dns"), type: :boolean, default: true, section: section,
                                 hint: I18n.t("integrations.coolify.alert_dns_hint")),
         Integrations::Field.new(key: :alert_stale_key, label: I18n.t("integrations.coolify.alert_stale_key"), type: :boolean, default: true, section: section,
@@ -118,6 +120,10 @@ class Integrations::Coolify < Integrations::Base
             reasons << reason("warn", :unhealthy, kind: resource.kind_label.downcase, name: resource.name)
           end
         end
+      end
+      if integration.value(:alert_public_database)
+        resources.select { |resource| resource.kind == "database" && resource.data["public"] }
+                 .each { |database| reasons << reason("crit", :public_database, name: database.name, port: database.data["public_port"] || "?") }
       end
       if integration.value(:alert_no_health_check)
         resources.select { |resource| resource.kind == "application" && resource.running? && resource.data["health_check"] != true }

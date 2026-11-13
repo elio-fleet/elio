@@ -36,7 +36,7 @@
                 <tr class="firewall-port" data-port="<%= port.key %>">
                   <td class="pl-4 font-mono font-medium"><%= port.port %><span class="text-ink-3">/<%= port.proto %></span>
                     <% if port.unexpected %><%= status_badge :warn, t("words.unexpected"), class: "port-unexpected ml-1" %><% end %></td>
-                  <td class="text-xs text-ink-2"><%= port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || port.process || "—" %></td>
+                  <td class="text-xs text-ink-2"><%= coolify_port_owner(port, server) || (port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || port.process || "—") %></td>
                   <td class="text-xs"><%= render "servers/port_firewall", port: port %></td>
                   <% ovh_firewalls.each do |firewall| %>
                     <td class="ovh-port text-xs" data-ip="<%= firewall.ip %>"><%= ovh_firewall_badge(overview.ovh_verdict(firewall, port)) %></td>
