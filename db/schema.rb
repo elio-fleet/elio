@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_08_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -117,6 +117,23 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
     t.index ["user_id"], name: "index_background_tasks_on_user_id"
   end
 
+  create_table "coolify_resources", force: :cascade do |t|
+    t.bigint "integration_connection_id", null: false
+    t.string "kind", null: false
+    t.string "uuid", null: false
+    t.string "name", null: false
+    t.string "status"
+    t.string "coolify_server_uuid"
+    t.bigint "server_id"
+    t.string "matched_by"
+    t.jsonb "data", default: {}, null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["integration_connection_id", "kind", "uuid"], name: "index_coolify_resources_unique", unique: true
+    t.index ["integration_connection_id"], name: "index_coolify_resources_on_integration_connection_id"
+    t.index ["server_id"], name: "index_coolify_resources_on_server_id"
+  end
+
   create_table "cve_ratings", force: :cascade do |t|
     t.string "cve", null: false
     t.decimal "score", precision: 3, scale: 1
@@ -181,6 +198,19 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
     t.datetime "checked_at"
     t.string "error"
     t.index ["reference"], name: "index_image_updates_on_reference", unique: true
+  end
+
+  create_table "integration_connections", force: :cascade do |t|
+    t.bigint "integration_id", null: false
+    t.string "name"
+    t.jsonb "settings", default: {}, null: false
+    t.text "secrets"
+    t.jsonb "state", default: {}, null: false
+    t.datetime "last_synced_at"
+    t.text "last_error"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["integration_id"], name: "index_integration_connections_on_integration_id"
   end
 
   create_table "integration_links", force: :cascade do |t|
@@ -563,9 +593,12 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_07_120000) do
   add_foreign_key "background_task_items", "servers", on_delete: :nullify
   add_foreign_key "background_tasks", "automations", on_delete: :nullify
   add_foreign_key "background_tasks", "users", on_delete: :nullify
+  add_foreign_key "coolify_resources", "integration_connections", on_delete: :cascade
+  add_foreign_key "coolify_resources", "servers", on_delete: :nullify
   add_foreign_key "dns_links", "servers", on_delete: :cascade
   add_foreign_key "dns_links", "users", on_delete: :nullify
   add_foreign_key "dns_records", "servers", on_delete: :nullify
+  add_foreign_key "integration_connections", "integrations", on_delete: :cascade
   add_foreign_key "integration_links", "integrations", on_delete: :cascade
   add_foreign_key "integration_links", "servers", on_delete: :cascade
   add_foreign_key "integration_links", "users", on_delete: :nullify

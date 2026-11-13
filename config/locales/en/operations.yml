@@ -40,6 +40,9 @@ en:
       technitium_sync:
         label: Technitium DNS sync
         description: Reads again the Technitium DNS records, attaches them to the servers and raises the alerts chosen in the extension.
+      coolify_sync:
+        label: Coolify sync
+        description: Reads each Coolify connection again (servers, applications, services, databases) and attaches them to the servers of the fleet.
       gandi_sync:
         label: Gandi sync
         description: Reads again the Gandi domains and their LiveDNS records, attaches them to the servers and raises the alerts chosen in the extension.

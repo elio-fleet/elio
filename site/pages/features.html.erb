@@ -146,7 +146,18 @@
       <% end -%>
     </ul>
   </div>
-  <p class="mt-8 text-sm text-ink-3"><%= t en: "Uptime Kuma, OVHcloud and Gandi are not yet tried on real accounts: built and tested on recorded or documented API answers (Technitium DNS was tried on a real instance). Feedback welcome.", fr: "Uptime Kuma, OVHcloud et Gandi ne sont pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées ou documentées (Technitium DNS a été essayé sur une vraie instance). Vos retours sont bienvenus." %></p>
+  <div class="mt-16 max-w-3xl">
+    <h3 class="text-xl font-semibold">Coolify</h3>
+    <ul class="mt-4 space-y-3 text-ink-2">
+      <% [ t(en: "One connection per Coolify team (a token only sees its team), as many instances as needed; read tokens, GET requests only, a warning if a token can read secrets.", fr: "Une connexion par équipe Coolify (un jeton ne voit que son équipe), autant d'instances que nécessaire ; des jetons read, uniquement des requêtes GET, un avertissement si un jeton lit les secrets."),
+           t(en: "A Coolify tab on each server it manages: applications, services and databases with their project, domains, deployed version and state, the recent deployments and the database backups; a Coolify page for the whole fleet.", fr: "Un onglet Coolify sur chaque serveur qu'il gère : applications, services et bases avec leur projet, leurs domaines, la version déployée et leur état, les déploiements récents et les sauvegardes de bases ; une page Coolify pour tout le parc."),
+           t(en: "Readable names in the Docker tab, the ports and the prompts; deployments in the server's journal; Coolify's SSH key recognized.", fr: "Des noms lisibles dans l'onglet Docker, les ports et les prompts ; les déploiements dans le journal du serveur ; la clé SSH de Coolify reconnue."),
+           t(en: "Alerts to choose: backup failed or late, database without backup or made public, failed deployment, resource stopped or unhealthy, server Coolify cannot reach, domain whose DNS points elsewhere.", fr: "Alertes au choix : sauvegarde en échec ou en retard, base sans sauvegarde ou rendue publique, déploiement en échec, ressource arrêtée ou en mauvaise santé, serveur que Coolify ne joint plus, domaine dont le DNS pointe ailleurs.") ].each do |point| -%>
+        <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
+      <% end -%>
+    </ul>
+  </div>
+  <p class="mt-8 text-sm text-ink-3"><%= t en: "Uptime Kuma, OVHcloud and Gandi are not yet tried on real accounts: built and tested on recorded or documented API answers (Technitium DNS and Coolify were tried on real instances). Feedback welcome.", fr: "Uptime Kuma, OVHcloud et Gandi ne sont pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées ou documentées (Technitium DNS et Coolify ont été essayés sur de vraies instances). Vos retours sont bienvenus." %></p>
 </section>
 
 <section id="team" class="mx-auto mt-20 max-w-6xl px-5">

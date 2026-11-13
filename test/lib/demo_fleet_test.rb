@@ -14,7 +14,7 @@ class DemoFleetTest < ActiveSupport::TestCase
     assert_equal %w[backup db-prod monitoring staging web-prod-1 web-prod-2 worker-1], Server.order(:name).pluck(:name)
     assert built[:db].inventory("docker").collected?
     assert_operator built[:db].server_vulnerabilities.count, :>, 50
-    assert_equal %w[gandi ovh technitium uptime_kuma], Integration.where(enabled: true).pluck(:kind).sort
+    assert_equal %w[coolify gandi ovh technitium uptime_kuma], Integration.where(enabled: true).pluck(:kind).sort
     assert DnsRecord.exists?(source: "gandi", server: built[:web])
     assert_equal 2, built[:db].notes.count
   end

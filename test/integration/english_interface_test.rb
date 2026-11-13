@@ -177,6 +177,19 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     Integration.find_or_initialize_by(kind: "gandi").update!(enabled: true, secrets: { "api_token" => "t" },
                                                             state: { "domains" => [ { "fqdn" => "example.test", "expires_at" => 1.year.from_now.iso8601, "autorenew" => true, "livedns" => true } ] })
     assert_english edit_settings_integration_path("gandi"), except: data + [ ".gandi-domain td:first-child" ]
+    coolify = Integration.find_or_initialize_by(kind: "coolify").tap { |integration| integration.update!(enabled: true) }
+    assert_english edit_settings_integration_path("coolify"), except: data
+    connection = coolify.connections.create!(settings: { "url" => "https://coolify.example.test" }, secrets: { "token" => "t" },
+                                             state: { "team" => "Tools", "version" => "4.6.0", "servers" => 2, "attached" => 1, "resources" => 5 })
+    assert_english edit_settings_integration_path("coolify"), except: data + [ ".integration-connection p:first-child", ".list-divider" ]
+    assert_english new_settings_integration_connection_path("coolify"), except: data
+    assert_english edit_settings_integration_connection_path("coolify", connection), except: data + [ "h2" ]
+    CoolifyResource.create!(connection: connection, kind: "server", uuid: "s1", name: "web", server: servers(:web), data: { "reachable" => true, "usable" => true })
+    CoolifyResource.create!(connection: connection, kind: "application", uuid: "a1", name: "api", status: "running:unknown", server: servers(:web),
+                            data: { "domains" => [ "api.example.test" ], "git_branch" => "main", "project" => "Shop", "environment" => "production" })
+    coolify_data = data + [ ".coolify-resource td:first-child span.font-medium", "[data-status=team] .badge", "[data-status=instance] .badge" ]
+    assert_english coolify_path, except: coolify_data
+    assert_english server_path(servers(:web), tab: "coolify"), except: coolify_data
     assert_english settings_integrations_path, except: data
   end
 

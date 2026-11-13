@@ -49,11 +49,19 @@
         <table class="table-dense">
           <thead><tr><th class="pl-4"><%= t(".state") %></th><th><%= t("words.container") %></th><th>Image</th><th class="text-right"><%= t(".restarts") %></th><th class="text-right">CPU</th><th class="text-right"><%= t(".memory") %></th><th class="pr-4"><%= t(".since") %></th></tr></thead>
           <tbody>
+            <% coolify_for = Integration.enabled?(:coolify) ? coolify_resource_finder(server) : ->(_container) { nil } %>
             <% containers.sort_by { |container| [ container["looping"] || container["health"] == "unhealthy" ? 0 : container["state"] == "running" ? 1 : 2, container["name"] ] }.each do |container| %>
               <tr class="docker-container-row" data-name="<%= container["name"] %>" data-state="<%= container["state"] %>">
                 <td class="pl-4"><%= container_state_badge(container) %></td>
-                <td><span class="font-mono text-xs"><%= container["name"] %></span>
-                  <% if container["project"] %><span class="compose-project block text-[11px] text-ink-3" title="<%= Array(container["config_files"]).join(", ") %>"><%= container["project"] %> · <%= container["service"] %></span><% end %></td>
+                <% coolify = coolify_for.call(container) %>
+                <td>
+                  <% if coolify %>
+                    <span class="coolify-container font-medium" title="<%= container["name"] %>"><%= coolify_container_label(coolify, container) %></span>
+                    <span class="block text-[11px] text-ink-3"><%= safe_join([ source_tag("Coolify"), " ", [ coolify.kind_label, coolify.data["project"], coolify.data["environment"] ].compact.join(" · ") ]) %></span>
+                  <% else %>
+                    <span class="font-mono text-xs"><%= container["name"] %></span>
+                  <% end %>
+                  <% if container["project"] && !coolify %><span class="compose-project block text-[11px] text-ink-3" title="<%= Array(container["config_files"]).join(", ") %>"><%= container["project"] %> · <%= container["service"] %></span><% end %></td>
                 <td class="font-mono text-xs text-ink-2"><%= container["image"] %></td>
                 <td class="text-right text-xs tabular-nums <%= "text-crit-ink" if container["looping"] %>"><%= container["restarts"] %></td>
                 <td class="text-right text-xs tabular-nums"><%= container["cpu_percent"] ? number_to_percentage(container["cpu_percent"], precision: 1) : "—" %></td>
