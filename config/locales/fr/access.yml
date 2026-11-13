@@ -11,6 +11,9 @@ fr:
       known_access_add_below: Aucun accès connu. Ajoutez-la ci-dessous, ou lancez un scan si des clés ont été ajoutées à la main.
       seen_html: Vu %{time}
     bulk_form:
+      account: Compte
+      account_placeholder: celui d'Elio
+      account_hint: Vide = le compte de connexion d'Elio de chaque serveur ; un autre compte demande root.
       duration: Durée
       permanent: Permanent
       add_server: Ajoutez un serveur
@@ -106,6 +109,13 @@ fr:
       key_will_be_removed_from: La clé « %{nom} » sera supprimée du compte %{account} de « %{server_name} ». Elle ne pourra plus se connecter à ce compte.
   servers:
     add_key_dialog:
+      account: Compte Unix
+      login_account: "%{user} (connexion d'Elio)"
+      other_account: Autre compte…
+      other_account_name: Nom du compte
+      account_hint: Un autre compte que celui d'Elio demande root ; son ~/.ssh est créé s'il manque, jamais le compte.
+      other_accounts_need_root: "Elio n'a pas root sur ce serveur : seulement son propre compte."
+      subtitle: Dans le fichier ~/.ssh/authorized_keys du compte choisi.
       keyring: Depuis le trousseau
       new_key: Nouvelle clé
       keyring_key: Clé du trousseau
@@ -151,6 +161,13 @@ fr:
       forbidden_details: 'La clé Elio ne peut pas être supprimée : l''application perdrait l''accès au serveur.'
       root_needed_title: Root nécessaire
       root_needed_details: Elio a besoin de root (ou de sudo sans mot de passe) pour modifier les clés du compte %{account}.
+    public_key_authorization:
+      root_needed_title: Root nécessaire
+      root_needed_details: Elio a besoin de root (ou de sudo sans mot de passe) pour ajouter une clé au compte %{account}.
+      unknown_account_title: Compte inconnu
+      unknown_account_details: Le compte %{account} n'existe pas sur ce serveur (ou n'a pas de dossier personnel). Elio ne crée jamais de compte.
+      not_owned_title: Fichier refusé
+      not_owned_details: Le dossier ~/.ssh ou le fichier authorized_keys de %{account} est un lien ou n'appartient pas à ce compte ; Elio n'y écrit pas en root.
     bulk_access:
       added_for: ajoutée pendant %{label_for}
       added: ajoutée
@@ -187,6 +204,7 @@ fr:
     updated: La clé « %{public_key_name} » a été modifiée.
     deleted: La clé « %{public_key_name} » a été retirée du trousseau.
   server_authorizations_controller:
+    invalid_account: 'Nom de compte invalide : lettres minuscules, chiffres, « _ », « - » ou « . », 32 caractères au plus.'
     not_saved: 'Clé non enregistrée : %{full_messages_to_sentence}'
     target: "« %{server_name} »"
     added_for: "%{name} est ajoutée sur %{target} pendant %{label_for}, jusqu'à %{date}."

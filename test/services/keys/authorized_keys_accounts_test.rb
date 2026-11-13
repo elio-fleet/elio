@@ -178,4 +178,67 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     assert_equal %w[bob deploy root], server.account_snapshots.order(:unix_user).pluck(:unix_user), "carol unreadable: not recorded, old: gone"
     assert Activity.of_kind(:unknown_key_detected).where(server: server, unix_user: "bob").exists?
   end
+
+  # The test runner cannot give a file to another account: chown is a no-op here.
+  def without_chown = @bin.join("chown").tap { |file| file.write("#!/bin/sh\nexit 0\n") }.chmod(0o755)
+
+  def authorize(user, public_key: public_keys(:alice), sudo: true, **options)
+    Keys::PublicKeyAuthorization.call(servers(:web), public_key, account: AuthorizedKeysAccount.new(servers(:web), user), transport: fake(sudo: sudo),
+                                                                 known_hosts_file: @known_hosts, **options)
+  end
+
+  test "adding a key to another account keeps its lines; a second time it is already there" do
+    without_chown
+    file = @root.join("bob", ".ssh", "authorized_keys")
+
+    assert authorize("bob").added?
+    assert_equal "# deploy\n#{@bob_key}\n#{@alice_key}\n#{public_keys(:alice).content.split.first(2).join(" ")} Alice\n", file.read
+    assert authorize("bob").already_present?
+  end
+
+  test "adding a key to an account without ~/.ssh creates it, private; never the account" do
+    without_chown
+
+    assert authorize("dave").added?
+    assert_equal 0o700, @root.join("dave", ".ssh").stat.mode & 0o777
+    assert_equal 0o600, @root.join("dave", ".ssh", "authorized_keys").stat.mode & 0o777
+    assert_equal "Alice", AuthorizedKey.parse(@root.join("dave", ".ssh", "authorized_keys").read).sole.name
+
+    unknown = authorize("nobody")
+    assert_equal [ :error, "Compte inconnu" ], [ unknown.status, unknown.error_title ]
+    assert_not @root.join("nobody").exist?
+  end
+
+  test "adding never writes through a link nor in a file the account does not own, and needs root" do
+    without_chown
+    root_file = @root.join("root", ".ssh", "authorized_keys")
+    before = root_file.read
+    %w[mallory eve].each do |user|
+      result = authorize(user)
+      assert_equal [ :error, "Fichier refusé" ], [ result.status, result.error_title ], user
+    end
+    assert_equal before, root_file.read, "root's file is untouched"
+
+    refused = authorize("bob", sudo: false)
+    assert_equal [ :error, "Root nécessaire" ], [ refused.status, refused.error_title ]
+    assert_not_includes @root.join("bob", ".ssh", "authorized_keys").read, "Alice"
+  end
+
+  test "a temporary access on another account: replaced with its expiry, then removed from that account" do
+    without_chown
+    bob = AuthorizedKeysAccount.new(servers(:web), "bob")
+    file = @root.join("bob", ".ssh", "authorized_keys")
+    assert authorize("bob", expires_at: 1.hour.from_now).added?
+    assert authorize("bob", expires_at: 2.hours.from_now, replace: true).added?
+    lines = file.read.lines.grep(/Alice/)
+    assert_equal 1, lines.size
+    assert_match(/\Aexpiry-time="\d{14}Z" /, lines.sole)
+
+    access = TemporaryAccess.create!(server: servers(:web), public_key: public_keys(:alice), unix_user: "bob", key_blob: public_keys(:alice).authorized_key.key,
+                                     fingerprint: public_keys(:alice).fingerprint, expires_at: 1.minute.ago)
+    assert_equal bob, access.account
+    result = Keys::AuthorizedKeyRemoval.call(servers(:web), access.key_blob, account: access.account, transport: fake, known_hosts_file: @known_hosts)
+    assert result.removed?
+    assert_not_includes file.read, "Alice"
+  end
 end
