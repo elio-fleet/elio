@@ -43,6 +43,15 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
       echo "-rw------- 1 $account $account 0 Jan 1 00:00 $path"
     SH
     @bin.join("ls").chmod(0o755)
+    # The file is read and written as the account (`runuser -u <account> -- …`): the test runner is every account here.
+    @bin.join("runuser").write(<<~SH)
+      #!/bin/sh
+      [ "$1" = -u ] && [ "$3" = -- ] || exit 2
+      echo "$2" >> "#{@root.join("runuser.log")}"
+      shift 3
+      exec "$@"
+    SH
+    @bin.join("runuser").chmod(0o755)
     @root.join("passwd").write(@passwd)
   end
 
@@ -207,6 +216,22 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     unknown = authorize("nobody")
     assert_equal [ :error, "Compte inconnu" ], [ unknown.status, unknown.error_title ]
     assert_not @root.join("nobody").exist?
+  end
+
+  test "the files of another account are read and written as that account, never as root" do
+    authorize("bob")
+    Keys::AuthorizedKeyRemoval.call(servers(:web), @alice_key.split[1], account: AuthorizedKeysAccount.new(servers(:web), "bob"), transport: fake, known_hosts_file: @known_hosts)
+    run_with_getent(Reader.accounts_command)
+
+    runs = @root.join("runuser.log").readlines(chomp: true)
+    assert_includes runs, "bob"
+    assert_includes runs, "root", "root's own file is read as root"
+    assert_equal %w[bob carol root], runs.uniq.sort, "each file read as its own account, mallory's link and eve's file never opened"
+    %w[append_to_account replace_in_account remove_from_account].each do |command|
+      script = YAML.load_file(Rails.root.join("config/ssh_commands.yml")).dig("keys", command, "default")
+      assert_match(/^runuser -u @{user} -- sh -s --/, script, command)
+      assert_no_match(/^(cat|printf)\b.*> ?"\$file"$/, script.split("<<'ELIO'").first, "#{command}: root writes nothing")
+    end
   end
 
   test "adding never writes through a link nor in a file the account does not own, and needs root" do
