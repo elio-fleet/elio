@@ -30,7 +30,7 @@
 
 Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels vont bien, ce qui tourne dessus, quels paquets sont vulnérables et comment les corriger, qui a une clé SSH dessus. Rien à installer sur les serveurs : Elio s'y connecte avec sa propre clé SSH et lance une courte liste de **commandes en lecture seule**, toutes écrites dans un seul fichier à relire — [`config/ssh_commands.yml`](config/ssh_commands.yml).
 
-> **Bêta.** Elio est jeune (`v0.4.1-beta`). Il tourne sur de vrais serveurs, mais attendez-vous à quelques aspérités, et lisez les [limites connues](#limites-connues).
+> **Bêta.** Elio est jeune (`v0.5.0-beta`). Il tourne sur de vrais serveurs, mais attendez-vous à quelques aspérités, et lisez les [limites connues](#limites-connues).
 
 ## Fonctionnalités
 
@@ -59,7 +59,9 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 | ![Sondes Uptime Kuma](docs/screenshots/fr/uptime-kuma-monitors.png) | ![OVHcloud](docs/screenshots/fr/ovh.png) |
 | **Sondes** : les sondes Uptime Kuma rattachées à chaque serveur | **Hébergement** : le service OVHcloud, les IP et reverse d'un serveur |
 | ![DNS du parc](docs/screenshots/fr/dns.png) | ![CVE des images Docker](docs/screenshots/fr/docker-cves.png) |
-| **DNS du parc** : OVHcloud, Technitium et Gandi ensemble | **CVE des images Docker**, par image |
+| **DNS du parc** : OVHcloud, Technitium, Gandi et les sources manuelles ensemble | **CVE des images Docker**, par image |
+| ![Onglet Coolify](docs/screenshots/fr/coolify.png) | ![Recherche dans le Journal](docs/screenshots/fr/journal-search.png) |
+| **Coolify** : ressources, déploiements et sauvegardes d'un serveur | **Recherche dans le Journal** : texte et période |
 | ![Onglet Firewall](docs/screenshots/fr/firewall.png) | ![Réglages du firewall](docs/screenshots/fr/firewall-settings.png) |
 | **Firewall** : celui du serveur et celui d'OVH, port par port, IPv6 compris | **Règles proposées** : sources SSH, IPv6 entrant |
 
