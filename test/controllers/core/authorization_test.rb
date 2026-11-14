@@ -76,6 +76,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       },
       "new server" => -> { get new_server_path },
       "create server" => -> { post servers_path, params: { server: { name: "New", host: "10.0.0.1", port: 22, username: "root" } } },
+      "duplicate server" => -> { get new_server_path(from: servers(:web).id) },
+      "test a server connection" => -> { post test_connection_servers_path, params: { server: { host: "10.0.0.1", port: 22, username: "root" } }, as: :turbo_stream },
       "edit server" => -> { get edit_server_path(servers(:web)) },
       "update server" => -> { patch server_path(servers(:web)), params: { server: { name: "Renamed" } } },
       "delete server" => -> { delete server_path(servers(:web)) },

@@ -48,6 +48,8 @@ fr:
               same_as_start: doivent finir à une autre heure que leur début
         server:
           attributes:
+            host:
+              address_taken: est déjà utilisé par un autre serveur avec le même port et le même utilisateur
             extra_addresses_text:
               invalid_ips: 'contiennent des valeurs qui ne sont pas des adresses IP : %{addresses}'
         notification_channel:

@@ -1,0 +1,16 @@
+<%# Result of "Test the connection" in the server form (ServersController#test_connection). Locals: server (unsaved, the form's values), result (Ssh::Check::Result or nil before a test). %>
+<div id="server-connection-test" aria-live="polite">
+  <% if (result = local_assigns[:result]) %>
+    <% tone = result.success? ? :good : :crit %>
+    <div class="connection-test-result mt-3 rounded-lg px-3 py-2 text-sm <%= result.success? ? "bg-good-soft text-good-ink" : "bg-crit-soft text-crit-ink" %>" data-result="<%= tone %>">
+      <p class="flex items-start gap-2 font-medium">
+        <%= icon(result.success? ? :check_circle : :x_circle, class: "mt-0.5 h-4 w-4 shrink-0") %>
+        <span><%= result.success? ? t("servers.connection_test.succeeded") : result.message %></span>
+      </p>
+      <p class="mt-1 break-all font-mono text-xs"><%= result.details %></p>
+    </div>
+    <% if result.reason == :key_refused %>
+      <%= render "ssh_keys/setup_hint", server: server, reason: result.reason %>
+    <% end %>
+  <% end %>
+</div>

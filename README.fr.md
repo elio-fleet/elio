@@ -112,7 +112,7 @@ Tout le reste — seuils, notifications, automatisations, fournisseurs de notes,
 
 1. Dans *Paramètres → Général*, générez la clé SSH d'Elio (Ed25519, gardée chiffrée).
 2. Ajoutez sa clé publique au `~/.ssh/authorized_keys` du compte qu'Elio utilisera (la page donne la commande pour root, un compte avec sudo ou un compte dédié, avec si besoin une restriction à l'adresse d'Elio par `from=`, et montre sur quels serveurs la clé a été trouvée).
-3. Ajoutez le serveur (ou importez-en plusieurs depuis un CSV ou votre `~/.ssh/config`), puis lancez un inventaire.
+3. Ajoutez le serveur (*Tester la connexion* vérifie l'accès avant d'enregistrer ; *Dupliquer*, dans son menu, en prépare un autre avec le même port, le même utilisateur et les mêmes groupes) : son premier inventaire se lance seul si Elio peut déjà s'y connecter. Ou importez-en plusieurs depuis un CSV ou votre `~/.ssh/config`, puis lancez un inventaire.
 
 Elio lit tout ce qu'un compte sans privilège peut lire. Certains détails demandent root — le processus derrière chaque port, le firewall, Docker, les crontabs des utilisateurs, les clés SSH des autres comptes : connectez Elio en root, ou donnez au compte un `sudo` sans mot de passe. Sans cela, ces collectes sont marquées *partielles*, et seules les clés du compte d'Elio sont listées.
 
