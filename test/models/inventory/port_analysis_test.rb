@@ -93,7 +93,25 @@ class Inventory::PortAnalysisTest < ActiveSupport::TestCase
     assert_not rules.any? { |rule| rule.include?("3306") }
   end
 
+  test "without expected ports: only SSH, 80 and 443 are allowed, the other public ports stay commented" do
+    collect_ports
+    @server.inventory_snapshots.of_category(:ports).sole.tap do |snapshot|
+      snapshot.data["listening"] << { "port" => 443, "proto" => "tcp", "address" => "0.0.0.0", "scope" => "public", "process" => "nginx" }
+      snapshot.save!
+    end
+
+    rules = analysis.suggested_ufw_rules.lines.map(&:chomp)
+
+    assert_match(/Aucun port attendu.*Serveurs → Groupes/, rules[1])
+    assert_includes rules, "sudo ufw allow 443/tcp comment 'nginx'"
+    index = rules.index { |rule| rule.start_with?("# 9100/tcp (node-exporter) écoute publiquement") }
+    assert index, "an exporter is not opened to the whole Internet"
+    assert_equal "# sudo ufw allow 9100/tcp comment 'node-exporter'", rules[index + 1]
+    assert_not rules.any? { |rule| rule.start_with?("sudo ufw allow 9100") }
+  end
+
   test "with SSH sources, the SSH rules allow only them, with a reminder for Elio's own address" do
+    server_groups(:production).update!(expected_ports: "22, 9100")
     SshSource.create!(name: "Elio", cidr: "203.0.113.5", position: 0)
     SshSource.create!(name: "Bureau d'Anna", cidr: "2001:db8:1::/48", position: 1)
     collect_ports
@@ -108,6 +126,7 @@ class Inventory::PortAnalysisTest < ActiveSupport::TestCase
   end
 
   test "blocking all the incoming IPv6: the ports are allowed from IPv4 only, an IPv6 SSH source stays" do
+    server_groups(:production).update!(expected_ports: "22, 9100")
     SshSource.create!(name: "V6", cidr: "2001:db8:1::/48")
     collect_ports
 

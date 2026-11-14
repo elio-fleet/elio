@@ -54,6 +54,11 @@ class Inventory::PortAnalysis
     end
   end
 
+  # Without expected ports for the groups of the server, only these public
+  # ports get an allow rule; the others stay commented: never a database or
+  # an exporter opened to the whole Internet by default.
+  DEFAULT_ALLOWED = [ [ 80, "tcp" ], [ 443, "tcp" ] ].freeze
+
   # Commands to copy, SSH first so the session is not cut. With "block all
   # the incoming IPv6" (AppSetting#ufw_block_ipv6), the ports are allowed from
   # IPv4 only: the default policy then denies every IPv6 connection (an SSH
@@ -64,6 +69,7 @@ class Inventory::PortAnalysis
     ssh_port = server.port
     lines = [ I18n.t("inventory.port_analysis.header", server_name: server.name),
               *(I18n.t("inventory.port_analysis.ipv6_blocked") if block_ipv6),
+              *(I18n.t("inventory.port_analysis.no_expected_ports") if expected_ports.empty?),
               "sudo ufw default deny incoming", "sudo ufw default allow outgoing", *ssh_rules(ssh_port) ]
     public_ports.reject { |entry| entry.port == ssh_port && entry.proto == "tcp" }.each do |entry|
       label = comment_for(entry)
@@ -71,6 +77,8 @@ class Inventory::PortAnalysis
         I18n.t("inventory.port_analysis.docker", key: entry.key, container: container_label(entry.container))
       elsif entry.unexpected
         I18n.t("inventory.port_analysis.unexpected", key: entry.key, label: label)
+      elsif expected_ports.empty? && DEFAULT_ALLOWED.exclude?([ entry.port, entry.proto ])
+        [ I18n.t("inventory.port_analysis.not_expected", key: entry.key, label: label), "# #{allow_rule(entry.port, entry.proto, label)}" ].join("\n")
       else
         allow_rule(entry.port, entry.proto, label)
       end
