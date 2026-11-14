@@ -36,7 +36,7 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 
 | | |
 |---|---|
-| **Santé** | Charge, mémoire, swap, disques et inodes, redémarrage requis, unités en échec (par leur nom, depuis quand), horloge, mises à jour en attente — avec vos seuils et 30 jours d'historique. |
+| **Santé** | Charge, mémoire, swap, disques et inodes, redémarrage requis, unités en échec (par leur nom, depuis quand), horloge, mises à jour en attente, processus tués faute de mémoire — avec vos seuils et 30 jours d'historique. |
 | **Inventaire** | Système et date de fin de support, adresses réseau (WireGuard compris), paquets (dpkg, snap), services systemd, **Docker** (conteneurs, images, projets Compose), **tâches planifiées** (cron, timers systemd), ports en écoute, et un onglet **Firewall** : le firewall du serveur (ufw, nftables, iptables) et celui d'OVHcloud côte à côte pour chaque port public, avec des règles ufw à copier — SSH ouvert seulement aux sources que vous listez, IPv6 entrant bloqué si vous le voulez. |
 | **Vulnérabilités** | Les CVE de chaque paquet, d'après le Debian Security Tracker et les données OSV d'Ubuntu, rapprochées de l'inventaire — aucune commande de plus sur les serveurs ; les paquets signés (grub, shim, noyau, fwupd) comparés au code qu'ils signent. Regroupées **par paquet, avec la mise à jour à faire**, celles du serveur à part de celles de ses images Docker, et **les commandes pour corriger une CVE** (`apt-get install --only-upgrade …`, ou `docker compose pull` et `up -d` pour une image) — à copier, jamais lancées par Elio. Notes de NVD, Red Hat et CVE.org (ou de vos propres fournisseurs), exploitation d'après EPSS et le catalogue CISA KEV. |
 | **Docker** | Conteneurs en mauvaise santé ou qui redémarrent en boucle, un **état Docker** par serveur, à part de sa santé, images par serveur, **nouvelles versions publiées sur les registres** (Docker Hub, GHCR, Quay, registres privés : un tag republié, et pour une version figée comme `redis:7.0.11` le dernier correctif de sa série et la plus récente de son majeur), vulnérabilités des images (Trivy ou Grype s'ils sont installés, sinon le rapprochement d'Elio) dans un onglet **CVE** : par image, avec les serveurs et conteneurs qui l'utilisent. |
@@ -125,7 +125,7 @@ Pris en charge : **Debian et Ubuntu** (les autres systèmes : santé et système
 | Pour | Commandes (lecture seule) |
 |---|---|
 | Système, réseau | `/etc/os-release`, `uname`, `hostname`, `systemd-detect-virt`, `/proc`, `timedatectl`, `ip -j addr`, `ip -j link` |
-| Santé | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (et `show` des unités en échec), `apt-get -s dist-upgrade` (simulation) |
+| Santé | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (et `show` des unités en échec), `apt-get -s dist-upgrade` (simulation, seulement si la base des paquets a changé), `/proc/vmstat` (processus tués faute de mémoire) |
 | Paquets | `dpkg-query -W`, `apt list --upgradable`, `snap list` |
 | Services, tâches planifiées | `systemctl list-units`, `list-unit-files`, `show` des timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (état, santé, redémarrages — **jamais les variables d'environnement**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` s'ils sont installés, `docker cp` de `os-release` et de l'état dpkg |

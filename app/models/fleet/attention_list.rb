@@ -15,6 +15,7 @@ class AttentionList
   # The action of a health reason: its label (attention_list.actions.<key>) and the tab it opens.
   REASON_ACTIONS = {
     "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "server-health-details" ], "load" => [ :health, nil, "server-health-details" ],
+    "oom_kills" => [ :health, nil, "server-health-details" ],
     "vulnerability" => [ :fixes, "vulnerabilities" ], "vulnerabilities" => [ :fixes, "vulnerabilities" ],
     "service_failed" => [ :services, "services" ], "services_failed" => [ :services, "services" ],
     "units_failed" => [ :services, "services" ], "units_failed_more" => [ :services, "services" ],

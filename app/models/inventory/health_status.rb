@@ -51,7 +51,8 @@ class Inventory::HealthStatus
   # 3: no "OVH firewall disabled" reason for IPv6 blocks (OVH has no firewall for IPv6).
   # 4: Coolify backups (integrations.coolify.health.*).
   # 5: failed units named (health.units_failed / units_failed_more).
-  VERSION = 5
+  # 6: processes killed for lack of memory in the last 24 hours (health.oom_kills).
+  VERSION = 6
 
   def self.refresh_outdated!
     setting = AppSetting.current
@@ -112,10 +113,18 @@ class Inventory::HealthStatus
     reasons << self.class.reason("warn", :reboot_required) if data["reboot_required"]
     reasons << failed_units_reason(Array(data["failed_units"])) if Array(data["failed_units"]).any?
     reasons << self.class.reason("warn", :clock) if data["ntp_synchronized"] == false
+    reasons << self.class.reason("warn", :oom_kills, count: oom_kills) if oom_kills.positive?
     if @os&.collected? && Inventory::EndOfLife.status(@os.data["id"], @os.data["version_id"]).ended?
       reasons << self.class.reason("warn", :unsupported, name: @os.data["name"])
     end
     reasons
+  end
+
+  # Processes the kernel killed for lack of memory in the last
+  # Inventory::Collectors::Health::OOM_WINDOW (events kept by the collector).
+  def oom_kills
+    window = Inventory::Collectors::Health::OOM_WINDOW.ago
+    Array(data["oom_kill_events"]).sum { |event| Time.zone.parse(event["at"].to_s)&.after?(window) ? event["count"].to_i : 0 }
   end
 
   # The failed units by name ("nginx", "mnt-backup.mount"): all of them up to
