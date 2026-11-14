@@ -57,7 +57,7 @@ module Settings
       FileUtils.mkdir_p(IMPORT_DIR)
       path = IMPORT_DIR.join("import-#{SecureRandom.hex(8)}")
       FileUtils.cp(file.path, path)
-      label = t("vulnerabilities_controller.import_label", fetch: (Vulnerability::SOURCES.fetch(source)))
+      label = LocalizedText.part("vulnerabilities_controller.import_label", fetch: Vulnerability::SOURCES.fetch(source))
       task = BackgroundTask.enqueue!(kind: "vulnerabilities", label: label, servers: [], user: current_user)
       ImportVulnerabilitiesJob.perform_later(source, path.to_s, task)
       redirect_to task_path(task), notice: t("vulnerabilities_controller.import_started", fetch: (Vulnerability::SOURCES.fetch(source)))

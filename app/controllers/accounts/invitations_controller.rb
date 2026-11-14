@@ -34,4 +34,9 @@ class InvitationsController < ApplicationController
     @invitation = Invitation.find_pending_by_token(params[:token])
     render :invalid, status: :not_found unless @invitation
   end
+
+  # The page of an invitation speaks the language chosen for it (that of its
+  # email and of the account it creates), not the browser's.
+  # (Read here: the locale is chosen around every callback, before set_invitation.)
+  def request_locale = Elio::Locales.find(Invitation.find_pending_by_token(params[:token])&.locale) || super
 end
