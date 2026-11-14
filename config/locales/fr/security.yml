@@ -289,7 +289,7 @@ fr:
         automation_off: désactivée
         what_containers_images_report: 'Ce que les conteneurs et les images signalent : l''état Docker du serveur (à part de sa santé) et une activité (notifiable). Rouge pour les conteneurs, orange pour les images.'
         healthcheck_fails: Son healthcheck échoue.
-        restarting_state_least_restarts_html: État « restarting », ou au moins %{_} redémarrages et relancé il y a moins de %{in_minutes_to_i} minutes.
+        restarting_state_least_restarts_html: État « restarting », ou au moins %{_} redémarrages depuis la collecte précédente et relancé il y a moins de %{in_minutes_to_i} minutes (un conteneur qui a redémarré au démarrage puis tient n'est pas en boucle).
         handy_latest_1_27: Pratique pour les tags « latest » ou « 1.27 » ; sans effet sur un tag figé.
         private_registries: Registres privés
         delete_saved_credentials_html: "%{clear_credentials} Supprimer les identifiants enregistrés"

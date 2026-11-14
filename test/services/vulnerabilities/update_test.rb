@@ -80,4 +80,17 @@ class Vulnerabilities::UpdateTest < ActiveSupport::TestCase
     assert_equal [ "debian", "trixie" ], Vulnerabilities.target({ "id" => "raspbian", "codename" => "trixie" })
     assert_nil Vulnerabilities.target({ "id" => "alpine", "version_id" => "3.20" })
   end
+  test "remembers the releases the feed does not hold, and scans again the images that waited for a new release" do
+    record_os(servers(:web), codename: "bookworm")
+    db = servers(:db)
+    record_os(db, codename: "jessie")
+    db.inventory_snapshots.create!(category: "docker", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                   data: { "images" => [], "scans" => { "sha256:1" => { "method" => "elio", "os" => { "id" => "debian", "codename" => "bookworm" }, "error" => "bookworm not yet in the feed" } } })
+
+    rescanned = []
+    stub_method(Inventory::CollectJob, :perform_later, ->(server, categories) { rescanned << [ server, categories ] }) { load_debian_feed }
+
+    assert_equal %w[jessie], VulnerabilityFeed.for("debian").unavailable_releases
+    assert_equal [ [ db, %w[docker] ] ], rescanned
+  end
 end
