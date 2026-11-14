@@ -33,7 +33,7 @@ class Vulnerabilities::CoverTest < ActiveSupport::TestCase
     assert_enqueued_jobs(1, only: RunAutomationJob) { cover }
   end
 
-  test "nothing when the release is held, after a failure, within an hour of a download, when disabled, or on another system" do
+  test "nothing when the release is held, after a failure, when the feed has no such release, when disabled, or on another system" do
     record_os(@server, codename: "trixie")
     feed = VulnerabilityFeed.for("debian")
 
@@ -43,8 +43,10 @@ class Vulnerabilities::CoverTest < ActiveSupport::TestCase
     feed.update!(releases: [], failed_at: 1.minute.ago)
     assert_no_enqueued_jobs { cover } # a closed network: not at every inventory
 
-    feed.update!(failed_at: nil, refreshed_at: 10.minutes.ago)
-    assert_no_enqueued_jobs { cover }
+    feed.update!(failed_at: nil, refreshed_at: 10.minutes.ago, unavailable_releases: %w[trixie])
+    assert_no_enqueued_jobs { cover } # the last download did not find it: not at every inventory
+
+    feed.update!(unavailable_releases: [])
 
     feed.update!(refreshed_at: 2.days.ago)
     @update.update!(enabled: false)
@@ -55,7 +57,18 @@ class Vulnerabilities::CoverTest < ActiveSupport::TestCase
     assert_no_enqueued_jobs { cover }
   end
 
-  test "an inventory that reads the system covers the server" do
+test "a Docker image on another release than the servers: the download runs now" do
+  record_os(@server, codename: "trixie")
+  @server.inventory_snapshots.create!(category: "docker", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                      data: { "images" => [ { "reference" => "nginx:1.25", "os" => { "id" => "debian", "codename" => "bookworm" } } ] })
+  @server.inventory_snapshots.reset
+  VulnerabilityFeed.for("debian").update!(refreshed_at: 5.minutes.ago, releases: %w[trixie])
+
+  assert_equal [ %w[debian trixie], %w[debian bookworm] ], Vulnerabilities.targets_of(@server)
+  assert_enqueued_jobs(1, only: RunAutomationJob) { cover }
+end
+
+test "an inventory that reads the system covers the server" do
     covered = []
     stub_method(Vulnerabilities, :cover, ->(server) { covered << server }) do
       with_collectors("os" => "Vulnerabilities::CoverTest::TrixieCollector") do

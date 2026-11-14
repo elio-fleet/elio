@@ -24,16 +24,33 @@ module Vulnerabilities
   end
 
   # A server on a release that its feed does not hold yet — the first server
-  # of a new installation, an upgrade to a new release — gets its
-  # vulnerabilities now rather than at the next daily download. Not again
-  # within an hour of a download, nor after a failure (a closed network).
+  # of a new installation, an upgrade to a new release, a Docker image on
+  # another release than the servers (bookworm on a trixie fleet) — gets its
+  # vulnerabilities now rather than at the next daily download. Not after a
+  # failure (a closed network), nor for a release the last download could not
+  # find in the feed (unavailable_releases: no download at every inventory).
   def self.cover(server)
-    source, release = target(server.inventory("os")&.data)
-    return unless source
+    missing = targets_of(server).group_by(&:first).select do |source, targets|
+      feed = VulnerabilityFeed.for(source)
+      !feed.failed? && (targets.map(&:last) - Array(feed.releases) - Array(feed.unavailable_releases)).any?
+    end
+    Automation.trigger(:vulnerabilities_update) if missing.any?
+  end
 
-    feed = VulnerabilityFeed.for(source)
-    return if Array(feed.releases).include?(release) || feed.failed? || feed.refreshed_at&.after?(1.hour.ago)
+  # Feeds of a server: its own system and the systems of its Docker images.
+  def self.targets_of(server)
+    images = Array(server.inventory("docker")&.data&.dig("images")).filter_map { |image| image["os"] }
+    [ server.inventory("os")&.data, *images ].filter_map { |data| target(data) }.uniq
+  end
 
-    Automation.trigger(:vulnerabilities_update)
+  # After an update brought new releases: the servers with Docker images that
+  # waited for them are scanned again (their Docker inventory only).
+  def self.rescan_images(source, releases)
+    Inventory::Snapshot.where(category: "docker").where.not(collected_at: nil).includes(:server).find_each do |snapshot|
+      waiting = Array(snapshot.data&.dig("scans")&.values).any? do |scan|
+        scan["error"].present? && (target = target(scan["os"])) && target.first == source && releases.include?(target.last)
+      end
+      Inventory::CollectJob.perform_later(snapshot.server, %w[docker]) if waiting
+    end
   end
 end

@@ -32,8 +32,11 @@ module Vulnerabilities::Update
     end
     Vulnerability.where(source: source).where.not(release: releases).delete_all
     count = Vulnerability.where(source: source).count
-    feed.update!(refreshed_at: Time.current, origin: origin, entries_count: count, releases: Vulnerability.where(source: source).distinct.order(:release).pluck(:release))
+    before = Array(feed.releases)
+    held = Vulnerability.where(source: source).distinct.order(:release).pluck(:release)
+    feed.update!(refreshed_at: Time.current, origin: origin, entries_count: count, releases: held, unavailable_releases: releases - held)
     Vulnerabilities::Matcher.call_all
+    Vulnerabilities.rescan_images(source, held - before) if (held - before).any?
     I18n.t("vulnerabilities.update.done", label: feed.label, count: count, releases_join: (feed.releases.join(", ")))
   rescue Vulnerabilities::Error => e
     feed&.update!(failed_at: Time.current, last_error: e.message)

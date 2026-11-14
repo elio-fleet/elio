@@ -27,7 +27,7 @@ class Inventory::Collection
 
     record(outcomes, privilege)
     @server.refresh_health!
-    Vulnerabilities.cover(@server) if outcomes["os"]&.status.in?(%w[ok partial])
+    Vulnerabilities.cover(@server) if outcomes.values_at("os", "docker").compact.any? { |outcome| outcome.status.in?(%w[ok partial]) }
     outcomes
   rescue Ssh::Connection::Error => e
     @server.record_ssh_status!(false) if e.reason == :key_refused
