@@ -319,14 +319,14 @@ class Ssh::ConnectionTest < ActiveSupport::TestCase
     })
     connect(servers(:web), fake) do |ssh|
       ssh.run_command("inventory.os")
-      2.times { ssh.run_command("inventory.health") }
+      2.times { ssh.run_command("inventory.health", updates_stamp: "") }
       assert_equal %w[ubuntu debian], ssh.distros
     end
 
     os_release, os, health, health_again = fake.commands
     assert_equal Ssh::Commands.render("inventory.os"), os_release, "inventory.os has no variant: no os-release read before it"
     assert_equal Ssh::Commands.render("connection.os_release"), os
-    assert_equal Ssh::Commands.render("inventory.health", distros: %w[ubuntu debian]), health
+    assert_equal Ssh::Commands.render("inventory.health", distros: %w[ubuntu debian], updates_stamp: ""), health
     assert_equal health, health_again
   end
 

@@ -60,10 +60,10 @@ inventory:
       echo "@@elio link"; ip -d -j link 2>/dev/null || true
 
   health:
-    description: "Health: load, memory, disks (space and inodes), reboot required, failed units (name, description, result, since when), pending updates, clock sync."
+    description: "Health: load, memory, disks (space and inodes), reboot required, failed units (name, description, result, since when), pending updates, clock sync, processes killed for lack of memory (kernel counter since boot). The apt simulation, the costly part, is skipped when the package database and the package lists have not changed since the last one (updates_stamp: their modification times then)."
     shell: true
     debian: |
-      excluded="-x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs -x ramfs -x nsfs"
+      excluded="-x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs -x ramfs -x nsfs -x fuse.lxcfs -x fuse.snapfuse"
       echo "@@elio loadavg"; cat /proc/loadavg
       echo "@@elio cpus"; nproc 2>/dev/null || getconf _NPROCESSORS_ONLN
       echo "@@elio meminfo"; grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo
@@ -72,10 +72,13 @@ inventory:
       echo "@@elio reboot"; if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi
       echo "@@elio failed"; systemctl --failed --no-legend --plain 2>/dev/null || true
       echo "@@elio failed_details"; units=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{ print $1 }'); [ -z "$units" ] || systemctl show --timestamp=unix -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || systemctl show -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || true
-      echo "@@elio updates"; apt-get -s -o Debug::NoLocking=true dist-upgrade 2>/dev/null | grep '^Inst ' || true
+      echo "@@elio updates_stamp"; stamp=$(stat -c %Y /var/lib/dpkg/status /var/lib/apt/lists 2>/dev/null | tr '\n' '.'); echo "$stamp"
+      echo "@@elio updates"; if [ -n "$stamp" ] && [ "$stamp" = @{updates_stamp} ]; then echo unchanged; else apt-get -s -o Debug::NoLocking=true dist-upgrade 2>/dev/null | grep '^Inst ' || true; fi
       echo "@@elio ntp"; timedatectl show -p NTPSynchronized --value 2>/dev/null || true
+      echo "@@elio oom_kill"; awk '$1 == "oom_kill" { print $2 }' /proc/vmstat 2>/dev/null
+      echo "@@elio boot_id"; cat /proc/sys/kernel/random/boot_id 2>/dev/null
     default: |
-      excluded="-x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs -x ramfs -x nsfs"
+      excluded="-x tmpfs -x devtmpfs -x overlay -x squashfs -x efivarfs -x ramfs -x nsfs -x fuse.lxcfs -x fuse.snapfuse"
       echo "@@elio loadavg"; cat /proc/loadavg
       echo "@@elio cpus"; nproc 2>/dev/null || getconf _NPROCESSORS_ONLN
       echo "@@elio meminfo"; grep -E '^(MemTotal|MemAvailable|SwapTotal|SwapFree):' /proc/meminfo
@@ -84,8 +87,12 @@ inventory:
       echo "@@elio reboot"; if [ -f /var/run/reboot-required ]; then echo yes; else echo no; fi
       echo "@@elio failed"; systemctl --failed --no-legend --plain 2>/dev/null || true
       echo "@@elio failed_details"; units=$(systemctl --failed --no-legend --plain 2>/dev/null | awk '{ print $1 }'); [ -z "$units" ] || systemctl show --timestamp=unix -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || systemctl show -p Id -p Description -p Result -p StateChangeTimestamp $units 2>/dev/null || true
+      # No apt here: the stamp of the last simulation is not used (`:` does nothing).
+      : @{updates_stamp}
       echo "@@elio updates"; echo unsupported
       echo "@@elio ntp"; timedatectl show -p NTPSynchronized --value 2>/dev/null || true
+      echo "@@elio oom_kill"; awk '$1 == "oom_kill" { print $2 }' /proc/vmstat 2>/dev/null
+      echo "@@elio boot_id"; cat /proc/sys/kernel/random/boot_id 2>/dev/null
 
   packages:
     description: "Packages: dpkg packages (with their source package, for the CVE feeds) and the available updates (security ones flagged), snaps, Docker presence."
