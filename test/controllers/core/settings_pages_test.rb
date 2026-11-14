@@ -39,6 +39,7 @@ class SettingsPagesTest < ActionDispatch::IntegrationTest
 
   test "the automations page lists the automations with their state" do
     Automation.all_kinds.find { |automation| automation.kind == "keys_scan" }.update!(enabled: true, last_run_at: 1.hour.ago, last_result: "3/3 serveur(s) scanné(s)")
+    Automation.find_by!(kind: "servers_ping").update!(enabled: false)
     sign_in users(:one)
 
     get settings_automations_path
