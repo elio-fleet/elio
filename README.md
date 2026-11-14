@@ -30,7 +30,7 @@
 
 Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are healthy, what runs on them, which packages are vulnerable and how to fix them, who has an SSH key on them. Nothing to install on the servers: Elio logs in with its own SSH key and runs a short list of **read-only commands**, all written in one file you can review — [`config/ssh_commands.yml`](config/ssh_commands.yml).
 
-> **Beta.** Elio is young (`v0.4.1-beta`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
+> **Beta.** Elio is young (`v0.5.0-beta`). It is used on real servers, but expect rough edges, and read the [known limits](#known-limits).
 
 ## Features
 
@@ -59,7 +59,9 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | ![Uptime Kuma monitors](docs/screenshots/en/uptime-kuma-monitors.png) | ![OVHcloud](docs/screenshots/en/ovh.png) |
 | **Probes**: the Uptime Kuma monitors attached to each server | **Hosting**: the OVHcloud service, IPs and reverse of a server |
 | ![DNS of the fleet](docs/screenshots/en/dns.png) | ![CVEs of the Docker images](docs/screenshots/en/docker-cves.png) |
-| **DNS of the fleet**: OVHcloud, Technitium and Gandi together | **CVEs of the Docker images**, by image |
+| **DNS of the fleet**: OVHcloud, Technitium, Gandi and manual sources together | **CVEs of the Docker images**, by image |
+| ![Coolify tab](docs/screenshots/en/coolify.png) | ![Journal search](docs/screenshots/en/journal-search.png) |
+| **Coolify**: resources, deployments and backups of a server | **Journal search**: text and period |
 | ![Firewall tab](docs/screenshots/en/firewall.png) | ![Firewall settings](docs/screenshots/en/firewall-settings.png) |
 | **Firewall**: the server's and OVH's, port by port, IPv6 included | **Suggested rules**: SSH sources, incoming IPv6 |
 

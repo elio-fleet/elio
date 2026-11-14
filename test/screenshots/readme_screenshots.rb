@@ -52,6 +52,7 @@ class ReadmeScreenshots < ApplicationSystemTestCase
                           .gsub("198.51.100.7", "198.51.100.40")))
     Integration.find_by!(kind: "ovh").sync!
     fleet.build_dns_and_firewall(db)
+    fleet.build_coolify(web, db)
 
     fleet.build_notes(db, admin: users(:one), operator: users(:operator))
     Server.find_each(&:refresh_health!)
@@ -125,6 +126,8 @@ class ReadmeScreenshots < ApplicationSystemTestCase
       shoot.("notes", server_path(db, tab: "journal"))
       shoot.("docker-cves", docker_path(tab: "cves")) { first("section.image-vulnerabilities details summary").click }
       shoot.("keyring-outside", public_keys_path(kind: "outside"))
+      shoot.("coolify", server_path(web, tab: "coolify"))
+      shoot.("journal-search", activities_path(q: "web-prod-1", from: 7.days.ago.to_date.iso8601, to: Date.current.iso8601))
     end
   end
 end
