@@ -476,7 +476,9 @@ en:
         daily_digest: Daily digest
         every_morning_8_00: "— every morning at 8:00: state of the fleet and activity of the day before."
         uncheck_pause_channel: "— uncheck to pause the channel."
-        webhook_help_html: 'Slack: %{slack} · Discord: %{discord} · Webhook: any HTTPS URL that receives signed JSON (headers %{timestamp} and %{signature}). Stored encrypted.'
+        webhook_help_html: 'Slack: %{slack} · Discord: %{discord} · Slack-compatible (Mattermost, Rocket.Chat): the address of an incoming webhook of the service · Webhook: any HTTPS URL that receives signed JSON (headers %{timestamp} and %{signature}). Stored encrypted.'
+        allow_http: Allow a plain HTTP address
+        allow_http_hint: "— only for a service on your internal network: the messages travel unencrypted."
         discord_path: Channel settings → Integrations → Webhooks
         mention_html: Mention everyone <span class="text-ink-3">— %{channel} on Slack, %{everyone} on Discord.</span>
         type: Type
@@ -503,6 +505,7 @@ en:
     kinds:
       slack: Slack
       discord: Discord
+      slack_compatible: Mattermost, Rocket.Chat (Slack-compatible)
       webhook: Webhook (signed JSON)
       email: Email
     group:

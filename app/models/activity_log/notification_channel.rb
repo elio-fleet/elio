@@ -1,15 +1,18 @@
-# A destination for activity notifications: a Slack, Discord or generic
-# webhook (JSON signed with HMAC SHA-256), or email recipients. Each channel
+# A destination for activity notifications: a Slack, Discord, Slack-compatible
+# (Mattermost, Rocket.Chat: the Slack message format at any HTTPS address) or
+# generic webhook (JSON signed with HMAC SHA-256), or email recipients. A
+# generic or Slack-compatible webhook may use plain HTTP on the internal
+# network when the administrator allows it on the channel (allow_http). Each channel
 # picks the activity kinds it receives (Activity::KINDS), whether messages
 # mention everyone (Slack, Discord), and whether it gets a daily digest.
 class NotificationChannel < ApplicationRecord
   include Localized
   localized # nil: the instance's language
 
-  KINDS = %w[slack discord webhook email].freeze
+  KINDS = %w[slack discord slack_compatible webhook email].freeze
   # Minutes the non-critical activities of a kind wait to leave as one message (0: right away).
   GROUP_MINUTES = [ 0, 5, 10, 15, 30, 60 ].freeze
-  NOTIFIERS = { "slack" => "Notifications::Slack", "discord" => "Notifications::Discord", "webhook" => "Notifications::Webhook", "email" => "Notifications::Email" }.freeze
+  NOTIFIERS = { "slack" => "Notifications::Slack", "slack_compatible" => "Notifications::Slack", "discord" => "Notifications::Discord", "webhook" => "Notifications::Webhook", "email" => "Notifications::Email" }.freeze
 
   SLACK_WEBHOOK = %r{\Ahttps://hooks\.slack\.com/services/[A-Za-z0-9/_-]+\z}
   DISCORD_WEBHOOK = %r{\Ahttps://(?:(?:ptb|canary)\.)?discord(?:app)?\.com/api/webhooks/\d+/[A-Za-z0-9_-]+\z}
@@ -25,6 +28,7 @@ class NotificationChannel < ApplicationRecord
   normalizes :activity_kinds, with: ->(kinds) { Array(kinds).compact_blank.map(&:to_s).uniq }
 
   before_validation :generate_signing_secret, if: -> { kind == "webhook" && signing_secret.blank? }
+  before_validation { self.allow_http = false unless kind.in?(%w[webhook slack_compatible]) }
 
   has_many :notification_batches, dependent: :delete_all
 
@@ -54,7 +58,7 @@ class NotificationChannel < ApplicationRecord
 
   def email? = kind == "email"
 
-  def mentions? = %w[slack discord].include?(kind)
+  def mentions? = %w[slack discord slack_compatible].include?(kind)
 
   def subscribed_to?(kind) = activity_kinds.include?(kind.to_s)
 
@@ -86,9 +90,10 @@ class NotificationChannel < ApplicationRecord
     case kind
     when "slack" then url_must_match(SLACK_WEBHOOK)
     when "discord" then url_must_match(DISCORD_WEBHOOK)
-    when "webhook"
+    when "webhook", "slack_compatible"
       uri = URI.parse(webhook_url.to_s) rescue nil
-      errors.add(:webhook_url, webhook_url.blank? ? :blank : :invalid) unless uri.is_a?(URI::HTTPS) && uri.host.present?
+      allowed = uri.is_a?(URI::HTTPS) || (allow_http && uri.is_a?(URI::HTTP))
+      errors.add(:webhook_url, webhook_url.blank? ? :blank : :invalid) unless allowed && uri.host.present?
     when "email"
       list = recipient_list
       if list.empty? then errors.add(:recipients, :blank)

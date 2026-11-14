@@ -30,14 +30,18 @@
     </div>
   </fieldset>
 
-  <div data-kind-fields-target="field" data-kinds="slack discord webhook">
+  <div data-kind-fields-target="field" data-kinds="slack discord slack_compatible webhook">
     <%= f.label :webhook_url, t(".webhook_url"), class: label_class %>
     <%= f.password_field :webhook_url, value: nil, autocomplete: "off",
           placeholder: (channel.persisted? && channel.webhook_url ? t(".leave_empty_keep", masked_destination: channel.masked_destination) : "https://…"),
           class: "#{input_class} font-mono text-xs" %>
     <p class="mt-1 text-xs text-ink-3">
-      <%= t(".webhook_help_html", slack: tag.em("Apps → Incoming Webhooks"), discord: tag.em(t(".discord_path")), timestamp: tag.code("X-Elio-Timestamp", class: "font-mono"), signature: tag.code("X-Elio-Signature", class: "font-mono")) %>   
+      <%= t(".webhook_help_html", slack: tag.em("Apps → Incoming Webhooks"), discord: tag.em(t(".discord_path")), timestamp: tag.code("X-Elio-Timestamp", class: "font-mono"), signature: tag.code("X-Elio-Signature", class: "font-mono")) %>
     </p>
+    <label class="mt-2 flex cursor-pointer items-start gap-2 text-sm text-ink-2" data-kind-fields-target="field" data-kinds="slack_compatible webhook">
+      <%= f.check_box :allow_http, class: "mt-0.5 h-4 w-4 rounded border-line text-accent" %>
+      <span><%= t(".allow_http") %> <span class="text-ink-3"><%= t(".allow_http_hint") %></span></span>
+    </label>
   </div>
 
   <div data-kind-fields-target="field" data-kinds="email">
@@ -81,7 +85,7 @@
   </div>
 
   <div class="space-y-3">
-    <label class="flex cursor-pointer items-start gap-2 text-sm text-ink-2" data-kind-fields-target="field" data-kinds="slack discord">
+    <label class="flex cursor-pointer items-start gap-2 text-sm text-ink-2" data-kind-fields-target="field" data-kinds="slack discord slack_compatible">
       <%= f.check_box :mention_channel, class: "mt-0.5 h-4 w-4 rounded border-line text-accent" %>
       <span><%= t(".mention_html", channel: tag.code("@channel", class: "font-mono text-xs"), everyone: tag.code("@everyone", class: "font-mono text-xs")) %></span>
     </label>

@@ -168,8 +168,9 @@ class NotificationChannelsControllerTest < ActionDispatch::IntegrationTest
     get new_settings_notification_channel_path
 
     assert_select "form[data-controller=kind-fields]" do
-      assert_select "input[type=radio][name='notification_channel[kind]']", 4
-      assert_select "[data-kind-fields-target=field][data-kinds='slack discord webhook'] input[name='notification_channel[webhook_url]']"
+      assert_select "input[type=radio][name='notification_channel[kind]']", 5
+      assert_select "[data-kind-fields-target=field][data-kinds='slack discord slack_compatible webhook'] input[name='notification_channel[webhook_url]']"
+      assert_select "[data-kind-fields-target=field][data-kinds='slack_compatible webhook'] input[type=checkbox][name='notification_channel[allow_http]']"
       assert_select "[data-kind-fields-target=field][data-kinds=email] input[name='notification_channel[recipients]']"
       assert_select "input[type=checkbox][name='notification_channel[daily_digest]']"
     end
