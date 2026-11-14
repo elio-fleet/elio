@@ -16,11 +16,11 @@ module Settings
 
     # Role.
     def update
-      previous_role = @user.role_label
+      previous_role = @user.role
 
       if @user.update(params.expect(user: %i[role]))
         if @user.saved_change_to_role?
-          Activity.record!(:user_role_changed, email: @user.email, from: previous_role, to: @user.role_label)
+          Activity.record!(:user_role_changed, email: @user.email, from_role: previous_role, to_role: @user.role)
         end
         redirect_to settings_users_path, notice: t("flash.users.updated", email: @user.email)
       else

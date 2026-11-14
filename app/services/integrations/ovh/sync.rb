@@ -55,7 +55,7 @@ class Integrations::Ovh::Sync
     unmanaged = OvhResource.services.unattached.to_a
     once(state, "unmanaged", unmanaged.map(&:link_key)) do |key|
       service = unmanaged.find { |candidate| candidate.link_key == key }
-      Activity.record!(:ovh_service_unmanaged, user: nil, service: service.name, kind_label: service.kind_label) if @integration.value(:alert_unmanaged_service)
+      Activity.record!(:ovh_service_unmanaged, user: nil, service: service.name, kind: service.kind) if @integration.value(:alert_unmanaged_service)
     end
 
     @integration.update_columns(state: state)
