@@ -75,6 +75,27 @@ class RoleBasedUiTest < ActionDispatch::IntegrationTest
     assert_select "#bulk-authorize"
   end
 
+  # Hidden, not greyed out: no link, lazy frame or quick-search entry leads a
+  # viewer or an operator to a page that answers "forbidden".
+  test "no link shown to a viewer or an operator leads to a forbidden page" do
+    stub_method_until_teardown(Ssh::Check, :call, Ssh::Check::Result.new(success: true, message: "ok", details: "ok"))
+    stub_method_until_teardown(Servers::Ping, :reachable?, true)
+    %w[uptime_kuma ovh coolify technitium].each { |kind| Integration.create!(kind: kind).update_column(:enabled, true) }
+
+    %i[viewer operator].each do |role|
+      sign_in users(role)
+      targets = crawled_pages.flat_map do |page|
+        get page
+        assert_response :success, "#{role}: #{page}"
+        links_in(Nokogiri::HTML(response.body))
+      end
+      targets = targets.select { |href| href.start_with?("/") && !href.start_with?("//") }.map { |href| href.split("#").first }.uniq
+
+      forbidden = targets.select { |href| get(href) && response.status == 403 }
+      assert_empty forbidden, "#{role} is shown links to forbidden pages"
+    end
+  end
+
   test "the setup hint asks a non-admin to contact an administrator" do
     SshKey.delete_all
     stub_method_until_teardown(Ssh::Check, :call, Ssh::Check::Result.new(success: false, message: "Aucune clé SSH configurée", details: "x", reason: :missing_key))
@@ -84,5 +105,22 @@ class RoleBasedUiTest < ActionDispatch::IntegrationTest
 
     assert_select ".ssh-setup-hint a[href=?]", settings_path, 0
     assert_select ".ssh-setup-hint", text: /Demandez à un administrateur/
+  end
+
+  private
+
+  # The pages a non-admin reaches from the menu, every server tab and the extensions.
+  def crawled_pages
+    [ root_path, servers_path, server_groups_path, vulnerabilities_path, packages_path, ports_path, docker_path,
+      scheduled_tasks_path, public_keys_path, public_key_path(public_keys(:alice)), activities_path, tasks_path, account_path,
+      server_authorized_keys_path(servers(:web)), monitors_path, ovh_path, coolify_path, dns_records_path,
+      *ServersController::TABS.map { |tab| server_path(servers(:web), tab: tab) } ]
+  end
+
+  # Links, lazy frames and quick-search entries of a page.
+  def links_in(html)
+    palette = html.at_css("script[data-command-palette-target=items]")
+    [ *html.css("a[href]").map { |a| a["href"] }, *html.css("turbo-frame[src]").map { |frame| frame["src"] },
+      *(palette ? JSON.parse(palette.text).map { |item| item["url"] } : []) ]
   end
 end

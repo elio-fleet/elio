@@ -109,5 +109,41 @@
   </ul>
   <%= render "shared/pagination", pager: @pager, noun: t(".users") %>
 </section>
+
+<section id="roles" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".roles") %></h2>
+  <p class="mt-1 text-xs text-ink-3"><%= t(".roles_intro") %></p>
+  <div class="mt-4 overflow-x-auto rounded-md border border-line">
+    <table class="permissions-matrix table-dense w-full">
+      <thead>
+        <tr>
+          <th scope="col"><%= t(".permission") %></th>
+          <% User.roles.each_key do |role| %>
+            <th scope="col" class="w-24 text-center"><%= User.role_label(role) %></th>
+          <% end %>
+        </tr>
+      </thead>
+      <tbody>
+        <% User::PERMISSIONS.each do |permission, roles| %>
+          <tr id="permission-<%= permission %>">
+            <th scope="row" class="font-normal">
+              <span class="block font-medium text-ink"><%= t(".permissions.#{permission}.label") %></span>
+              <span class="block text-xs text-ink-3"><%= t(".permissions.#{permission}.description") %></span>
+            </th>
+            <% User.roles.each_key do |role| %>
+              <td class="text-center">
+                <% if roles.include?(role) %>
+                  <span class="allowed inline-flex text-ink"><%= icon :check, class: "h-4 w-4" %><span class="sr-only"><%= t(".allowed") %></span></span>
+                <% else %>
+                  <span class="denied text-ink-3" aria-hidden="true">–</span><span class="sr-only"><%= t(".denied") %></span>
+                <% end %>
+              </td>
+            <% end %>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+</section>
 <% end %>
 <%= render "settings/frame", page: page %>

@@ -26,6 +26,22 @@ class SettingsUsersTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the permissions matrix shows what each role can do, from User::PERMISSIONS" do
+    sign_in users(:one)
+
+    get settings_users_path
+
+    assert_select "#roles table.permissions-matrix" do
+      assert_equal [ "Droit", "Admin", "Opérateur", "Lecture" ], css_select("thead th").map { |th| th.text.strip }
+      assert_select "tbody tr", User::PERMISSIONS.size
+      assert_select "#permission-view .allowed", 3
+      assert_select "#permission-operate .allowed", 2
+      assert_select "#permission-operate td:last-child .denied"
+      assert_select "#permission-administer .allowed", 1
+      assert_select "#permission-administer th", text: /Administrer Elio/
+    end
+  end
+
   test "an admin invites someone, by email when emails can be sent" do
     sign_in users(:one)
 

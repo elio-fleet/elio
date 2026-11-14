@@ -5,7 +5,16 @@
 module Authorization
   extend ActiveSupport::Concern
 
-  class NotAuthorized < StandardError; end
+  # Carries the permission that was missing (nil for a rule of its own, like
+  # editing someone else's note), so the forbidden page names the roles it needs.
+  class NotAuthorized < StandardError
+    attr_reader :permission
+
+    def initialize(permission = nil)
+      @permission = permission
+      super("not authorized#{": #{permission}" if permission}")
+    end
+  end
 
   included do
     before_action :authorize_view!, unless: :devise_controller?
@@ -26,11 +35,11 @@ module Authorization
   def authorize_view! = authorize!(:view)
 
   def authorize!(permission)
-    raise NotAuthorized unless can?(permission)
+    raise NotAuthorized.new(permission) unless can?(permission)
   end
 
-  def render_forbidden
-    message = I18n.t("authorization.forbidden", role: current_user.role_label)
+  def render_forbidden(error = nil)
+    message = forbidden_message(error&.permission)
 
     respond_to do |format|
       format.turbo_stream do
@@ -39,12 +48,30 @@ module Authorization
       end
       format.html do
         if turbo_frame_request?
-          render html: helpers.turbo_frame_tag(request.headers["Turbo-Frame"]) { helpers.tag.p(message, class: "forbidden py-4 text-sm text-red-700") }, status: :forbidden
+          render html: helpers.turbo_frame_tag(request.headers["Turbo-Frame"]) { helpers.tag.p(message, class: "forbidden py-4 text-sm text-crit-ink") }, status: :forbidden
         else
-          render "errors/forbidden", locals: { message: message }, status: :forbidden
+          render "errors/forbidden", locals: { message: message, back_path: forbidden_back_path }, status: :forbidden
         end
       end
       format.any { head :forbidden }
     end
+  end
+
+  def forbidden_message(permission)
+    role = current_user.role_label
+    return I18n.t("authorization.forbidden", role: role) unless User::PERMISSIONS.key?(permission)
+
+    roles = User::PERMISSIONS.fetch(permission).map { |name| User.role_label(name) }
+    I18n.t("authorization.forbidden_needs", role: role, roles: roles.join(" #{I18n.t("authorization.or")} "))
+  end
+
+  # The page the user came from, when it is one of ours and not this one.
+  def forbidden_back_path
+    referer = URI.parse(request.referer.to_s)
+    return if referer.host != request.host || referer.path.blank? || referer.path == request.path
+
+    referer.request_uri
+  rescue URI::InvalidURIError
+    nil
   end
 end

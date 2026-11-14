@@ -93,10 +93,13 @@ fr:
     forbidden:
       title: Accès refusé
       ask: Demandez à un administrateur si vous avez besoin de ce droit.
-      back: Retour à la vue d'ensemble
+      back: Retour à la page précédente
+      overview: Retour à la vue d'ensemble
   title: "%{page} · Elio"
   authorization:
     forbidden: Votre rôle (%{role}) ne permet pas cette action.
+    forbidden_needs: 'Votre rôle (%{role}) ne permet pas cette action : il faut le rôle %{roles}.'
+    or: ou
   throttled:
     too_many: 'Trop de tentatives : réessayez dans quelques minutes.'
   ui:

@@ -63,6 +63,21 @@ fr:
         deactivate: Désactiver
         deactivate_confirm: "%{email} ne pourra plus se connecter et sera déconnecté immédiatement."
         users: utilisateurs
+        roles: Rôles
+        roles_intro: Ce que chaque rôle peut faire dans Elio. Une action interdite n'apparaît pas dans les menus et elle est refusée si la page est ouverte directement.
+        permission: Droit
+        allowed: Autorisé
+        denied: Non autorisé
+        permissions:
+          view:
+            label: Consulter
+            description: Serveurs, inventaire, vulnérabilités, Docker, clés, extensions et journal ; notes et tests de connexion.
+          operate:
+            label: Agir sur le parc
+            description: Ajouter, modifier et supprimer des serveurs, les scanner, accorder et retirer des clés SSH, gérer le trousseau, lier les ressources des extensions.
+          administer:
+            label: Administrer Elio
+            description: Réglages, utilisateurs et invitations, extensions, notifications, automatisations, clé SSH d'Elio et suivi des jobs.
     copy_button:
       copy: Copier
       copied: Copié
