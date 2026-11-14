@@ -85,4 +85,16 @@ class TwoFactorAuthenticatableTest < ActiveSupport::TestCase
     AppSetting.current.update!(require_admin_two_factor: false)
     assert_not users(:one).reload.tap(&:disable_two_factor!).two_factor_required?
   end
+
+  test "with 2FA, a right password alone does not reset the failed attempts (the second step does)" do
+    enable_two_factor(@user)
+    @user.update_column(:failed_attempts, 4)
+    @user.reset_failed_attempts!
+    assert_equal 4, @user.reload.failed_attempts
+    assert_equal 6, @user.attempts_left
+
+    users(:viewer).update_column(:failed_attempts, 4)
+    users(:viewer).reset_failed_attempts!
+    assert_equal 0, users(:viewer).reload.failed_attempts
+  end
 end

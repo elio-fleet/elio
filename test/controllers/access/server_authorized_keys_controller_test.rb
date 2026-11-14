@@ -324,6 +324,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
 
     assert_equal false, servers(:web).reload.ssh_ok
     assert_select ".ssh-setup-hint textarea", text: /#{Regexp.escape(ssh_keys(:main).public_key)}/
+    assert_select ".ssh-setup-hint a[href=?][data-turbo-frame=_top]", settings_path(anchor: "ssh-key-install"), /Autre compte/
     assert_select "a.retry-authorized-keys[href=?]", server_authorized_keys_path(servers(:web))
     assert_equal 0, AccountSnapshot.count
   end

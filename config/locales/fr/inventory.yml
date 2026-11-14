@@ -17,6 +17,9 @@ fr:
       one: "%{first_names} et %{count} autre en échec"
       other: "%{first_names} et %{count} autres en échec"
     clock: Horloge non synchronisée
+    oom_kills:
+      one: "%{count} processus tué faute de mémoire en 24 h"
+      other: "%{count} processus tués faute de mémoire en 24 h"
     unsupported: "%{name} n'est plus supporté"
     timer_failed: Tâche planifiée %{name} en échec
     timers_failed:

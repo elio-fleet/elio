@@ -62,6 +62,7 @@ class Activity < ApplicationRecord
     Kind.new(:user_deactivated, :security, :warning),
     Kind.new(:user_reactivated, :security, :warning),
     Kind.new(:user_locked, :security, :warning),
+    Kind.new(:user_unlocked, :security, :info),
     Kind.new(:two_factor_enabled, :security, :info),
     Kind.new(:two_factor_disabled, :security, :critical),
     Kind.new(:two_factor_backup_code_used, :security, :warning),

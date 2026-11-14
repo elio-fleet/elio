@@ -1,6 +1,6 @@
 <% content_for :title, t("title", page: t("command_palette.add_server")) %>
 
-<%= page_header t("command_palette.add_server"), subtitle: t(".subtitle"), crumbs: [ [ t("nav.fleet"), servers_path ], t("command_palette.add_server") ] %>
+<%= page_header t("command_palette.add_server"), subtitle: (@source ? t(".copy_subtitle", name: @source.name) : t(".subtitle")), crumbs: [ [ t("nav.fleet"), servers_path ], t("command_palette.add_server") ] %>
 
 <div class="card max-w-4xl px-5 py-5">
   <%= render "form", server: @server %>

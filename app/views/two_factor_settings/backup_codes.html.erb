@@ -2,14 +2,21 @@
 
 <div class="max-w-3xl">
   <%= page_header t(".title"), crumbs: [ [ t("nav.account"), account_path ], t(".title") ] %>
-  <div class="card border-warn/40 p-5" data-controller="clipboard">
+  <% file = [ t(".file_heading", email: current_user.email, host: request.host, date: l(Time.current, format: :long)), "", *@backup_codes, "" ].join("\n") %>
+  <div class="card border-warn/40 p-5" data-controller="clipboard download"
+       data-download-content-value="<%= file %>" data-download-filename-value="elio-backup-codes-<%= request.host %>.txt">
     <p class="text-sm text-ink-2">
       <%= t(".keep_html") %>
     </p>
     <textarea readonly rows="<%= @backup_codes.size / 2 %>" data-clipboard-target="source" aria-label="<%= t(".title") %>"
               class="backup-codes mt-4 block w-full resize-none rounded-md border border-line bg-subtle px-3 py-2 font-mono text-sm leading-7 text-ink"><%= @backup_codes.each_slice(2).map { |pair| pair.join("    ") }.join("\n") %></textarea>
     <div class="mt-4 flex items-center justify-between gap-3">
-      <%= render "settings/copy_button" %>
+      <div class="flex flex-wrap items-center gap-2">
+        <%= render "settings/copy_button" %>
+        <button type="button" data-action="download#save" class="download-codes btn btn-secondary shrink-0">
+          <%= icon :arrow_down_tray %> <%= t(".download") %>
+        </button>
+      </div>
       <%= link_to t(".saved"), account_path, class: "btn btn-primary" %>
     </div>
   </div>

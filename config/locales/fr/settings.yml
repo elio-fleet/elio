@@ -48,6 +48,9 @@ fr:
         users_intro: Rôle et accès à Elio.
         you: " (vous)"
         deactivated: Désactivé
+        locked: Verrouillé
+        lock_ends: 'fin '
+        unlock: Déverrouiller
         last_sign_in: Dernière connexion
         never_signed_in: Jamais connecté
         two_factor_on: 2FA activée

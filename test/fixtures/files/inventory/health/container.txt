@@ -1,0 +1,29 @@
+@@elio loadavg
+0.41 0.37 0.30 2/310 4521
+@@elio cpus
+2
+@@elio meminfo
+MemTotal:        4022480 kB
+MemAvailable:    2915640 kB
+SwapTotal:       1048572 kB
+SwapFree:        1048572 kB
+@@elio df
+Filesystem     Type 1024-blocks     Used Available Capacity Mounted on
+/dev/sda1      ext4    61202244 47868212  10196392      83% /etc/hosts
+/dev/sdb1      ext4    20466256  2134020  17267380      12% /srv/data
+@@elio inodes
+Filesystem     Type  Inodes  IUsed   IFree IUse% Mounted on
+/dev/sda1      ext4 3907584  612380 3295204   16% /etc/hosts
+/dev/sdb1      ext4 1310720    1834 1308886    1% /srv/data
+@@elio reboot
+no
+@@elio failed
+@@elio failed_details
+@@elio updates_stamp
+1763012345.1763098765.
+@@elio updates
+@@elio ntp
+@@elio oom_kill
+3
+@@elio boot_id
+9b2e7c4d-1a3f-4c5e-8d6b-0f1e2a3b4c5d

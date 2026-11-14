@@ -26,11 +26,11 @@ class JobsDashboardTest < ActionDispatch::IntegrationTest
     assert_select "a", text: /Failed jobs/
   end
 
-  test "an admin without the required 2FA goes to their account first" do
+  test "an admin without the required 2FA sets it up first" do
     app_settings(:main).update!(require_admin_two_factor: true)
     sign_in users(:one)
     get "/jobs"
-    assert_redirected_to "/account"
+    assert_redirected_to "/account/two_factor/new"
   end
 
   test "the French translations survive a visit to the dashboard" do

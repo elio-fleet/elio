@@ -69,7 +69,7 @@ class TwoFactorSignInTest < ActionDispatch::IntegrationTest
 
     post two_factor_challenge_path, params: { code: "000000" }
     assert_response :unprocessable_entity
-    assert_select "#error_explanation", "Code invalide ou déjà utilisé."
+    assert_select "#error_explanation", /\ACode invalide ou déjà utilisé\./
 
     post two_factor_challenge_path, params: { code: code }
     assert_response :unprocessable_entity
@@ -84,6 +84,29 @@ class TwoFactorSignInTest < ActionDispatch::IntegrationTest
     assert_redirected_to root_path
     activity = Activity.of_kind(:two_factor_backup_code_used).sole
     assert_equal "operator@example.com s'est connecté avec un code de secours (9 restants)", activity.summary
+  end
+
+  test "the owner is told by email when a backup code is used, not for a code of the app" do
+    codes = enable_two_factor(users(:operator))
+    sign_in_with_password("operator@example.com")
+    assert_no_enqueued_emails { post two_factor_challenge_path, params: { code: next_totp(users(:operator)) } }
+    delete destroy_user_session_path
+
+    sign_in_with_password("operator@example.com")
+    perform_enqueued_jobs(only: ActionMailer::MailDeliveryJob) { post two_factor_challenge_path, params: { code: codes.first } }
+
+    mail = ActionMailer::Base.deliveries.sole
+    assert_equal [ "operator@example.com" ], mail.to
+    assert_match "(adresse IP : 127.0.0.1)", mail.body.to_s
+  end
+
+  test "a wrong code says how many attempts are left" do
+    enable_two_factor(users(:operator))
+    sign_in_with_password("operator@example.com")
+
+    post two_factor_challenge_path, params: { code: "000000" }
+
+    assert_select "#error_explanation", "Code invalide ou déjà utilisé. Encore 9 essais avant que votre compte soit verrouillé pendant 15 minutes."
   end
 
   test "the second step expires after 5 minutes" do

@@ -107,18 +107,39 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert_nil users(:viewer).reload.verify_two_factor(old_codes.first)
   end
 
-  test "an admin without 2FA is sent to their account while it is mandatory" do
+  test "an admin without 2FA is sent straight to its setup while it is mandatory" do
     AppSetting.current.update!(require_admin_two_factor: true)
     sign_in users(:one)
 
     get servers_path
-    assert_redirected_to account_path
-    assert_match "obligatoire", flash[:alert]
+    assert_redirected_to new_two_factor_path
+    follow_redirect!
+    assert_select ".two-factor-mandatory", "La double authentification est obligatoire pour votre rôle (admin) : activez-la pour continuer."
 
     get account_path
-    assert_response :success
+    assert_response :success, "the account page stays reachable (language, password)"
+  end
+
+  test "the setup page says nothing about a mandatory 2FA when it is optional" do
+    sign_in users(:viewer)
+
     get new_two_factor_path
     assert_response :success
+    assert_select ".two-factor-mandatory", count: 0
+  end
+
+  test "the backup codes can be downloaded as a text file" do
+    sign_in users(:viewer)
+    get new_two_factor_path
+    secret = session[:pending_otp_secret]
+
+    post two_factor_path, params: { code: ROTP::TOTP.new(secret).now }
+
+    file = css_select("[data-controller~=download]").sole["data-download-content-value"]
+    codes = file.lines.map(&:strip).grep(/\A\h{5}-\h{5}\z/)
+    assert_equal 10, codes.size
+    assert_match "Codes de secours Elio de viewer@example.com (www.example.com)", file
+    assert_select "button.download-codes", /Télécharger/
   end
 
   test "operators are not forced to enable 2FA" do

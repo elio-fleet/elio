@@ -48,6 +48,9 @@ en:
         users_intro: Role and access to Elio.
         you: " (you)"
         deactivated: Deactivated
+        locked: Locked
+        lock_ends: 'ends '
+        unlock: Unlock
         last_sign_in: Last sign in
         never_signed_in: Never signed in
         two_factor_on: 2FA on

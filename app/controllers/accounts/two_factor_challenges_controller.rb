@@ -18,7 +18,7 @@ class TwoFactorChallengesController < ApplicationController
     method = @user.verify_two_factor(params[:code])
     unless method
       @user.register_failed_two_factor_attempt!
-      return abandon(t("flash.two_factor.locked")) if @user.access_locked?
+      return abandon(t("flash.two_factor.locked", duration: User.lock_duration)) if @user.access_locked?
 
       return render(:new, status: :unprocessable_entity)
     end
@@ -28,14 +28,19 @@ class TwoFactorChallengesController < ApplicationController
     session.delete(:two_factor)
     sign_in(:user, @user)
     remember_me(@user) if remember
-    if method == :backup_code
-      Activity.record!(:two_factor_backup_code_used, user: @user, email: @user.email, left: @user.backup_codes_left)
-    end
+    backup_code_used if method == :backup_code
 
     redirect_to after_sign_in_path_for(@user), notice: t("flash.two_factor.signed_in")
   end
 
   private
+
+  # Logged, and the owner is told by email: if it was not them, someone has
+  # their password and one of their codes.
+  def backup_code_used
+    Activity.record!(:two_factor_backup_code_used, user: @user, email: @user.email, left: @user.backup_codes_left)
+    AccountMailer.backup_code_used(@user, ip: request.remote_ip, at: Time.current).deliver_later if Rails.configuration.x.mail_enabled
+  end
 
   def set_pending_user
     pending = session[:two_factor] || {}

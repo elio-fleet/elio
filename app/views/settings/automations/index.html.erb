@@ -10,7 +10,7 @@
   <div class="card overflow-x-auto">
     <table id="automations" class="table-dense">
       <thead>
-        <tr><th class="pl-4"><%= t(".active") %></th><th><%= t(".automation") %></th><th><%= t(".frequency") %></th><% if @groups.any? %><th><%= t(".on") %></th><% end %>
+        <tr><th class="pl-4"><%= t(".active") %></th><th><%= t(".automation") %></th><th><%= t(".frequency") %></th><th><%= t(".hours") %></th><% if @groups.any? %><th><%= t(".on") %></th><% end %>
             <th class="pr-4"><span class="sr-only"><%= t(".run_now") %></span></th></tr>
       </thead>
       <tbody>
@@ -29,10 +29,29 @@
               <p class="text-[11px] text-ink-3">
                 <%= t(".last_run") %> <%= automation.last_run_at ? relative_time_tag(automation.last_run_at) : t(".never") %>
                 <% if (next_run = automation.next_run_at) %> · <%= t(".next") %> <%= relative_time_tag next_run, expired: t(".next_minute") %><% end %>
+                <% if (duration = automation.last_duration) %>
+                  · <span class="automation-duration tabular-nums"><%= t(".took", duration: task_duration(duration)) %></span>
+                  <%= sparkline automation.run_durations, width: 48, height: 12, title: t(".durations") %>
+                <% end %>
                 <% if automation.last_result %> · <span class="automation-result" title="<%= automation.last_result %>"><%= automation.last_result.truncate(60) %></span><% end %>
               </p>
             </td>
             <td><%= select_tag "#{name}[interval_minutes]", options_for_select(Automation.interval_options, automation.interval_minutes), aria: { label: t(".frequency") }, class: "input w-auto py-1 text-xs" %></td>
+            <td>
+              <details class="automation-hours relative">
+                <summary class="automation-window input cursor-pointer py-1 text-xs whitespace-nowrap"><%= automation.window_label %></summary>
+                <div class="absolute right-0 z-10 mt-1 w-56 space-y-2 rounded-lg border border-line bg-surface p-2 shadow-lg">
+                  <p class="px-1 text-[11px] text-ink-3"><%= t(".hours_help") %></p>
+                  <div class="flex items-center gap-2 text-xs text-ink-2">
+                    <%= select_tag "#{name}[window_start_hour]", options_for_select(Automation.hour_options, automation.window_start_hour), include_blank: t(".any_time"),
+                          id: "#{dom_id(automation)}_window_start", aria: { label: t(".window_start") }, class: "input w-auto py-1 text-xs" %>
+                    <span aria-hidden="true">→</span>
+                    <%= select_tag "#{name}[window_end_hour]", options_for_select(Automation.hour_options, automation.window_end_hour || 6),
+                          id: "#{dom_id(automation)}_window_end", aria: { label: t(".window_end") }, class: "input w-auto py-1 text-xs" %>
+                  </div>
+                </div>
+              </details>
+            </td>
             <% if @groups.any? %>
               <td>
                 <details class="automation-groups relative">
@@ -44,6 +63,15 @@
                       <label class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs text-ink-2 hover:bg-subtle">
                         <%= check_box_tag "#{name}[server_group_ids][]", group.id, automation.server_group_ids.include?(group.id), id: "#{dom_id(automation)}_group_#{group.id}",
                               class: "h-3.5 w-3.5 rounded border-line text-accent" %>
+                        <span class="h-2 w-2 rounded-full <%= group.dot_classes %>"></span><%= group.name %>
+                      </label>
+                    <% end %>
+                    <%= hidden_field_tag "#{name}[excluded_server_group_ids][]", "", id: nil %>
+                    <p class="border-t border-line px-1 pt-2 text-[11px] text-ink-3"><%= t(".except_groups") %></p>
+                    <% @groups.each do |group| %>
+                      <label class="flex cursor-pointer items-center gap-2 rounded px-1 py-0.5 text-xs text-ink-2 hover:bg-subtle">
+                        <%= check_box_tag "#{name}[excluded_server_group_ids][]", group.id, automation.excluded_server_group_ids.include?(group.id), id: "#{dom_id(automation)}_excluded_group_#{group.id}",
+                              aria: { label: t(".except_group", group: group.name) }, class: "h-3.5 w-3.5 rounded border-line text-accent" %>
                         <span class="h-2 w-2 rounded-full <%= group.dot_classes %>"></span><%= group.name %>
                       </label>
                     <% end %>

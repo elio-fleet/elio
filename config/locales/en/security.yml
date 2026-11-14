@@ -39,6 +39,18 @@ en:
       packages: Packages
       servers: Servers
       images_html: 'images: %{images_first}%{count}'
+      # Filters by server, exploitation, EPSS; concentration; export.
+      all_servers: All servers
+      server: Server
+      any_epss: Any EPSS
+      epss_at_least: EPSS ≥ %{percentage}
+      epss_label: Minimum EPSS
+      epss_help: 'EPSS: probability that the CVE is exploited within 30 days'
+      exploited_only: Exploited (KEV)
+      exploited_help: Only the CVEs that CISA lists as actively exploited (KEV)
+      concentration_html: "%{package} alone holds %{percentage} of these CVEs (%{count} of %{total})."
+      export_csv: Export (CSV)
+      export_json: Export (JSON)
     show:
       exploited: Actively exploited (CISA KEV%{date})
       see: See

@@ -26,6 +26,7 @@
       <%= actions_menu id: "server-actions" do %>
         <%= menu_item t(".add_note"), server_path(@server, tab: "journal", anchor: "server-notes"), icon: :pencil_square %>
         <%= menu_item t(".see_keys"), server_path(@server, tab: "keys"), icon: :key %>
+        <%= menu_item t(".duplicate"), new_server_path(from: @server.id), icon: :server_stack %>
         <%= menu_separator %>
         <%= menu_item t("servers.delete_button.delete_server"), server_path(@server), icon: :trash, method: :delete, danger: true, class: "delete-server",
                       confirm: t("servers.delete_button.warning", server_name: @server.name) + (temporary.positive? ? t("servers.delete_button.temporary_warning", count: temporary) : ""),
