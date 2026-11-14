@@ -295,3 +295,73 @@ fr:
     fixable: corrigeable
     no_fix: pas de correctif
     unexpected: inattendu
+  installation_doctor:
+    title: 'Elio %{version} : vérification de cette installation'
+    fix: 'À faire : %{fix}'
+    statuses:
+      ok: ok
+      warning: attention
+      failure: ÉCHEC
+    summary:
+      ok: Tout va bien.
+      failures:
+        one: 1 problème à corriger
+        other: "%{count} problèmes à corriger"
+      warnings:
+        one: 1 avertissement
+        other: "%{count} avertissements"
+    secrets:
+      subject: Secrets
+      ok: SECRET_KEY_BASE et les clés de chiffrement sont définis
+      missing: 'Non définis : %{variables}'
+      fix: pour une nouvelle installation, les générer avec bin/elio-keys et les mettre dans .env ; pour une installation qui a des données, remettre ceux de son .env d'origine (les données chiffrées ne se lisent pas avec d'autres clés)
+    database:
+      subject: Base %{name}
+      ok: connectée, à jour
+      pending:
+        one: connectée, 1 migration à lancer
+        other: connectée, %{count} migrations à lancer
+      pending_fix: redémarrer Elio (les migrations sont lancées au démarrage), ou bin/rails db:migrate
+      missing: n'existe pas
+      missing_fix: redémarrer Elio (les bases sont créées au démarrage), ou bin/rails db:prepare
+      unreachable: 'connexion impossible : %{error}'
+      unreachable_fix: vérifier que PostgreSQL tourne, ainsi que PGHOST et ELIO_DATABASE_PASSWORD
+    encrypted_data:
+      subject: Données chiffrées
+      ok: la clé SSH d'Elio se déchiffre
+      no_key: la clé SSH d'Elio n'est pas encore générée
+      no_key_fix: Paramètres → Général → générer la clé SSH d'Elio
+      unreadable: 'la clé SSH d''Elio ne se déchiffre pas : les clés de chiffrement ne sont pas celles avec lesquelles elle a été enregistrée'
+      unreadable_fix: remettre les valeurs ACTIVE_RECORD_ENCRYPTION_* du .env d'origine de cette installation, puis redémarrer Elio
+    feeds:
+      subject: Flux %{label}
+      none_subject: Flux de vulnérabilités
+      ok: mis à jour le %{date}
+      no_server: aucun serveur inventorié, aucun flux nécessaire
+      never: jamais téléchargé
+      never_fix: il est téléchargé par les automatisations ; ou Vulnérabilités → mettre à jour les flux, ou l'importer à la main
+      failed: 'dernière mise à jour en échec (%{date}) : %{error}'
+      failed_fix: voir Vulnérabilités → flux ; en réseau fermé, importer le flux à la main
+      unreachable: '%{host} ne répond pas : %{error}'
+      unreachable_fix: autoriser le HTTPS sortant vers %{host}, ou définir un miroir (variables ELIO_*_URL), ou importer le flux à la main
+    scores:
+      subject: Scores de gravité
+      ok: aucune erreur au dernier passage des fournisseurs activés
+      failed: '%{names} : %{error}'
+      failed_fix: voir Paramètres → Vulnérabilités
+    address:
+      subject: Adresse
+      ok: "%{host}, HTTPS"
+      no_host: 'ELIO_HOST n''est pas défini : les emails et notifications n''ont pas de lien vers Elio, et tout nom d''hôte est accepté'
+      no_host_fix: définir ELIO_HOST avec le domaine d'Elio (elio.example.com)
+      plain_http: 'ELIO_FORCE_SSL=false : HTTP en clair, les mots de passe circulent sans chiffrement'
+      plain_http_fix: mettre Elio derrière un proxy HTTPS (docker-compose.caddy.yml), puis retirer ELIO_FORCE_SSL
+    mail:
+      subject: Emails
+      ok: "%{server} accepte la connexion"
+      authenticated: "%{server} accepte les identifiants d'Elio"
+      not_tried: "%{server} configuré (non essayé)"
+      disabled: 'SMTP_ADDRESS n''est pas défini : pas d''emails (liens d''invitation à copier à la main, pas de mot de passe oublié, pas de notifications par email)'
+      disabled_fix: définir SMTP_ADDRESS, SMTP_PORT, ELIO_MAIL_FROM, et SMTP_USERNAME / SMTP_PASSWORD si le serveur les demande
+      failed: '%{server} : %{error}'
+      failed_fix: vérifier SMTP_ADDRESS, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, et que cette machine peut joindre le serveur

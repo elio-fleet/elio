@@ -47,6 +47,15 @@ for _ in $(seq 1 90); do
 done
 test "$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1:$port/up")" = 200 || { echo "/up never answered 200"; exit 1; }
 
+# The image's health check sees it too, and bin/elio-doctor finds nothing
+# to fix (--offline: no SMTP server nor feed to reach here).
+for _ in $(seq 1 30); do
+  if [ "$(docker inspect -f '{{.State.Health.Status}}' "$name-app")" = healthy ]; then break; fi
+  sleep 1
+done
+test "$(docker inspect -f '{{.State.Health.Status}}' "$name-app")" = healthy || { echo "The container is not healthy"; exit 1; }
+docker exec "$name-app" bin/elio-doctor --offline
+
 location="$(curl -s -o /dev/null -w '%{redirect_url}' "http://127.0.0.1:$port/")"
 case "$location" in
   */setup*) echo "OK: $image answers, and a new installation goes to $location" ;;

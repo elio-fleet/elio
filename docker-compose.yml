@@ -6,8 +6,10 @@
 #   3. open http://localhost:8080 and create the first (administrator) account
 #
 # Behind a reverse proxy with HTTPS, set ELIO_HOST (your domain) and remove
-# ELIO_FORCE_SSL. Keep .env and the volumes safe: without the keys of .env,
-# the encrypted data (Elio's SSH key, secrets) cannot be read.
+# ELIO_FORCE_SSL; or let Caddy do HTTPS: see docker-compose.caddy.yml.
+# Something wrong? docker compose exec elio bin/elio-doctor
+# Keep .env and the volumes safe: without the keys of .env, the encrypted
+# data (Elio's SSH key, secrets) cannot be read. Backups: see the README.
 services:
   elio:
     image: ghcr.io/elio-fleet/elio:${ELIO_VERSION:-beta}

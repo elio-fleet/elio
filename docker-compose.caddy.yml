@@ -1,0 +1,33 @@
+# Elio behind Caddy, with HTTPS: a Let's Encrypt certificate, obtained and
+# renewed by Caddy. On top of docker-compose.yml:
+#
+#   1. a DNS record of your domain points to this machine, and its ports 80
+#      and 443 are reachable from the Internet (Let's Encrypt checks them);
+#   2. in .env: ELIO_HOST=elio.example.com (your domain);
+#   3. docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d
+#
+# Elio is then only reachable through Caddy (https://<your domain>), and
+# HTTPS is forced. Caddy's certificates are kept in the caddy_data volume.
+services:
+  elio:
+    ports: !reset []
+    environment:
+      ELIO_FORCE_SSL: "true"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on:
+      - elio
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    command: caddy reverse-proxy --from "${ELIO_HOST:?set ELIO_HOST in .env}" --to elio:80
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  caddy_data:
+  caddy_config:

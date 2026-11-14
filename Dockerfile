@@ -27,7 +27,7 @@ RUN echo "packages of ${APT_REFRESH}" && apt-get update -qq && \
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
-    BUNDLE_WITHOUT="development"
+    BUNDLE_WITHOUT="development:test"
 
 # Throw-away build stage to reduce size of final image
 FROM base AS build
@@ -50,11 +50,14 @@ COPY . .
 # Precompile bootsnap code for faster boot times
 RUN bundle exec bootsnap precompile app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
-
-
-
+# Precompiling assets for production without requiring secret RAILS_MASTER_KEY.
+# Then the Tailwind CSS executable (about 100 MB) goes: it only builds the
+# stylesheet, now in public/assets. The runtime directories are given to the
+# user that runs Elio here, as COPY --from keeps owners: a chown in the final
+# stage would copy them (bootsnap's cache, about 80 MB) into one more layer.
+RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile && \
+    rm -rf "${BUNDLE_PATH}"/ruby/*/gems/tailwindcss-ruby-*/exe/*/ && \
+    chown -R 1000:1000 db log storage tmp
 
 # Final stage for app image
 FROM base
@@ -63,11 +66,15 @@ FROM base
 COPY --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --from=build /rails /rails
 
-# Run and own only the runtime files as a non-root user for security
+# Run as a non-root user, that owns only the runtime files (db log storage tmp)
 RUN groupadd --system --gid 1000 rails && \
-    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash && \
-    chown -R rails:rails db log storage tmp
+    useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
 USER 1000:1000
+
+# Docker (and docker compose ps) shows whether Elio answers. Thruster listens
+# on 80; /up answers without a database query nor a host check.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --start-interval=2s --retries=3 \
+  CMD curl -fsS -o /dev/null http://localhost/up || exit 1
 
 # Entrypoint prepares the database.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]

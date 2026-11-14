@@ -295,3 +295,73 @@ en:
     fixable: fixable
     no_fix: no fix
     unexpected: unexpected
+  installation_doctor:
+    title: 'Elio %{version}: checking this installation'
+    fix: 'To fix: %{fix}'
+    statuses:
+      ok: ok
+      warning: warning
+      failure: FAILED
+    summary:
+      ok: Everything is fine.
+      failures:
+        one: 1 problem to fix
+        other: "%{count} problems to fix"
+      warnings:
+        one: 1 warning
+        other: "%{count} warnings"
+    secrets:
+      subject: Secrets
+      ok: SECRET_KEY_BASE and the encryption keys are set
+      missing: 'Not set: %{variables}'
+      fix: for a new installation, generate them with bin/elio-keys and put them in .env; for an installation with data, put back those of its original .env (the encrypted data cannot be read with other keys)
+    database:
+      subject: Database %{name}
+      ok: connected, up to date
+      pending:
+        one: connected, 1 migration to run
+        other: connected, %{count} migrations to run
+      pending_fix: restart Elio (the migrations run on start), or run bin/rails db:migrate
+      missing: does not exist
+      missing_fix: restart Elio (the databases are created on start), or run bin/rails db:prepare
+      unreachable: 'cannot connect: %{error}'
+      unreachable_fix: check that PostgreSQL is running, and PGHOST and ELIO_DATABASE_PASSWORD
+    encrypted_data:
+      subject: Encrypted data
+      ok: Elio's SSH key can be decrypted
+      no_key: Elio's SSH key is not generated yet
+      no_key_fix: Settings → General → generate Elio's SSH key
+      unreadable: 'Elio''s SSH key cannot be decrypted: the encryption keys are not those it was saved with'
+      unreadable_fix: put back the ACTIVE_RECORD_ENCRYPTION_* values of this installation's original .env, then restart Elio
+    feeds:
+      subject: Feed %{label}
+      none_subject: Vulnerability feeds
+      ok: updated on %{date}
+      no_server: no server inventoried yet, no feed needed
+      never: never downloaded
+      never_fix: it is downloaded by the automations; or Vulnerabilities → update the feeds, or import it by hand
+      failed: 'last update failed (%{date}): %{error}'
+      failed_fix: see Vulnerabilities → feeds; in a closed network, import the feed by hand
+      unreachable: '%{host} does not answer: %{error}'
+      unreachable_fix: allow outbound HTTPS to %{host}, or set a mirror (ELIO_*_URL variables), or import the feed by hand
+    scores:
+      subject: Severity scores
+      ok: no error at the last run of the enabled providers
+      failed: '%{names}: %{error}'
+      failed_fix: see Settings → Vulnerabilities
+    address:
+      subject: Address
+      ok: "%{host}, HTTPS"
+      no_host: 'ELIO_HOST is not set: emails and notifications have no link to Elio, and any host name is answered'
+      no_host_fix: set ELIO_HOST to Elio's domain (elio.example.com)
+      plain_http: 'ELIO_FORCE_SSL=false: plain HTTP, passwords travel unencrypted'
+      plain_http_fix: put Elio behind an HTTPS reverse proxy (docker-compose.caddy.yml), then remove ELIO_FORCE_SSL
+    mail:
+      subject: Emails
+      ok: "%{server} accepts the connection"
+      authenticated: "%{server} accepts Elio's credentials"
+      not_tried: "%{server} configured (not tried)"
+      disabled: 'SMTP_ADDRESS is not set: no emails (invitation links to copy by hand, no password reset, no email notifications)'
+      disabled_fix: set SMTP_ADDRESS, SMTP_PORT, ELIO_MAIL_FROM, and SMTP_USERNAME / SMTP_PASSWORD if the server asks for them
+      failed: '%{server}: %{error}'
+      failed_fix: check SMTP_ADDRESS, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, and that this machine may reach the server
