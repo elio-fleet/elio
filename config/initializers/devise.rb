@@ -287,6 +287,11 @@ Devise.setup do |config|
   #   warden_config.intercept_401 = false
   #   warden_config.default_strategies(scope: :user).unshift :some_external_strategy
   # end
+  # Elio: messages that state the lock rule (Users::FailureApp); a lambda so
+  # the class is looked up at each call (reloaded in development).
+  config.warden do |warden_config|
+    warden_config.failure_app = ->(env) { Users::FailureApp.call(env) }
+  end
 
   # ==> Mountable engine configurations
   # When using Devise inside an engine, let's call it `MyEngine`, and this engine

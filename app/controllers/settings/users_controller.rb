@@ -4,7 +4,7 @@ module Settings
 
     require_permission :administer
 
-    before_action :set_user, only: %i[update deactivate reactivate reset_two_factor]
+    before_action :set_user, only: %i[update deactivate reactivate reset_two_factor unlock]
 
     def index
       @pager = paginate(User.order(:email), per_page: PER_PAGE)
@@ -49,6 +49,13 @@ module Settings
       @user.disable_two_factor!
       Activity.record!(:two_factor_disabled, email: @user.email, reset_by: current_user.email)
       redirect_to settings_users_path, notice: t("flash.users.two_factor_reset", email: @user.email)
+    end
+
+    # Before the end of a lock after too many failed sign in attempts.
+    def unlock
+      @user.unlock_access!
+      Activity.record!(:user_unlocked, email: @user.email)
+      redirect_to settings_users_path, notice: t("flash.users.unlocked", email: @user.email)
     end
 
     private

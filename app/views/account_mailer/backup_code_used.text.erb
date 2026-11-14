@@ -1,0 +1,9 @@
+<%= t(".hello") %>
+
+<%= t(".text", email: @user.email, date: l(@at, format: :long), ip: @ip) %>
+
+<%= @left.zero? ? t(".none_left") : t(".left", count: @left) %>
+
+<%= t(".not_you") %>
+
+<%= t(".account", url: @url) %>

@@ -75,6 +75,10 @@ fr:
               already_invited: a déjà une invitation en attente
   devise:
     failure:
+      invalid: "%{authentication_keys} ou mot de passe incorrect. Après %{maximum_attempts} échecs de suite, un compte est verrouillé pendant %{duration}."
+      not_found_in_database: "%{authentication_keys} ou mot de passe incorrect. Après %{maximum_attempts} échecs de suite, un compte est verrouillé pendant %{duration}."
+      last_attempt: "%{authentication_keys} ou mot de passe incorrect. Encore un essai : après un nouvel échec, ce compte est verrouillé pendant %{duration}."
+      locked: "Trop d'essais ratés : ce compte est verrouillé pendant %{duration} au plus. Un administrateur peut le déverrouiller avant."
       deactivated: Ce compte a été désactivé. Contactez un administrateur.
   time:
     formats:

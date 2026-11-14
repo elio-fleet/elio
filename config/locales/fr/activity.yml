@@ -145,6 +145,9 @@ fr:
       user_locked:
         label: Compte verrouillé
         description: 'Trop d''essais de connexion ratés : le compte est bloqué 15 minutes.'
+      user_unlocked:
+        label: Compte déverrouillé
+        description: Un administrateur a déverrouillé un compte avant la fin de son verrouillage.
       two_factor_enabled:
         label: 2FA activée
         description: Un utilisateur a activé la double authentification.
@@ -308,6 +311,7 @@ fr:
       user_role_changed: 'Rôle de %{email} : %{from} → %{to}'
       user_deactivated: "%{email} désactivé"
       user_reactivated: "%{email} réactivé"
+      user_unlocked: "%{email} déverrouillé"
       user_locked:
         one: "%{email} verrouillé après %{count} essai raté"
         other: "%{email} verrouillé après %{count} essais ratés"

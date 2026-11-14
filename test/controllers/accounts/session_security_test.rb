@@ -8,9 +8,12 @@ class SessionSecurityTest < ActionDispatch::IntegrationTest
   end
 
   test "10 wrong passwords lock the account for 15 minutes" do
-    9.times { sign_in_with("wrong") }
+    sign_in_with("wrong")
+    assert_equal "Email ou mot de passe incorrect. Après 10 échecs de suite, un compte est verrouillé pendant 15 minutes.", flash[:alert],
+                 "the lock rule is stated, the same for every email"
+    8.times { sign_in_with("wrong") }
     assert_not users(:viewer).reload.access_locked?
-    assert_match "Il vous reste une chance", flash[:alert].to_s, "the last attempt is announced"
+    assert_match "Encore un essai", flash[:alert].to_s, "the last attempt is announced"
 
     sign_in_with("wrong")
     assert users(:viewer).reload.access_locked?
@@ -18,7 +21,7 @@ class SessionSecurityTest < ActionDispatch::IntegrationTest
 
     sign_in_with("password1234")
     assert_response :unprocessable_entity
-    assert_match "verrouillé", flash[:alert].to_s
+    assert_match "verrouillé pendant 15 minutes au plus", flash[:alert].to_s
     get root_path
     assert_redirected_to new_user_session_path
 
@@ -28,6 +31,14 @@ class SessionSecurityTest < ActionDispatch::IntegrationTest
       get servers_path
       assert_response :success
     end
+  end
+
+  test "an unknown email gets the same answer as a wrong password" do
+    sign_in_with("wrong", email: "nobody@example.com")
+    unknown = flash[:alert]
+    sign_in_with("wrong")
+
+    assert_equal unknown, flash[:alert]
   end
 
   test "a successful sign in resets the failed attempts" do
@@ -48,9 +59,22 @@ class SessionSecurityTest < ActionDispatch::IntegrationTest
     post two_factor_challenge_path, params: { code: "000000" }
 
     assert_redirected_to new_user_session_path
-    assert_match "verrouillé", flash[:alert]
+    assert_match "verrouillé pendant 15 minutes", flash[:alert]
     assert users(:operator).reload.access_locked?
     assert_equal 1, Activity.of_kind(:user_locked).count
+  end
+
+  test "typing the password again does not give new guesses of the 2FA code" do
+    enable_two_factor(users(:operator))
+    sign_in_with("password1234", email: "operator@example.com")
+    5.times { post two_factor_challenge_path, params: { code: "000000" } }
+    assert_select "#error_explanation", /Encore 5 essais/
+
+    sign_in_with("password1234", email: "operator@example.com")
+    assert_equal 5, users(:operator).reload.failed_attempts, "a right password alone completes nothing"
+    5.times { post two_factor_challenge_path, params: { code: "000000" } }
+
+    assert users(:operator).reload.access_locked?
   end
 
   test "a valid 2FA code resets the failed attempts" do

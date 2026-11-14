@@ -145,6 +145,9 @@ en:
       user_locked:
         label: Account locked
         description: 'Too many failed sign in attempts: the account is locked for 15 minutes.'
+      user_unlocked:
+        label: Account unlocked
+        description: An administrator unlocked an account before the end of its lock.
       two_factor_enabled:
         label: 2FA turned on
         description: A user has turned on two-factor authentication.
@@ -308,6 +311,7 @@ en:
       user_role_changed: 'Role of %{email}: %{from} → %{to}'
       user_deactivated: "%{email} deactivated"
       user_reactivated: "%{email} reactivated"
+      user_unlocked: "%{email} unlocked"
       user_locked:
         one: "%{email} locked after %{count} failed attempt"
         other: "%{email} locked after %{count} failed attempts"
