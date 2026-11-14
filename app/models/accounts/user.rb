@@ -67,6 +67,20 @@ class User < ApplicationRecord
     lock_access! if attempts_exceeded? && !access_locked?
   end
 
+  # How long a lock lasts, for the messages ("15 minutes").
+  def self.lock_duration = I18n.t("datetime.distance_in_words.x_minutes", count: unlock_in.in_minutes.round)
+
+  # Attempts left before the account locks (password and 2FA codes together).
+  def attempts_left = [ self.class.maximum_attempts - failed_attempts.to_i, 0 ].max
+
+  # Devise resets the failed attempts once the password is right. With 2FA
+  # the sign in is not complete then: the counter is reset by the second step
+  # (TwoFactorChallengesController), otherwise typing the password again
+  # would give 10 new guesses of the code each time.
+  def reset_failed_attempts!
+    super unless two_factor_enabled?
+  end
+
   # Devise: a deactivated account cannot sign in, and is signed out on its next request.
   def active_for_authentication? = super && !deactivated?
 

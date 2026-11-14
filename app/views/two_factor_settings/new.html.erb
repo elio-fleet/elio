@@ -4,6 +4,9 @@
   <%= page_header t(".title"), crumbs: [ [ t("nav.account"), account_path ], t(".title") ] %>
 
   <div class="card p-5">
+    <% if current_user.two_factor_mandatory? %>
+      <p class="two-factor-mandatory mb-5 rounded-md border border-warn/40 bg-warn-soft px-4 py-3 text-sm text-warn-ink"><%= t(".mandatory", role: current_user.role_label.downcase) %></p>
+    <% end %>
     <ol class="space-y-6 text-sm text-ink-2">
       <li>
         <p class="font-medium"><%= t(".scan") %></p>

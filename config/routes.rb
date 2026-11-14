@@ -49,6 +49,7 @@ Rails.application.routes.draw do
         post :deactivate
         post :reactivate
         post :reset_two_factor
+        post :unlock
       end
     end
     resources :invitations, only: %i[create destroy]

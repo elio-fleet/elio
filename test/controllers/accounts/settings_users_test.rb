@@ -151,12 +151,30 @@ class SettingsUsersTest < ActionDispatch::IntegrationTest
     AppSetting.current.update!(require_operator_two_factor: true)
     sign_in users(:operator)
     get servers_path
-    assert_redirected_to account_path
-    assert_match "obligatoire pour votre rôle", flash[:alert]
+    assert_redirected_to new_two_factor_path
 
     sign_in users(:viewer)
     get servers_path
     assert_response :success
+  end
+
+  test "an admin unlocks an account before the end of its lock" do
+    users(:operator).lock_access!
+    sign_in users(:one)
+
+    get settings_users_path
+    row = "##{ActionView::RecordIdentifier.dom_id(users(:operator))}"
+    assert_select "#{row} .user-state", "Verrouillé"
+    assert_select "#{row} form[action=?]", unlock_settings_user_path(users(:operator))
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:viewer))} form[action=?]", unlock_settings_user_path(users(:viewer)), count: 0
+
+    post unlock_settings_user_path(users(:operator))
+
+    assert_redirected_to settings_users_path
+    assert_equal "operator@example.com peut de nouveau se connecter.", flash[:notice]
+    assert_not users(:operator).reload.access_locked?
+    assert_equal 0, users(:operator).failed_attempts
+    assert_equal "operator@example.com déverrouillé", Activity.of_kind(:user_unlocked).sole.summary
   end
 
   test "an admin resets the 2FA of someone who lost it" do

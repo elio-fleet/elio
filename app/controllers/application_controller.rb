@@ -41,11 +41,12 @@ class ApplicationController < ActionController::Base
     Current.user = current_user
   end
 
-  # Admins and operators must enable 2FA first when the settings require it.
+  # Admins and operators must enable 2FA first when the settings require it:
+  # straight to the setup page, which says why.
   def require_two_factor_setup
     return unless current_user&.two_factor_required?
 
-    redirect_to main_app.account_path, alert: t("flash.two_factor.mandatory")
+    redirect_to main_app.new_two_factor_path
   end
 
   # Until the first admin exists, every page leads to the setup page. Once
