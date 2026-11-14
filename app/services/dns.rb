@@ -10,6 +10,15 @@ module Dns
 
   def self.enabled? = source_integrations.any?
 
+  # DnsRecord.source of every enabled source (as in .sources), read from the
+  # database each time: the default scope of DnsRecord, never stale after a
+  # source is enabled or disabled within a request or a job.
+  def self.active_source_keys
+    Integration.enabled_kinds.select { |integration| integration.definition.dns_source?(integration) }.flat_map do |integration|
+      integration.kind == Integrations::ManualDns.key ? integration.connections.map { |connection| Integrations::ManualDns.source(connection) } : [ integration.kind ]
+    end
+  end
+
   # Every source of records, one per extension and one per manual source
   # (Integrations::ManualDns connection): its DnsRecord.source, its label,
   # its synchronization state and the extension it belongs to.

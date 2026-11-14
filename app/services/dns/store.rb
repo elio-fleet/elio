@@ -18,7 +18,7 @@ module Dns::Store
     end.uniq { |row| row[:source_id] }
 
     DnsRecord.transaction do
-      DnsRecord.of_source(source).where.not(source_id: rows.map { |row| row[:source_id] }).delete_all
+      DnsRecord.unscoped.of_source(source).where.not(source_id: rows.map { |row| row[:source_id] }).delete_all
       DnsRecord.upsert_all(rows, unique_by: %i[source source_id], update_only: %i[zone name record_type value ttl disabled]) if rows.any?
     end
     servers = Dns::Matcher.call

@@ -4,12 +4,31 @@ class DnsRecordsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include StubHelpers
   include TechnitiumHelpers
+  include IntegrationHelpers
 
   setup do
     @integration = enable_technitium
     fake_technitium
     servers(:web).update!(extra_addresses_text: "203.0.113.10")
     @integration.sync!
+  end
+
+  test "the records of a disabled source leave the page, and come back when it is enabled again" do
+    enable_dns_sources(:ovh)
+    Dns::Store.replace("ovh", [ { zone: "example.test", name: "ovh-only.example.test", record_type: "A", value: "203.0.113.10" } ])
+    sign_in users(:one)
+    get dns_records_path
+    assert_includes response.body, "ovh-only.example.test"
+
+    Integration.find_by(kind: "ovh").update_column(:enabled, false)
+    get dns_records_path
+    assert_not_includes response.body, "ovh-only.example.test"
+    assert_equal 1, DnsRecord.unscoped.of_source("ovh").count, "kept for when it is enabled again"
+    assert_not servers(:web).reload.dns_records.of_source("ovh").exists?, "nor attached to its server"
+
+    Integration.find_by(kind: "ovh").update_column(:enabled, true)
+    get dns_records_path
+    assert_includes response.body, "ovh-only.example.test"
   end
 
   test "404 while disabled, and no trace" do
@@ -72,6 +91,7 @@ class DnsRecordsControllerTest < ActionDispatch::IntegrationTest
   end
 
   test "with two sources: the records of a name that differ are flagged and filtered, and ⌘K offers the DNS search" do
+    enable_dns_sources(:ovh)
     Dns::Store.replace("ovh", [ { zone: "example.test", name: "web.example.test", record_type: "A", value: "198.51.100.1" } ])
     sign_in users(:viewer)
 

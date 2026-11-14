@@ -2,6 +2,10 @@ require "test_helper"
 
 # The DNS alerts common to every source (phase 14.3).
 class Dns::AlertsTest < ActiveSupport::TestCase
+  include IntegrationHelpers
+
+  setup { enable_dns_sources(:ovh, :technitium) }
+
   def row(name, value) = { zone: "example.test", name: name, record_type: "A", value: value }
 
   test "a record outside the fleet is logged once, whatever the source, not on the first run" do

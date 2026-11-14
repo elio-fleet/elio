@@ -75,7 +75,7 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     get tasks_path
 
-    assert_select "#upcoming-automations li.upcoming-automation", 5 # + the health check, the vulnerability feeds and scores, the image checks, enabled by default
+    assert_select "#upcoming-automations li.upcoming-automation", 10 # every collection, enabled by default (not the syncs of disabled extensions)
     assert_select "#upcoming-automations li", text: /Inventaire des paquets.*dans 5 heures/m
     assert_select "#upcoming-automations li", text: /Suivi de la santé.*discrète/m
   end
