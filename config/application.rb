@@ -13,6 +13,7 @@ require "rails/test_unit/railtie"
 require_relative "../lib/elio/secrets"
 require_relative "../lib/elio/version"
 require_relative "../lib/elio/locales"
+require_relative "../lib/elio/mail"
 
 # Require the gems listed in Gemfile, including any gems
 # you've limited to :test, :development, or :production.

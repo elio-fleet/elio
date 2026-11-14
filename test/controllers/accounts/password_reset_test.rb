@@ -3,6 +3,7 @@ require "test_helper"
 class PasswordResetTest < ActionDispatch::IntegrationTest
   include ActionMailer::TestHelper
   include TwoFactorHelpers
+  include StubHelpers
 
   test "the sign in page links to the password reset when emails can be sent" do
     get new_user_session_path
@@ -50,5 +51,14 @@ class PasswordResetTest < ActionDispatch::IntegrationTest
 
     assert_response :unprocessable_entity
     assert_not users(:one).reload.valid_password?("new-password-42")
+  end
+
+  test "an email that cannot be sent gets the same answer, never an error page" do
+    failing = ->(*) { raise ArgumentError, "SMTP-AUTH requested but missing user name" }
+    stub_method(User, :send_reset_password_instructions, failing) do
+      post user_password_path, params: { user: { email: "one@example.com" } }
+    end
+    assert_redirected_to new_user_session_path
+    assert_equal I18n.t("devise.passwords.send_paranoid_instructions"), flash[:notice]
   end
 end
