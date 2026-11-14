@@ -1,0 +1,5 @@
+@@os	os-pkgs	debian	httpd:2.4.57 (debian 12.2)
+CVE-2023-44487	libnghttp2-14	1.52.0-1	1.52.0-1+deb12u1	HIGH	HTTP/2: Multiple HTTP/2 enabled web servers are vulnerable to a DDoS attack (Rapid Reset Attack)
+CVE-2026-109518	apt	2.6.1	2.6.2	HIGH	apt: apt: Remote code execution via hard link reuse during package download retries
+CVE-2025-68973	gpgv	2.2.40-1.1	2.2.40-1.1+deb12u2	HIGH	GnuPG: GnuPG: Information disclosure and potential arbitrary code execution via out-of-bounds write
+CVE-2011-3374	apt	2.6.1		LOW	It was found that apt-key in apt, all versions, do not correctly valid ...

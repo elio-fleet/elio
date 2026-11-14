@@ -1,0 +1,6 @@
+@@os	os-pkgs	alpine	ghcr.io/acme/shop-worker:2.4.1 (alpine 3.20.3)
+CVE-2024-9143	libcrypto3	3.3.2-r0	3.3.2-r1	LOW	openssl: Low-level invalid GF(2^m) parameters lead to OOB memory access
+CVE-2024-6119	libssl3	3.3.2-r0		HIGH	openssl: Possible denial of service in X.509 name checks
+@@os	lang-pkgs	bundler	app/Gemfile.lock
+GHSA-vvfq-8hwr-qm4m	rack	3.0.8	3.0.9.1, 2.2.8.1	CRITICAL	Rack has possible DoS vulnerability with Range Header
+@@os	lang-pkgs	python-pkg	Python
