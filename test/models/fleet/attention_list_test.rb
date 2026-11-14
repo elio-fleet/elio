@@ -59,6 +59,24 @@ class AttentionListTest < ActiveSupport::TestCase
     assert_equal({ "crit" => [ "Database", "Web" ] }, list.by_tone.transform_values { |items| items.map(&:subject) })
   end
 
+  test "the fixable CVEs are one item for the fleet, not repeated on the line of each server" do
+    Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
+    web, db = servers(:web), servers(:db)
+    [ [ web, "host", nil ], [ db, "host", nil ], [ web, "image", "nginx:1.25" ] ].each_with_index do |(server, origin, image), index|
+      ServerVulnerability.create!(server: server, origin: origin, image: image, source: "debian", cve: "CVE-2026-000#{index}", source_package: "openssl",
+                                  installed_version: "1", fixed_version: "2", severity: "critical")
+    end
+    vulnerabilities = Inventory::HealthStatus.reason("crit", :vulnerabilities, count: 2).to_h
+    web.update_columns(health_status: "crit", health_reasons: [ vulnerabilities, Inventory::HealthStatus.reason("warn", :reboot_required).to_h ],
+                       docker_status: "warn", docker_reasons: [ Inventory::HealthStatus.reason("warn", :image_vulnerabilities, count: 1, images: 1).to_h ])
+    db.update_columns(health_status: "crit", health_reasons: [ vulnerabilities ])
+
+    attention = list
+    assert_equal [ [ "2 serveurs", :shield_exclamation ], [ "Web", :exclamation_triangle ] ], attention.items.map { |item| [ item.subject, item.icon ] }
+    assert_equal "Redémarrage requis", attention.items.last.text
+    assert_equal [ "1 serveur" ], attention.docker_items.map(&:subject)
+  end
+
   test "nothing to report" do
     Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
     assert_not list.any?
