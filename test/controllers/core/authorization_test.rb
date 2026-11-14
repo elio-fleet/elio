@@ -46,6 +46,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "fleet ports" => -> { get ports_path },
       "fleet scheduled tasks" => -> { get scheduled_tasks_path },
       "fleet vulnerabilities" => -> { get vulnerabilities_path },
+      "export the fleet vulnerabilities" => -> { get vulnerabilities_path(format: :csv) },
       "fleet docker" => -> { get docker_path },
       "vulnerability detail" => -> { Vulnerability.create!(source: "debian", release: "bookworm", package: "x", cve: "CVE-2024-1", severity: "low") && get(vulnerability_path("CVE-2024-1")) },
       "server docker" => -> { get server_path(servers(:web), tab: "docker") },

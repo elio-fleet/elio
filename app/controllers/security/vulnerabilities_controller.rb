@@ -1,10 +1,15 @@
 # Vulnerabilities of the whole fleet, in two tabs (?origin=): the packages of
 # the servers (host, by default) or those of their Docker images (image),
 # each by package or by CVE, whether a fix exists. Filters: ?q= (CVE or
-# package), ?severity= (minimum), ?group=, ?fixable=1. Fixable and most
-# serious first.
+# package), ?severity= (minimum), ?group= and ?server= (combined),
+# ?fixable=1, ?exploited=1 (CISA KEV), ?epss= (minimum, in %). Fixable and
+# most serious first. The same filters export as .csv / .json for an audit.
 class VulnerabilitiesController < ApplicationController
   PER_PAGE = 100
+  # Choices of the EPSS filter (probability of exploitation within 30 days, in %).
+  EPSS_THRESHOLDS = %w[1 10 50].freeze
+  # The concentration line is shown when one package holds at least this share of the CVEs.
+  CONCENTRATION = 0.5
   Row = Data.define(:cve, :severity, :packages, :servers, :images, :fixable, :description, :source) do
     def rank = [ fixable ? 0 : 1, -Vulnerability.severity_rank(severity), -servers.size, cve ]
     def url = Vulnerability.url(cve, source)
@@ -43,21 +48,69 @@ class VulnerabilitiesController < ApplicationController
   end
 
   def index
+    read_filters
+    scope = ServerVulnerability.all
+    scope = scope.where(server_id: Server.in_group(@group).select(:id)) if @group
+    scope = scope.where(server_id: @server.id) if @server
+    scope = filtered(scope)
+    respond_to do |format|
+      format.html { list(scope) }
+      format.csv { export(scope, :csv) }
+      format.json { export(scope, :json) }
+    end
+  end
+
+  private
+
+  def read_filters
     @groups = ServerGroup.order(:name)
     @group = @groups.find { |group| group.id.to_s == params[:group].to_s } if params[:group].present?
+    @servers = (@group ? Server.in_group(@group) : Server.all).order(:name).to_a
+    # A server outside the chosen group is dropped (the select would not show it).
+    @server = @servers.find { |server| server.id.to_s == params[:server].to_s } if params[:server].present?
     @q = params[:q].to_s.strip.first(100)
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     @fixable_only = params[:fixable] == "1"
+    @exploited_only = params[:exploited] == "1"
+    @epss = params[:epss].presence_in(EPSS_THRESHOLDS)
     @origin = params[:origin].presence_in(ServerVulnerability::ORIGINS.keys) || "host"
-    @feeds = VulnerabilityFeed.where.not(refreshed_at: nil).order(:source).to_a
+  end
 
-    scope = ServerVulnerability.all
-    scope = scope.where(server_id: Server.in_group(@group).select(:id)) if @group
-    @origin_counts = { "host" => scope.host.distinct.count(:cve), "image" => scope.images.distinct.count(:cve) }
+  # The filters after the scope of servers (group, server): the origin tabs count before them.
+  def filtered(scope)
+    @origin_counts = { "host" => scope.host.distinct.count(:cve), "image" => scope.images.distinct.count(:cve) } if request.format.html?
     scope = scope.at_least(@severity) if @severity
     scope = scope.fixable if @fixable_only
+    scope = scope.where(cve: CveRating.where(exploited: true).select(:cve)) if @exploited_only
+    scope = scope.where(cve: CveRating.where(epss: (@epss.to_d / 100)..).select(:cve)) if @epss
     scope = scope.where(origin: @origin)
     scope = scope.where("server_vulnerabilities.cve ILIKE :q OR server_vulnerabilities.source_package ILIKE :q", q: "%#{ServerVulnerability.sanitize_sql_like(@q)}%") if @q.present?
+    scope
+  end
+
+  def filters?
+    @q.present? || @severity || @fixable_only || @exploited_only || @epss || @group || @server
+  end
+  helper_method :filters?
+
+  def export(scope, format)
+    filters = { origin: @origin, q: @q, severity: @severity, group: @group&.name, server: @server&.name, fixable: @fixable_only, exploited: @exploited_only,
+                epss_min_percent: @epss&.to_i }
+    export = VulnerabilityExport.new(scope, filters: filters)
+    send_data format == :csv ? export.to_csv : export.to_json, filename: export.filename(format), type: format, disposition: "attachment"
+  end
+
+  # One package that holds most of the CVEs (often the kernel): { package:, count:, share: }.
+  def concentration(scope, total)
+    return if total.zero?
+
+    counts = scope.group(:source_package).distinct.count(:cve)
+    package, count = counts.max_by { |name, value| [ value, name ] }
+    { package: package, count: count, share: count.to_f / total } if counts.size > 1 && count >= total * CONCENTRATION
+  end
+
+  def list(scope)
+    @feeds = VulnerabilityFeed.where.not(refreshed_at: nil).order(:source).to_a
 
     @view = params[:view].presence_in(%w[packages cves]) || ("cves" if @q.present? && @q.match?(/\ACVE-/i))
     cookies.permanent[:elio_vulnerability_view] = { value: @view, same_site: :lax, httponly: true } if @view
@@ -67,6 +120,7 @@ class VulnerabilitiesController < ApplicationController
       # Separate counts: each uses an index, much faster than one query with several COUNT(DISTINCT … ) FILTER.
       @summary = { cves: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve), servers: scope.distinct.count(:server_id),
                    serious: scope.fixable.at_least("high").distinct.count(:cve) }
+      @concentration = concentration(scope, @summary[:cves])
       @pager = paginate(@package_groups, per_page: 50)
       @package_groups = @pager.records
       return
@@ -85,6 +139,7 @@ class VulnerabilitiesController < ApplicationController
     end
     @summary = { cves: rows.size, fixable: rows.count(&:fixable), servers: servers.size,
                  serious: rows.count { |row| row.fixable && row.severity.in?(%w[critical high]) } }
+    @concentration = concentration(scope, @summary[:cves])
     @pager = paginate(rows.sort_by(&:rank), per_page: PER_PAGE)
     @rows = @pager.records
     @ratings = CveRating.for(@rows.map(&:cve))
