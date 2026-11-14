@@ -68,6 +68,9 @@ class Automation < ApplicationRecord
 
   def definition = KINDS.fetch(kind.to_sym)
 
+  # The result of the last run in the reader's language (LocalizedText).
+  def last_result = LocalizedText.render(super)
+
   # Runs an automation now because something needs it (a release new to the
   # fleet needs the vulnerability feeds, new CVEs need their scores), unless
   # it is disabled — a closed network turns it off — or already waiting or
@@ -103,7 +106,7 @@ class Automation < ApplicationRecord
   # Enqueues a run, followed on the "Tâches" page except for the quiet
   # automations started on schedule. Returns the task (or nil).
   def enqueue!(user: nil, tracked: !definition.quiet)
-    task = BackgroundTask.enqueue!(kind: "automation", label: label, servers: [], user: user, automation: self) if tracked
+    task = BackgroundTask.enqueue!(kind: "automation", label: LocalizedText.part("automation.kinds.#{kind}.label"), servers: [], user: user, automation: self) if tracked
     RunAutomationJob.perform_later(self, task)
     task
   end
@@ -131,7 +134,7 @@ class Automation < ApplicationRecord
 
     update!(last_run_at: Time.current, last_result: result)
     Activity.record!(:automation_run, user: nil, automation: kind, automation_label: label, result: result) unless definition.quiet
-    result
+    LocalizedText.render(result)
   end
 
   private
@@ -144,7 +147,7 @@ class Automation < ApplicationRecord
       item&.finish_inventory!(outcomes)
       outcomes.values.none? { |outcome| outcome.status == "error" }
     end
-    I18n.t("automation.results.inventoried", done: collected.count(true), count: servers.size)
+    LocalizedText.dump("automation.results.inventoried", done: collected.count(true), count: servers.size)
   end
 
   def run_keys_scan
@@ -157,7 +160,7 @@ class Automation < ApplicationRecord
     end.count(true)
     detected = Activity.of_kind(:unknown_key_detected).count - detected_before
 
-    I18n.t("automation.results.scanned", done: scanned, count: servers.size, keys: I18n.t("automation.results.new_unknown_keys", count: detected))
+    LocalizedText.dump("automation.results.scanned", done: scanned, count: servers.size, keys: LocalizedText.part("automation.results.new_unknown_keys", count: detected))
   end
 
   # Runs the block on each server, a few at a time, with its task item (if any).
@@ -204,6 +207,6 @@ class Automation < ApplicationRecord
 
   def run_servers_ping
     results = Servers::Ping.check_all!(servers)
-    I18n.t("automation.results.reachable", done: results.values.count(true), count: results.size)
+    LocalizedText.dump("automation.results.reachable", done: results.values.count(true), count: results.size)
   end
 end

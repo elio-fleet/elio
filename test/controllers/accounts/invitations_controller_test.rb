@@ -19,6 +19,13 @@ class InvitationsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='user[email]'][readonly][value='dave@example.com']"
   end
 
+  test "the page speaks the language of the invitation, not the browser's" do
+    @invitation.update!(locale: "en")
+    get invitation_acceptance_path(@invitation.token), headers: { "Accept-Language" => "fr-FR,fr;q=0.9" }
+
+    assert_select "p", text: /one@example.com invites you with the role Operator/
+  end
+
   test "accepting creates the account, signs in and logs it" do
     accept
 

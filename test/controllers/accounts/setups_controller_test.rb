@@ -32,6 +32,16 @@ class SetupsControllerTest < ActionDispatch::IntegrationTest
     assert_select ".sidebar .user-role", "Admin"
   end
 
+  test "the language the first admin sets Elio up in becomes the language of the installation" do
+    without_users
+    AppSetting.current.update!(default_locale: "en")
+
+    post setup_path, params: { user: { email: "admin@example.com", password: "password1234", password_confirmation: "password1234" } },
+                     headers: { "Accept-Language" => "fr-FR,fr;q=0.9" }
+
+    assert_equal "fr", AppSetting.current.reload.default_locale
+  end
+
   test "re-renders the form with errors" do
     without_users
 

@@ -35,13 +35,19 @@ class BackgroundTask < ApplicationRecord
 
   # Creates the task and one queued item per server, then yields each item so
   # the caller enqueues its job: BackgroundTask.enqueue!(…) { |item| Job.perform_later(item.server, task_item: item) }.
+  # `label`: a text, or a LocalizedText.part written in each reader's language
+  # (the plain label, in the current language, stays for the text search).
   def self.enqueue!(kind:, label:, servers:, user: Current.user, automation: nil)
+    localized = label.to_json if label.is_a?(Hash)
     task = transaction do
-      create!(kind: kind, label: label, user: user, automation: automation).tap { |created| created.add_items!(servers) }
+      create!(kind: kind, label: localized ? LocalizedText.render(localized) : label, localized_label: localized, user: user, automation: automation).tap { |created| created.add_items!(servers) }
     end
     task.items.each { |item| yield item } if block_given?
     task.refresh!
   end
+
+  # The label in the reader's language when it was given as a LocalizedText.
+  def label = localized_label ? LocalizedText.render(localized_label) : super
 
   def add_items!(servers)
     now = Time.current
