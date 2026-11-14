@@ -91,6 +91,7 @@ fr:
       scan_keys_whole_fleet: Scanner les clés de tout le parc
       import_servers: Importer des serveurs
     show:
+      duplicate: Dupliquer
       add_note: Ajouter une note
       see_keys: Clés SSH du serveur
       search_whole_fleet: Chercher sur tout le parc
@@ -121,6 +122,8 @@ fr:
       answer: Pas de réponse
       inventory_yet: Pas encore d'inventaire
     form:
+      test_connection: Tester la connexion
+      test_connection_help: Essaie l'hôte, le port et l'utilisateur ci-dessus avec la clé d'Elio, sans enregistrer.
       connection: Connexion
       connection_help: Comment Elio joint ce serveur, en SSH. L'utilisateur doit pouvoir utiliser sudo sans mot de passe pour un inventaire complet.
       addresses: Adresses
@@ -138,9 +141,11 @@ fr:
       ip_addresses_through_which: Adresses IP par lesquelles ce serveur est joint mais qu'il ne voit pas lui-même (NAT, IP de basculement…). Les adresses de ses interfaces sont relevées par l'inventaire.
       groups: Groupes
     new:
+      copy_subtitle: 'Copie de « %{name} » : même port, même utilisateur et mêmes groupes. Renseignez le nom et l''hôte.'
       subtitle: Elio s'y connecte en SSH, en lecture seule, avec sa clé.
       servers: "← Serveurs"
     edit:
+      duplicate: Dupliquer
       modify: Modifier
       servers: "← Serveurs"
       delete_server: Supprimer le serveur
@@ -148,6 +153,8 @@ fr:
       delete_server_2: Supprimer ce serveur
       server_removed_elio_keys: 'Le serveur est retiré d''Elio. Les clés installées sur la machine, dont celle d''Elio, restent en place : retirez-les d''abord depuis la page du serveur si nécessaire. L''historique d''activité est conservé.'
       title: Modifier %{name}
+    connection_test:
+      succeeded: Elio peut se connecter à ce serveur.
     delete_button:
       warning: "« %{server_name} » sera retiré d'Elio, avec son historique de clés lues. Les clés installées sur la machine, dont celle d'Elio, n'en seront pas retirées."
       delete_server: Supprimer le serveur
@@ -314,7 +321,8 @@ fr:
         API,10.0.0.12,22,deploy,Production|API
       ssh_config_help_html: Un serveur par bloc %{host} (sans %{star}), avec %{host_name}, %{port} et %{user}.
   servers_controller:
-    created: Le serveur « %{server_name} » a été ajouté. Installez-y la clé d'Elio puis testez la connexion.
+    created: Le serveur « %{server_name} » a été ajouté. Si Elio peut déjà s'y connecter, son premier inventaire se lance en tâche de fond ; sinon installez-y la clé d'Elio puis testez la connexion.
+    connection_invalid: Vérifiez les champs de connexion
     updated: Le serveur « %{server_name} » a été modifié.
     deleted: Le serveur « %{server_name} » a été supprimé d'Elio. Les clés installées dessus n'ont pas été retirées.
   server_groups_controller:

@@ -91,6 +91,7 @@ en:
       scan_keys_whole_fleet: Scan the keys of the whole fleet
       import_servers: Import servers
     show:
+      duplicate: Duplicate
       add_note: Add a note
       see_keys: SSH keys of the server
       search_whole_fleet: Search the whole fleet
@@ -121,6 +122,8 @@ en:
       answer: No answer
       inventory_yet: No inventory yet
     form:
+      test_connection: Test the connection
+      test_connection_help: Tries the host, port and user above with Elio's key, without saving.
       connection: Connection
       connection_help: How Elio reaches this server, over SSH. The user must be able to use sudo without a password for a full inventory.
       addresses: Addresses
@@ -138,9 +141,11 @@ en:
       ip_addresses_through_which: IP addresses through which this server is reached but that it does not see itself (NAT, failover IP…). The addresses of its interfaces are read by the inventory.
       groups: Groups
     new:
+      copy_subtitle: 'Copy of “%{name}”: same port, user and groups. Fill in the name and the host.'
       subtitle: Elio connects to it over SSH, read-only, with its key.
       servers: "← Servers"
     edit:
+      duplicate: Duplicate
       modify: Edit
       servers: "← Servers"
       delete_server: Delete the server
@@ -148,6 +153,8 @@ en:
       delete_server_2: Delete this server
       server_removed_elio_keys: 'The server is removed from Elio. The keys installed on the machine, Elio''s included, stay in place: remove them first from the server page if needed. The activity history is kept.'
       title: Edit %{name}
+    connection_test:
+      succeeded: Elio can log in to this server.
     delete_button:
       warning: "“%{server_name}” will be removed from Elio, with its history of keys read. The keys installed on the machine, Elio's included, will not be removed from it."
       delete_server: Delete the server
@@ -314,7 +321,8 @@ en:
         API,10.0.0.12,22,deploy,Production|API
       ssh_config_help_html: One server per %{host} block (without %{star}), with %{host_name}, %{port} and %{user}.
   servers_controller:
-    created: The server “%{server_name}” has been added. Install Elio's key on it, then test the connection.
+    created: The server “%{server_name}” has been added. If Elio can already log in, its first inventory runs in the background; otherwise install Elio's key on it, then test the connection.
+    connection_invalid: Check the connection fields
     updated: The server “%{server_name}” has been updated.
     deleted: The server “%{server_name}” has been deleted from Elio. The keys installed on it have not been removed.
   server_groups_controller:

@@ -5,7 +5,7 @@ class ServersController < ApplicationController
   STATE_ORDER = { "crit" => 0, "off" => 0, "warn" => 1, "unknown" => 2, "ok" => 3 }.freeze
   HISTORY_PER_PAGE = 30
 
-  require_permission :operate, only: %i[new create edit update destroy]
+  require_permission :operate, only: %i[new create edit update destroy test_connection]
 
   before_action :set_server, only: %i[show edit update destroy]
 
@@ -63,8 +63,11 @@ class ServersController < ApplicationController
     @health_history = @server.health_samples.since(24.hours.ago).pluck(:collected_at, :load_percent, :memory_percent, :disk_percent) if @tab == "overview"
   end
 
+  # ?from=<id>: a copy of that server (port, user, groups), to fill in the
+  # name and the host.
   def new
-    @server = Server.new
+    @source = Server.find_by(id: params[:from]) if params[:from].present?
+    @server = @source ? Server.new(port: @source.port, username: @source.username, server_group_ids: @source.server_group_ids) : Server.new
   end
 
   # The journal of a server: its notes and its activities on one timeline,
@@ -87,6 +90,7 @@ class ServersController < ApplicationController
 
     if @server.save
       Activity.record!(:server_created, server: @server, address: "#{@server.username}@#{@server.host}:#{@server.port}")
+      Inventory::FirstCollectJob.perform_later(@server)
       redirect_to server_path(@server), notice: t("servers_controller.created", server_name: @server.name)
     else
       render :new, status: :unprocessable_entity
@@ -103,6 +107,20 @@ class ServersController < ApplicationController
       redirect_to server_path(@server), notice: t("servers_controller.updated", server_name: @server.name)
     else
       render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # Tries the SSH values of the form (host, port, user) without saving:
+  # connection, Elio's key, host key. Answers in the form (Turbo Stream).
+  def test_connection
+    @server = Server.new(params.expect(server: %i[host port username]))
+    @server.validate
+    errors = @server.errors.select { |error| error.attribute.in?(%i[host port username]) && error.type != :taken }
+    @result = errors.any? ? Ssh::Check::Result.new(success: false, message: t("servers_controller.connection_invalid"), details: errors.map(&:full_message).to_sentence) : Ssh::Check.call(@server)
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("server-connection-test", partial: "servers/connection_test", locals: { server: @server, result: @result }) }
+      format.html { redirect_to new_server_path }
     end
   end
 
