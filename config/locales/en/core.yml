@@ -90,10 +90,13 @@ en:
     forbidden:
       title: Access denied
       ask: Ask an administrator if you need this permission.
-      back: Back to the overview
+      back: Back to the previous page
+      overview: Back to the overview
   title: "%{page} · Elio"
   authorization:
     forbidden: Your role (%{role}) does not allow this action.
+    forbidden_needs: 'Your role (%{role}) does not allow this action: it needs the role %{roles}.'
+    or: or
   throttled:
     too_many: 'Too many attempts: try again in a few minutes.'
   ui:

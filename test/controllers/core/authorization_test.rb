@@ -194,7 +194,34 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
     get new_server_path
 
     assert_select "h1", "Accès refusé"
-    assert_select "p", text: "Votre rôle (Lecture) ne permet pas cette action."
+    assert_select "p.forbidden-message", text: "Votre rôle (Lecture) ne permet pas cette action : il faut le rôle Admin ou Opérateur."
+    assert_select "a.forbidden-back[href=?]", root_path, text: "Retour à la vue d'ensemble"
+  end
+
+  test "a forbidden page names the role needed and leads back to the previous page" do
+    sign_in users(:operator)
+    get settings_path, headers: { "Referer" => "http://www.example.com#{server_path(servers(:web))}?tab=keys" }
+
+    assert_select "p.forbidden-message", text: "Votre rôle (Opérateur) ne permet pas cette action : il faut le rôle Admin."
+    assert_select "a.forbidden-back[href=?]", "#{server_path(servers(:web))}?tab=keys", text: "Retour à la page précédente"
+    assert_select "a[href=?]", root_path, text: "Retour à la vue d'ensemble"
+  end
+
+  test "a forbidden page never leads back to another site" do
+    sign_in users(:viewer)
+    get new_server_path, headers: { "Referer" => "https://evil.example/phish" }
+
+    assert_select "a.forbidden-back[href=?]", root_path
+    assert_select "a[href*=evil]", 0
+  end
+
+  test "a rule of its own (someone else's note) keeps the short message" do
+    note = ServerNote.create!(server: servers(:web), user: users(:one), body: "Admin note")
+    sign_in users(:operator)
+    get edit_server_note_path(servers(:web), note)
+
+    assert_response :forbidden
+    assert_select "p.forbidden-message", text: "Votre rôle (Opérateur) ne permet pas cette action."
   end
 
   test "a forbidden Turbo Stream request shows a toast" do
