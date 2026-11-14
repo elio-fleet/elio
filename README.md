@@ -97,6 +97,7 @@ Elio is a Rails application with PostgreSQL. Put it behind a reverse proxy with 
 | Variable | |
 |---|---|
 | `SECRET_KEY_BASE`, `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`, `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Secrets of the installation, printed by `bin/elio-keys`. **Required.** (An installation that keeps them in Rails credentials sets `RAILS_MASTER_KEY` instead.) |
+| `ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS` | Only while [rotating the encryption key](#security): the former keys, comma-separated, still read but never used to encrypt. |
 | `ELIO_DATABASE_PASSWORD`, `PGHOST` | PostgreSQL password of the `elio` user, and host. Elio uses four databases: `elio_production`, `_cache`, `_queue`, `_cable`. |
 | `ELIO_HOST` | Elio's domain: links in emails and notifications, and the only host name it answers to. |
 | `ELIO_SETUP_TOKEN` | If set, asked when creating the first account (useful when Elio is reachable before you set it up). |
@@ -208,7 +209,15 @@ The extensions that read DNS (OVHcloud with its DNS product, Technitium DNS, Gan
 ## Security
 
 - Elio's SSH key, API keys, webhooks and 2FA secrets are **encrypted in the database** and never sent back to the browser.
-- Two-factor authentication (TOTP and backup codes), mandatory by default for administrators and operators; roles; invitations only (no public sign-up); rate-limited sign-in and lockout; strict Content Security Policy.
+- Two-factor authentication (TOTP and backup codes), mandatory by default for administrators and operators; roles; invitations only (no public sign-up); rate-limited sign-in and lockout.
+- **Headers**: a strict Content Security Policy (scripts with a per-request nonce, no framing), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and a `Permissions-Policy` that denies the camera, microphone, location, payment and device APIs Elio never uses. When HTTPS is forced (the default in production), `Strict-Transport-Security: max-age=63072000; includeSubDomains` too; never over plain HTTP (`ELIO_FORCE_SSL=false`). CSP violations are reported to Elio itself (`POST /csp-reports`, rate-limited, written to the log), never to an external service.
+- **Plain HTTP**: an administrator reaching Elio over plain HTTP in production sees a notice (passwords and cookies cross the network unencrypted); it can be hidden for an installation kept on a trusted local network on purpose. Behind a reverse proxy, send `X-Forwarded-Proto: https`.
+- **Rotating the encryption key** of the database (`ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`), for example after it leaked:
+  1. Move the current value to `ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS` (several former keys: comma-separated), put a new one in `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (`bin/elio-keys` prints one), restart Elio: it encrypts with the new key and still reads the former ones.
+  2. Run `bin/rails elio:reencrypt` (Docker: `docker compose exec elio bin/rails elio:reencrypt`): every secret is encrypted again with the new key.
+  3. Remove `ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS` and restart.
+
+  Keep `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY` and `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` as they are: changing them is not supported (the pending invitations would have to be sent again, the other secrets would be lost). Back up the database first.
 - Servers' host keys are pinned on first connection; a change blocks the connection until an administrator accepts it.
 - **Outbound connections** of Elio: the vulnerability feeds and score providers (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — only the releases and CVEs of your fleet), the Docker registries (manifest `HEAD` requests), and the extensions you enable (your Uptime Kuma instance, the OVH API, your Technitium DNS Server, the Gandi API, your Coolify instances — read-only, see [Extensions](#extensions)). Nothing else, no telemetry. In a closed network, the feeds can be imported by hand.
 - The Docker image is built on Debian 13 and takes the Debian security updates at every build; the CVEs Elio may list in its own container are those Debian has not fixed yet (see [SECURITY.md](SECURITY.md#the-docker-image)).

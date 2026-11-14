@@ -97,6 +97,7 @@ Elio est une application Rails avec PostgreSQL. Placez-la derrière un reverse p
 | Variable | |
 |---|---|
 | `SECRET_KEY_BASE`, `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`, `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY`, `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` | Secrets de l'installation, affichés par `bin/elio-keys`. **Obligatoires.** (Une installation qui les garde dans les credentials Rails définit `RAILS_MASTER_KEY` à la place.) |
+| `ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS` | Seulement pendant un [changement de clé de chiffrement](#sécurité) : les anciennes clés, séparées par des virgules, encore lues mais jamais utilisées pour chiffrer. |
 | `ELIO_DATABASE_PASSWORD`, `PGHOST` | Mot de passe PostgreSQL de l'utilisateur `elio`, et hôte. Elio utilise quatre bases : `elio_production`, `_cache`, `_queue`, `_cable`. |
 | `ELIO_HOST` | Le domaine d'Elio : liens des emails et des notifications, et seul nom d'hôte auquel il répond. |
 | `ELIO_SETUP_TOKEN` | S'il est défini, demandé à la création du premier compte (utile si Elio est joignable avant que vous le configuriez). |
@@ -208,7 +209,15 @@ Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS,
 ## Sécurité
 
 - La clé SSH d'Elio, les clés d'API, les webhooks et les secrets 2FA sont **chiffrés en base** et jamais renvoyés au navigateur.
-- Double authentification (TOTP et codes de secours), obligatoire par défaut pour les administrateurs et les opérateurs ; rôles ; invitations seulement (pas d'inscription publique) ; connexion limitée en débit et verrouillage ; Content Security Policy stricte.
+- Double authentification (TOTP et codes de secours), obligatoire par défaut pour les administrateurs et les opérateurs ; rôles ; invitations seulement (pas d'inscription publique) ; connexion limitée en débit et verrouillage.
+- **En-têtes** : une Content Security Policy stricte (scripts avec un nonce par requête, aucune intégration en cadre), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, et une `Permissions-Policy` qui refuse la caméra, le micro, la localisation, le paiement et les API de périphériques, dont Elio ne se sert pas. Quand HTTPS est forcé (par défaut en production), aussi `Strict-Transport-Security: max-age=63072000; includeSubDomains` ; jamais en HTTP simple (`ELIO_FORCE_SSL=false`). Les violations de la CSP sont signalées à Elio lui-même (`POST /csp-reports`, limité en débit, écrit dans le journal de l'application), jamais à un service externe.
+- **HTTP simple** : un administrateur qui consulte Elio en HTTP simple en production voit un avertissement (mots de passe et cookies circulent en clair) ; il peut le masquer pour une installation laissée volontairement sur un réseau local de confiance. Derrière un reverse proxy, envoyez `X-Forwarded-Proto: https`.
+- **Changer la clé de chiffrement** de la base (`ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`), par exemple après une fuite :
+  1. Déplacez la valeur actuelle dans `ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS` (plusieurs anciennes clés : séparées par des virgules), mettez une nouvelle clé dans `ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY` (`bin/elio-keys` en affiche une), redémarrez Elio : il chiffre avec la nouvelle clé et lit encore les anciennes.
+  2. Lancez `bin/rails elio:reencrypt` (Docker : `docker compose exec elio bin/rails elio:reencrypt`) : chaque secret est chiffré à nouveau avec la nouvelle clé.
+  3. Retirez `ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS` et redémarrez.
+
+  Gardez `ACTIVE_RECORD_ENCRYPTION_DETERMINISTIC_KEY` et `ACTIVE_RECORD_ENCRYPTION_KEY_DERIVATION_SALT` tels quels : les changer n'est pas pris en charge (les invitations en attente seraient à renvoyer, les autres secrets perdus). Sauvegardez la base avant.
 - L'empreinte de chaque serveur est mémorisée à la première connexion ; un changement bloque la connexion jusqu'à ce qu'un administrateur l'accepte.
 - **Connexions sortantes** d'Elio : les bases de vulnérabilités et fournisseurs de notes (Debian, OSV, NVD, Red Hat, CVE.org, FIRST, CISA — seulement les versions et CVE de votre parc), les registres Docker (requêtes `HEAD` sur les manifestes), et les extensions que vous activez (votre instance Uptime Kuma, l'API OVH, votre serveur Technitium DNS, l'API Gandi — en lecture seule, voir [Extensions](#extensions)). Rien d'autre, aucune télémétrie. En réseau fermé, les bases peuvent être importées à la main.
 - L'image Docker est construite sur Debian 13 et prend les mises à jour de sécurité Debian à chaque construction ; les CVE qu'Elio peut lister dans son propre conteneur sont celles que Debian n'a pas encore corrigées (voir [SECURITY.md](SECURITY.md#the-docker-image)).

@@ -7,6 +7,12 @@ class ElioSecretsTest < ActiveSupport::TestCase
     assert_empty Elio::Secrets.encryption_keys({})
   end
 
+  test "during a rotation, the former primary keys are still read and the current one encrypts (last)" do
+    env = { "ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY" => "new", "ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS" => " old1, old2,,new " }
+    assert_equal({ primary_key: %w[old1 old2 new] }, Elio::Secrets.encryption_keys(env))
+    assert_equal({}, Elio::Secrets.encryption_keys("ACTIVE_RECORD_ENCRYPTION_PREVIOUS_PRIMARY_KEYS" => "old"))
+  end
+
   test "bin/elio-keys prints a fresh set of variables, different each time" do
     output = `#{RbConfig.ruby} #{Rails.root.join("bin/elio-keys")}`
     variables = output.lines.to_h { |line| line.chomp.split("=", 2) }
