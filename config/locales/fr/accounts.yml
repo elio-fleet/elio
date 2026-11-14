@@ -156,8 +156,6 @@ fr:
       mandatory_operators: Double authentification obligatoire pour les opérateurs.
       mandatory_both: Double authentification obligatoire pour les administrateurs et opérateurs.
       optional: Double authentification facultative pour tous.
-  account_keys:
-    create:
-      claimed: "« %{name} » est votre clé."
-    destroy:
-      released: "« %{name} » n'est plus votre clé."
+  account_keys_controller:
+    claimed: "« %{name} » est votre clé."
+    released: "« %{name} » n'est plus votre clé."

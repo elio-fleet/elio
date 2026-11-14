@@ -128,7 +128,7 @@ Pris en charge : **Debian et Ubuntu** (les autres systèmes : santé et système
 | Services, tâches planifiées | `systemctl list-units`, `list-unit-files`, `show` des timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (état, santé, redémarrages — **jamais les variables d'environnement**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` s'ils sont installés, `docker cp` de `os-release` et de l'état dpkg |
 | Ports | `ss -tulpn`, `/proc/<pid>/cgroup`, `ufw status verbose`, `nft list ruleset`, `iptables -S INPUT` |
-| Clés SSH | lecture de `~/.ssh/authorized_keys` (avec root, de chaque compte qui a un shell — jamais à travers un lien, ni un fichier qui n'appartient pas au compte) ; **écriture seulement** quand vous ajoutez une clé (au compte d'Elio, ou avec root à un autre compte existant : son `~/.ssh` est créé s'il manque, jamais le compte) ou en retirez une |
+| Clés SSH | lecture de `~/.ssh/authorized_keys` (avec root, de chaque compte qui a un shell — jamais à travers un lien, ni un fichier qui n'appartient pas au compte) ; **écriture seulement** quand vous ajoutez une clé (au compte d'Elio, ou avec root à un autre compte existant : son `~/.ssh` est créé s'il manque, jamais le compte) ou en retirez une. Le fichier d'un autre compte est lu et écrit **sous ce compte** (`runuser`) : root sert seulement à le trouver |
 
 Elio **ne modifie jamais le firewall** et n'installe rien : les règles ufw suggérées et les commandes de mise à jour sont à relire et à lancer vous-même.
 

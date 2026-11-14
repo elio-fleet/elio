@@ -5,7 +5,6 @@
 # the "Test" button previews what would be read, without saving.
 class Integrations::ManualDns < Integrations::Base
   self.key = "manual_dns"
-  self.label = "DNS"
   self.icon = :globe
   self.default_interval = 1440
 

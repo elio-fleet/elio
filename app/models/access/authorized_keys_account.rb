@@ -4,6 +4,8 @@
 class AuthorizedKeysAccount
   # Unix user names Elio accepts from a request (as useradd does).
   NAME_FORMAT = /\A[a-z_][a-z0-9_.-]{0,31}\$?\z/i
+  # The same rule for an <input pattern> (checked again on the server).
+  NAME_PATTERN = "[A-Za-z_][A-Za-z0-9_.\-]{0,31}\$?"
 
   attr_reader :server, :unix_user
 
@@ -14,6 +16,11 @@ class AuthorizedKeysAccount
     return login(server) if unix_user.blank? || unix_user == server.username
 
     new(server, unix_user) if unix_user.match?(NAME_FORMAT)
+  end
+
+  # The other accounts Elio read on the server (root first), offered when adding a key.
+  def self.others(server)
+    AccountSnapshot.where(server: server).where.not(unix_user: server.username).pluck(:unix_user).sort_by { |user| [ user == "root" ? 0 : 1, user ] }
   end
 
   def initialize(server, unix_user = server.username)

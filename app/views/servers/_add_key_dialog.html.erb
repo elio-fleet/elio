@@ -7,7 +7,7 @@
 <% snapshot = AccountSnapshot.find_by(server: server, unix_user: server.username) %>
 <% present = snapshot ? snapshot.keys.map(&:fingerprint).to_set : Set.new %>
 <%# The other accounts Elio read (root first); writing there needs root, unknown when never inventoried. %>
-<% other_accounts = AccountSnapshot.where(server: server).where.not(unix_user: server.username).pluck(:unix_user).sort_by { |user| [ user == "root" ? 0 : 1, user ] } %>
+<% other_accounts = AuthorizedKeysAccount.others(server) %>
 <% root_missing = server.privilege == "none" %>
 <% source = "new" if keys.empty? %>
 <div id="<%= dom_id(server, :add_key) %>" data-controller="modal" class="add-key" <% if open %>data-modal-open-value="true"<% end %>>
@@ -93,7 +93,7 @@
         <div data-kind-fields-target="field" data-kinds="other" class="mt-2">
           <%= label_tag :other_account, t(".other_account_name"), for: "#{dom_id(server, :add_key)}_other_account", class: "sr-only" %>
           <%= text_field_tag :other_account, nil, id: "#{dom_id(server, :add_key)}_other_account", required: true, placeholder: "deploy",
-                pattern: "[a-z_][a-z0-9_.\\-]{0,31}\\$?", autocomplete: "off", spellcheck: false, class: "input w-full font-mono text-sm sm:w-60" %>
+                pattern: AuthorizedKeysAccount::NAME_PATTERN, autocomplete: "off", spellcheck: false, class: "input w-full font-mono text-sm sm:w-60" %>
         </div>
         <p class="mt-1 text-xs text-ink-3"><%= root_missing ? t(".other_accounts_need_root") : t(".account_hint") %></p>
       </div>

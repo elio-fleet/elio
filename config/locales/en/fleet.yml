@@ -426,11 +426,9 @@ en:
     added: Note added.
     updated: Note updated.
     deleted: Note deleted.
-  my_key_accesses:
-    create:
-      no_key: "No key is yours: pick it first in “My SSH keys”."
-      added: "“%{name}” added to the account %{account} for %{label}, until %{time}."
-      failed: "Key not added: %{error_title} — %{error_details}"
-    destroy:
-      removed: "“%{name}” removed from the account %{account}."
-      failed: "Key not removed: %{error_title} — %{error_details}"
+  my_key_accesses_controller:
+    no_key: "No key is yours: pick it first in “My SSH keys”."
+    added: "“%{name}” added to the account %{account} for %{label}, until %{time}."
+    add_failed: "Key not added: %{error_title} — %{error_details}"
+    removed: "“%{name}” removed from the account %{account}."
+    remove_failed: "Key not removed: %{error_title} — %{error_details}"

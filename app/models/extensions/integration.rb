@@ -104,10 +104,10 @@ class Integration < ApplicationRecord
       [ connection, e ]
     end
     failed = results.select { |_connection, result| result.is_a?(Integrations::Error) }
-    raise Integrations::Error, failed.map { |connection, error| "#{connection.label} : #{error.message}" }.join(" · ") if failed.size == results.size
+    raise Integrations::Error, failed.map { |connection, error| I18n.t("integration.connection_result", label: connection.label, result: error.message) }.join(" · ") if failed.size == results.size
 
     definition.after_connections_sync(self)
-    results.map { |connection, result| "#{connection.label} : #{result.is_a?(Integrations::Error) ? I18n.t("integration.connection_failed", error: result.message) : result}" }.join(" · ")
+    results.map { |connection, result| I18n.t("integration.connection_result", label: connection.label, result: result.is_a?(Integrations::Error) ? I18n.t("integration.connection_failed", error: result.message) : result) }.join(" · ")
   end
 
   def known_kind

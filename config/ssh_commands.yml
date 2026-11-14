@@ -258,7 +258,7 @@ keys:
       echo removed
 
   read_accounts:
-    description: "Reads ~/.ssh/authorized_keys of every account that has a login shell and a home (root included), one section per account with a file. Needs root. Refuses a link or a file the account does not own."
+    description: "Reads ~/.ssh/authorized_keys of every account that has a login shell and a home (root included), one section per account with a file. Needs root to list the accounts; each file is read as its account (runuser). Refuses a link or a file the account does not own."
     run_as: root
     shell: true
     default: |
@@ -266,78 +266,98 @@ keys:
         case "$shell" in */nologin|*/false|*/sync|"") continue ;; esac
         [ -n "$home" ] && [ -f "$home/.ssh/authorized_keys" ] || continue
         printf '@@elio account %s\n' "$user"
-        # Read as root: a link (to another account's file) or a file the user does not own is refused.
+        # Read as the account itself (runuser), never as root; a link or a file the user does not own is refused.
         if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ] || [ "$(ls -ld "$home/.ssh/authorized_keys" 2>/dev/null | awk '{ print $3 }')" != "$user" ]; then
           printf '@@elio unreadable\n'; continue
         fi
-        cat "$home/.ssh/authorized_keys" 2>/dev/null || printf '@@elio unreadable\n'
+        runuser -u "$user" -- cat "$home/.ssh/authorized_keys" 2>/dev/null || printf '@@elio unreadable\n'
       done
 
   append_to_account:
-    description: "Adds a key line to the authorized_keys of another account unless its key is already there (creates its ~/.ssh in 700 and the file in 600, owned by the account). Needs root; refuses a link, an unknown account, or a directory or file the account does not own. Prints present or added."
+    description: "Adds a key line to the authorized_keys of another account unless its key is already there (creates its ~/.ssh in 700 and the file in 600). Root only finds the account: the file is read and written as the account itself (runuser), so a link it made leads nowhere it could not already write. Refuses an unknown account, a link, or a directory or file the account does not own. Prints present or added."
     writes: true
     run_as: root
     shell: true
     default: |
-      set -e
-      home=$(getent passwd @{user} | cut -d: -f6)
-      if [ -z "$home" ] || [ ! -d "$home" ]; then echo "unknown user" >&2; exit 3; fi
-      # Written as root: never through a link, nor in a directory or file the user does not own.
-      if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then echo "not owned by the account" >&2; exit 4; fi
-      if [ ! -e "$home/.ssh" ]; then mkdir -m 700 "$home/.ssh"; chown @{user}: "$home/.ssh"; fi
-      if [ "$(ls -ld "$home/.ssh" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
-      file="$home/.ssh/authorized_keys"
-      if [ ! -e "$file" ]; then (umask 077; : > "$file"); chown @{user}: "$file"; fi
-      if [ "$(ls -ld "$file" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
-      if grep -qF -- @{blob} "$file"; then
-        echo present
-      else
+        set -e
+        home=$(getent passwd @{user} | cut -d: -f6)
+        if [ -z "$home" ] || [ ! -d "$home" ]; then echo "unknown user" >&2; exit 3; fi
+        # ~/.ssh created by root only in a home the account cannot write to (it cannot swap anything there).
+        if [ ! -e "$home/.ssh" ] && [ ! -L "$home/.ssh" ] && ! runuser -u @{user} -- test -w "$home"; then mkdir -m 700 "$home/.ssh"; chown @{user}: "$home/.ssh"; fi
+        runuser -u @{user} -- sh -s -- "$home" @{user} @{line} @{blob} <<'ELIO'
+        set -e
+        home=$1 user=$2
+        refuse() { echo "not owned by the account" >&2; exit 4; }
+        if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then refuse; fi
+        umask 077
+        [ -e "$home/.ssh" ] || mkdir "$home/.ssh"
+        if [ "$(ls -ld "$home/.ssh" | awk '{ print $3 }')" != "$user" ]; then refuse; fi
+        file="$home/.ssh/authorized_keys"
+        [ -e "$file" ] || : > "$file"
+        if [ "$(ls -ld "$file" | awk '{ print $3 }')" != "$user" ]; then refuse; fi
+        line=$3 blob=$4
+        if grep -qF -- "$blob" "$file"; then echo present; exit 0; fi
         if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
-        printf '%s\n' @{line} >> "$file"
+        printf '%s\n' "$line" >> "$file"
         echo added
-      fi
+        ELIO
 
   replace_in_account:
-    description: "Replaces the lines of a key by a new line in the authorized_keys of another account (changes or removes a temporary access expiry). Needs root; same refusals as append_to_account. Prints added."
+    description: "Replaces the lines of a key by a new line in the authorized_keys of another account (changes or removes a temporary access expiry). Same as append_to_account: root only finds the account, the file is written as the account. Prints added."
     writes: true
     run_as: root
     shell: true
     default: |
-      set -e
-      home=$(getent passwd @{user} | cut -d: -f6)
-      if [ -z "$home" ] || [ ! -d "$home" ]; then echo "unknown user" >&2; exit 3; fi
-      # Written as root: never through a link, nor in a directory or file the user does not own.
-      if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then echo "not owned by the account" >&2; exit 4; fi
-      if [ ! -e "$home/.ssh" ]; then mkdir -m 700 "$home/.ssh"; chown @{user}: "$home/.ssh"; fi
-      if [ "$(ls -ld "$home/.ssh" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
-      file="$home/.ssh/authorized_keys"
-      if [ ! -e "$file" ]; then (umask 077; : > "$file"); chown @{user}: "$file"; fi
-      if [ "$(ls -ld "$file" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
-      tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
-      trap 'rm -f "$tmp"' EXIT
-      awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) next; print }' "$file" > "$tmp"
-      cat "$tmp" > "$file"
-      if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
-      printf '%s\n' @{line} >> "$file"
-      echo added
+        set -e
+        home=$(getent passwd @{user} | cut -d: -f6)
+        if [ -z "$home" ] || [ ! -d "$home" ]; then echo "unknown user" >&2; exit 3; fi
+        # ~/.ssh created by root only in a home the account cannot write to (it cannot swap anything there).
+        if [ ! -e "$home/.ssh" ] && [ ! -L "$home/.ssh" ] && ! runuser -u @{user} -- test -w "$home"; then mkdir -m 700 "$home/.ssh"; chown @{user}: "$home/.ssh"; fi
+        runuser -u @{user} -- sh -s -- "$home" @{user} @{line} @{blob} <<'ELIO'
+        set -e
+        home=$1 user=$2
+        refuse() { echo "not owned by the account" >&2; exit 4; }
+        if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then refuse; fi
+        umask 077
+        [ -e "$home/.ssh" ] || mkdir "$home/.ssh"
+        if [ "$(ls -ld "$home/.ssh" | awk '{ print $3 }')" != "$user" ]; then refuse; fi
+        file="$home/.ssh/authorized_keys"
+        [ -e "$file" ] || : > "$file"
+        if [ "$(ls -ld "$file" | awk '{ print $3 }')" != "$user" ]; then refuse; fi
+        line=$3 blob=$4
+        tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
+        trap 'rm -f "$tmp"' EXIT
+        awk -v blob="$blob" '{ for (i = 1; i <= NF; i++) if ($i == blob) next; print }' "$file" > "$tmp"
+        cat "$tmp" > "$file"
+        if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
+        printf '%s\n' "$line" >> "$file"
+        echo added
+        ELIO
 
   remove_from_account:
-    description: "Removes every line whose key is the given one from the authorized_keys of another account (keeps its owner and rights). Needs root; refuses a link or a file the account does not own. Prints absent or removed."
+    description: "Removes every line whose key is the given one from the authorized_keys of another account (keeps its owner and rights). Root only finds the account: the file is read and written as the account itself (runuser). Refuses a link or a file the account does not own. Prints absent or removed."
     writes: true
     run_as: root
     shell: true
     default: |
-      set -e
-      home=$(getent passwd @{user} | cut -d: -f6)
-      if [ -z "$home" ]; then echo "unknown user" >&2; exit 3; fi
-      file="$home/.ssh/authorized_keys"
-      if [ ! -f "$file" ]; then echo absent; exit 0; fi
-      # Written as root: never through a link, nor in a file the user does not own.
-      if [ -L "$home/.ssh" ] || [ -L "$file" ] || [ "$(ls -ld "$file" | awk '{ print $3 }')" != @{user} ]; then echo "not owned by the account" >&2; exit 4; fi
-      matches=$(awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
-      if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
-      tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
-      trap 'rm -f "$tmp"' EXIT
-      awk -v blob=@{blob} '{ for (i = 1; i <= NF; i++) if ($i == blob) next; print }' "$file" > "$tmp"
-      cat "$tmp" > "$file"
-      echo removed
+        set -e
+        home=$(getent passwd @{user} | cut -d: -f6)
+        if [ -z "$home" ]; then echo "unknown user" >&2; exit 3; fi
+        if [ ! -f "$home/.ssh/authorized_keys" ]; then echo absent; exit 0; fi
+        runuser -u @{user} -- sh -s -- "$home" @{user} @{blob} <<'ELIO'
+        set -e
+        home=$1 user=$2
+        refuse() { echo "not owned by the account" >&2; exit 4; }
+        if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then refuse; fi
+        blob=$3
+        file="$home/.ssh/authorized_keys"
+        if [ "$(ls -ld "$file" | awk '{ print $3 }')" != "$user" ]; then refuse; fi
+        matches=$(awk -v blob="$blob" '{ for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
+        if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
+        tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
+        trap 'rm -f "$tmp"' EXIT
+        awk -v blob="$blob" '{ for (i = 1; i <= NF; i++) if ($i == blob) next; print }' "$file" > "$tmp"
+        cat "$tmp" > "$file"
+        echo removed
+        ELIO
+

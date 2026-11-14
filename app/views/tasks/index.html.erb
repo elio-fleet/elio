@@ -14,14 +14,14 @@
 
   <%= render "tasks/workers_warning", workers_running: @workers_running %>
 
-  <div class="filter-bar mb-3 flex flex-wrap items-center gap-2">
+  <%= filter_bar do %>
   <nav class="task-filters flex flex-wrap gap-2" aria-label="<%= t(".status") %>">
     <% [ [ t(".all"), nil ], [ t(".queued"), "queued" ], [ t(".running"), "running" ], [ t(".done"), "succeeded" ], [ t(".failed"), "failed" ] ].each do |label, filter| %>
       <%= filter_chip label, tasks_path(status: filter, **@search.to_params), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
     <% end %>
   </nav>
   <%= render "activities/journal_search", search: @search, url: tasks_path, hidden: { status: @filter } %>
-  </div>
+  <% end %>
 
   <%= search_results_frame do %>
   <% if @search.any? %><p class="journal-search-count mb-2 text-xs text-ink-3"><%= t("activities.journal_search.count", count: @pager.total) %></p><% end %>

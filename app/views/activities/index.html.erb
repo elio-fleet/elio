@@ -6,7 +6,7 @@
 
 <%= render "activities/journal_tabs", current: "events" %>
 
-<div class="filter-bar mb-3 flex flex-wrap items-center gap-2">
+<%= filter_bar do %>
 <nav class="activity-filters flex flex-wrap items-center gap-2" aria-label="<%= t(".categories") %>">
   <% [ [ t(".all"), nil ], *Activity::CATEGORIES.map { |key| [ Activity.category_label(key), key.to_s ] } ].each do |label, category| %>
     <%= filter_chip label, activities_path(category: category, server_id: @server&.id, **@search.to_params), active: @category == category %>
@@ -19,7 +19,7 @@
   <% end %>
 </nav>
 <%= render "activities/journal_search", search: @search, url: activities_path, hidden: { category: @category, server_id: @server&.id, kind: @kind } %>
-</div>
+<% end %>
 
 <%= search_results_frame do %>
 <% if @search.any? %><p class="journal-search-count mb-2 text-xs text-ink-3"><%= t("activities.journal_search.count", count: @pager.total) %></p><% end %>

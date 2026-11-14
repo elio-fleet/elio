@@ -21,6 +21,19 @@ class MyKeyAccessesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ [ servers(:web), public_keys(:alice), "deploy", 1.hour ], [ servers(:web), public_keys(:alice), "root", 4.hours ] ], calls
   end
 
+  test "an unknown duration is a bad request, an invalid account name is refused, neither connects" do
+    sign_in users(:operator)
+    stub_method(Keys::AccessGrant, :call, ->(*) { flunk "no grant" }) do
+      post server_my_key_accesses_path(servers(:web)), params: { duration: "999" }
+      assert_response :bad_request
+
+      sign_in users(:operator) # (an error response ends the test session)
+      post server_my_key_accesses_path(servers(:web)), params: { account: "bad name;" }
+      assert_redirected_to server_path(servers(:web))
+      assert_match "Nom de compte invalide", flash[:alert]
+    end
+  end
+
   test "without a key of mine, sends me to My SSH keys; never someone else's key" do
     public_keys(:alice).update!(user: users(:one))
     sign_in users(:operator)

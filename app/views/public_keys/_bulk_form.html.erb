@@ -15,7 +15,7 @@
         </div>
         <div>
           <%= label_tag :bulk_unix_user, t(".account"), class: "label" %>
-          <%= text_field_tag :unix_user, nil, id: "bulk_unix_user", placeholder: t(".account_placeholder"), pattern: "[a-z_][a-z0-9_.\\-]{0,31}\\$?",
+          <%= text_field_tag :unix_user, nil, id: "bulk_unix_user", placeholder: t(".account_placeholder"), pattern: AuthorizedKeysAccount::NAME_PATTERN,
                 autocomplete: "off", spellcheck: false, class: "#{select_class} w-52 font-mono text-sm" %>
           <p class="mt-1 max-w-xs text-xs text-ink-3"><%= t(".account_hint") %></p>
         </div>

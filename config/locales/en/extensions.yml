@@ -501,6 +501,7 @@ en:
     url_expected: "%{label}: an http(s) address is expected (e.g. https://uptime.example.com)"
     no_connection: no connection
     connection_failed: "failed (%{error})"
+    connection_result: "%{label}: %{result}"
   integration_connection:
     required: "%{label}: required"
     default_label: "Connection #%{id}"

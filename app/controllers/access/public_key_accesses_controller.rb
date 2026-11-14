@@ -10,7 +10,7 @@ class PublicKeyAccessesController < ApplicationController
     return redirect_to(public_key_path(@public_key), alert: t("public_key_accesses_controller.choose_server")) if servers.empty?
 
     unix_user = params[:unix_user].to_s.strip.presence
-    return redirect_to(public_key_path(@public_key), alert: t("server_authorizations_controller.invalid_account")) if unix_user && !unix_user.match?(AuthorizedKeysAccount::NAME_FORMAT)
+    return redirect_to(public_key_path(@public_key), alert: t("server_authorizations_controller.invalid_account"), status: :see_other) if unix_user && !unix_user.match?(AuthorizedKeysAccount::NAME_FORMAT)
 
     @results = Keys::BulkAccess.grant([ @public_key ], servers, duration: requested_duration, unix_user: unix_user)
 
