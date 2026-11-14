@@ -208,6 +208,9 @@ en:
       integration_disabled:
         label: Extension turned off
         description: An administrator has turned off an extension.
+      notification_channel_disabled:
+        label: Notification channel turned off
+        description: "A notification channel failed for a day without a single delivery: Elio turned it off."
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
@@ -353,6 +356,7 @@ en:
       integration_enabled: Extension %{integration} turned on
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
+      notification_channel_disabled: "Notification channel “%{channel}” turned off after failing for a day: %{error}"
       coolify_deployed: "Coolify: %{application} deployed%{commit}"
       coolify_deploy_failed: "Coolify: deployment of %{application} failed%{commit}"
       quoted: "“%{text}”"
@@ -462,6 +466,11 @@ en:
         signing_secret: Signing secret
         last_delivery_failed_html: 'Last delivery failed: %{last_error}'
         last_delivery_html: Last delivery %{last_delivered_at}.
+        verification_example: 'Checking a message (Python):'
+        given_up_html: 'Turned off by Elio: no delivery succeeded since %{failing_since}. Fix the destination, then turn the channel back on.'
+        backing_off_html:
+          one: 'Failed once, next attempt %{retry_at}: the notifications wait until then.'
+          other: 'Failed %{count} times in a row, next attempt %{retry_at}: the notifications wait until then.'
         notification_channel_yet: No notification channel yet.
         secret_html: Signing secret (HMAC SHA-256 of “%{body}”, headers %{timestamp} and %{signature}; reject messages that are too old)
     notification_channels:

@@ -90,7 +90,8 @@ class Activity < ApplicationRecord
     Kind.new(:coolify_deployed, :servers, :info),
     Kind.new(:coolify_deploy_failed, :servers, :warning),
     Kind.new(:integration_connection_added, :configuration, :info),
-    Kind.new(:integration_connection_removed, :configuration, :info)
+    Kind.new(:integration_connection_removed, :configuration, :info),
+    Kind.new(:notification_channel_disabled, :configuration, :warning)
   ].index_by(&:key).freeze
 
   belongs_to :user, optional: true

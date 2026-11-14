@@ -116,7 +116,7 @@ class NotificationBatchesTest < ActiveJob::TestCase
     assert_match "- Clé inconnue « key-1 » trouvée sur « Web »", mail.body.to_s
   end
 
-  test "an error is retried and recorded; a paused or unsubscribed channel sends nothing" do
+  test "an error is recorded and tried again at the channel's next attempt; a paused or unsubscribed channel sends nothing" do
     notify(:unknown_key_detected)
     batch = NotificationBatch.sole
     stub_method(Notifications::Slack, :post, ->(*) { raise Notifications::DeliveryError, "Slack: 500" }) do
@@ -125,7 +125,14 @@ class NotificationBatchesTest < ActiveJob::TestCase
     assert_equal "Slack: 500", @channel.reload.last_error
     assert_nil batch.reload.delivered_at
     assert batch.closed_at
+    assert_equal @channel.retry_at, batch.send_at
+    assert_enqueued_with(job: DeliverNotificationBatchJob, args: [ batch ], at: @channel.retry_at)
+
+    # Its job runs while the channel still backs off: postponed again, no attempt.
+    clear_enqueued_jobs
+    stub_method(Notifications::Slack, :post, ->(*) { flunk "backing off" }) { DeliverNotificationBatchJob.perform_now(batch) }
     assert_enqueued_with(job: DeliverNotificationBatchJob, args: [ batch ])
+    @channel.update_columns(retry_at: nil, failure_count: 0)
 
     notify(:key_disappeared)
     @channel.update!(activity_kinds: %w[unknown_key_detected])

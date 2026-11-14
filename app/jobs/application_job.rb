@@ -1,4 +1,9 @@
 class ApplicationJob < ActiveJob::Base
+  # Notification jobs (queue "notifications") pass before the jobs already
+  # waiting, such as the inventories of a whole fleet: Solid Queue takes the
+  # lowest priority first (0 by default).
+  NOTIFICATIONS_PRIORITY = -10
+
   # Results and errors written by the jobs (tasks, last errors) are in the
   # instance's language, whoever started them. Notifications switch to their
   # channel's language.

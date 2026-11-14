@@ -1,0 +1,8 @@
+import hashlib, hmac, time
+
+def from_elio(secret, headers, body):  # body: the raw bytes received
+    timestamp = headers["X-Elio-Timestamp"]
+    signed = timestamp.encode() + b"." + body
+    expected = "sha256=" + hmac.new(secret.encode(), signed, hashlib.sha256).hexdigest()
+    recent = abs(time.time() - int(timestamp)) < 300
+    return recent and hmac.compare_digest(expected, headers["X-Elio-Signature"])

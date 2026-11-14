@@ -43,6 +43,8 @@
                   <input readonly value="<%= channel.signing_secret %>" data-clipboard-target="source" aria-label="<%= t(".signing_secret") %>" class="input py-1 font-mono text-xs">
                   <%= render "settings/copy_button" %>
                 </div>
+                <p class="mt-3 text-ink-3"><%= t(".verification_example") %></p>
+                <pre class="channel-verification mt-1 overflow-x-auto rounded-md bg-subtle p-3 font-mono text-xs text-ink-2"><%= render "settings/notifications/verification_example" %></pre>
               </details>
             <% end %>
           </div>
@@ -72,6 +74,11 @@
           </div>
         </div>
 
+        <% if channel.given_up? %>
+          <p class="channel-given-up mt-4 rounded-md border border-crit/40 bg-crit-soft px-3 py-2 text-xs text-crit-ink"><%= t(".given_up_html", failing_since: relative_time_tag(channel.failing_since)) %></p>
+        <% elsif channel.backing_off? %>
+          <p class="channel-backoff mt-4 rounded-md border border-warn/40 bg-warn-soft px-3 py-2 text-xs text-warn-ink"><%= t(".backing_off_html", count: channel.failure_count, retry_at: relative_time_tag(channel.retry_at)) %></p>
+        <% end %>
         <% if channel.last_error %>
           <p class="channel-error mt-4 rounded-md border border-crit/40 bg-crit-soft px-3 py-2 text-xs text-crit-ink"><%= t(".last_delivery_failed_html", last_error: channel.last_error) %></p>
         <% elsif channel.last_delivered_at %>

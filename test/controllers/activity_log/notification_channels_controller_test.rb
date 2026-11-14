@@ -43,6 +43,20 @@ class NotificationChannelsControllerTest < ActionDispatch::IntegrationTest
     assert_select "a[href=?]", new_settings_notification_channel_path, text: "Ajouter un canal"
   end
 
+  test "a failing channel shows its next attempt; a channel turned off by Elio says so" do
+    failing = create_channel(last_error: "Slack a répondu 500")
+    failing.update_columns(failure_count: 3, failing_since: 10.minutes.ago, retry_at: 4.minutes.from_now)
+    given_up = create_channel(name: "#old", enabled: false, last_error: "Slack a répondu 404")
+    given_up.update_columns(failure_count: 40, failing_since: 25.hours.ago)
+    sign_in users(:one)
+
+    get settings_notifications_path
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(failing)} .channel-backoff", text: /3 échecs de suite, prochain essai dans 4 minutes/
+    assert_select "##{ActionView::RecordIdentifier.dom_id(given_up)} .channel-given-up", text: /Désactivé par Elio : aucun envoi réussi depuis il y a 1 jour/
+    assert_select "##{ActionView::RecordIdentifier.dom_id(given_up)} .channel-backoff", 0
+  end
+
   test "empty state" do
     sign_in users(:one)
     get settings_notifications_path
@@ -159,6 +173,7 @@ class NotificationChannelsControllerTest < ActionDispatch::IntegrationTest
     assert_select "##{ActionView::RecordIdentifier.dom_id(NotificationChannel.find_by!(name: "Hook"))}" do
       assert_select ".channel-kind-label", "Webhook (JSON signé)"
       assert_select "details.channel-secret input[value=?]", NotificationChannel.find_by!(name: "Hook").signing_secret
+      assert_select "details.channel-secret pre.channel-verification", text: /X-Elio-Signature/
     end
     assert_select "##{ActionView::RecordIdentifier.dom_id(channel)} .channel-digest", "résumé quotidien"
   end
