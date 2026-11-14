@@ -24,6 +24,11 @@ class AttentionList
 
   TONE_ORDER = { "crit" => 0, "warn" => 1, "info" => 2 }.freeze
 
+  # Reasons already summed up for the whole fleet by one item (the fixable CVEs
+  # of the servers, of the images): not repeated on the line of each server.
+  VULNERABILITY_REASONS = %w[health.vulnerability health.vulnerabilities].freeze
+  IMAGE_VULNERABILITY_REASONS = %w[health.image_vulnerabilities].freeze
+
   def initialize(servers, insights:, summary:, routes: Rails.application.routes.url_helpers)
     @servers = servers.to_a
     @insights = insights
@@ -64,7 +69,7 @@ class AttentionList
       items = []
       if server.health_state == "off"
         items << Item.new("crit", :signal_slash, server.name, I18n.t("attention_list.unreachable"), I18n.t("attention_list.actions.connection"), @routes.server_path(server), [ server_ref(server) ])
-      elsif (reasons = Array(server.health_reasons)).any?
+      elsif (reasons = without_fleet_reasons(server.health_reasons, VULNERABILITY_REASONS, vulnerabilities_item)).any?
         first = reasons.first
         more = reasons.size > 1 ? " (+#{reasons.size - 1})" : ""
         label, path = reason_action(server, first)
@@ -90,7 +95,9 @@ class AttentionList
     @servers.filter_map do |server|
       next unless server.docker_status.in?(%w[warn crit])
 
-      reasons = Array(server.docker_reasons)
+      reasons = without_fleet_reasons(server.docker_reasons, IMAGE_VULNERABILITY_REASONS, image_vulnerabilities_item)
+      next if reasons.empty?
+
       more = reasons.size > 1 ? " (+#{reasons.size - 1})" : ""
       Item.new(server.docker_status, :docker, server.name, "#{Inventory::HealthStatus.text(reasons.first)}#{more}", I18n.t("attention_list.see_docker"),
                @routes.server_path(server, tab: "docker"), [ server_ref(server) ])
@@ -109,12 +116,24 @@ class AttentionList
   # the servers' own packages (critical), their Docker images (a warning, in
   # the Docker group, when the Docker alerts ask for it).
   def vulnerabilities_item
+    return @vulnerabilities_item if defined?(@vulnerabilities_item)
+
+    @vulnerabilities_item = find_vulnerabilities_item
+  end
+
+  def find_vulnerabilities_item
     serious_vulnerabilities_item("crit", :host, :vulnerabilities, :shield_exclamation, I18n.t("attention_list.see_vulnerabilities")) do |minimum|
       @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: "host")
     end
   end
 
   def image_vulnerabilities_item
+    return @image_vulnerabilities_item if defined?(@image_vulnerabilities_item)
+
+    @image_vulnerabilities_item = find_image_vulnerabilities_item
+  end
+
+  def find_image_vulnerabilities_item
     return unless AppSetting.current.docker_alert_vulnerabilities
 
     serious_vulnerabilities_item("warn", :images, :image_vulnerabilities, :docker, I18n.t("attention_list.see_images")) do |minimum|
@@ -136,6 +155,12 @@ class AttentionList
   end
 
   def server_ref(server) = [ server.name, @routes.server_path(server) ]
+
+  # The reasons of a server, without those a fleet item already shows.
+  def without_fleet_reasons(reasons, keys, fleet_item)
+    reasons = Array(reasons)
+    fleet_item ? reasons.reject { |reason| keys.include?(reason["key"].to_s) } : reasons
+  end
 
   # Reasons raised by the extensions, by the start of their key.
   EXTENSION_ACTIONS = { "integrations.uptime_kuma." => [ :probes, "monitors" ], "dns." => [ :dns, "dns" ],
