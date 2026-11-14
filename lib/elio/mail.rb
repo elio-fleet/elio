@@ -21,5 +21,11 @@ module Elio
         read_timeout: 10
       }.compact
     end
+
+    # Scheme of the links in the emails: https in production, unless
+    # ELIO_FORCE_SSL=false (an installation tried over plain HTTP).
+    def url_protocol(env = ENV, production: Rails.env.production?)
+      production && env.fetch("ELIO_FORCE_SSL", "true") != "false" ? "https" : "http"
+    end
   end
 end

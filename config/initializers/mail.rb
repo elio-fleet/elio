@@ -15,6 +15,6 @@ Rails.application.configure do
   end
 
   if ENV["ELIO_HOST"].present?
-    config.action_mailer.default_url_options = { host: ENV["ELIO_HOST"], protocol: Rails.env.production? ? "https" : "http" }
+    config.action_mailer.default_url_options = { host: ENV["ELIO_HOST"], protocol: Elio::Mail.url_protocol }
   end
 end
