@@ -154,6 +154,9 @@ fr:
       public_key_created:
         label: Clé ajoutée au trousseau
         description: Une clé a été ajoutée au trousseau.
+      public_key_owner_changed:
+        label: Propriétaire d'une clé
+        description: Une clé du trousseau a été attribuée à un utilisateur (« ma clé »), ou ne l'est plus.
       public_key_deleted:
         label: Clé retirée du trousseau
         description: Une clé a été retirée du trousseau (elle reste sur les serveurs).
@@ -202,12 +205,30 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      coolify_deployed:
+        label: Déploiement Coolify
+        description: Coolify a fini de déployer une application sur un serveur.
+      coolify_deploy_failed:
+        label: Déploiement Coolify en échec
+        description: Un déploiement Coolify a échoué (l'ancienne version tourne en général toujours).
+      coolify_backup_failed:
+        label: Sauvegarde Coolify en échec
+        description: Une sauvegarde de base planifiée dans Coolify a échoué.
+      integration_connection_added:
+        label: "Connexion d'extension ajoutée"
+        description: "Un administrateur a ajouté une connexion à une extension (une équipe Coolify…)."
+      integration_connection_removed:
+        label: "Connexion d'extension supprimée"
+        description: "Un administrateur a supprimé une connexion d'une extension, et ce qu'elle avait lu."
       server_note_added:
         label: Note ajoutée
         description: Quelqu'un a laissé une note sur un serveur (onglet Notes).
       dns_record_conflict:
         label: Nom DNS différent selon la source
         description: Un nom DNS a des enregistrements différents dans deux sources (OVHcloud, Technitium…).
+      dns_manual_updated:
+        label: Source DNS manuelle modifiée
+        description: Les enregistrements d'une source DNS manuelle ont changé.
     categories:
       keys: Clés SSH
       servers: Serveurs
@@ -293,6 +314,8 @@ fr:
         one: "%{email} s'est connecté avec un code de secours (%{count} restant)"
         other: "%{email} s'est connecté avec un code de secours (%{count} restants)"
       public_key_created: Clé « %{name} » ajoutée au trousseau
+      public_key_owner_set: Clé « %{name} » attribuée à %{owner}
+      public_key_owner_removed: Clé « %{name} » attribuée à personne
       public_key_deleted: Clé « %{name} » retirée du trousseau
       ssh_key_generated: Clé Elio générée
       ssh_key_regenerated: Clé Elio régénérée
@@ -322,9 +345,16 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      coolify_deployed: "Coolify : %{application} déployée%{commit}"
+      coolify_deploy_failed: "Coolify : déploiement de %{application} en échec%{commit}"
+      quoted: "« %{text} »"
+      coolify_backup_failed: "Coolify : sauvegarde de %{database} en échec (équipe %{team})"
+      integration_connection_added: '%{integration} : connexion « %{connection} » ajoutée'
+      integration_connection_removed: '%{integration} : connexion « %{connection} » supprimée'
       automation_run: "%{automation} : %{result}"
       server_note_added: 'Note sur « %{server} » par %{author} : %{excerpt}'
       dns_record_conflict: "%{record} diffère entre %{sources}"
+      dns_manual_updated: "Source DNS « %{source} » : %{count} enregistrements (+%{added} / −%{removed})"
     target_account: "« %{server_name} » (compte %{account})"
   automation:
     whole_fleet: Tout le parc

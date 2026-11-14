@@ -11,6 +11,9 @@ class User < ApplicationRecord
 
   include TwoFactorAuthenticatable
 
+  # The keyring keys this user said are theirs ("my keys").
+  has_many :public_keys, -> { order(:name) }, dependent: :nullify, inverse_of: :user
+
 
   # What each permission level allows (see Authorization):
   # - view: see everything (dashboard, servers, keys, public_keys, activity)

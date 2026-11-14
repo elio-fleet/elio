@@ -1,5 +1,15 @@
 fr:
   accounts:
+    my_keys:
+      title: Mes clés SSH
+      intro: Les clés du trousseau qui sont à vous. Le bouton « Ajouter ma clé temporairement » d'un serveur s'en sert.
+      none: Aucune clé n'est à vous pour l'instant.
+      keyring_key: Une clé du trousseau
+      claim: C'est ma clé
+      release: Ce n'est pas ma clé
+      release_confirm: "« %{name} » ne sera plus votre clé. Elle reste dans le trousseau et sur les serveurs."
+      missing_html: Votre clé n'est pas dans le trousseau ? %{link}, puis revenez ici.
+      add_to_keyring: Ajoutez-la
     language:
       title: Langue
       hint: La langue de l'interface pour vous. Automatique suit votre navigateur, sinon la langue de cet Elio.
@@ -146,3 +156,6 @@ fr:
       mandatory_operators: Double authentification obligatoire pour les opérateurs.
       mandatory_both: Double authentification obligatoire pour les administrateurs et opérateurs.
       optional: Double authentification facultative pour tous.
+  account_keys_controller:
+    claimed: "« %{name} » est votre clé."
+    released: "« %{name} » n'est plus votre clé."

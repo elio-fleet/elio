@@ -1,0 +1,37 @@
+<%# "My SSH keys": the keyring keys of the signed-in user (AccountKeysController), used by "Add my key temporarily" on a server. %>
+<% claimable = PublicKey.of_kind("person").unowned.order(:name) %>
+<section id="my-keys" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".title") %></h2>
+  <p class="mt-1 text-sm text-ink-3"><%= t(".intro") %></p>
+
+  <% if current_user.public_keys.any? %>
+    <ul class="mt-4 divide-y divide-line rounded-md border border-line">
+      <% current_user.public_keys.each do |public_key| %>
+        <li class="my-key flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+          <%= icon :key, class: "h-4 w-4 text-ink-3" %>
+          <%= link_to public_key.name, public_key_path(public_key), class: "font-medium text-ink hover:text-accent" %>
+          <code class="truncate text-xs text-ink-3"><%= public_key.fingerprint %></code>
+          <% if can?(:operate) %>
+            <%= button_to t(".release"), account_key_path(public_key), method: :delete, class: "ml-auto text-xs font-medium text-ink-3 hover:text-crit-ink",
+                  form: { data: { turbo_confirm: t(".release_confirm", name: public_key.name) } } %>
+          <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="my-keys-empty mt-4 text-sm text-ink-3"><%= t(".none") %></p>
+  <% end %>
+
+  <% if can?(:operate) %>
+    <% if claimable.any? %>
+      <%= form_with url: account_keys_path, class: "mt-4 flex flex-wrap items-end gap-3" do |f| %>
+        <div>
+          <%= label_tag :public_key_id, t(".keyring_key"), class: "label" %>
+          <%= select_tag :public_key_id, options_from_collection_for_select(claimable, :id, :name), class: "input mt-1 w-auto min-w-52" %>
+        </div>
+        <%= f.submit t(".claim"), class: "btn btn-secondary" %>
+      <% end %>
+    <% end %>
+    <p class="mt-3 text-xs text-ink-3"><%= t(".missing_html", link: link_to(t(".add_to_keyring"), new_public_key_path, class: "font-medium text-accent hover:underline")) %></p>
+  <% end %>
+</section>

@@ -1,5 +1,52 @@
 fr:
   integrations:
+    manual_dns:
+      wording:
+        settings:
+          integrations:
+            connections:
+              title: Sources
+              add: Ajouter une source
+              none: Aucune source
+              none_text: Ajoutez une source, donnez-lui un nom et collez ses enregistrements.
+              delete: Supprimer la source
+              delete_confirm: "Supprimer la source « %{label} » et tous ses enregistrements ?"
+            test_result:
+              succeeded: 'Aperçu : '
+          integration_connections:
+            form:
+              name: Nom de la source
+              name_hint: Le DNS qu'elle décrit (« Bureau », « DNS interne »…), affiché à côté de ses enregistrements.
+              test: Aperçu (sans enregistrer)
+            new:
+              title: Nouvelle source DNS
+              intro: Ses enregistrements remplaceront à chaque enregistrement ceux de la source.
+            edit:
+              title: Source DNS
+              intro: "Collez à nouveau tout le CSV : il remplace tous les enregistrements de la source."
+        integration_connections_controller:
+          created: Source « %{label} » ajoutée.
+          updated: Source « %{label} » enregistrée.
+          deleted: Source « %{label} » supprimée avec ses enregistrements.
+      label: DNS manuel
+      description: Des sources DNS saisies à la main (un CSV collé), pour un DNS qui n'a pas d'extension. Leurs enregistrements rejoignent le DNS du parc comme ceux d'OVHcloud, Technitium ou Gandi.
+      records: Enregistrements (CSV)
+      records_hint: "Une ligne par enregistrement : nom, type, valeur, TTL facultatif ; « , », « ; » ou tabulation. %{count} lignes au plus. Chaque enregistrement remplace tous ceux de cette source."
+      nothing: Aucun enregistrement dans le CSV.
+      unsaved: Enregistrez d'abord cette source.
+      refused_line: "Ligne %{line} refusée (%{reason}) : %{text}"
+      more_refused:
+        one: … et %{count} autre ligne refusée.
+        other: … et %{count} autres lignes refusées.
+      connection_summary:
+        one: "%{count} enregistrement · %{refused} ligne(s) refusée(s)"
+        other: "%{count} enregistrements · %{refused} ligne(s) refusée(s)"
+      help:
+        title: Une source manuelle
+        step1_html: "<strong>Ajouter une source</strong> : donnez-lui un nom (le DNS qu'elle décrit, par exemple « Bureau » ou « DNS interne »)."
+        step2_html: Collez tous ses enregistrements en CSV, puis <strong>Aperçu</strong> pour voir ce qui sera lu et les lignes refusées, sans rien enregistrer.
+        step3_html: "<strong>Enregistrer</strong> : les enregistrements remplacent ceux de la source et sont rattachés aux serveurs ; collez à nouveau tout le CSV pour la mettre à jour."
+        rules_html: "Types lus : A, AAAA et CNAME. En-tête facultative (colonnes <code>name</code>, <code>type</code>, <code>value</code>, <code>ttl</code>, <code>zone</code>, dans n'importe quel ordre). Sans colonne <code>zone</code>, la zone est la fin du nom (deux derniers niveaux). Lignes vides et commençant par # ignorées."
     uptime_kuma:
       health:
         no_monitor: Aucune sonde Uptime Kuma
@@ -197,6 +244,115 @@ fr:
     sync_job:
       turned_off: 'Extension désactivée : rien à faire'
       internal_error: Erreur interne (%{class})
+    coolify:
+      description: Ce que Coolify fait tourner sur vos serveurs (applications, services, bases de données), rattaché aux serveurs du parc. Une connexion par équipe Coolify, autant d'instances que nécessaire.
+      url: Adresse de l'instance
+      token: Jeton d'API
+      token_hint: Un jeton avec la permission read seulement, créé dans l'équipe à suivre (voir plus haut).
+      unexpected: "Réponse inattendue de Coolify (l'adresse est-elle bien celle de l'instance ?)"
+      valid_token:
+        one: "équipe « %{team} », Coolify v%{version}, %{count} serveur"
+        other: "équipe « %{team} », Coolify v%{version}, %{count} serveurs"
+      sensitive_token: ". Attention : ce jeton lit aussi les secrets (permission read:sensitive ou root) ; Elio n'en a pas besoin, créez plutôt un jeton read."
+      summary:
+        one: "%{count} serveur (%{attached} dans le parc), %{resources} ressources"
+        other: "%{count} serveurs (%{attached} dans le parc), %{resources} ressources"
+      connection_summary:
+        one: "%{count} serveur, %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
+        other: "%{count} serveurs dont %{attached} dans le parc · %{resources} ressources · Coolify v%{version}"
+      alert_backups: Alerter quand une sauvegarde de base échoue ou est en retard
+      alert_backups_hint: les sauvegardes planifiées dans Coolify, base par base
+      backup_max_age_hours: "En retard : aucune sauvegarde réussie depuis (heures)"
+      alert_no_backup: Alerter quand une base n'a aucune sauvegarde planifiée
+      alert_deploy_failed: Alerter quand le dernier déploiement d'une application a échoué
+      alert_deploy_failed_hint: jusqu'au prochain déploiement réussi
+      alert_resources: Alerter quand une ressource est arrêtée ou en mauvaise santé
+      alert_resources_hint: "sauf celles arrêtées depuis plus de %{count} jours (sans doute volontairement)"
+      alert_server_unreachable: Alerter quand Coolify ne peut plus joindre ou utiliser un serveur
+      alert_no_health_check: Alerter quand une application n'a pas de health check
+      alert_no_health_check_hint: "« en cours » ne dit pas alors si elle répond"
+      alert_dns: Alerter quand un domaine servi par Coolify ne pointe pas vers son serveur
+      alert_dns_hint: d'après les extensions DNS (OVHcloud, Technitium, Gandi) ; un domaine d'une zone qu'Elio ne lit pas n'est pas vérifié
+      alert_stale_key: Alerter quand la clé de Coolify est sur un serveur que Coolify ne gère pas
+      alert_stale_key_hint: un accès oublié à retirer, ou un serveur à ajouter dans Coolify
+      key_detail: "équipe %{team} · %{instance}"
+      alert_public_database: Alerter quand une base de données est rendue publique dans Coolify
+      alert_public_database_hint: "option « Make it publicly available » : la base est joignable depuis Internet sur son port"
+      health:
+        public_database: "Coolify : la base %{name} est joignable depuis Internet (port %{port})"
+        stale_key: "Coolify : la clé « %{name} » (%{detail}) est sur ce serveur, que Coolify ne gère pas"
+        dns_elsewhere: "Coolify : %{domain} est servi ici, mais son DNS pointe vers %{targets}"
+        dns_missing: "Coolify : %{domain} est servi ici, mais n'a aucun enregistrement DNS"
+        stopped: "Coolify : %{name} à l'arrêt (%{kind})"
+        unhealthy: "Coolify : %{name} en mauvaise santé (%{kind})"
+        server_unreachable: "Coolify : ne peut plus joindre ou utiliser ce serveur (équipe %{team})"
+        no_health_check: "Coolify : application %{name} sans health check"
+        deploy_failed: "Coolify : déploiement de %{application} en échec"
+        backup_failed: "Coolify : sauvegarde de %{database} en échec"
+        backup_late:
+          one: "Coolify : aucune sauvegarde de %{database} réussie depuis %{count} heure"
+          other: "Coolify : aucune sauvegarde de %{database} réussie depuis %{count} heures"
+        no_backup: "Coolify : base %{database} sans sauvegarde planifiée"
+      backups:
+        title: Sauvegardes de bases
+        count:
+          one: "%{count} base"
+          other: "%{count} bases"
+        schedule: "%{frequency}%{s3}"
+        to_s3: " · vers S3"
+        last_success_html: dernière réussie %{at}
+        never: aucune réussie
+        last: "%{count} dernières, la plus récente à droite"
+        states:
+          ok: à jour
+          failed: dernière en échec
+          late: en retard
+          none: aucune sauvegarde planifiée
+        none_hint: Si elle garde des données utiles, planifiez une sauvegarde dans Coolify (onglet Backups de la base).
+        services_note: Les bases des services Coolify (n8n, etc.) ne sont pas encore suivies.
+      server_tab:
+        instance: Instance
+        team: Équipe
+        reachable: Pour Coolify
+        reachable_yes: joignable
+        reachable_no: injoignable ou inutilisable
+        proxy: Proxy
+        synchronized_html: synchronisé %{at}
+        resources: Ressources Coolify
+        count:
+          one: "%{count} ressource"
+          other: "%{count} ressources"
+        all: Tout le parc
+        resource: Ressource
+        project: Projet / environnement
+        domains: Domaines
+        version: Version déployée
+        last_deploy: Dernier déploiement
+        deploy_failed: échec
+        deployments: Déploiements récents
+        open_in_coolify: ouvrir dans Coolify
+        deploy_kinds:
+          webhook: webhook git
+          restart: redémarrage
+          rollback: retour arrière
+        deploy_statuses:
+          finished: réussi
+          failed: échec
+          in_progress: en cours
+          queued: en attente
+          cancelled-by-user: annulé
+        state: État
+        no_health_check: "« En cours » sans « sain » : la ressource n'a pas de health check dans Coolify, qui ne sait donc pas si elle répond."
+        none: Aucune ressource
+        none_text: Coolify gère ce serveur mais n'y fait rien tourner pour l'instant.
+      help:
+        title: Créer un jeton en lecture seule
+        step1_html: 'Dans Coolify, <strong class="font-medium">Settings › Advanced</strong> : activez <strong class="font-medium">API access</strong> ; si « Allowed API IPs » est rempli, ajoutez-y l''adresse d''Elio.'
+        step2_html: Passez sur l'<strong class="font-medium">équipe</strong> à suivre (menu des équipes, en haut à gauche).
+        step3_html: '<strong class="font-medium">Keys &amp; Tokens › API Tokens</strong> → nouveau jeton, permission <strong class="font-medium">read</strong> seulement, une expiration au choix.'
+        step4_html: Ajoutez une connexion ici avec l'adresse de l'instance et ce jeton.
+        one_team_html: 'Un jeton Coolify ne voit <strong class="font-medium">qu''une équipe</strong>, et l''API ne dit pas lesquelles existent : ajoutez une connexion par équipe. Le serveur qui fait tourner Coolify appartient à l''équipe « Root ».'
+        reads: Elio lit les serveurs, les ressources, leurs domaines, projets et états. Jamais les variables d'environnement ni les secrets, et il ne déploie, n'arrête ni ne modifie rien.
     gandi:
       description: Les enregistrements A, AAAA et CNAME de vos domaines servis par Gandi LiveDNS, rattachés aux serveurs vers lesquels ils pointent, et vos domaines avec leur date d'expiration (alerte en option).
       api_token: Jeton d'accès personnel
@@ -278,9 +434,77 @@ fr:
       connection: Connexion
       alerts: Alertes
       resources: Ressources
+  coolify:
+    index:
+      subtitle:
+        one: "ce que Coolify fait tourner sur le parc, %{count} connexion."
+        other: "ce que Coolify fait tourner sur le parc, %{count} connexions (équipes et instances)."
+      connections_failed:
+        one: "Connexion en échec : %{names}."
+        other: "Connexions en échec : %{names}."
+      resources: Ressources
+      attention: À traiter
+      attention_caption: arrêtées, en mauvaise santé
+      outside: Hors du parc
+      outside_caption:
+        one: "%{count} serveur Coolify sans serveur Elio"
+        other: "%{count} serveurs Coolify sans serveur Elio"
+      all: Tout
+      applications: Applications
+      services: Services
+      databases: Bases
+      search: Chercher une ressource
+      search_placeholder: Nom ou domaine
+      server: Serveur
+      team_project: Équipe / projet
+      not_in_fleet: hors du parc
+      no_result: Aucune ressource
+      no_result_text: Aucune ressource ne correspond à ce filtre ou à cette recherche.
+      empty: Aucune ressource Coolify
+      empty_text: Les connexions ne voient encore aucune application, aucun service ni aucune base.
+      not_synchronized: Coolify n'a pas encore été synchronisé.
+  coolify_helper:
+    states:
+      healthy: En cours · sain
+      running: En cours
+      unhealthy: En mauvaise santé
+      restarting: Redémarre
+      stopped: Arrêté
+      other: Inconnu
+    build_packs:
+      dockerfile: Dockerfile
+      dockercompose: Compose
+      dockerimage: Image Docker
+      nixpacks: Nixpacks
+      static: Statique
+    engines:
+      postgresql: PostgreSQL
+      mysql: MySQL
+      mariadb: MariaDB
+      mongodb: MongoDB
+      redis: Redis
+      keydb: KeyDB
+      dragonfly: Dragonfly
+      clickhouse: ClickHouse
+    dns_elsewhere: "Le DNS pointe vers %{targets}, pas vers ce serveur"
+    dns_missing: Aucun enregistrement DNS pour ce domaine
+    no_domain: aucun
+  coolify_resource:
+    kinds:
+      server: Serveur
+      application: Application
+      service: Service
+      database: Base de données
   integration:
     sync_label: Synchronisation %{label}
     required: "%{label} : obligatoire pour activer l'extension"
+    url_expected: "%{label} : adresse http(s) attendue (ex. https://uptime.example.com)"
+    no_connection: aucune connexion
+    connection_failed: "échec (%{error})"
+    connection_result: "%{label} : %{result}"
+  integration_connection:
+    required: "%{label} : obligatoire"
+    default_label: "Connexion n° %{id}"
   uptime_kuma_monitor:
     matches:
       ip: par son adresse IP
@@ -364,6 +588,17 @@ fr:
       field:
         leave_empty_keep: "•••••••• (laisser vide pour la conserver)"
         optional: "(facultatif)"
+      connections:
+        title: Connexions
+        add: Ajouter une connexion
+        none: Aucune connexion
+        none_text: Ajoutez une connexion pour que l'extension lise son service.
+        failed: Échec
+        synchronized_html: synchronisée %{at}
+        never: pas encore synchronisée
+        edit: Modifier
+        delete: Supprimer la connexion
+        delete_confirm: "Supprimer la connexion « %{label} » et tout ce qu'elle a lu ?"
       test_result:
         succeeded: 'Connexion réussie : '
         failed: 'Échec : '
@@ -384,6 +619,22 @@ fr:
         not_synchronized_yet: Pas encore synchronisée
         extension_available: Aucune extension disponible.
         intro_html: 'Les extensions relient Elio à vos autres outils, <strong class="font-medium text-ink-2">en lecture seule</strong> : Elio n''y crée, ne modifie et ne supprime rien. Une extension désactivée n''apparaît nulle part dans l''interface.'
+    integration_connections:
+      form:
+        name: Nom
+        name_hint: Laissé vide, Elio prend le nom lu sur le service (l'équipe Coolify…).
+        test: Tester la connexion
+        save: Enregistrer
+      new:
+        title: Nouvelle connexion
+        intro: Chaque connexion est lue à part ; les alertes de l'extension valent pour toutes.
+      edit:
+        title: Connexion
+        intro: Un jeton laissé vide garde celui enregistré.
+  integration_connections_controller:
+    created: Connexion « %{label} » ajoutée.
+    updated: Connexion « %{label} » enregistrée.
+    deleted: Connexion « %{label} » supprimée.
   monitor_links_controller:
     attached: Sonde « %{monitor_name} » rattachée à « %{server_name} ».
     detached: Sonde « %{monitor_name} » rattachée à aucun serveur.
@@ -438,6 +689,7 @@ fr:
       ovh_firewall: Firewall réseau OVHcloud (par IP)
       ssh_sources: Sources autorisées pour le SSH
       dns_names: Noms DNS qui pointent vers lui
+      coolify: Domaines servis par Coolify sur ce serveur
     fields:
       name: 'Nom dans Elio : %{value}'
       hostname: 'Nom d''hôte : %{value}'
@@ -451,6 +703,12 @@ fr:
       private: privée / VPN
       local: locale uniquement
     manual_address: ajoutée à la main dans Elio
+    coolify:
+      port: "Coolify : %{name} (%{kind})"
+      health_check_on: "health check Coolify : %{path}"
+      health_check_off: pas de health check dans Coolify
+      monitored: "sonde existante : %{name}"
+      not_monitored: aucune sonde
     container: image %{image}, %{state}
     published: ports %{ports}
     compose: projet Compose %{project}
@@ -552,5 +810,20 @@ fr:
     detached: "%{name} n'est rattaché à aucun serveur."
     automatic: "%{name} revient au rattachement automatique."
   dns:
+    csv_import:
+      summary:
+        one: "%{count} enregistrement lu, %{refused} ligne(s) refusée(s)"
+        other: "%{count} enregistrements lus, %{refused} ligne(s) refusée(s)"
+      reasons:
+        columns: il faut au moins nom, type et valeur
+        type: type non pris en charge (A, AAAA ou CNAME)
+        name: nom invalide
+        ttl: TTL invalide
+        zone: le nom n'est pas dans cette zone
+        ipv4: adresse IPv4 invalide
+        ipv6: adresse IPv6 invalide
+        cname: cible CNAME invalide
+        duplicate: déjà plus haut
+        too_long: au-delà de %{count} lignes, le reste est ignoré
     health:
       no_name: Aucun nom DNS

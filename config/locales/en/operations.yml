@@ -40,6 +40,9 @@ en:
       technitium_sync:
         label: Technitium DNS sync
         description: Reads again the Technitium DNS records, attaches them to the servers and raises the alerts chosen in the extension.
+      coolify_sync:
+        label: Coolify sync
+        description: Reads each Coolify connection again (servers, applications, services, databases) and attaches them to the servers of the fleet.
       gandi_sync:
         label: Gandi sync
         description: Reads again the Gandi domains and their LiveDNS records, attaches them to the servers and raises the alerts chosen in the extension.
@@ -50,6 +53,17 @@ en:
       i360: Every 6 hours
       i1440: Every day
   activities:
+    journal_search:
+      label: Search the journal
+      placeholder: Server, key, service, package, CVE…
+      from: From
+      to: to
+      clear: Clear the search
+      nothing: Nothing matches this search.
+      count:
+        zero: No result
+        one: 1 result
+        other: "%{count} results"
     severity:
       information: Information
       warning: Warning

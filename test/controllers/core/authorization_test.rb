@@ -21,6 +21,17 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
   end
 
 
+  # The demo extension with several connections, registered for one request; yields a connection.
+  def with_demo_multi
+    previous = Integration.registry
+    Integration.registry = previous.merge("demo_multi" => "DemoMultiIntegration")
+    integration = Integration.find_or_create_by!(kind: "demo_multi")
+    connection = integration.connections.first || integration.connections.create!(settings: { "url" => "https://a.example" }, secrets: { "token" => "t" })
+    yield connection
+  ensure
+    Integration.registry = previous
+  end
+
   REQUESTS = {
     view: {
       "dashboard" => -> { get root_path },
@@ -50,6 +61,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "activities" => -> { get activities_path },
       "tasks" => -> { get tasks_path },
       "ovh" => -> { Integration.create!(kind: "ovh", enabled: true, settings: { "application_key" => "a" }, secrets: { "application_secret" => "s", "consumer_key" => "c" }) && get(ovh_path) },
+      "coolify" => -> { Integration.create!(kind: "coolify", enabled: true) && get(coolify_path) },
       "monitors" => -> { Integration.create!(kind: "uptime_kuma", enabled: true, settings: { "url" => "https://u.test" }, secrets: { "api_key" => "k" }) && get(monitors_path) },
       "dns records" => -> { Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" }) && get(dns_records_path) },
       "task page" => -> { get task_path(BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: [], user: nil)) },
@@ -85,7 +97,11 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "update public_key" => -> { patch public_key_path(public_keys(:alice)), params: { public_key: { name: "Renamed" } } },
       "delete public_key" => -> { delete public_key_path(public_keys(:alice)) },
       "grant a public_key on servers" => -> { post public_key_accesses_path(public_keys(:alice)), params: { server_ids: [ servers(:web).id ] } },
-      "revoke a public_key access" => -> { delete public_key_access_path(public_keys(:alice)), params: { server_id: servers(:web).id } }
+      "revoke a public_key access" => -> { delete public_key_access_path(public_keys(:alice)), params: { server_id: servers(:web).id } },
+      "claim a keyring key as mine" => -> { post account_keys_path, params: { public_key_id: public_keys(:alice).id } },
+      "release one of my keys" => -> { delete account_key_path(public_keys(:alice)) },
+      "add my key to a server" => -> { post server_my_key_accesses_path(servers(:web)) },
+      "remove my key from a server" => -> { delete server_my_key_access_path(servers(:web), 0) }
     },
     administer: {
       "DNS alerts" => -> { patch settings_dns_alerts_path, params: { dns_alerts: { outside: "1" } } },
@@ -102,6 +118,12 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "delete channel" => -> { delete settings_notification_channel_path(create_channel) },
       "automations" => -> { get settings_automations_path },
       "extensions" => -> { get settings_integrations_path },
+      "new extension connection" => -> { with_demo_multi { get new_settings_integration_connection_path("demo_multi") } },
+      "add an extension connection" => -> { with_demo_multi { post settings_integration_connections_path("demo_multi"), params: { connection: { values: { url: "https://a.example", token: "t" } } } } },
+      "test an extension connection" => -> { with_demo_multi { post test_settings_integration_connections_path("demo_multi"), params: { connection: { values: { url: "https://a.example" } } } } },
+      "edit an extension connection" => -> { with_demo_multi { |connection| get edit_settings_integration_connection_path("demo_multi", connection) } },
+      "update an extension connection" => -> { with_demo_multi { |connection| patch settings_integration_connection_path("demo_multi", connection), params: { connection: { name: "x" } } } },
+      "delete an extension connection" => -> { with_demo_multi { |connection| delete settings_integration_connection_path("demo_multi", connection) } },
       "vulnerability feeds" => -> { get settings_vulnerabilities_path },
       "docker settings" => -> { get settings_docker_path },
       "update the CVE scores" => -> { post scores_settings_vulnerabilities_path },

@@ -18,6 +18,7 @@ Integrations::Field = Data.define(:key, :label, :type, :secret, :hint, :default,
     when :number then value.to_s.strip.presence && value.to_s.strip.to_f.then { |number| number == number.to_i ? number.to_i : number }
     when :list then value.is_a?(Array) ? value.compact_blank : value.to_s.split(/[\s,;]+/).compact_blank
     when :checkboxes then Array(value).compact_blank & options.map { |option| option.first.to_s }
+    when :textarea then value.to_s.gsub("\r\n", "\n").strip.presence
     else value.to_s.strip.presence
     end
   end

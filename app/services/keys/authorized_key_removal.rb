@@ -33,9 +33,8 @@ class Keys::AuthorizedKeyRemoval
     error(*account.error_for(e))
   end
 
-  # The commands sent (config/ssh_commands.yml: keys.remove, keys.remove_from_account), also run locally by the tests.
+  # The command sent (config/ssh_commands.yml: keys.remove), also run locally by the tests.
   def self.command(blob) = Ssh::Commands.render("keys.remove", blob: blob)
-  def self.account_command(user, blob) = Ssh::Commands.render("keys.remove_from_account", user: user, blob: blob)
 
   def self.error(title, details)
     Result.new(status: :error, error_title: title, error_details: details)

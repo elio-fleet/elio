@@ -1,0 +1,13 @@
+<% content_for :title, "#{integration_text(@integration.kind, "settings.integration_connections.edit.title")} · #{@integration.label} · Elio" %>
+<% page = capture do %>
+<div class="mt-6 max-w-2xl">
+  <p class="text-xs text-ink-3"><%= link_to t("settings.nav.extensions"), settings_integrations_path, class: "hover:text-ink" %> / <%= link_to @integration.label, edit_settings_integration_path(@integration.kind), class: "hover:text-ink" %> /</p>
+  <h2 class="mt-1 text-lg font-semibold"><%= @connection.label %></h2>
+  <p class="mt-1 text-sm text-ink-2"><%= integration_text(@integration.kind, "settings.integration_connections.edit.intro") %></p>
+</div>
+<% if (help = @integration.definition.help_partial) %>
+  <%= render help, integration: @integration %>
+<% end %>
+<%= render "form", integration: @integration, connection: @connection %>
+<% end %>
+<%= render "settings/frame", page: page %>

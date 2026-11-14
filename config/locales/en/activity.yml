@@ -154,6 +154,9 @@ en:
       public_key_created:
         label: Key added to the keyring
         description: A key has been added to the keyring.
+      public_key_owner_changed:
+        label: Owner of a key
+        description: A keyring key was given to a user ("my key"), or no longer is.
       public_key_deleted:
         label: Key removed from the keyring
         description: A key has been removed from the keyring (it stays on the servers).
@@ -202,12 +205,30 @@ en:
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
+      coolify_deployed:
+        label: Coolify deployment
+        description: Coolify finished deploying an application on a server.
+      coolify_deploy_failed:
+        label: Coolify deployment failed
+        description: A Coolify deployment failed (the previous version usually still runs).
+      coolify_backup_failed:
+        label: Coolify backup failed
+        description: A database backup scheduled in Coolify failed.
+      integration_connection_added:
+        label: "Extension connection added"
+        description: "An administrator added a connection to an extension (a Coolify team…)."
+      integration_connection_removed:
+        label: "Extension connection removed"
+        description: "An administrator removed a connection of an extension, and what it had read."
       server_note_added:
         label: Note added
         description: Someone left a note on a server (Notes tab).
       dns_record_conflict:
         label: DNS name that differs by source
         description: A DNS name has different records in two sources (OVHcloud, Technitium…).
+      dns_manual_updated:
+        label: Manual DNS source changed
+        description: The records of a manual DNS source changed.
     categories:
       keys: SSH keys
       servers: Servers
@@ -293,6 +314,8 @@ en:
         one: "%{email} signed in with a backup code (%{count} left)"
         other: "%{email} signed in with a backup code (%{count} left)"
       public_key_created: Key “%{name}” added to the keyring
+      public_key_owner_set: Key “%{name}” given to %{owner}
+      public_key_owner_removed: Key “%{name}” given to nobody
       public_key_deleted: Key “%{name}” removed from the keyring
       ssh_key_generated: Elio key generated
       ssh_key_regenerated: Elio key regenerated
@@ -322,9 +345,16 @@ en:
       integration_enabled: Extension %{integration} turned on
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
+      coolify_deployed: "Coolify: %{application} deployed%{commit}"
+      coolify_deploy_failed: "Coolify: deployment of %{application} failed%{commit}"
+      quoted: "“%{text}”"
+      coolify_backup_failed: "Coolify: backup of %{database} failed (team %{team})"
+      integration_connection_added: '%{integration}: connection “%{connection}” added'
+      integration_connection_removed: '%{integration}: connection “%{connection}” removed'
       automation_run: "%{automation}: %{result}"
       server_note_added: 'Note on “%{server}” by %{author}: %{excerpt}'
       dns_record_conflict: "%{record} differs between %{sources}"
+      dns_manual_updated: "DNS source “%{source}”: %{count} records (+%{added} / −%{removed})"
     target_account: "“%{server_name}” (%{account} account)"
   automation:
     whole_fleet: The whole fleet

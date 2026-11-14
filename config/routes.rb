@@ -5,6 +5,7 @@ Rails.application.routes.draw do
     patch :password
     patch :locale
   end
+  resources :account_keys, only: %i[create destroy], path: "account/keys"
   resource :two_factor, only: %i[new create destroy], path: "account/two_factor", controller: "two_factor_settings" do
     post :backup_codes
   end
@@ -27,6 +28,7 @@ Rails.application.routes.draw do
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
     resource :authorized_key, only: :destroy, controller: "server_authorized_keys"
     resources :authorizations, only: :create, controller: "server_authorizations"
+    resources :my_key_accesses, only: %i[create destroy], path: "my-key"
     resources :notes, only: %i[create edit update destroy], controller: "server_notes" do
       post :preview, on: :collection
     end
@@ -94,6 +96,10 @@ Rails.application.routes.draw do
         match :test, via: %i[post patch] # (the button shares the settings form, sent as PATCH)
         post :sync
       end
+      resources :connections, controller: "integration_connections", only: %i[new create edit update destroy] do
+        post :test, on: :collection # (an unsaved connection)
+        match :test, on: :member, via: %i[post patch]
+      end
     end
   end
   resources :activities, only: :index, path: "journal"
@@ -113,6 +119,7 @@ Rails.application.routes.draw do
     resource :link, only: %i[create destroy], controller: "dns_links"
   end
   get "hosting", to: "ovh#index", as: :ovh
+  get "coolify", to: "coolify#index", as: :coolify
   resources :ovh_resources, only: [], path: "hosting/resources" do
     resource :link, only: %i[create destroy], controller: "ovh_links"
   end

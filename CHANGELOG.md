@@ -4,6 +4,43 @@ All notable changes to Elio. The format follows [Keep a Changelog](https://keepa
 
 ## [Unreleased]
 
+## [0.5.0-beta] — 2026-11-14
+
+### Upgrading from 0.4.1-beta
+
+- Three migrations (extension connections, Coolify resources, the owner of a keyring key), run on start as usual. The health of every server is computed again after the upgrade (new reasons: failed units named, Coolify).
+- New commands that write, only when you add a key to another account than Elio's (they need root): `keys.append_to_account` and `keys.replace_in_account`. With `keys.read_accounts` and `keys.remove_from_account`, they now read and write the file **as that account** through `runuser` (util-linux, present on Debian and Ubuntu); see *Security* below. Nothing changes for Elio's own account.
+
+### Added
+
+- **Coolify extension** (read-only API tokens): the servers of each Coolify team and what runs on them (applications, services, databases, with their project, environment, domains and state), attached to the servers of the fleet. A Coolify token sees one team only: add one connection per team, for as many instances as needed. The connection test warns about a token that can read secrets.
+  - **On the server page**: a Coolify tab on the servers Coolify manages (whether Coolify reaches the server, its Docker version and proxy, then each application, service and database with its project, domains, deployed version and state), and a **Coolify page** listing every resource of every team, what needs attention first. In the Docker tab, a container created by Coolify shows the name of its resource and project instead of its generated name.
+  - **Deployments**: the last ones of each application (status, commit, message, how it started), in the server's journal as they end; each application links to its page in Coolify.
+  - **Database backups**: the schedules, the last successful backup and the last 14 runs; a new failure is logged in the journal and can be notified.
+  - **Health reasons** (each can be turned off in the extension): a server Coolify can no longer reach or use (critical), a resource stopped or unhealthy (except one stopped for more than 30 days, probably on purpose), a failed last deployment, a failed backup, none successful for too long (26 hours by default) or none scheduled, a database made public (critical), a domain whose DNS points to another server or has no record (with a DNS extension), a Coolify SSH key on a server Coolify does not manage, and, if chosen, an application without a health check.
+  - **Ports, keys and prompts**: a port published by a Coolify container shows its resource on the Firewall tab, the Ports page and in the firewall prompt; the keys Coolify connects with are named in the keys tab and no longer counted as outside the keyring; the "monitors to create" prompt lists the domains Coolify serves, with their health check and the Uptime Kuma monitor that already watches each one.
+- **Extensions with several connections**: an extension can now read several accounts or instances, each with its own address, token and sync state, listed and tested one by one in its settings (used by Coolify and by the manual DNS sources).
+- **Manual DNS sources**: a new extension, *Manual DNS*, for a DNS that has no extension. Each source has a name and its records pasted as CSV (`name,type,value[,ttl]`, optional header, `,` `;` or tab; A, AAAA and CNAME). *Preview* shows what will be read and every refused line with its reason, without saving. Each save replaces the source's records, attached to the servers and checked like those of OVHcloud, Technitium or Gandi (DNS page and tab, conflicts between sources, alerts); deleting a source deletes its records. Changes are logged in the journal.
+- **Add a key to any Unix account**: the "Add a key" dialog of a server lets you choose the account: Elio's own (the default), one Elio already read, or another existing account typed in. Another account needs root (or passwordless sudo); its `~/.ssh` and `authorized_keys` are created if missing (700 / 600). Elio never creates an account and never writes through a link nor in a file the account does not own. Temporary accesses work the same way and expire on that account. The keyring key page can add a key to an account of several servers at once.
+- **My SSH keys**: on *My account*, each user says which keys of the keyring are theirs (a person's key nobody owns yet), or that one is not. An administrator can also choose the owner on the key's form; the key's page shows it. Logged in the journal.
+- **Add my key temporarily**: a button in the server page header (operators) adds one of your keys to an account of the server for a limited time, one hour by default. While it is there, the button says until when, and lets you extend it or remove it now. Without a key of yours, it leads to *My SSH keys*.
+- **Search in the Journal**: a search field on both tabs (Events and Runs), sent while typing, with a period (from / to). Events are found by server, key, user, Unix account, what they mention (service, package, CVE, container…) or their kind ("key added", accents ignored); runs by their label, author, servers and messages. It combines with the existing filters and stays in the links and the pagination.
+
+### Changed
+
+- **Failed services named**: the health reason names the failed units ("nginx, mnt-backup.mount and php-fpm failed", then "and 2 others" beyond three) instead of "3 services failed", on the server page, the dashboard and in the notifications.
+- **Services tab**: each failed unit says since when it failed, and the failed units that are not services (mounts, sockets…) or that failed after the last services inventory are listed too (seen by the health reading, which runs more often). The tab's count includes them.
+- **README in French**: the Coolify section, until now in the English README only.
+
+### Fixed
+
+- **Servers that are containers** (an LXC on Proxmox): their `eth0` is a veth, and it was left out of the network inventory with the host side of the veth pairs. The server had no address, so nothing could be attached to it by IP (Uptime Kuma, OVHcloud, DNS, Coolify). It is now kept as the server's ethernet card.
+- **Docker tab**: a container that is not part of a Compose project showed "<no value> · <no value>" under its name on Docker 26 (what Docker prints for a missing label). Nothing is shown any more.
+
+### Security
+
+- **Keys of another account written as that account**: the `authorized_keys` of an account other than Elio's is now read and written as that account (`runuser`); root only finds it. Before, root removed a key from it (and read it) after checking it was not a link: in between, the account could have replaced its file by a link to a system file. Elio's own account was never concerned.
+
 ## [0.4.1-beta] — 2026-11-08
 
 Three fixes after 0.4.0-beta: Docker older than 20.10, the OVHcloud firewall warning for IPv6 blocks, and the Network card of the server page.
@@ -233,7 +270,8 @@ The first public version of Elio, the self-hosted fleet manager for Linux server
 - Image CVEs without Trivy or Grype: Debian and Ubuntu based images only.
 - The interface is in French.
 
-[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.4.1-beta...HEAD
+[Unreleased]: https://github.com/elio-fleet/elio/compare/v0.5.0-beta...HEAD
+[0.5.0-beta]: https://github.com/elio-fleet/elio/compare/v0.4.1-beta...v0.5.0-beta
 [0.4.1-beta]: https://github.com/elio-fleet/elio/compare/v0.4.0-beta...v0.4.1-beta
 [0.4.0-beta]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4.1...v0.4.0-beta
 [0.1.0-beta.4.1]: https://github.com/elio-fleet/elio/compare/v0.1.0-beta.4...v0.1.0-beta.4.1

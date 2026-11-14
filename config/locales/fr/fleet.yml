@@ -1,5 +1,23 @@
 fr:
   servers:
+    my_key:
+      add_my_key: Ajouter ma clé
+      no_key_hint: Déclarez d'abord votre clé dans « Mon compte ».
+      active_until: Ma clé jusqu'à %{time}
+      title: Ajouter ma clé temporairement
+      intro: Votre clé, sur un compte de ce serveur, pour un temps limité. Elle est retirée toute seule à la fin.
+      active_title: Ma clé sur ce serveur
+      active_intro: "« %{name} » sur le compte %{account}, jusqu'au %{time}."
+      close: Fermer
+      key: Clé
+      key_html: Clé %{name}
+      account: Compte Unix
+      login_account: "%{user} (connexion d'Elio)"
+      duration: Pendant
+      extend_for: Prolonger de (à partir de maintenant)
+      add: Ajouter
+      extend: Prolonger
+      remove: Retirer maintenant
     journal_card:
       all: Tout
       notes: Notes
@@ -81,7 +99,7 @@ fr:
       edit: Modifier
       server_sections: Sections du serveur
       authorized_ssh_keys: Clés SSH autorisées
-      public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur, sur chaque compte qu'Elio peut lire. Les clés s'ajoutent au compte de connexion d'Elio.
+      public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur, sur chaque compte qu'Elio peut lire. Les clés s'ajoutent au compte de connexion d'Elio, ou à un autre compte si Elio a root.
       activity_server_yet: Aucune activité sur ce serveur pour le moment.
     row:
       load_over_24_h: Charge sur 24 h (en % des processeurs)
@@ -336,6 +354,8 @@ fr:
       probes: Voir les sondes
       dns: Voir le DNS
       hosting: Voir l'hébergement
+      coolify: Voir Coolify
+      keys: Voir les clés
       connection: Tester la connexion
       disks: Voir les disques
       health: Voir la santé
@@ -406,3 +426,9 @@ fr:
     added: Note ajoutée.
     updated: Note modifiée.
     deleted: Note supprimée.
+  my_key_accesses_controller:
+    no_key: "Aucune clé n'est à vous : choisissez-la d'abord dans « Mes clés SSH »."
+    added: "« %{name} » ajoutée sur le compte %{account} pendant %{label}, jusqu'à %{time}."
+    add_failed: "Clé non ajoutée : %{error_title} — %{error_details}"
+    removed: "« %{name} » retirée du compte %{account}."
+    remove_failed: "Clé non retirée : %{error_title} — %{error_details}"

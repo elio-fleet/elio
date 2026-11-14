@@ -19,7 +19,7 @@
     { id: "health", eyebrow: t(en: "Health", fr: "Santé"),
       title: t(en: "Which servers are fine, which need you", fr: "Quels serveurs vont bien, lesquels ont besoin de vous"),
       points: [ t(en: "Load, memory, swap, disks and inodes, with warning and critical thresholds you set.", fr: "Charge, mémoire, swap, disques et inodes, avec des seuils d'alerte et critiques que vous réglez."),
-                t(en: "Reboot required, failed systemd services, clock not synchronized, pending updates (security ones apart).", fr: "Redémarrage requis, services systemd en échec, horloge non synchronisée, mises à jour en attente (dont sécurité)."),
+                t(en: "Reboot required, failed systemd units by name and since when (mounts and sockets too), clock not synchronized, pending updates (security ones apart).", fr: "Redémarrage requis, unités systemd en échec par leur nom et depuis quand (montages et sockets compris), horloge non synchronisée, mises à jour en attente (dont sécurité)."),
                 t(en: "End-of-support dates of Debian and Ubuntu releases.", fr: "Dates de fin de support des versions Debian et Ubuntu."),
                 t(en: "30 days of history, 24-hour charts, a list or a grid of the fleet, most serious first.", fr: "30 jours d'historique, courbes sur 24 h, le parc en liste ou en grille, le plus grave d'abord."),
                 t(en: "The health covers the system and its packages: an up-to-date server reads Online even when its Docker needs attention, shown apart.", fr: "La santé porte sur le système et ses paquets : un serveur à jour est En ligne même si son Docker demande de l'attention, affiché à part.") ],
@@ -55,15 +55,15 @@
     { id: "ssh-keys", eyebrow: t(en: "SSH keys", fr: "Clés SSH"),
       title: t(en: "Who can log in, and for how long", fr: "Qui peut se connecter, et pour combien de temps"),
       points: [ t(en: "A keyring of the team's and the machines' public keys; add or remove one on a server in a click.", fr: "Un trousseau des clés publiques de l'équipe et des machines ; en ajouter ou en retirer une sur un serveur en un clic."),
-                t(en: "Temporary access: the key expires on its own (OpenSSH expiry-time), even if Elio is down.", fr: "Accès temporaires : la clé expire toute seule (expiry-time d'OpenSSH), même si Elio est arrêté."),
-                t(en: "With root, the keys of every account of a server, removable from any of them (links and files the account does not own are refused).", fr: "Avec root, les clés de tous les comptes d'un serveur, retirables de chacun (liens et fichiers qui n'appartiennent pas au compte refusés)."),
+                t(en: "Temporary access: the key expires on its own (OpenSSH expiry-time), even if Elio is down. \"Add my key\": your own key on a server for an hour, in one click.", fr: "Accès temporaires : la clé expire toute seule (expiry-time d'OpenSSH), même si Elio est arrêté. « Ajouter ma clé » : votre propre clé sur un serveur pour une heure, en un clic."),
+                t(en: "With root, the keys of every account of a server, added to or removed from any of them (links and files the account does not own are refused, accounts are never created).", fr: "Avec root, les clés de tous les comptes d'un serveur, ajoutées ou retirées sur chacun (liens et fichiers qui n'appartiennent pas au compte refusés, aucun compte créé)."),
                 t(en: "Keys found on a server and unknown to the keyring are flagged and gathered in an Outside the keyring list; rotation of Elio's own key without downtime.", fr: "Les clés trouvées sur un serveur et inconnues du trousseau sont signalées et réunies dans une liste Hors trousseau ; rotation de la clé d'Elio sans coupure.") ],
       shots: [ [ "ssh-keys", t(en: "The SSH keys of every account of a server", fr: "Les clés SSH de tous les comptes d'un serveur") ],
                [ "keyring-outside", t(en: "The keys of the fleet that are in no keyring key", fr: "Les clés du parc absentes du trousseau") ] ] },
     { id: "alerts", eyebrow: t(en: "Alerts & automation", fr: "Alertes et automatisations"),
       title: t(en: "Told when it matters, quiet otherwise", fr: "Prévenu quand ça compte, tranquille sinon"),
       points: [ t(en: "The overview lists what needs attention, most serious first, with a button to act.", fr: "La vue d'ensemble liste ce qui demande attention, le plus grave d'abord, avec un bouton pour agir."),
-                t(en: "An activity log of everything that changed; notifications to Slack, Discord, email or signed webhooks, chosen per kind and grouped by type over a few minutes (critical ones right away); a daily digest.", fr: "Un journal de tout ce qui a changé ; notifications Slack, Discord, email ou webhooks signés, au choix par type et regroupées par type sur quelques minutes (les critiques tout de suite) ; un résumé quotidien."),
+                t(en: "A journal of everything that changed, searchable (server, key, service, package, CVE…) over a period; notifications to Slack, Discord, email or signed webhooks, chosen per kind and grouped by type over a few minutes (critical ones right away); a daily digest.", fr: "Un journal de tout ce qui a changé, avec une recherche (serveur, clé, service, paquet, CVE…) sur une période ; notifications Slack, Discord, email ou webhooks signés, au choix par type et regroupées par type sur quelques minutes (les critiques tout de suite) ; un résumé quotidien."),
                 t(en: "Every collection on schedule, on the fleet or per group, followed live in the Runs tab of the Journal.", fr: "Chaque collecte à la fréquence voulue, sur le parc ou par groupe, suivie en direct dans l'onglet Exécutions du Journal.") ],
       shots: [ [ "overview", t(en: "The overview: what needs attention", fr: "La vue d'ensemble : ce qui est à traiter") ], [ "automations", t(en: "Automations", fr: "Automatisations") ] ] }
   ]
@@ -146,7 +146,28 @@
       <% end -%>
     </ul>
   </div>
-  <p class="mt-8 text-sm text-ink-3"><%= t en: "Uptime Kuma, OVHcloud and Gandi are not yet tried on real accounts: built and tested on recorded or documented API answers (Technitium DNS was tried on a real instance). Feedback welcome.", fr: "Uptime Kuma, OVHcloud et Gandi ne sont pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées ou documentées (Technitium DNS a été essayé sur une vraie instance). Vos retours sont bienvenus." %></p>
+  <div class="mt-16 max-w-3xl">
+    <h3 class="text-xl font-semibold">Coolify</h3>
+    <ul class="mt-4 space-y-3 text-ink-2">
+      <% [ t(en: "One connection per Coolify team (a token only sees its team), as many instances as needed; read tokens, GET requests only, a warning if a token can read secrets.", fr: "Une connexion par équipe Coolify (un jeton ne voit que son équipe), autant d'instances que nécessaire ; des jetons read, uniquement des requêtes GET, un avertissement si un jeton lit les secrets."),
+           t(en: "A Coolify tab on each server it manages: applications, services and databases with their project, domains, deployed version and state, the recent deployments and the database backups; a Coolify page for the whole fleet.", fr: "Un onglet Coolify sur chaque serveur qu'il gère : applications, services et bases avec leur projet, leurs domaines, la version déployée et leur état, les déploiements récents et les sauvegardes de bases ; une page Coolify pour tout le parc."),
+           t(en: "Readable names in the Docker tab, the ports and the prompts; deployments in the server's journal; Coolify's SSH key recognized.", fr: "Des noms lisibles dans l'onglet Docker, les ports et les prompts ; les déploiements dans le journal du serveur ; la clé SSH de Coolify reconnue."),
+           t(en: "Alerts to choose: backup failed or late, database without backup or made public, failed deployment, resource stopped or unhealthy, server Coolify cannot reach, domain whose DNS points elsewhere.", fr: "Alertes au choix : sauvegarde en échec ou en retard, base sans sauvegarde ou rendue publique, déploiement en échec, ressource arrêtée ou en mauvaise santé, serveur que Coolify ne joint plus, domaine dont le DNS pointe ailleurs.") ].each do |point| -%>
+        <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
+      <% end -%>
+    </ul>
+  </div>
+  <div class="mt-16 max-w-3xl">
+    <h3 class="text-xl font-semibold"><%= t en: "Manual DNS", fr: "DNS manuel" %></h3>
+    <ul class="mt-4 space-y-3 text-ink-2">
+      <% [ t(en: "For a DNS that has no extension: name a source and paste its records as CSV (name, type, value, TTL).", fr: "Pour un DNS qui n'a pas d'extension : nommez une source et collez ses enregistrements en CSV (nom, type, valeur, TTL)."),
+           t(en: "A preview shows what will be read and every refused line with its reason, before anything is saved.", fr: "Un aperçu montre ce qui sera lu et chaque ligne refusée avec sa raison, avant tout enregistrement."),
+           t(en: "Its records join the DNS of the fleet like the other sources: attached to the servers, compared, alerted on.", fr: "Ses enregistrements rejoignent le DNS du parc comme les autres sources : rattachés aux serveurs, comparés, surveillés.") ].each do |point| -%>
+        <li class="flex gap-3"><span class="mt-1 text-accent"><%= icon(:check, "h-4 w-4") %></span><span><%= point %></span></li>
+      <% end -%>
+    </ul>
+  </div>
+  <p class="mt-8 text-sm text-ink-3"><%= t en: "Uptime Kuma, OVHcloud and Gandi are not yet tried on real accounts: built and tested on recorded or documented API answers (Technitium DNS and Coolify were tried on real instances). Feedback welcome.", fr: "Uptime Kuma, OVHcloud et Gandi ne sont pas encore essayées sur de vrais comptes : construites et testées sur des réponses d'API enregistrées ou documentées (Technitium DNS et Coolify ont été essayés sur de vraies instances). Vos retours sont bienvenus." %></p>
 </section>
 
 <section id="team" class="mx-auto mt-20 max-w-6xl px-5">

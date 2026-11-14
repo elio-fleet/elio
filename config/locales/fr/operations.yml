@@ -40,6 +40,9 @@ fr:
       technitium_sync:
         label: Synchronisation Technitium DNS
         description: Relit les enregistrements Technitium DNS, les rattache aux serveurs et lève les alertes choisies dans l'extension.
+      coolify_sync:
+        label: Synchronisation Coolify
+        description: Relit chaque connexion Coolify (serveurs, applications, services, bases) et les rattache aux serveurs du parc.
       gandi_sync:
         label: Synchronisation Gandi
         description: Relit les domaines Gandi et leurs enregistrements LiveDNS, les rattache aux serveurs et lève les alertes choisies dans l'extension.
@@ -50,6 +53,17 @@ fr:
       i360: Toutes les 6 heures
       i1440: Tous les jours
   activities:
+    journal_search:
+      label: Rechercher dans le journal
+      placeholder: Serveur, clé, service, paquet, CVE…
+      from: Du
+      to: au
+      clear: Effacer la recherche
+      nothing: Rien ne correspond à cette recherche.
+      count:
+        zero: Aucun résultat
+        one: 1 résultat
+        other: "%{count} résultats"
     severity:
       information: Information
       warning: Avertissement

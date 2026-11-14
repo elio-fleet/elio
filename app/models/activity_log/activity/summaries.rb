@@ -7,6 +7,12 @@ module Activity::Summaries
   def self.t(key, **options) = I18n.t("activity.summaries.#{key}", **options)
 
   # " (a, b)" or "".
+  # " (623a4be « fix: export »)", " (623a4be)" or "".
+  def self.coolify_commit(data)
+    parts = [ data["commit"], (I18n.t("activity.summaries.quoted", text: data["message"]) if data["message"].present?) ].compact
+    parts.any? ? " (#{parts.join(" ")})" : ""
+  end
+
   def self.list(values) = Array(values).any? ? " (#{Array(values).join(", ")})" : ""
 
   BY_KIND = {
@@ -75,6 +81,7 @@ module Activity::Summaries
     two_factor_disabled: proc { data["reset_by"] ? Activity::Summaries.t(:two_factor_reset, email: data["email"], by: data["reset_by"]) : Activity::Summaries.t(:two_factor_disabled, email: data["email"]) },
     two_factor_backup_code_used: proc { Activity::Summaries.t(:two_factor_backup_code_used, email: data["email"], count: data["left"].to_i) },
     public_key_created: proc { Activity::Summaries.t(:public_key_created, name: public_key_name) },
+    public_key_owner_changed: proc { data["owner"] ? Activity::Summaries.t(:public_key_owner_set, name: public_key_name, owner: data["owner"]) : Activity::Summaries.t(:public_key_owner_removed, name: public_key_name) },
     public_key_deleted: proc { Activity::Summaries.t(:public_key_deleted, name: public_key_name) },
     ssh_key_generated: proc { Activity::Summaries.t(data["regenerated"] ? :ssh_key_regenerated : :ssh_key_generated) },
     ssh_key_rotation_started: proc { Activity::Summaries.t(:ssh_key_rotation_started, count: data["servers"].to_i) },
@@ -91,9 +98,15 @@ module Activity::Summaries
     gandi_domain_expiring: proc { Activity::Summaries.t(:gandi_domain_expiring, domain: data["domain"], count: data["days"].to_i) },
     dns_record_outside_fleet: proc { Activity::Summaries.t(:dns_record_outside_fleet, record: data["record"], target: data["target"]) },
     dns_record_conflict: proc { Activity::Summaries.t(:dns_record_conflict, record: data["record"], sources: Array(data["sources"]).join(", ")) },
+    dns_manual_updated: proc { Activity::Summaries.t(:dns_manual_updated, source: data["source"], count: data["count"].to_i, added: data["added"].to_i, removed: data["removed"].to_i) },
     ovh_service_unmanaged: proc { Activity::Summaries.t(:ovh_service_unmanaged, kind: data["kind_label"], service: data["service"]) },
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },
-    integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) }
+    integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) },
+    coolify_deployed: proc { Activity::Summaries.t(:coolify_deployed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
+    coolify_deploy_failed: proc { Activity::Summaries.t(:coolify_deploy_failed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
+    coolify_backup_failed: proc { Activity::Summaries.t(:coolify_backup_failed, database: data["database"], team: data["team"]) },
+    integration_connection_added: proc { Activity::Summaries.t(:integration_connection_added, integration: data["integration_label"], connection: data["connection"]) },
+    integration_connection_removed: proc { Activity::Summaries.t(:integration_connection_removed, integration: data["integration_label"], connection: data["connection"]) }
   }.freeze
 end

@@ -3,5 +3,5 @@
 class Current < ActiveSupport::CurrentAttributes
   attribute :user
   # The enabled DNS sources (Dns.source_integrations), read once per request.
-  attribute :dns_sources
+  attribute :dns_sources, :manual_dns_labels
 end

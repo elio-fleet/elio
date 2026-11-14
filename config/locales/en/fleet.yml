@@ -1,5 +1,23 @@
 en:
   servers:
+    my_key:
+      add_my_key: Add my key
+      no_key_hint: First say which key is yours on "My account".
+      active_until: My key until %{time}
+      title: Add my key temporarily
+      intro: Your key, on an account of this server, for a limited time. It is removed by itself at the end.
+      active_title: My key on this server
+      active_intro: "“%{name}” on the account %{account}, until %{time}."
+      close: Close
+      key: Key
+      key_html: Key %{name}
+      account: Unix account
+      login_account: "%{user} (Elio's login)"
+      duration: For
+      extend_for: Extend by (from now)
+      add: Add
+      extend: Extend
+      remove: Remove now
     journal_card:
       all: All
       notes: Notes
@@ -81,7 +99,7 @@ en:
       edit: Edit
       server_sections: Server sections
       authorized_ssh_keys: Authorized SSH keys
-      public_keys_can_log: Public keys that can log in to this server, on every account Elio can read. Keys are added to Elio's login account.
+      public_keys_can_log: Public keys that can log in to this server, on every account Elio can read. Keys are added to Elio's login account, or to another account when Elio has root.
       activity_server_yet: No activity on this server yet.
     row:
       load_over_24_h: Load over 24 h (in % of the processors)
@@ -336,6 +354,8 @@ en:
       probes: See the probes
       dns: See the DNS
       hosting: See the hosting
+      coolify: See Coolify
+      keys: See the keys
       connection: Test the connection
       disks: See the disks
       health: See the health
@@ -406,3 +426,9 @@ en:
     added: Note added.
     updated: Note updated.
     deleted: Note deleted.
+  my_key_accesses_controller:
+    no_key: "No key is yours: pick it first in “My SSH keys”."
+    added: "“%{name}” added to the account %{account} for %{label}, until %{time}."
+    add_failed: "Key not added: %{error_title} — %{error_details}"
+    removed: "“%{name}” removed from the account %{account}."
+    remove_failed: "Key not removed: %{error_title} — %{error_details}"

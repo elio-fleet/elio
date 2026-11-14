@@ -1,0 +1,69 @@
+<%# "Add my key temporarily" in the server page header (operators, MyKeyAccessesController): one of the user's keys on an account of the
+    server for a while. With an active access of theirs: until when, extend or remove. Without a key of theirs: a link to "My SSH keys". %>
+<% my_keys = current_user.public_keys.to_a %>
+<% active = my_keys.any? ? server.temporary_accesses.active.where(public_key: my_keys).order(:expires_at).first : nil %>
+<% dialog_id = dom_id(server, :my_key) %>
+<% other_accounts = AuthorizedKeysAccount.others(server) %>
+<% accounts = [ [ t(".login_account", user: server.username), server.username ], *(other_accounts.map { |user| [ user, user ] } unless server.privilege == "none") ] %>
+
+<% if my_keys.empty? %>
+  <%= link_to account_path(anchor: "my-keys"), class: "my-key-button btn btn-secondary", title: t(".no_key_hint") do %>
+    <%= icon :key %> <%= t(".add_my_key") %>
+  <% end %>
+<% else %>
+  <div id="<%= dialog_id %>" data-controller="modal" class="my-key">
+    <% if active %>
+      <button type="button" data-action="modal#open" class="my-key-button my-key-active btn btn-secondary" title="<%= l(active.expires_at, format: :long) %>">
+        <%= icon :key, class: "h-4 w-4 text-good-ink" %> <%= t(".active_until", time: l(active.expires_at, format: (active.expires_at.to_date == Date.current ? :hour_minute : :short))) %>
+      </button>
+    <% else %>
+      <button type="button" data-action="modal#open" class="my-key-button btn btn-secondary">
+        <%= icon :key %> <%= t(".add_my_key") %>
+      </button>
+    <% end %>
+
+    <dialog data-modal-target="dialog" data-action="click->modal#backdropClose" aria-labelledby="<%= dialog_id %>-title"
+            class="m-auto w-full max-w-md rounded-xl border border-line bg-surface p-0 text-left text-ink shadow-xl backdrop:bg-neutral-950/40 backdrop:backdrop-blur-sm">
+      <div class="flex items-start justify-between gap-4 border-b border-line px-6 py-4">
+        <div>
+          <h2 id="<%= dialog_id %>-title" class="text-base font-semibold"><%= active ? t(".active_title") : t(".title") %></h2>
+          <p class="mt-0.5 text-xs text-ink-3"><%= active ? t(".active_intro", name: active.public_key&.name, account: active.unix_user, time: l(active.expires_at, format: :long)) : t(".intro") %></p>
+        </div>
+        <button type="button" data-action="modal#close" aria-label="<%= t(".close") %>" class="btn btn-ghost btn-icon"><%= icon :x_mark, class: "h-5 w-5" %></button>
+      </div>
+
+      <%= form_with url: server_my_key_accesses_path(server), class: "space-y-4 px-6 py-5", data: { controller: "quiet-submit" } do %>
+        <% if active %>
+          <%= hidden_field_tag :public_key_id, active.public_key_id, id: nil %>
+          <%= hidden_field_tag :account, active.unix_user, id: nil %>
+        <% else %>
+          <% if my_keys.size > 1 %>
+            <div>
+              <%= label_tag :public_key_id, t(".key"), for: "#{dialog_id}_key", class: "label" %>
+              <%= select_tag :public_key_id, options_from_collection_for_select(my_keys, :id, :name), id: "#{dialog_id}_key", class: "input mt-1 w-full" %>
+            </div>
+          <% else %>
+            <%= hidden_field_tag :public_key_id, my_keys.first.id, id: nil %>
+            <p class="text-sm"><%= t(".key_html", name: tag.strong(my_keys.first.name)) %></p>
+          <% end %>
+          <div>
+            <%= label_tag :account, t(".account"), for: "#{dialog_id}_account", class: "label" %>
+            <%= select_tag :account, options_for_select(accounts, server.username), id: "#{dialog_id}_account", class: "input mt-1 w-full" %>
+          </div>
+        <% end %>
+        <div>
+          <%= label_tag :duration, active ? t(".extend_for") : t(".duration"), for: "#{dialog_id}_duration", class: "label" %>
+          <%= select_tag :duration, options_for_select(TemporaryAccess.options, MyKeyAccessesController::DEFAULT_DURATION), id: "#{dialog_id}_duration", class: "input mt-1 w-full" %>
+        </div>
+        <div class="flex flex-wrap items-center justify-end gap-2 border-t border-line pt-4">
+          <% if active %>
+            <%= button_tag t(".remove"), type: "submit", formaction: server_my_key_access_path(server, active), formmethod: "post", name: "_method", value: "delete",
+                  class: "my-key-remove btn btn-ghost mr-auto text-crit-ink" %>
+          <% end %>
+          <button type="button" data-action="modal#close" class="btn btn-ghost"><%= t("words.cancel") %></button>
+          <%= button_tag active ? t(".extend") : t(".add"), type: "submit", class: "btn btn-primary" %>
+        </div>
+      <% end %>
+    </dialog>
+  </div>
+<% end %>

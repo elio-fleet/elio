@@ -24,6 +24,15 @@ class BackgroundTask < ApplicationRecord
   scope :filtered, ->(filter) { FILTERS.key?(filter.to_s) ? where(status: FILTERS[filter.to_s]) : all }
   scope :expired, -> { finished.where(created_at: ...RETENTION.ago) }
 
+  # Text search: the task's label and result, who started it, and the
+  # servers and messages of its items ("Inventaire", "web-1", "timeout").
+  def self.search(text)
+    like = JournalSearch.like(text)
+    items = BackgroundTaskItem.where("background_task_items.background_task_id = background_tasks.id")
+                              .where("background_task_items.server_name ILIKE :q OR background_task_items.message ILIKE :q", q: like)
+    left_joins(:user).where("background_tasks.label ILIKE :q OR background_tasks.result ILIKE :q OR users.email ILIKE :q", q: like).or(left_joins(:user).where(items.arel.exists))
+  end
+
   # Creates the task and one queued item per server, then yields each item so
   # the caller enqueues its job: BackgroundTask.enqueue!(…) { |item| Job.perform_later(item.server, task_item: item) }.
   def self.enqueue!(kind:, label:, servers:, user: Current.user, automation: nil)

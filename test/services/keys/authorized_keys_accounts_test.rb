@@ -43,6 +43,15 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
       echo "-rw------- 1 $account $account 0 Jan 1 00:00 $path"
     SH
     @bin.join("ls").chmod(0o755)
+    # The file is read and written as the account (`runuser -u <account> -- …`): the test runner is every account here.
+    @bin.join("runuser").write(<<~SH)
+      #!/bin/sh
+      [ "$1" = -u ] && [ "$3" = -- ] || exit 2
+      echo "$2" >> "#{@root.join("runuser.log")}"
+      shift 3
+      exec "$@"
+    SH
+    @bin.join("runuser").chmod(0o755)
     @root.join("passwd").write(@passwd)
   end
 
@@ -177,5 +186,84 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     AccountSnapshot.record_all!(server, read)
     assert_equal %w[bob deploy root], server.account_snapshots.order(:unix_user).pluck(:unix_user), "carol unreadable: not recorded, old: gone"
     assert Activity.of_kind(:unknown_key_detected).where(server: server, unix_user: "bob").exists?
+  end
+
+  # The test runner cannot give a file to another account: chown is a no-op here.
+  def without_chown = @bin.join("chown").tap { |file| file.write("#!/bin/sh\nexit 0\n") }.chmod(0o755)
+
+  def authorize(user, public_key: public_keys(:alice), sudo: true, **options)
+    Keys::PublicKeyAuthorization.call(servers(:web), public_key, account: AuthorizedKeysAccount.new(servers(:web), user), transport: fake(sudo: sudo),
+                                                                 known_hosts_file: @known_hosts, **options)
+  end
+
+  test "adding a key to another account keeps its lines; a second time it is already there" do
+    without_chown
+    file = @root.join("bob", ".ssh", "authorized_keys")
+
+    assert authorize("bob").added?
+    assert_equal "# deploy\n#{@bob_key}\n#{@alice_key}\n#{public_keys(:alice).content.split.first(2).join(" ")} Alice\n", file.read
+    assert authorize("bob").already_present?
+  end
+
+  test "adding a key to an account without ~/.ssh creates it, private; never the account" do
+    without_chown
+
+    assert authorize("dave").added?
+    assert_equal 0o700, @root.join("dave", ".ssh").stat.mode & 0o777
+    assert_equal 0o600, @root.join("dave", ".ssh", "authorized_keys").stat.mode & 0o777
+    assert_equal "Alice", AuthorizedKey.parse(@root.join("dave", ".ssh", "authorized_keys").read).sole.name
+
+    unknown = authorize("nobody")
+    assert_equal [ :error, "Compte inconnu" ], [ unknown.status, unknown.error_title ]
+    assert_not @root.join("nobody").exist?
+  end
+
+  test "the files of another account are read and written as that account, never as root" do
+    authorize("bob")
+    Keys::AuthorizedKeyRemoval.call(servers(:web), @alice_key.split[1], account: AuthorizedKeysAccount.new(servers(:web), "bob"), transport: fake, known_hosts_file: @known_hosts)
+    run_with_getent(Reader.accounts_command)
+
+    runs = @root.join("runuser.log").readlines(chomp: true)
+    assert_includes runs, "bob"
+    assert_includes runs, "root", "root's own file is read as root"
+    assert_equal %w[bob carol root], runs.uniq.sort, "each file read as its own account, mallory's link and eve's file never opened"
+    %w[append_to_account replace_in_account remove_from_account].each do |command|
+      script = YAML.load_file(Rails.root.join("config/ssh_commands.yml")).dig("keys", command, "default")
+      assert_match(/^runuser -u @{user} -- sh -s --/, script, command)
+      assert_no_match(/^(cat|printf)\b.*> ?"\$file"$/, script.split("<<'ELIO'").first, "#{command}: root writes nothing")
+    end
+  end
+
+  test "adding never writes through a link nor in a file the account does not own, and needs root" do
+    without_chown
+    root_file = @root.join("root", ".ssh", "authorized_keys")
+    before = root_file.read
+    %w[mallory eve].each do |user|
+      result = authorize(user)
+      assert_equal [ :error, "Fichier refusé" ], [ result.status, result.error_title ], user
+    end
+    assert_equal before, root_file.read, "root's file is untouched"
+
+    refused = authorize("bob", sudo: false)
+    assert_equal [ :error, "Root nécessaire" ], [ refused.status, refused.error_title ]
+    assert_not_includes @root.join("bob", ".ssh", "authorized_keys").read, "Alice"
+  end
+
+  test "a temporary access on another account: replaced with its expiry, then removed from that account" do
+    without_chown
+    bob = AuthorizedKeysAccount.new(servers(:web), "bob")
+    file = @root.join("bob", ".ssh", "authorized_keys")
+    assert authorize("bob", expires_at: 1.hour.from_now).added?
+    assert authorize("bob", expires_at: 2.hours.from_now, replace: true).added?
+    lines = file.read.lines.grep(/Alice/)
+    assert_equal 1, lines.size
+    assert_match(/\Aexpiry-time="\d{14}Z" /, lines.sole)
+
+    access = TemporaryAccess.create!(server: servers(:web), public_key: public_keys(:alice), unix_user: "bob", key_blob: public_keys(:alice).authorized_key.key,
+                                     fingerprint: public_keys(:alice).fingerprint, expires_at: 1.minute.ago)
+    assert_equal bob, access.account
+    result = Keys::AuthorizedKeyRemoval.call(servers(:web), access.key_blob, account: access.account, transport: fake, known_hosts_file: @known_hosts)
+    assert result.removed?
+    assert_not_includes file.read, "Alice"
   end
 end

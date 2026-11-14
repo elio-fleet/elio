@@ -1,6 +1,7 @@
-<%# One field of an extension's form (Integrations::Base::Field). %>
-<% name = "integration[values][#{field.key}]" %>
-<% id = "integration_#{field.key}" %>
+<%# One field of an extension's form (Integrations::Base::Field). Locals: field, integration (an Integration or an IntegrationConnection: value, secret?), scope (param name, "integration" by default). %>
+<% scope = local_assigns.fetch(:scope, "integration") %>
+<% name = "#{scope}[values][#{field.key}]" %>
+<% id = "#{scope}_#{field.key}" %>
 <% value = integration.value(field.key) %>
 <div class="integration-field" data-field="<%= field.key %>">
   <% case field.type %>
@@ -33,6 +34,8 @@
       <%= select_tag name, options_for_select(field.options, value), id: id, class: "input mt-1 w-auto" %>
     <% elsif field.type == :number %>
       <%= number_field_tag name, value, id: id, step: "any", class: "input mt-1 w-32", placeholder: field.placeholder %>
+    <% elsif field.type == :textarea %>
+      <%= text_area_tag name, value, id: id, rows: 12, class: "input mt-1 w-full font-mono text-xs", placeholder: field.placeholder, autocomplete: "off", spellcheck: false %>
     <% elsif field.type == :list %>
       <%= text_field_tag name, Array(value).join(", "), id: id, class: "input mt-1 font-mono text-xs", placeholder: field.placeholder %>
     <% else %>
