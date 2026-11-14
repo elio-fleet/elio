@@ -435,6 +435,8 @@ en:
       stopped_code: stopped (code %{code})
     image_update:
       available: new version
+      newer: "%{version} available"
+      in_major: "newest %{major}.x: %{version}"
       current: up to date
       unknown: Not checked yet, image without a tag, or private
     scanners:

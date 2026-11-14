@@ -96,7 +96,7 @@
                 <td class="text-xs whitespace-nowrap"><%= image["created_at"] ? relative_time_tag(Time.zone.parse(image["created_at"])) : "—" %></td>
                 <td class="text-right text-xs tabular-nums"><%= human_bytes(image["size"]) %></td>
                 <td class="text-xs"><%= image["used"] ? t("words.yes") : tag.span(t("words.no"), class: "text-warn-ink") %></td>
-                <td class="text-xs"><%= image_update_badge(ImageUpdate.state_for(image, updates)) %></td>
+                <td class="text-xs"><%= image_update_badge(ImageUpdate.state_for(image, updates), updates[Array(image["tags"]).first]) %></td>
                 <td class="pr-4 text-xs">
                   <% if total.to_i.positive? %>
                     <%= link_to server_path(server, tab: "docker", section: "vulnerabilities"), class: "hover:underline" do %><strong class="<%= fixable.to_i.positive? ? "text-crit-ink" : "text-ink" %>"><%= total %></strong> <%= t(".including_fixable_html", fixable: fixable) %><% end %>
