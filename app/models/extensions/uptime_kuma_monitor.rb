@@ -18,6 +18,11 @@ class UptimeKumaMonitor < ApplicationRecord
 
   def uptime_ratio(window) = uptime[window.to_s]
 
+  # Whether the instance publishes the uptime of its monitors in /metrics
+  # (monitor_uptime_ratio): Uptime Kuma 1.23 and 2.0 do not, and then the
+  # uptime column and alert have nothing to show.
+  def self.uptime_published? = where.not(uptime: {}).exists?
+
   # Link to the probe in Uptime Kuma.
   # (nil unless the instance address is http(s): never a javascript: link)
   def dashboard_url(base_url) = Integration.http_url?(base_url) ? "#{base_url.to_s.chomp("/")}/dashboard/#{monitor_id.to_i}" : nil

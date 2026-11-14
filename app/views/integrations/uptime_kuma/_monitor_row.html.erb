@@ -1,4 +1,4 @@
-<%# One probe; `show_server`: column of the server it is attached to (fleet page). %>
+<%# One probe; `show_server`: column of the server it is attached to (fleet page); `show_uptime`: the uptime column (only when the instance publishes it). %>
 <tr id="<%= dom_id(monitor) %>" class="monitor-row" data-state="<%= monitor.state %>">
   <td class="pl-4">
     <%= link_to monitor.name, monitor.dashboard_url(base_url), target: "_blank", rel: "noopener", class: "font-medium hover:text-accent hover:underline" %>
@@ -24,7 +24,7 @@
   </td>
   <td><%= monitor_status_badge(monitor) %></td>
   <td class="whitespace-nowrap text-xs tabular-nums"><%= monitor.response_time_ms ? "#{monitor.response_time_ms.round(1).to_s.sub(".", ",").delete_suffix(",0")} ms" : "—" %></td>
-  <td class="monitor-uptime whitespace-nowrap text-xs"><%= uptime_percent(monitor.uptime_ratio("1d")) %> · <%= uptime_percent(monitor.uptime_ratio("30d")) %></td>
+  <% if local_assigns.fetch(:show_uptime, true) %><td class="monitor-uptime whitespace-nowrap text-xs"><%= uptime_percent(monitor.uptime_ratio("1d")) %> · <%= uptime_percent(monitor.uptime_ratio("30d")) %></td><% end %>
   <td class="whitespace-nowrap text-xs">
     <% if monitor.cert_days_remaining %>
       <span class="<%= monitor.cert_days_remaining <= 14 ? "text-warn-ink" : "text-ink-2" %>"><%= monitor.cert_days_remaining %> j</span>

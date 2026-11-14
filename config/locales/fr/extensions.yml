@@ -84,6 +84,7 @@ fr:
       alert_cert: Certificat bientôt expiré
       cert_days: Seuil du certificat (jours)
       alert_uptime: Disponibilité sous un seuil
+      alert_uptime_hint: Uptime Kuma ne publie la disponibilité dans /metrics que dans certaines versions (ni 1.23 ni 2.0) ; sans elle, cette alerte ne se déclenche jamais et la colonne de disponibilité reste masquée.
       uptime_threshold: Seuil de disponibilité (%)
       uptime_window: Sur
       alert_maintenance: Sonde en maintenance depuis longtemps
