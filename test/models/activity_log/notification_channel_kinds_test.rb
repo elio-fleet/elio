@@ -19,6 +19,21 @@ class NotificationChannelKindsTest < ActiveSupport::TestCase
     assert_not build(kind: "sms", webhook_url: "https://x").valid?
   end
 
+  test "Slack-compatible services (Mattermost, Rocket.Chat): any HTTPS address, the Slack message format, mentions" do
+    channel = build(kind: "slack_compatible", webhook_url: "https://chat.acme.fr/hooks/abc123")
+    assert channel.valid?
+    assert_equal [ Notifications::Slack, true ], [ channel.notifier, channel.mentions? ]
+    assert_not build(kind: "slack_compatible", webhook_url: "http://chat.lan/hooks/abc123").valid?
+  end
+
+  test "plain HTTP only when allowed on the channel, for a generic or Slack-compatible webhook" do
+    assert build(kind: "webhook", webhook_url: "http://n8n.lan:5678/webhook/elio", allow_http: true).valid?
+    assert build(kind: "slack_compatible", webhook_url: "http://chat.lan/hooks/abc", allow_http: true).valid?
+    assert_not build(kind: "webhook", webhook_url: "ftp://n8n.lan/elio", allow_http: true).valid?
+    slack = build(kind: "slack", webhook_url: SlackHelpers::WEBHOOK, allow_http: true).tap(&:validate)
+    assert_not slack.allow_http, "never for Slack or Discord"
+  end
+
   test "a webhook channel gets a signing secret, stored encrypted" do
     channel = build(kind: "webhook", webhook_url: "https://hooks.acme.fr/elio")
     channel.save!

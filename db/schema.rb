@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_200000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_210000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -358,6 +358,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_200000) do
     t.datetime "last_digest_at"
     t.string "locale"
     t.integer "group_minutes", default: 10, null: false
+    t.boolean "allow_http", default: false, null: false
     t.index ["name"], name: "index_notification_channels_on_name", unique: true
   end
 
