@@ -2,6 +2,8 @@ module Settings
   class AutomationsController < ApplicationController
     require_permission :administer
 
+    PERMITTED = [ :enabled, :interval_minutes, :window_start_hour, :window_end_hour, { server_group_ids: [], excluded_server_group_ids: [] } ].freeze
+
     before_action :set_automation, only: %i[update run]
 
     def index
@@ -25,7 +27,7 @@ module Settings
       Automation.transaction do
         params.fetch(:automations, {}).each do |id, values|
           automation = automations[id] or next
-          next if automation.update(values.permit(:enabled, :interval_minutes, server_group_ids: []))
+          next if automation.update(values.permit(*PERMITTED))
 
           errors << "#{automation.label} — #{automation.errors.full_messages.to_sentence}"
         end
@@ -50,7 +52,7 @@ module Settings
     end
 
     def automation_params
-      params.expect(automation: [ :enabled, :interval_minutes, server_group_ids: [] ])
+      params.expect(automation: PERMITTED)
     end
   end
 end

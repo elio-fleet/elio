@@ -37,6 +37,8 @@ class Server < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :host, presence: true
+  # The same account on the same machine once (unique index on lower(host), port, username).
+  validates :host, uniqueness: { scope: %i[port username], case_sensitive: false, message: :address_taken }, if: -> { host.present? }
   validates :port, numericality: { only_integer: true, in: 1..65_535 }
   # A POSIX account name (useradd's default rule), never passed to a shell anyway.
   USERNAME_FORMAT = /\A[a-z_][a-z0-9_.-]{0,31}\z/i

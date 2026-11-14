@@ -140,6 +140,15 @@ en:
         result: 'Result:'
         next: 'Next:'
         run_now: Run now
+        hours: Hours
+        hours_help: 'Scheduled runs start only within these hours (instance time zone); “Run now” works at any time.'
+        any_time: At any time
+        window_start: From
+        window_end: To
+        took: took %{duration}
+        durations: Duration of the last runs
+        except_groups: 'Except the servers of:'
+        except_group: Except %{group}
         group_checked_whole_fleet: 'No group checked: the whole fleet.'
         intro_html: Collections and checks run automatically, on the whole fleet or on some groups. What they find appears in %{activity} and can be notified; each run is followed in %{tasks} (except the quiet checks every 15 minutes).
   automations_controller:

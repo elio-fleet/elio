@@ -370,6 +370,9 @@ en:
     target_account: "“%{server_name}” (%{account} account)"
   automation:
     whole_fleet: The whole fleet
+    scope_except: "%{included} except %{groups}"
+    any_time: At any time
+    window: From %{from} to %{to}
     extension_off: 'Extension turned off: nothing to do'
     failed: 'Failed: %{message}'
     feed_failed: "%{label}: failed (%{message})"
@@ -383,6 +386,12 @@ en:
       new_unknown_keys:
         one: "%{count} new unknown key"
         other: "%{count} new unknown keys"
+      inventoried_with_waiting:
+        one: "%{done}/%{count} server inventoried, %{waiting}"
+        other: "%{done}/%{count} servers inventoried, %{waiting}"
+      waiting:
+        one: "%{count} unreachable server tried again later"
+        other: "%{count} unreachable servers tried again later"
       reachable:
         one: "%{done}/%{count} server reachable"
         other: "%{done}/%{count} servers reachable"

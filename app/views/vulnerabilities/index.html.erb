@@ -7,8 +7,12 @@
              safe_join([ t(".feeds_not_downloaded_yet"), (safe_join([ " — ", link_to(t(".settings_vulnerabilities"), settings_vulnerabilities_path, class: "text-accent hover:underline") ]) if can?(:administer)), "." ].compact)
            end %>
 <%= page_header t("nav.vulnerabilities"), subtitle: safe_join([ t(@origin == "image" ? ".cves_images" : ".cves_packages_fleet"), tag.span(feeds, class: "vulnerability-feeds-state block") ]) do %>
-  <% if can?(:administer) %>
-    <%= actions_menu do %>
+  <%= actions_menu do %>
+    <%# The export follows the filters of the page (not its view nor its page): every row behind them. %>
+    <%= menu_item t(".export_csv"), vulnerabilities_path(filters.except(:view).merge(format: :csv)), icon: :arrow_down_tray, class: "export-csv", data: { turbo: false } %>
+    <%= menu_item t(".export_json"), vulnerabilities_path(filters.except(:view).merge(format: :json)), icon: :arrow_down_tray, class: "export-json", data: { turbo: false } %>
+    <% if can?(:administer) %>
+      <%= menu_separator %>
       <%= menu_item t(".refresh_feeds"), refresh_settings_vulnerabilities_path, icon: :arrow_path, method: :post %>
       <%= menu_item t(".settings_vulnerabilities"), settings_vulnerabilities_path, icon: :cog %>
     <% end %>
@@ -17,11 +21,11 @@
 
 <%= stat_tiles do %>
   <%= stat_tile t(".vulnerabilities"), @summary[:cves], t(".distinct_cves"), icon: :shield_exclamation, id: "stat-cves",
-                href: vulnerabilities_path(filters.slice(:origin, :group, :view)), active: !@fixable_only && @severity.nil? %>
+                href: vulnerabilities_path(filters.slice(:origin, :group, :server, :view)), active: !@fixable_only && @severity.nil? %>
   <%= stat_tile t(".fixable"), @summary[:fixable], t(".update_exists"), tone: (:warn if @summary[:fixable].positive?), icon: :arrow_up_circle, id: "stat-fixable",
-                href: vulnerabilities_path(filters.slice(:origin, :group, :view).merge(fixable: 1)), active: @fixable_only && @severity.nil? %>
+                href: vulnerabilities_path(filters.slice(:origin, :group, :server, :view).merge(fixable: 1)), active: @fixable_only && @severity.nil? %>
   <%= stat_tile t(".serious_fixable"), @summary[:serious], t(".high_critical"), tone: (:crit if @summary[:serious].positive?), icon: :x_mark, id: "stat-serious",
-                href: vulnerabilities_path(filters.slice(:origin, :group, :view).merge(fixable: 1, severity: "high")), active: @fixable_only && @severity == "high" %>
+                href: vulnerabilities_path(filters.slice(:origin, :group, :server, :view).merge(fixable: 1, severity: "high")), active: @fixable_only && @severity == "high" %>
   <%= stat_tile t(".servers_affected"), @summary[:servers], nil, icon: :server_stack, id: "stat-affected" %>
 <% end %>
 
@@ -40,12 +44,23 @@
         { selected: @severity }, aria: { label: t(".minimum_severity") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <%= f.select :group, [ [ t(".all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
         aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
+  <%= f.select :server, [ [ t(".all_servers"), "" ], *@servers.map { |server| [ server.name, server.id ] } ], { selected: @server&.id },
+        aria: { label: t(".server") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto max-w-48 py-1.5" %>
+  <%= f.select :epss, [ [ t(".any_epss"), "" ], *VulnerabilitiesController::EPSS_THRESHOLDS.map { |value| [ t(".epss_at_least", percentage: number_to_percentage(value, precision: 0)), value ] } ],
+        { selected: @epss }, aria: { label: t(".epss_label") }, title: t(".epss_help"), data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <label class="flex items-center gap-1.5 text-sm text-ink-2"><%= t(".fixable_only_html", submit: (check_box_tag :fixable, "1", @fixable_only, data: { action: "change->auto-submit#submit" })) %></label>
+  <label class="flex items-center gap-1.5 text-sm text-ink-2" title="<%= t(".exploited_help") %>"><%= check_box_tag :exploited, "1", @exploited_only, data: { action: "change->auto-submit#submit" } %><%= t(".exploited_only") %></label>
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
   <% end %>
 <% end %>
 
 <%= search_results_frame do %>
+<% if @concentration %>
+  <p class="vulnerability-concentration mb-3 text-sm text-ink-2" data-package="<%= @concentration[:package] %>">
+    <%= t(".concentration_html", package: tag.span(@concentration[:package], class: "font-mono font-medium text-ink"), percentage: number_to_percentage(@concentration[:share] * 100, precision: 0),
+                                 count: number_with_delimiter(@concentration[:count]), total: number_with_delimiter(@summary[:cves])) %>
+  </p>
+<% end %>
 <div class="-mt-1 mb-3 flex justify-end">
 <div class="vulnerability-view-toggle flex rounded-lg border border-line bg-surface p-0.5 text-xs" role="group" aria-label="<%= t(".group_2") %>">
   <% [ [ "packages", t(".package"), :cube ], [ "cves", t(".cve"), :list_bullet ] ].each do |view, label, icon_name| %>
@@ -85,6 +100,6 @@
   </div>
   <%= render "shared/pagination", pager: @pager, noun: t(".vulnerabilities_2") %>
 <% else %>
-  <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @q.present? || @severity || @fixable_only || @group ? t(".vulnerability_matches") : t(".known_vulnerability_fleet") %></p>
+  <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= filters? ? t(".vulnerability_matches") : t(".known_vulnerability_fleet") %></p>
 <% end %>
 <% end %>

@@ -31,6 +31,7 @@ en:
         activity_kinds: The activities
       automation:
         interval_minutes: The frequency
+        window_end_hour: The hours
       invitation:
         email: The email
         role: The role
@@ -41,8 +42,14 @@ en:
         password_confirmation: Password confirmation
     errors:
       models:
+        automation:
+          attributes:
+            window_end_hour:
+              same_as_start: must end at another hour than they start
         server:
           attributes:
+            host:
+              address_taken: is already used by another server with the same port and user
             extra_addresses_text:
               invalid_ips: 'contain values that are not IP addresses: %{addresses}'
         notification_channel:

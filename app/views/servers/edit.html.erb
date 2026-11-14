@@ -4,6 +4,8 @@
 
 <%= page_header t(".edit_html", name_was: @server.name_was), crumbs: [ [ t("nav.fleet"), servers_path ], [ @server.name_was, server_path(@server) ], t(".modify") ] do %>
   <%= actions_menu do %>
+    <%= menu_item t(".duplicate"), new_server_path(from: @server.id), icon: :server_stack %>
+    <%= menu_separator %>
     <%= menu_item t(".delete_server"), server_path(@server), icon: :trash, method: :delete, danger: true, confirm: warning,
                   data: { confirm_label: t("servers.delete_button.delete_server") }, class: "delete-server" %>
   <% end %>

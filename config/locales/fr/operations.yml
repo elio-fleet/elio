@@ -140,6 +140,15 @@ fr:
         result: 'Résultat :'
         next: 'Prochaine :'
         run_now: Lancer maintenant
+        hours: Heures
+        hours_help: 'Les passages planifiés ne démarrent que dans ces heures (fuseau de l''instance) ; « Lancer maintenant » marche à toute heure.'
+        any_time: À toute heure
+        window_start: De
+        window_end: À
+        took: durée %{duration}
+        durations: Durée des derniers passages
+        except_groups: 'Sauf les serveurs de :'
+        except_group: Sauf %{group}
         group_checked_whole_fleet: 'Aucun groupe coché : tout le parc.'
         intro_html: Collectes et vérifications lancées automatiquement, sur tout le parc ou sur certains groupes. Ce qu'elles détectent apparaît dans %{activity} et peut être notifié ; chaque passage est suivi dans %{tasks} (sauf les vérifications discrètes toutes les 15 minutes).
   automations_controller:

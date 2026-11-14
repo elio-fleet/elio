@@ -20,6 +20,8 @@ Rails.application.routes.draw do
     post :preview
   end
   resources :servers do
+    # Tests the SSH values of the form before saving (the edit form is sent as PATCH).
+    match :test_connection, on: :collection, via: %i[post patch]
     resource :ping, only: %i[show create], controller: "server_pings"
     resource :ssh_check, only: :show, controller: "server_ssh_checks"
     resource :inventory, only: :create, controller: "server_inventories"

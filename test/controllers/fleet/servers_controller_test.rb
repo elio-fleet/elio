@@ -3,6 +3,7 @@ require "test_helper"
 class ServersControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include StubHelpers
+  include ActiveJob::TestHelper
   include ActionView::RecordIdentifier
 
   def valid_params
@@ -329,5 +330,106 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
 
     get server_path(servers(:web), tab: "nope")
     assert_select "nav.server-tabs a[aria-current=page][data-tab=overview]"
+  end
+
+  test "a new server gets its first inventory in the background" do
+    sign_in users(:one)
+
+    post servers_path, params: valid_params
+
+    assert_enqueued_with(job: Inventory::FirstCollectJob, args: [ Server.find_by!(name: "Staging") ])
+  end
+
+  test "a server already added (same host, port and user) is refused" do
+    sign_in users(:one)
+    db = servers(:db)
+
+    assert_no_difference "Server.count" do
+      post servers_path, params: { server: { name: "Copy", host: db.host.upcase, port: db.port, username: db.username } }
+    end
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", text: /déjà utilisé par un autre serveur/
+  end
+
+  test "duplicating a server fills in its port, user and groups, not its name nor its host" do
+    sign_in users(:one)
+    db = servers(:db)
+    db.update!(server_group_ids: [ server_groups(:staging).id ])
+
+    get new_server_path(from: db.id)
+
+    assert_response :success
+    assert_select "input[name='server[name]']:not([value])"
+    assert_select "input[name='server[host]']:not([value])"
+    assert_select "input[name='server[port]'][value=?]", db.port.to_s
+    assert_select "input[name='server[username]'][value=?]", db.username
+    assert_select "input[name='server[server_group_ids][]'][value=?][checked]", server_groups(:staging).id.to_s
+    assert_select ".page-subtitle", text: /Copie de « #{db.name} »/
+
+    get new_server_path(from: 0)
+    assert_select "input[name='server[port]'][value='22']"
+  end
+
+  test "the server page and its edit page offer to duplicate it" do
+    sign_in users(:one)
+
+    stub_method(Servers::Ping, :reachable?, true) { get server_path(servers(:web)) }
+    assert_select "a[href=?]", new_server_path(from: servers(:web).id), text: "Dupliquer"
+
+    get edit_server_path(servers(:web))
+    assert_select "a[href=?]", new_server_path(from: servers(:web).id), text: "Dupliquer"
+  end
+
+  test "testing the connection tries the form values without saving" do
+    sign_in users(:one)
+    tried = nil
+    ok = Ssh::Check::Result.new(success: true, message: "ok", details: "deploy@staging.example.com a répondu")
+
+    check = lambda do |server|
+      tried = server
+      ok
+    end
+
+    assert_no_difference "Server.count" do
+      stub_method(Ssh::Check, :call, check) do
+        post test_connection_servers_path, params: valid_params, as: :turbo_stream
+      end
+    end
+
+    assert_response :success
+    assert_equal [ "staging.example.com", 2222, "deploy", false ], [ tried.host, tried.port, tried.username, tried.persisted? ]
+    assert_select "turbo-stream[action=replace][target=server-connection-test]"
+    assert_select ".connection-test-result[data-result=good]", text: /Elio peut se connecter à ce serveur/
+  end
+
+  test "testing the connection from the edit form (sent as PATCH) shows a refused key and how to install it" do
+    sign_in users(:one)
+    refused = Ssh::Check::Result.new(success: false, message: "Authentification refusée", details: "refusée", reason: :key_refused)
+
+    stub_method(Ssh::Check, :call, refused) do
+      patch test_connection_servers_path, params: { server: { name: "Web", host: "192.168.1.10", port: 22, username: "deploy" } }, as: :turbo_stream
+    end
+
+    assert_response :success
+    assert_select ".connection-test-result[data-result=crit]", text: /Authentification refusée/
+    assert_select ".ssh-setup-hint"
+  end
+
+  test "testing the connection with invalid fields says so without connecting" do
+    sign_in users(:one)
+
+    stub_method(Ssh::Check, :call, ->(*) { flunk "no connection with invalid fields" }) do
+      post test_connection_servers_path, params: { server: { host: "not a host", port: 22, username: "root" } }, as: :turbo_stream
+    end
+
+    assert_select ".connection-test-result[data-result=crit]", text: /Vérifiez les champs de connexion/
+  end
+
+  test "the form has a button to test the connection, after the save button" do
+    sign_in users(:one)
+    get new_server_path
+
+    assert_select "form input[type=submit] ~ button.test-connection[formaction=?][formnovalidate]", test_connection_servers_path
+    assert_select "#server-connection-test"
   end
 end
