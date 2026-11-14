@@ -326,6 +326,14 @@ fr:
       show:
         releases_fleet: 'Versions du parc : %{releases_join}'
         server_concerned: Aucun serveur concerné
+        out_of_date: Pas à jour
+        release_servers:
+          one: "%{count} serveur sur cette version"
+          other: "%{count} serveurs sur cette version"
+        release_images:
+          one: "%{count} image Docker construite dessus"
+          other: "%{count} images Docker construites dessus"
+        release_not_in_feed: absente de la base (trop ancienne ou trop récente), aucune vulnérabilité connue pour elle
         failed: Échec
         vulnerabilities: "%{entries_count} vulnérabilités"
         never_updated: Jamais mise à jour
@@ -353,7 +361,7 @@ fr:
         minimum_severity: Gravité minimale
         save: Enregistrer
         vulnerability_feeds: Bases de vulnérabilités
-        downloaded_every_day_releases: 'Téléchargées chaque jour pour les versions présentes sur le parc, puis rapprochées des paquets inventoriés : aucune commande de plus sur les serveurs.'
+        downloaded_every_day_releases: 'Téléchargées chaque jour, seulement pour les versions des serveurs et de leurs images Docker (et seulement si le fichier a changé), puis rapprochées des paquets inventoriés : aucune commande de plus sur les serveurs. Signalé si une base n''est pas mise à jour depuis 3 jours.'
         update_now: Mettre à jour maintenant
         updated_html: mise à jour %{refreshed_at} (%{origin_label})
         automation_html: 'Automatisation « %{label} » :'

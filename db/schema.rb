@@ -594,6 +594,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_100000) do
     t.datetime "failed_at"
     t.string "last_error"
     t.jsonb "unavailable_releases", default: [], null: false
+    t.jsonb "download_validators", default: {}, null: false
+    t.datetime "stale_alerted_at"
     t.index ["source"], name: "index_vulnerability_feeds_on_source", unique: true
   end
 

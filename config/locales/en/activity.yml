@@ -81,7 +81,7 @@ en:
         description: A serious, fixable vulnerability (CVE) affects a server or one of its Docker images (severity chosen in the settings).
       vulnerability_feed_failed:
         label: Vulnerability feed not updated
-        description: The download or import of a vulnerability feed has failed (reported once, until it works again).
+        description: The download or import of a vulnerability feed has failed, or a feed the fleet needs has not been updated for 3 days (reported once, until it works again).
       container_unhealthy:
         label: Unhealthy container
         description: The healthcheck of a Docker container fails (alert chosen in Settings → Docker).
@@ -285,6 +285,9 @@ en:
         one: "%{count} fixable vulnerability on %{where}: %{cves}"
         other: "%{count} fixable vulnerabilities on %{where}: %{cves}"
       vulnerability_feed_failed: 'Vulnerability feed %{feed} not updated: %{error}'
+      vulnerability_feed_stale:
+        one: Vulnerability feed %{feed} not updated for %{count} day
+        other: Vulnerability feed %{feed} not updated for %{count} days
       container_unhealthy: The container %{container} is unhealthy on “%{server}”
       container_restarting: The container %{container} restarts in a loop on “%{server}”
       image_update_available: New version of the image %{image} for “%{server}”

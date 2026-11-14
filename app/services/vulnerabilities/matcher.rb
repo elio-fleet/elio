@@ -61,20 +61,33 @@ module Vulnerabilities::Matcher
     text.to_s.split(",").filter_map { |entry| entry.strip.match(/\A(\S+)\s*\(=\s*([^)\s]+)\s*\)\z/)&.captures }
   end
 
-  def self.call_all
-    Server.includes(:inventory_snapshots).find_each { |server| call(server) }
+  # Every server, or after an update of a feed (Vulnerabilities::Update) only
+  # the servers of the releases it changed, for the source packages whose
+  # entries changed: { ["debian", "bookworm"] => ["openssl"] or :all }.
+  def self.call_all(changes = nil)
+    return if changes&.empty?
+
+    Server.includes(:inventory_snapshots).find_each do |server|
+      next call(server) unless changes
+
+      only = changes[Vulnerabilities.target(server.inventory("os")&.data)]
+      call(server, only: only == :all ? nil : only) if only
+    end
   end
 
-  def self.call(server, refresh_health: true)
+  # `only`: the source packages to match again, the others keep their rows
+  # (every package on the first match of a server).
+  def self.call(server, refresh_health: true, only: nil)
     # Read from the database: during a collection, a copy loaded before it would hold the previous kernel.
     os = Inventory::Snapshot.find_by(server_id: server.id, category: "os")&.data || {}
     target = Vulnerabilities.target(os)
     return unless target && VulnerabilityFeed.for(target.first).releases.include?(target.last)
 
+    only = nil if server.vulnerabilities_checked_at.nil?
     packages = server.packages.where(manager: "dpkg").pluck(:name, :source_name, :source_version, :version)
                      .map { |name, source, source_version, version| package(name, version, source: source, source_version: source_version) }
-    rows = affected(*target, packages, running_kernel: os["kernel"]).map { |row| row.merge(server_id: server.id, origin: "host", image: nil) }
-    replace(server, rows, origin: "host", log: server.vulnerabilities_checked_at.present?)
+    rows = affected(*target, packages, running_kernel: os["kernel"], only: only).map { |row| row.merge(server_id: server.id, origin: "host", image: nil) }
+    replace(server, rows, origin: "host", log: server.vulnerabilities_checked_at.present?, only: only)
     server.update_columns(vulnerabilities_checked_at: Time.current)
     server.refresh_health! if refresh_health
   end
@@ -82,14 +95,14 @@ module Vulnerabilities::Matcher
   # CVEs of `packages` (Package) in a feed release: rows without server_id.
   # The oldest installed version of a source counts, except for the kernel:
   # the running one (an old kernel left installed does not run).
-  def self.affected(source, release, packages, running_kernel: nil)
+  def self.affected(source, release, packages, running_kernel: nil, only: nil)
     by_source = packages.group_by(&:source)
     if running_kernel && (running = by_source["linux"]&.find { |package| package.name == "linux-image-#{running_kernel}" })
       by_source["linux"] = [ running ] + by_source["linux"].reject { |package| package.name.start_with?("linux-image-") }
     end
     return [] if by_source.empty?
 
-    Vulnerability.where(source: source, release: release, package: by_source.keys)
+    Vulnerability.where(source: source, release: release, package: only ? by_source.keys & only.to_a : by_source.keys)
                  .pluck(:package, :cve, :fixed_version, :severity, :description).filter_map do |package, cve, fixed, severity, description|
       installed = by_source.fetch(package).map(&:version).compact.min { |left, right| Inventory::DebianVersion.compare(left, right) }
       next if fixed && installed && !Inventory::DebianVersion.older?(installed, fixed)
@@ -99,12 +112,14 @@ module Vulnerabilities::Matcher
     end
   end
 
-  # Replaces the rows of an origin (and image), logging the new serious ones
-  # when `log` (not on a first match).
-  def self.replace(server, rows, origin:, image: :all, log: true)
+  # Replaces the rows of an origin (and image), only those of the source
+  # packages `only` when given, logging the new serious ones when `log` (not
+  # on a first match).
+  def self.replace(server, rows, origin:, image: :all, log: true, only: nil)
     scope = server.server_vulnerabilities.where(origin: origin)
     scope = scope.where(image: image) unless image == :all
     known = scope.pluck(:cve).to_set
+    scope = scope.where(source_package: only.to_a) if only
     rows = with_severity(rows)
     ServerVulnerability.transaction do
       scope.delete_all

@@ -81,7 +81,7 @@ fr:
         description: Une vulnérabilité (CVE) grave et corrigeable touche un serveur ou une de ses images Docker (gravité choisie dans les paramètres).
       vulnerability_feed_failed:
         label: Base de vulnérabilités non mise à jour
-        description: Le téléchargement ou l'import d'une base de vulnérabilités a échoué (signalé une fois, jusqu'au retour à la normale).
+        description: Le téléchargement ou l'import d'une base de vulnérabilités a échoué, ou une base dont le parc a besoin n'a pas été mise à jour depuis 3 jours (signalé une fois, jusqu'au retour à la normale).
       container_unhealthy:
         label: Conteneur en mauvaise santé
         description: Le healthcheck d'un conteneur Docker échoue (alerte au choix dans Paramètres → Docker).
@@ -285,6 +285,9 @@ fr:
         one: "%{count} vulnérabilité corrigeable sur %{where} : %{cves}"
         other: "%{count} vulnérabilités corrigeables sur %{where} : %{cves}"
       vulnerability_feed_failed: 'Base de vulnérabilités %{feed} non mise à jour : %{error}'
+      vulnerability_feed_stale:
+        one: Base de vulnérabilités %{feed} non mise à jour depuis %{count} jour
+        other: Base de vulnérabilités %{feed} non mise à jour depuis %{count} jours
       container_unhealthy: Le conteneur %{container} est en mauvaise santé sur « %{server} »
       container_restarting: Le conteneur %{container} redémarre en boucle sur « %{server} »
       image_update_available: Nouvelle version de l'image %{image} pour « %{server} »

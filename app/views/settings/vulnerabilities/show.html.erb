@@ -15,11 +15,14 @@
     <% @feeds.each do |feed| %>
       <li class="vulnerability-feed flex flex-wrap items-center gap-x-4 gap-y-1 px-4 py-3 text-sm" data-source="<%= feed.source %>">
         <span class="w-56 font-medium"><%= feed.label %></span>
-        <% releases = @releases.fetch(feed.source) %>
-        <span class="text-xs text-ink-2"><%= releases.any? ? t(".releases_fleet", releases_join: (releases.join(", "))) : t(".server_concerned") %></span>
+        <% usage = @usage.fetch(feed.source) %>
+        <span class="text-xs text-ink-2"><%= usage.any? ? t(".releases_fleet", releases_join: (usage.keys.join(", "))) : t(".server_concerned") %></span>
         <span class="ml-auto text-xs">
           <% if feed.failed? %>
             <%= status_badge :crit, t(".failed"), title: feed.last_error, class: "feed-state" %> <span class="text-crit-ink"><%= feed.last_error %></span>
+          <% elsif feed.refreshed_at && feed.stale? && usage.any? %>
+            <%= status_badge :warn, t(".out_of_date"), class: "feed-state" %>
+            <span class="text-ink-3"><%= t(".updated_html", refreshed_at: (relative_time_tag feed.refreshed_at), origin_label: feed.origin_label) %></span>
           <% elsif feed.refreshed_at %>
             <%= status_badge :good, t(".vulnerabilities", entries_count: feed.entries_count), class: "feed-state" %>
             <span class="text-ink-3"><%= t(".updated_html", refreshed_at: (relative_time_tag feed.refreshed_at), origin_label: feed.origin_label) %></span>
@@ -27,6 +30,20 @@
             <%= status_badge :neutral, t(".never_updated"), class: "feed-state" %>
           <% end %>
         </span>
+        <% if usage.any? %>
+          <ul class="feed-releases basis-full space-y-0.5 text-xs text-ink-3">
+            <% usage.each do |release, counts| %>
+              <li class="feed-release" data-release="<%= release %>">
+                <span class="font-mono text-ink-2"><%= release %></span> —
+                <%= safe_join([ (t(".release_servers", count: counts[:servers]) if counts[:servers].positive?),
+                                (t(".release_images", count: counts[:images]) if counts[:images].positive?) ].compact, ", ") %>
+                <% if Array(feed.unavailable_releases).include?(release) %>
+                  <span class="text-warn-ink">· <%= t(".release_not_in_feed") %></span>
+                <% end %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
       </li>
     <% end %>
   </ul>

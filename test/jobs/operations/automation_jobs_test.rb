@@ -67,6 +67,17 @@ class AutomationJobsTest < ActiveJob::TestCase
     assert_no_enqueued_jobs only: RunAutomationJob
   end
 
+  test "RunDueAutomationsJob reports a vulnerability feed left out of date, even with its automation off" do
+    Automation.all_kinds.each { |automation| automation.update!(enabled: false) }
+    servers(:web).inventory_snapshots.create!(category: "os", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                              data: { "id" => "debian", "codename" => "bookworm" })
+    VulnerabilityFeed.for("debian").update!(refreshed_at: 5.days.ago, releases: %w[bookworm])
+
+    RunDueAutomationsJob.perform_now
+
+    assert_equal "Base de vulnérabilités Debian Security Tracker non mise à jour depuis 5 jours", Activity.of_kind(:vulnerability_feed_failed).sole.summary
+  end
+
   test "on a new installation, the first tick creates the automations and starts every collection" do
     RunDueAutomationsJob.perform_now
 
