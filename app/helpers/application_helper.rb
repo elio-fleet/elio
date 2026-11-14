@@ -45,10 +45,9 @@ module ApplicationHelper
     "#{count} #{count.to_i.abs < 2 ? singular : plural}"
   end
 
-  # Shell command adding the app's public key to ~/.ssh/authorized_keys.
-  def ssh_key_install_command(ssh_key)
-    "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '#{ssh_key.public_key}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
-  end
+  # Shell command adding the app's public key to ~/.ssh/authorized_keys of
+  # the account that runs it (KeyInstallGuide has the other accounts).
+  def ssh_key_install_command(ssh_key) = KeyInstallGuide.new(ssh_key).command
 
   # Docker tab of a server page: the number of containers, or the number of
   # Docker problems coloured by the Docker state (Inventory::DockerStatus).

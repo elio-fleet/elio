@@ -292,7 +292,6 @@ fr:
       ssh_key_application: Clé SSH de l'application
       generated: Générée le
       public_key: Clé publique
-      command_run_each_server: Commande à lancer sur chaque serveur
       key_rotation_progress_elio: 'Une rotation de la clé est en cours : Elio utilise l''ancienne et la nouvelle clé.'
       new_key_installed_each: 'Une nouvelle clé est installée sur chaque serveur avec l''ancienne, vérifiée, puis l''ancienne est retirée : aucune coupure.'
       only_if_key_compromised: 'En cas de compromission seulement : régénérer coupe immédiatement l''accès à tous les serveurs jusqu''à ce que la nouvelle clé publique y soit ajoutée à la main.'
@@ -304,6 +303,29 @@ fr:
         one: Une nouvelle clé Elio va remplacer l'actuelle sur le serveur, sans coupure. Les serveurs injoignables pourront être relancés ensuite.
         other: Une nouvelle clé Elio va remplacer l'actuelle sur les %{count} serveurs, sans coupure. Les serveurs injoignables pourront être relancés ensuite.
       key_intro_html: Elio se connecte à vos serveurs avec cette clé. Sa clé publique doit être ajoutée au fichier %{file} de l'utilisateur configuré sur chaque serveur. La clé privée reste chiffrée dans la base et n'est jamais affichée.
+    key_install:
+      title: Installer la clé sur un serveur
+      account: Compte utilisé par Elio
+      username: Nom du compte
+      from: Limiter à l'adresse d'Elio (facultatif)
+      apply: Appliquer
+      from_hint: "Ajoute from=\"…\" à la ligne : le serveur n'accepte la clé que depuis cette adresse (ou ce réseau CIDR), telle que le serveur la voit. Une adresse fausse coupe l'accès d'Elio, et une rotation de clé installe la nouvelle clé sans cette restriction."
+      errors:
+        username: Nom de compte invalide (lettres minuscules, chiffres, « _ », « - » ou « . », pas root) ; « elio » est utilisé.
+        from: Adresse invalide (adresses IP, réseaux CIDR ou noms séparés par des virgules) ; la clé n'est pas limitée.
+      run_as:
+        root: À lancer en root sur chaque serveur
+        sudo: À lancer avec le compte d'Elio sur chaque serveur
+        dedicated: "À lancer en root sur chaque serveur : crée le compte %{username} s'il n'existe pas"
+      sudoers: Puis, pour que ce compte passe root sans mot de passe (sudo -n), avec le même compte
+      next:
+        root_html: Ajoutez ensuite le serveur avec le compte <code class="font-mono">root</code> (connexion root par clé autorisée par sshd).
+        sudo_html: "Ajoutez ensuite le serveur avec ce compte. La ligne sudoers lui donne tous les droits root sans mot de passe : sans elle, Elio ne lit que ce qu'un compte sans privilège peut lire."
+        dedicated_html: "Ajoutez ensuite le serveur avec le compte %{username}. Sans sudo, Elio ne lit que ce qu'un compte sans privilège peut lire : processus des ports, firewall, Docker et clés des autres comptes restent partiels."
+    key_presence:
+      title: Présence de la clé sur les serveurs
+      source: D'après le dernier scan des clés du compte d'Elio sur chaque serveur et le dernier test SSH.
+      no_servers: Aucun serveur pour l'instant.
     key_rotations:
       show:
         ssh_key_application: "← Clé SSH de l'application"
@@ -335,3 +357,25 @@ fr:
   health_thresholds_controller:
     saved: Seuils de santé enregistrés.
     invalid: 'Seuils invalides : %{full_messages_to_sentence}'
+  key_install_guide:
+    accounts:
+      root: root
+      sudo: Compte existant avec sudo
+      dedicated: Compte dédié, sans sudo
+  key_presence:
+    states:
+      failing:
+        one: Connexion SSH en échec sur %{count} serveur (clé refusée ou autre erreur)
+        other: Connexion SSH en échec sur %{count} serveurs (clé refusée ou autre erreur)
+      missing:
+        one: Clé absente du compte d'Elio au dernier scan sur %{count} serveur
+        other: Clé absente du compte d'Elio au dernier scan sur %{count} serveurs
+      unreachable:
+        one: "%{count} serveur injoignable"
+        other: "%{count} serveurs injoignables"
+      unknown:
+        one: Clés pas encore scannées sur %{count} serveur
+        other: Clés pas encore scannées sur %{count} serveurs
+      installed:
+        one: Clé installée sur %{count} serveur
+        other: Clé installée sur %{count} serveurs

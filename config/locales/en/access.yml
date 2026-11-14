@@ -292,7 +292,6 @@ en:
       ssh_key_application: SSH key of the application
       generated: Generated on
       public_key: Public key
-      command_run_each_server: Command to run on each server
       key_rotation_progress_elio: 'A key rotation is in progress: Elio uses the old and the new key.'
       new_key_installed_each: 'A new key is installed on each server next to the old one, checked, then the old one is removed: no interruption.'
       only_if_key_compromised: 'Only if the key is compromised: regenerating cuts the access to every server at once, until the new public key is added to them by hand.'
@@ -304,6 +303,29 @@ en:
         one: A new Elio key will replace the current one on the %{count} server, without interruption. Unreachable servers can be retried afterwards.
         other: A new Elio key will replace the current one on the %{count} servers, without interruption. Unreachable servers can be retried afterwards.
       key_intro_html: Elio logs in to your servers with this key. Its public key must be added to the %{file} file of the user configured on each server. The private key stays encrypted in the database and is never shown.
+    key_install:
+      title: Install the key on a server
+      account: Account Elio uses
+      username: Account name
+      from: Restrict to Elio's address (optional)
+      apply: Apply
+      from_hint: "Adds from=\"…\" to the line: the server only accepts the key from this address (or CIDR network), as the server sees it. A wrong address cuts Elio's access, and a key rotation installs the new key without this restriction."
+      errors:
+        username: Invalid account name (lowercase letters, digits, "_", "-" or ".", not root); "elio" is used.
+        from: Invalid address (IP addresses, CIDR networks or names separated by commas); the key is not restricted.
+      run_as:
+        root: Run as root on each server
+        sudo: Run with Elio's account on each server
+        dedicated: "Run as root on each server: creates the %{username} account if it does not exist"
+      sudoers: Then, so that this account becomes root without a password (sudo -n), with the same account
+      next:
+        root_html: Then add the server with the <code class="font-mono">root</code> account (root login by key allowed by sshd).
+        sudo_html: "Then add the server with this account. The sudoers line gives it every root right without a password: without it, Elio only reads what an unprivileged account can read."
+        dedicated_html: "Then add the server with the %{username} account. Without sudo, Elio only reads what an unprivileged account can read: port processes, firewall, Docker and the other accounts' keys stay partial."
+    key_presence:
+      title: Where the key is installed
+      source: From the last scan of the keys of Elio's account on each server and the last SSH check.
+      no_servers: No server yet.
     key_rotations:
       show:
         ssh_key_application: "← SSH key of the application"
@@ -335,3 +357,25 @@ en:
   health_thresholds_controller:
     saved: Health thresholds saved.
     invalid: 'Invalid thresholds: %{full_messages_to_sentence}'
+  key_install_guide:
+    accounts:
+      root: root
+      sudo: Existing account with sudo
+      dedicated: Dedicated account, without sudo
+  key_presence:
+    states:
+      failing:
+        one: SSH login failing on %{count} server (key refused or another error)
+        other: SSH login failing on %{count} servers (key refused or another error)
+      missing:
+        one: Key missing from Elio's account at the last scan on %{count} server
+        other: Key missing from Elio's account at the last scan on %{count} servers
+      unreachable:
+        one: "%{count} unreachable server"
+        other: "%{count} unreachable servers"
+      unknown:
+        one: Keys not scanned yet on %{count} server
+        other: Keys not scanned yet on %{count} servers
+      installed:
+        one: Key installed on %{count} server
+        other: Key installed on %{count} servers
