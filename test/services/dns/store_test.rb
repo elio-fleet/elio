@@ -2,7 +2,10 @@ require "test_helper"
 
 # The DNS of the fleet, fed by several sources (phase 14).
 class Dns::StoreTest < ActiveSupport::TestCase
+  include IntegrationHelpers
+
   setup do
+    enable_dns_sources(:ovh, :technitium)
     servers(:web).update!(extra_addresses_text: "203.0.113.10")
     servers(:db).update!(extra_addresses_text: "10.0.0.12")
   end
