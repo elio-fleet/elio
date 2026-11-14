@@ -19,6 +19,9 @@ en:
       ssh_access_lost:
         label: SSH access lost
         description: The server now refuses Elio's key.
+      host_key_mismatch:
+        label: Server fingerprint differs
+        description: A server presents another SSH host key than the one Elio knows (reinstallation, or a machine in between). Elio no longer connects until an administrator accepts it.
       host_key_changed:
         label: Server fingerprint replaced
         description: An administrator has accepted the new fingerprint of a server (reinstallation…).
@@ -245,6 +248,7 @@ en:
       unknown_key_detected: Unknown key “%{name}” found on %{target}
       key_disappeared: Key “%{name}” gone from %{target}
       ssh_access_lost: "“%{server}” refuses Elio's key"
+      host_key_mismatch: '“%{server}” presents another fingerprint: %{fingerprint}. Elio no longer connects to it until an administrator accepts it.'
       host_key_changed: 'New fingerprint accepted for “%{server}”: %{fingerprint}'
       server_unreachable: "“%{server}” no longer answers"
       server_back_online: "“%{server}” answers again"

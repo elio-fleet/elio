@@ -4,7 +4,8 @@
 # on the whole fleet or on some server groups (server_group_ids).
 class Automation < ApplicationRecord
   # `categories`: inventory categories collected (Inventory::Collection) by the
-  # inventory kinds. `default_enabled`: state of a new installation. `quiet`:
+  # inventory kinds. `default_enabled`: state of a new installation (every
+  # collection on schedule: an existing installation keeps its own choices). `quiet`:
   # frequent tasks whose runs are not logged (what they find still is).
   # `integration`: synchronization of an extension (Integration), only
   # available while the extension is enabled.
@@ -19,15 +20,15 @@ class Automation < ApplicationRecord
 
   KINDS = [
     Definition.new(key: :health_check, default_interval: 15, categories: %w[health], default_enabled: true, quiet: true),
-    Definition.new(key: :servers_ping, default_interval: 15, quiet: true),
-    Definition.new(key: :inventory_os, default_interval: 1440, categories: %w[os network]),
-    Definition.new(key: :inventory_packages, default_interval: 360, categories: %w[packages]),
-    Definition.new(key: :inventory_services, default_interval: 60, categories: %w[services scheduled_tasks docker]),
-    Definition.new(key: :inventory_ports, default_interval: 60, categories: %w[ports]),
+    Definition.new(key: :servers_ping, default_interval: 15, default_enabled: true, quiet: true),
+    Definition.new(key: :inventory_os, default_interval: 1440, categories: %w[os network], default_enabled: true),
+    Definition.new(key: :inventory_packages, default_interval: 360, categories: %w[packages], default_enabled: true),
+    Definition.new(key: :inventory_services, default_interval: 60, categories: %w[services scheduled_tasks docker], default_enabled: true),
+    Definition.new(key: :inventory_ports, default_interval: 60, categories: %w[ports], default_enabled: true),
     Definition.new(key: :vulnerabilities_update, default_interval: 1440, default_enabled: true),
     Definition.new(key: :cve_scores_update, default_interval: 360, default_enabled: true),
     Definition.new(key: :docker_image_updates, default_interval: 360, default_enabled: true),
-    Definition.new(key: :keys_scan, default_interval: 360),
+    Definition.new(key: :keys_scan, default_interval: 360, default_enabled: true),
     Definition.new(key: :uptime_kuma_sync, default_interval: 15, default_enabled: true, quiet: true, integration: "uptime_kuma"),
     Definition.new(key: :ovh_sync, default_interval: 360, default_enabled: true, integration: "ovh"),
     Definition.new(key: :technitium_sync, default_interval: 60, default_enabled: true, quiet: true, integration: "technitium"),
