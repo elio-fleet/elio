@@ -37,6 +37,45 @@ class SettingsPagesTest < ActionDispatch::IntegrationTest
     assert_select "#ssh-key-fingerprint", ssh_keys(:main).fingerprint
   end
 
+  test "the install command follows the chosen account and restriction, nothing is saved" do
+    sign_in users(:one)
+
+    get settings_path
+    assert_select "turbo-frame#ssh-key-install form#ssh-key-install-form[method=get]"
+    assert_select "#ssh-install-command", text: KeyInstallGuide.new(ssh_keys(:main)).command
+    assert_select "#ssh-sudoers-command", 0
+    assert_select "input[name=?]", "install[username]", 0
+
+    get settings_path, params: { install: { account: "sudo" } }
+    assert_select "select[name=?] option[selected][value=sudo]", "install[account]"
+    assert_select "#ssh-sudoers-command", text: /NOPASSWD: ALL/
+
+    get settings_path, params: { install: { account: "dedicated", username: "monitor", from: "203.0.113.10" } }
+    assert_select "input[name=?][value=monitor]", "install[username]"
+    assert_select "#ssh-install-command", text: /useradd -m -s \/bin\/bash monitor.*from="203.0.113.10" ssh-ed25519/
+    assert_select "#ssh-key-install-next code", "monitor"
+
+    get settings_path, params: { install: { from: %(1.2.3.4" command="sh) } }
+    assert_select ".key-install-error", /Adresse invalide/
+    assert_select "#ssh-install-command", text: /command=/, count: 0
+  end
+
+  test "the settings show where Elio's key is installed" do
+    sign_in users(:one)
+    AccountSnapshot.record!(servers(:web), AuthorizedKeysAccount.login(servers(:web)), AuthorizedKey.parse(ssh_keys(:main).public_key))
+    servers(:db).update_columns(ssh_ok: false, reachable: true)
+
+    get settings_path
+
+    assert_select "#ssh-key-presence" do
+      assert_select "#key-presence-failing", /Connexion SSH en échec sur 1 serveur/ do
+        assert_select "a.server-chip[href=?]", server_path(servers(:db)), "Database"
+      end
+      assert_select "#key-presence-unknown a.server-chip", "Backup"
+      assert_select "#key-presence-installed", /Clé installée sur 1 serveur/
+    end
+  end
+
   test "the automations page lists the automations with their state" do
     Automation.all_kinds.find { |automation| automation.kind == "keys_scan" }.update!(enabled: true, last_run_at: 1.hour.ago, last_result: "3/3 serveur(s) scanné(s)")
     Automation.find_by!(kind: "servers_ping").update!(enabled: false)

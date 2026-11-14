@@ -111,7 +111,7 @@ Everything else — thresholds, notifications, automations, score providers, Doc
 ### Preparing the servers
 
 1. In *Settings → General*, generate Elio's SSH key (Ed25519, kept encrypted).
-2. Add its public key to `~/.ssh/authorized_keys` of the account Elio will use (the page gives the command).
+2. Add its public key to `~/.ssh/authorized_keys` of the account Elio will use (the page gives the command for root, an account with sudo or a dedicated account, optionally restricted to Elio's address with `from=`, and shows on which servers the key was found).
 3. Add the server (or import many from a CSV or your `~/.ssh/config`), then run an inventory.
 
 Elio reads everything an unprivileged account can read. Some details need root — the process behind each port, the firewall, Docker, the users' crontabs, the SSH keys of the other accounts: log in as root, or give the account password-less `sudo`. Without it, those collections are marked *partial*, and only the keys of Elio's account are listed.

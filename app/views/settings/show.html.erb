@@ -46,14 +46,8 @@
                 class="mt-2 block w-full resize-none rounded-md border border-line bg-subtle px-3 py-2 font-mono text-xs text-ink-2"><%= @ssh_key.public_key %></textarea>
     </div>
 
-    <div class="mt-6" data-controller="clipboard">
-      <div class="flex items-end justify-between gap-4">
-        <label for="ssh-install-command" class="text-sm font-medium text-ink-2"><%= t(".command_run_each_server") %></label>
-        <%= render "copy_button" %>
-      </div>
-      <textarea id="ssh-install-command" readonly rows="3" data-clipboard-target="source"
-                class="mt-2 block w-full resize-none rounded-md border border-line bg-neutral-950 px-3 py-2 font-mono text-xs text-neutral-100"><%= ssh_key_install_command(@ssh_key) %></textarea>
-    </div>
+    <%= render "key_install", guide: @install_guide %>
+    <%= render "key_presence", presence: @key_presence %>
 
     <div id="key-rotation" class="mt-5 border-t border-line pt-4 text-xs text-ink-3">
       <% if @rotation %>
