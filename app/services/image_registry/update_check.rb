@@ -1,8 +1,11 @@
 # Checks the registries for the tags of the Docker images of the fleet
 # (docker inventories), at most once per ImageUpdate::FRESHNESS each and at
 # most MAX per run; a registry that limits Elio is left until the next run.
-# Logs image_update_available when a tag gets a new digest (if the Docker
-# alerts ask for it), then refreshes the health of the Docker servers.
+# A pinned version tag ("redis:7.0.11") also gets the newer versions of its
+# repository (ImageRegistry::Versions): the last fix of its series, the last
+# version of its major. Logs image_update_available when a tag gets a new
+# digest or a newer fix (if the Docker alerts ask for it), then refreshes the
+# health of the Docker servers.
 module ImageRegistry::UpdateCheck
   MAX = 300
 
@@ -19,10 +22,13 @@ module ImageRegistry::UpdateCheck
 
       update = updates[text] || ImageUpdate.new(reference: text, registry: reference.registry, repository: reference.repository, tag: reference.tag)
       before = update.remote_digest
+      patch_before = update.latest_patch
       begin
-        update.update!(remote_digest: client.digest(reference), checked_at: Time.current, error: nil)
+        newer = ImageRegistry::Versions.version_tag?(reference.tag) ? ImageRegistry::Versions.newer(reference.tag, client.tags(reference)) : {}
+        update.update!(remote_digest: client.digest(reference), latest_patch: newer[:patch], latest_in_major: newer[:major], checked_at: Time.current, error: nil)
         checked += 1
-        log_update(update, images[text]) if before && before != update.remote_digest
+        # Never on the first check of a tag: only what changed since the previous one.
+        log_update(update, images[text]) if before && (before != update.remote_digest || (update.latest_patch && update.latest_patch != patch_before))
       rescue ImageRegistry::Client::RateLimited => e
         limited << reference.registry
         update.update!(checked_at: Time.current, error: e.message)

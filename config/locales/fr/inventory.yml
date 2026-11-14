@@ -437,6 +437,8 @@ fr:
       stopped_code: arrêté (code %{code})
     image_update:
       available: nouvelle version
+      newer: "%{version} disponible"
+      in_major: "dernière %{major}.x : %{version}"
       current: à jour
       unknown: Pas encore vérifiée, image sans tag ou privée
     scanners:

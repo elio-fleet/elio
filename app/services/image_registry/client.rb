@@ -4,11 +4,15 @@ require "base64"
 # Reads the digest of an image tag from its registry (Docker Registry HTTP
 # API v2): HEAD /v2/<repository>/manifests/<tag>, after the token dance when
 # the registry asks for one (WWW-Authenticate: Bearer realm=…, anonymous or
-# with the credentials of the settings), or Basic auth. HTTPS only.
+# with the credentials of the settings), or Basic auth; and the tags of a
+# repository (GET /v2/<repository>/tags/list, pages followed by their Link
+# header, at most TAG_PAGES). HTTPS only, read-only.
 class ImageRegistry::Client
   ACCEPT = %w[application/vnd.oci.image.index.v1+json application/vnd.docker.distribution.manifest.list.v2+json
               application/vnd.docker.distribution.manifest.v2+json application/vnd.oci.image.manifest.v1+json].join(", ")
   TIMEOUT = 10
+  TAG_PAGES = 10
+  TAGS_PER_PAGE = 1000
 
   class RateLimited < ImageRegistry::Error; end
 
@@ -37,7 +41,45 @@ class ImageRegistry::Client
     end
   end
 
+  # Every tag of the repository of `reference` (the first TAG_PAGES pages).
+  def tags(reference)
+    uri = URI("https://#{reference.host}/v2/#{reference.repository}/tags/list?n=#{TAGS_PER_PAGE}")
+    tags = []
+    TAG_PAGES.times do
+      response = get(uri, authorization(reference))
+      if response.is_a?(Net::HTTPUnauthorized) && (challenge = response["www-authenticate"])
+        response = get(uri, authenticate(reference, challenge))
+      end
+      check!(response)
+      tags.concat(Array(JSON.parse(response.body)["tags"]))
+      link = response["link"].to_s[/<([^>]+)>;\s*rel="?next"?/, 1]
+      break unless link
+
+      uri = URI.join(uri, link)
+      raise ImageRegistry::Error, I18n.t("image_registry.client.auth_https_only") unless uri.is_a?(URI::HTTPS) && uri.host == URI("https://#{reference.host}").host
+    end
+    tags
+  rescue JSON::ParserError
+    raise ImageRegistry::Error, I18n.t("image_registry.client.unexpected", code: "JSON")
+  end
+
   private
+
+  def check!(response)
+    case response
+    when Net::HTTPSuccess then response
+    when Net::HTTPNotFound then raise ImageRegistry::Error, I18n.t("image_registry.client.tag_not_found")
+    when Net::HTTPUnauthorized, Net::HTTPForbidden then raise ImageRegistry::Error, I18n.t("image_registry.client.access_refused")
+    when Net::HTTPTooManyRequests then raise RateLimited, I18n.t("image_registry.client.rate_limited")
+    else raise ImageRegistry::Error, I18n.t("image_registry.client.unexpected", code: response.code)
+    end
+  end
+
+  def get(uri, authorization)
+    request = Net::HTTP::Get.new(uri, "Accept" => "application/json", "User-Agent" => "Elio")
+    request["Authorization"] = authorization if authorization
+    http(uri) { |connection| connection.request(request) }
+  end
 
   def authorization(reference) = @tokens[[ reference.registry, reference.repository ]]
 

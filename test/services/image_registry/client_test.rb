@@ -82,7 +82,21 @@ class ImageRegistry::ClientTest < ActiveSupport::TestCase
     assert_match "injoignable", assert_raises(ImageRegistry::Error) { ImageRegistry::Client.new.digest(reference("127.0.0.1:#{closed_port}")) }.message
   end
 
-  test "an authentication address in plain HTTP is refused" do
+test "reads the tags of a repository, page after page, after the token dance" do
+  handler = lambda do |_method, path, headers|
+    if path.start_with?("/token") then http_response("200 OK", { token: "pull-token" }.to_json)
+    elsif headers["authorization"] != "Bearer pull-token"
+      http_response("401 Unauthorized", "", "Www-Authenticate" => %(Bearer realm="https://#{headers["host"]}/token",service="registry.test"))
+    elsif path.include?("last=7.0.11") then http_response("200 OK", { name: "library/redis", tags: %w[7.0.15 7.4.6] }.to_json)
+    else http_response("200 OK", { name: "library/redis", tags: %w[7.0.10 7.0.11] }.to_json, "Link" => %(</v2/library/redis/tags/list?n=1000&last=7.0.11>; rel="next"))
+    end
+  end
+  with_https_server(ImageRegistry::Client, handler: handler) do |host|
+    assert_equal %w[7.0.10 7.0.11 7.0.15 7.4.6], ImageRegistry::Client.new.tags(reference(host, "library/redis", "7.0.11"))
+  end
+end
+
+test "an authentication address in plain HTTP is refused" do
     handler = ->(_method, _path, _headers) { http_response("401 Unauthorized", "", "Www-Authenticate" => %(Bearer realm="http://evil.test/token")) }
     with_https_server(ImageRegistry::Client, handler: handler) do |host|
       assert_match "HTTPS seulement", assert_raises(ImageRegistry::Error) { ImageRegistry::Client.new(credentials: { host => %w[a b] }).digest(reference(host)) }.message

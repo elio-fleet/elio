@@ -7,7 +7,9 @@ class ImageRegistry::UpdateCheckTest < ActiveSupport::TestCase
   class FakeClient
     attr_reader :asked
 
-    def initialize(digests) = (@digests = digests) && (@asked = [])
+    def initialize(digests, tags = {}) = (@digests = digests) && (@tags = tags) && (@asked = [])
+
+    def tags(reference) = @tags.fetch(reference.repository, [])
 
     def digest(reference)
       @asked << "#{reference.registry}/#{reference.repository}:#{reference.tag}"
@@ -65,5 +67,23 @@ class ImageRegistry::UpdateCheckTest < ActiveSupport::TestCase
 
   test "registry credentials of the settings, one line each" do
     assert_equal({ "ghcr.io" => %w[alice ghp_x], "docker.io" => %w[bob dckr] }, ImageRegistry::UpdateCheck.credentials("ghcr.io alice ghp_x\n\nindex.docker.io bob dckr\nbroken\n"))
+  end
+  test "a pinned version also gets the last fix of its series (an update to make) and the last version of its major" do
+    servers(:web).inventory_snapshots.destroy_all
+    docker(servers(:web), [ image("redis:7.0.11") ])
+    client = FakeClient.new({ "library/redis" => PULLED }, { "library/redis" => %w[7.0.11 7.0.15 7.4.6 8.0.1 latest] })
+    AppSetting.current.update!(docker_alert_updates: true)
+    ImageRegistry::UpdateCheck.call(client: client)
+
+    update = ImageUpdate.find_by!(reference: "redis:7.0.11")
+    assert_equal [ "7.0.15", "7.4.6" ], [ update.latest_patch, update.latest_in_major ]
+    assert_equal :available, ImageUpdate.state_for(image("redis:7.0.11"), { "redis:7.0.11" => update }), "same digest, but a newer fix exists"
+    assert_equal 0, Activity.where(kind: "image_update_available").count, "not on the first check"
+
+    update.update!(checked_at: 1.day.ago)
+    client = FakeClient.new({ "library/redis" => PULLED }, { "library/redis" => %w[7.0.11 7.0.16 7.4.6] })
+    ImageRegistry::UpdateCheck.call(client: client)
+    assert_equal "7.0.16", update.reload.latest_patch
+    assert_equal 1, Activity.where(kind: "image_update_available").count, "a newer fix is logged"
   end
 end

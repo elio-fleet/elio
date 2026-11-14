@@ -15,7 +15,7 @@ class DockerController < ApplicationController
     def frame_id = self.class.frame_id(image)
   end
   PACKAGES_PER_PAGE = 50
-  Version = Data.define(:tag, :image, :servers, :state, :cves, :fixable, :severity)
+  Version = Data.define(:tag, :image, :servers, :state, :update, :cves, :fixable, :severity)
   Repository = Data.define(:name, :versions) do
     def servers = versions.flat_map(&:servers).uniq
     def updates? = versions.any? { |version| version.state == :available }
@@ -101,6 +101,7 @@ class DockerController < ApplicationController
         severities = counts.filter_map(&:last)
         Version.new(tag: tag.rpartition(":").last, image: tag_uses.first.last, servers: tag_uses.select { |_, image| image["used"] }.map(&:first).uniq,
                     state: tag_uses.map { |_, image| ImageUpdate.state_for(image, updates) }.then { |states| states.include?(:available) ? :available : states.include?(:current) ? :current : :unknown },
+                    update: updates[tag],
                     cves: counts.map(&:first).max.to_i, fixable: counts.map(&:second).max.to_i,
                     severity: severities.min_by { |severity| Vulnerability::SEVERITIES.keys.index(severity) })
       end

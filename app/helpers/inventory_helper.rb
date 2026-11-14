@@ -51,12 +51,15 @@ module InventoryHelper
     end
   end
 
-  def image_update_badge(state)
-    case state
-    when :available then status_badge(:warn, t("inventory_helper.image_update.available"), class: "image-update")
+  # `update` (ImageUpdate): names the newer fix of a pinned version, and the last version of its major below.
+  def image_update_badge(state, update = nil)
+    major = (tag.span(t("inventory_helper.image_update.in_major", major: update.latest_in_major[/\d+/], version: update.latest_in_major), class: "image-update-major block text-[11px] text-ink-3") if update&.latest_in_major.present?)
+    badge = case state
+    when :available then status_badge(:warn, update&.latest_patch.present? ? t("inventory_helper.image_update.newer", version: update.latest_patch) : t("inventory_helper.image_update.available"), class: "image-update")
     when :current then tag.span(t("inventory_helper.image_update.current"), class: "image-update text-xs text-ink-3")
     else tag.span("—", class: "image-update text-xs text-ink-3", title: t("inventory_helper.image_update.unknown"))
     end
+    safe_join([ badge, major ].compact)
   end
 
   def scan_label(scanner) = t("inventory_helper.scanners.#{scanner.presence || "none"}", default: scanner.to_s)
