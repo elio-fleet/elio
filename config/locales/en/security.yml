@@ -289,7 +289,7 @@ en:
         automation_off: 'off'
         what_containers_images_report: 'What the containers and images report: the Docker state of the server (apart from its health) and an activity (can be notified). Red for containers, orange for images.'
         healthcheck_fails: Its healthcheck fails.
-        restarting_state_least_restarts_html: "“restarting” state, or at least %{_} restarts and restarted less than %{in_minutes_to_i} minutes ago."
+        restarting_state_least_restarts_html: "“restarting” state, or at least %{_} restarts since the previous collection and up for less than %{in_minutes_to_i} minutes (a container that restarted at boot then stays up is not looping)."
         handy_latest_1_27: Handy for “latest” or “1.27” tags; no effect on a pinned tag.
         private_registries: Private registries
         delete_saved_credentials_html: "%{clear_credentials} Delete the saved credentials"

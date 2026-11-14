@@ -13,7 +13,7 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
     known_hosts = Rails.root.join("tmp", "test", "docker-#{SecureRandom.hex(4)}", "known_hosts")
     handler = lambda do |command|
       if command.end_with?(Ssh::Commands.render("inventory.docker")) then FakeSsh::Response.new(output(name), "", 0)
-      elsif command.include?("trivy image") then trivy || FakeSsh::Response.new(file_fixture("inventory/docker/trivy_report.json").read, "", 0)
+      elsif command.include?("trivy image") then trivy || FakeSsh::Response.new(file_fixture("inventory/docker/trivy_report.txt").read, "", 0)
       elsif command.include?("docker\\ cp") then FakeSsh::Response.new(packages, "", 0)
       end
     end
@@ -40,6 +40,17 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
     assert_not containers["web"].key?("looping")
     assert_not Ssh::Commands.render("inventory.docker").include?(".Config.Env"), "the environment (secrets) is never read"
   end
+
+test "a loop is restarts piling up on a container that never stays up, not restarts at boot" do
+  line = ->(restarts, started) { "abc123def456\t/api\tapi:1\tsha256:#{"c" * 64}\trunning\t#{restarts}\t\t#{started.iso8601}\t\t0\talways\t#{(NOW - 30.days).iso8601}\t\t\n" }
+  looping = ->(restarts, started, previous = {}) { Collector.parse_containers(line.(restarts, started), now: NOW, previous_restarts: previous).sole["looping"] }
+
+  assert_nil looping.(3, NOW - 4.minutes), "restarted 3 times at boot while waiting for its database, up since"
+  assert_nil looping.(3, NOW - 4.minutes, "abc123def456" => 0), "the same, seen by the next collection"
+  assert looping.(3, NOW - 20.seconds), "3 restarts and up for seconds: a loop"
+  assert looping.(9, NOW - 20.seconds, "abc123def456" => 5), "4 more restarts since the previous collection"
+  assert_nil looping.(12, NOW - 20.seconds, "abc123def456" => 11), "one restart since: an old count, not a loop (docker restart)"
+end
 
   test "reads the images (used or not, dangling ones without tag) and the disk usage" do
     data = Collector.parse(Collector.sections(output(:debian13)), now: NOW)
@@ -87,7 +98,7 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
   test "with Trivy, scans each image, once a day, and keeps the rows of the others" do
     outcome, commands = collect(:with_trivy)
     assert_equal 6, commands.count { |command| command.include?("trivy image") }, "every image, used or not"
-    assert_includes commands, "sudo -n trivy image --quiet --format json --scanners vuln nginx:1.27"
+    assert commands.any? { |command| command.start_with?("sudo -n trivy image --quiet --scanners vuln --format template --template ") && command.end_with?(" nginx:1.27") }
     assert_equal [ "trivy", 3, { "id" => "alpine", "version_id" => "3.20.3" } ], outcome.data["scans"]["sha256:#{"b" * 64}"].values_at("method", "count", "os")
     rows = outcome.data["image_vulnerabilities"]["sha256:#{"b" * 64}"]["rows"]
     assert_equal [ [ "GHSA-vvfq-8hwr-qm4m", "rack", "3.0.9.1", "critical" ], [ "CVE-2024-9143", "libcrypto3", "3.3.2-r1", "low" ], [ "CVE-2024-6119", "libssl3", nil, "high" ] ],
@@ -101,6 +112,8 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
   test "a failed or too long scan is noted on the image" do
     outcome, = collect(:with_trivy, trivy: FakeSsh::Response.new("", "FATAL image scan error: unable to find the specified image", 1))
     assert_match "unable to find the specified image", outcome.data["scans"]["sha256:#{"a" * 64}"]["error"]
+    assert_equal "partial", outcome.status, "a scan that failed shows on the Docker inventory, not only in its details"
+    assert_match(/Vulnérabilités de 6 images illisibles : FATAL image scan error/, outcome.message)
 
     outcome, = collect(:with_trivy, trivy: FakeSsh::Response.new("", "", 0, true), command_timeout: 0.2)
     scans = outcome.data["scans"].values
@@ -108,7 +121,15 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
     assert_equal 5, scans.count { |scan| scan["method"] == "none" }
   end
 
-  test "Grype reports" do
+test "Trivy template output of a real image: one line per CVE, the system from the target" do
+  rows, os = Collector.parse_trivy(file_fixture("inventory/docker/trivy_report_debian_real.txt").read)
+  assert_equal({ "id" => "debian", "version_id" => "12.2" }, os)
+  assert_equal [ "CVE-2023-44487", "libnghttp2-14", "1.52.0-1", "1.52.0-1+deb12u1", "high" ], rows.first.values_at(:cve, :source_package, :installed_version, :fixed_version, :severity)
+  assert_nil rows.last[:fixed_version]
+  assert_equal rows, rows.uniq
+end
+
+test "Grype reports" do
     rows, os = Collector.parse_grype(file_fixture("inventory/docker/grype_report.json").read)
     assert_equal [ [ "CVE-2024-6119", "libssl3", "3.3.2-r1", "high" ], [ "CVE-2023-0001", "busybox", nil, "low" ] ], rows.map { |row| row.values_at(:cve, :source_package, :fixed_version, :severity) }
     assert_equal({ "id" => "alpine", "version_id" => "3.20.3" }, os)

@@ -337,6 +337,9 @@ fr:
         not_covered: Système de l'image non couvert
         unknown_system: Système de l'image inconnu
         not_in_feed: "%{target_last} pas encore dans la base %{label} (prochaine mise à jour des vulnérabilités)"
+        scan_failed:
+          one: "Vulnérabilités d'une image illisibles : %{error}"
+          other: "Vulnérabilités de %{count} images illisibles : %{error}"
         unreadable_report: Rapport illisible
         timeout: Analyse trop longue (délai dépassé)
         unreadable: 'Docker illisible : %{error}.%{hint}'
