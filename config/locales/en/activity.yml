@@ -253,6 +253,8 @@ en:
       ssh_access_lost: "“%{server}” refuses Elio's key"
       host_key_mismatch: '“%{server}” presents another fingerprint: %{fingerprint}. Elio no longer connects to it until an administrator accepts it.'
       host_key_changed: 'New fingerprint accepted for “%{server}”: %{fingerprint}'
+      host_key_mismatch_new_type: '“%{server}” presents a key of a new type (%{type}): %{fingerprint}. Elio no longer connects to it until an administrator accepts it.'
+      host_key_added: 'New key type (%{type}) accepted for “%{server}”: %{fingerprint}'
       server_unreachable: "“%{server}” no longer answers"
       server_back_online: "“%{server}” answers again"
       os_upgraded: "“%{server}” went from %{from} to %{to}"

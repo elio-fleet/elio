@@ -149,8 +149,28 @@ fr:
       trust: Faire confiance
       presented: Présentée
       ask_administrator_check_accept: Demandez à un administrateur de vérifier et d'accepter la nouvelle empreinte.
-      warning_html: 'Si le serveur vient d''être %{reinstalled} ou a changé de clé d''hôte, c''est normal. Sinon, quelqu''un se fait peut-être passer pour lui : vérifiez l''empreinte sur le serveur (%{command}) avant d''accepter.'
+      warning_html: Si le serveur vient d'être %{reinstalled} ou a changé de clé d'hôte, c'est normal. Sinon, quelqu'un se fait peut-être passer pour lui.
       reinstalled: réinstallé
+      new_algorithm_html: Le serveur présente maintenant une clé d'un autre type (%{type}) que celle qu'Elio connaît (%{known}). Il a peut-être ajouté ou remplacé un type de clé, mais quelqu'un se fait peut-être aussi passer pour lui.
+      verify_html: 'Avant d''accepter, vérifiez l''empreinte sur le serveur lui-même (console, pas à travers ce réseau) : %{command}'
+      review_all: Voir toutes les clés d'hôte changées
+  host_key_batches:
+    show:
+      title: Clés d'hôte changées
+      help_html: "Ces serveurs présentent une autre clé d'hôte que celle qu'Elio connaît : Elio ne s'y connecte plus. Après une réinstallation planifiée, vérifiez chaque nouvelle empreinte sur la console du serveur (par exemple %{command}) et faites confiance à celles qui correspondent. Elio recontacte chaque serveur et n'accepte que l'empreinte affichée ici."
+      all: Tous
+      server: Serveur
+      change: Changement
+      presented: Présentée
+      detected: Détecté
+      new_algorithm: Nouveau type de clé
+      key_changed: Clé changée
+      trust_for: Faire confiance à la nouvelle empreinte de « %{server_name} »
+      trust_selected: Faire confiance aux empreintes cochées
+      trust_selected_confirm: Les nouvelles empreintes remplaceront les anciennes pour les serveurs cochés. Ne le faites qu'après les avoir vérifiées sur les serveurs.
+      trust: Faire confiance
+      none: Aucune clé d'hôte changée
+      none_text: Tous les serveurs présentent la clé d'hôte qu'Elio connaît. Un serveur qui en présente une autre apparaît ici jusqu'à ce qu'un administrateur l'accepte.
   server_ssh_checks:
     show:
       ssh: SSH
@@ -231,6 +251,15 @@ fr:
   server_host_keys_controller:
     accepted: Nouvelle empreinte acceptée pour « %{server_name} ».
     changed_again: 'Le serveur ne présente plus l''empreinte affichée (%{expected}) : rien n''a été accepté. Vérifiez le serveur avant de réessayer.'
+    unreachable: 'Impossible de contacter le serveur pour lire sa clé (%{expected} n''a pas été acceptée). Réessayez quand il répondra.'
+  host_key_batches_controller:
+    choose_server: Choisissez au moins un serveur.
+    accepted:
+      one: Nouvelle empreinte acceptée pour %{count} serveur.
+      other: Nouvelles empreintes acceptées pour %{count} serveurs.
+    failed:
+      one: 'Rien n''a été accepté pour %{count} serveur, qui ne présente plus l''empreinte affichée ou ne répond pas : %{servers}.'
+      other: 'Rien n''a été accepté pour %{count} serveurs, qui ne présentent plus l''empreinte affichée ou ne répondent pas : %{servers}.'
   key_rotations_controller:
     started: Rotation de la clé Elio lancée.
     already_running: Une rotation de la clé est déjà en cours.

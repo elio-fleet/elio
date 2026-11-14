@@ -42,6 +42,27 @@ class Ssh::KnownHostsTest < ActiveSupport::TestCase
     assert_equal [], Ssh::KnownHosts.fingerprints("web.example.com", 22, file: @file.dirname.join("missing"))
   end
 
+  test "entries tell the type of each pinned key" do
+    key = Ssh::KeyGenerator.generate
+    @file.write("web.example.com #{key.public_key.split.first(2).join(" ")}\n")
+
+    assert_equal [ Ssh::KnownHosts::Entry.new(type: "ssh-ed25519", fingerprint: key.fingerprint) ], Ssh::KnownHosts.entries("web.example.com", 22, file: @file)
+  end
+
+  test "replaces the pins of one host by those of another file, keeping the other hosts" do
+    key = Ssh::KeyGenerator.generate
+    source = @file.dirname.join("presented")
+    source.write("db.example.com,10.0.0.2 #{key.public_key.split.first(2).join(" ")}\n192.168.1.100 ssh-ed25519 AAAAintruder\n")
+
+    entries = Ssh::KnownHosts.replace("db.example.com", 22, source: source, file: @file)
+
+    assert_equal [ key.fingerprint ], entries.map(&:fingerprint)
+    assert_not_includes @file.read, "AAAAdb"
+    assert_not_includes @file.read, "AAAAintruder", "only the lines of this host are taken from the source"
+    assert_includes @file.read, "192.168.1.100 ssh-ed25519 AAAAother"
+    assert_includes @file.read, "[192.168.1.10]:2222 ssh-ed25519 AAAAweb2222"
+  end
+
   test "uses the configured file by default, never the project one in tests" do
     assert_not_equal Ssh::Connection::KNOWN_HOSTS_FILE, Ssh::KnownHosts.file
     assert_equal 0, Ssh::KnownHosts.forget("unknown.example.com", 22)

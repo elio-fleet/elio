@@ -253,6 +253,8 @@ fr:
       ssh_access_lost: "« %{server} » refuse la clé d'Elio"
       host_key_mismatch: "« %{server} » présente une autre empreinte : %{fingerprint}. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée."
       host_key_changed: 'Nouvelle empreinte acceptée pour « %{server} » : %{fingerprint}'
+      host_key_mismatch_new_type: "« %{server} » présente une clé d'un nouveau type (%{type}) : %{fingerprint}. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée."
+      host_key_added: 'Nouveau type de clé (%{type}) accepté pour « %{server} » : %{fingerprint}'
       server_unreachable: "« %{server} » ne répond plus"
       server_back_online: "« %{server} » répond à nouveau"
       os_upgraded: "« %{server} » est passé de %{from} à %{to}"

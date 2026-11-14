@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   resource :server_import, only: %i[new create], path: "servers/import" do
     post :preview
   end
+  resource :host_key_batch, only: %i[show create], path: "servers/host-keys"
   resources :servers do
     # Tests the SSH values of the form before saving (the edit form is sent as PATCH).
     match :test_connection, on: :collection, via: %i[post patch]

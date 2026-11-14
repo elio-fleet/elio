@@ -74,6 +74,8 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english server_groups_path, except: data + [ "table td:first-child" ]
     assert_english new_server_group_path, except: data
     assert_english new_server_import_path, except: data
+    Activity.record!(:host_key_mismatch, server: servers(:web), new_fingerprint: "SHA256:new", key_type: "ssh-ed25519", new_algorithm: false)
+    assert_english host_key_batch_path, except: data + [ "#pending-host-keys td:nth-child(2)" ]
   end
 
   test "the inventory pages" do
