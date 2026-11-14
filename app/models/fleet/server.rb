@@ -141,24 +141,35 @@ class Server < ApplicationRecord
 
   # Recomputes the health of the server (Inventory::HealthStatus) and the state
   # of its Docker (Inventory::DockerStatus), and logs each change between ok,
-  # warn and crit (not on the first evaluation).
-  def refresh_health!
-    previous = { health: health_status, docker: docker_status }
+  # warn and crit (not on the first evaluation), or a new reason while the
+  # state stays warn or crit (`new_reasons: false` after an upgrade, when the
+  # rules rename reasons that are not new problems).
+  def refresh_health!(new_reasons: true)
+    previous = { health: health_status, docker: docker_status, health_reasons: health_reasons, docker_reasons: docker_reasons }
     inventory_snapshots.reset
     health = Inventory::HealthStatus.evaluate(self)
     docker = Inventory::DockerStatus.evaluate(self)
     update_columns(health_status: health.state, health_reasons: health.reasons.map(&:to_h),
                    docker_status: docker.state, docker_reasons: docker.reasons.map(&:to_h))
-    record_state_change(previous[:health], health, HEALTH_KINDS)
-    record_state_change(previous[:docker], docker, DOCKER_KINDS)
+    record_state_change(previous[:health], (previous[:health_reasons] if new_reasons), health, HEALTH_KINDS)
+    record_state_change(previous[:docker], (previous[:docker_reasons] if new_reasons), docker, DOCKER_KINDS)
   end
 
   private
 
-  def record_state_change(previous, result, kinds)
-    return if previous.nil? || previous == "unknown" || result.state.nil? || result.state == "unknown" || previous == result.state
+  # A server already to watch that gains a problem (reboot required on top of
+  # a full disk) is logged again with the new reasons only, so that the
+  # notification names what just went wrong.
+  # Without previous reasons (nil), only the changes of state are logged.
+  def record_state_change(previous, previous_reasons, result, kinds)
+    return if previous.nil? || previous == "unknown" || result.state.nil? || result.state == "unknown"
 
-    Activity.record!(kinds.fetch(result.state), server: self, user: nil, reasons: result.reasons.map(&:to_h).first(3))
+    reasons = result.reasons.map(&:to_h)
+    if previous != result.state
+      Activity.record!(kinds.fetch(result.state), server: self, user: nil, reasons: reasons.first(3))
+    elsif result.state != "ok" && previous_reasons && (added = Inventory::HealthStatus.new_reasons(previous_reasons, reasons)).any?
+      Activity.record!(kinds.fetch(result.state), server: self, user: nil, reasons: added.first(3), new_reasons: true)
+    end
   end
 
   # The last ping and SSH results no longer apply once the address changes.
