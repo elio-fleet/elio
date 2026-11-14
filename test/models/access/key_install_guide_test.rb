@@ -7,7 +7,9 @@ class KeyInstallGuideTest < ActiveSupport::TestCase
     guide = KeyInstallGuide.new(key)
 
     assert_equal "root", guide.account
-    assert_equal "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '#{key.public_key}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys", guide.command
+    assert_equal "mkdir -p ~/.ssh && chmod 700 ~/.ssh && " \
+                 "{ grep -qxF '#{key.public_key}' ~/.ssh/authorized_keys 2>/dev/null || echo '#{key.public_key}' >> ~/.ssh/authorized_keys; } && " \
+                 "chmod 600 ~/.ssh/authorized_keys", guide.command
     assert_nil guide.sudoers_command
     assert_nil guide.username
     assert_empty guide.errors
@@ -31,7 +33,7 @@ class KeyInstallGuideTest < ActiveSupport::TestCase
     assert_equal "monitor", guide.username
     assert_equal "id -u monitor >/dev/null 2>&1 || useradd -m -s /bin/bash monitor && " \
                  "install -d -m 700 -o monitor -g \"$(id -gn monitor)\" ~monitor/.ssh && " \
-                 "echo '#{key.public_key}' >> ~monitor/.ssh/authorized_keys && " \
+                 "{ grep -qxF '#{key.public_key}' ~monitor/.ssh/authorized_keys 2>/dev/null || echo '#{key.public_key}' >> ~monitor/.ssh/authorized_keys; } && " \
                  "chown monitor: ~monitor/.ssh/authorized_keys && chmod 600 ~monitor/.ssh/authorized_keys", guide.command
     assert_nil guide.sudoers_command
   end
@@ -61,6 +63,20 @@ class KeyInstallGuideTest < ActiveSupport::TestCase
       assert_nil guide.from, from
       assert_equal [ :from ], guide.errors, from
       assert_equal key.public_key, guide.authorized_keys_line
+    end
+  end
+
+  test "running the command twice installs the key once, other keys kept" do
+    Dir.mktmpdir do |home|
+      other = public_keys(:alice).content
+      FileUtils.mkdir_p("#{home}/.ssh")
+      File.write("#{home}/.ssh/authorized_keys", "#{other}\n")
+      command = KeyInstallGuide.new(key, from: "203.0.113.10").command
+
+      2.times { assert system({ "HOME" => home }, "sh", "-c", command), command }
+
+      assert_equal [ other, %(from="203.0.113.10" #{key.public_key}) ], File.read("#{home}/.ssh/authorized_keys").lines(chomp: true)
+      assert_equal "600", format("%o", File.stat("#{home}/.ssh/authorized_keys").mode & 0o777)
     end
   end
 

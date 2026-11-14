@@ -30,7 +30,7 @@ class KeyInstallGuide
   end
 
   # Run as root (root, dedicated) or as the account itself (sudo): appends the
-  # line to the account's authorized_keys with the permissions sshd expects;
+  # line once to the account's authorized_keys with the permissions sshd expects;
   # the dedicated account is created first when missing.
   def command
     return append_command("~") unless dedicated?
@@ -38,7 +38,7 @@ class KeyInstallGuide
     home = "~#{username}"
     "id -u #{username} >/dev/null 2>&1 || useradd -m -s /bin/bash #{username} && " \
       "install -d -m 700 -o #{username} -g \"$(id -gn #{username})\" #{home}/.ssh && " \
-      "echo '#{authorized_keys_line}' >> #{home}/.ssh/authorized_keys && " \
+      "#{append_once("#{home}/.ssh/authorized_keys")} && " \
       "chown #{username}: #{home}/.ssh/authorized_keys && chmod 600 #{home}/.ssh/authorized_keys"
   end
 
@@ -53,7 +53,15 @@ class KeyInstallGuide
   private
 
   def append_command(home)
-    "mkdir -p #{home}/.ssh && chmod 700 #{home}/.ssh && echo '#{authorized_keys_line}' >> #{home}/.ssh/authorized_keys && chmod 600 #{home}/.ssh/authorized_keys"
+    "mkdir -p #{home}/.ssh && chmod 700 #{home}/.ssh && #{append_once("#{home}/.ssh/authorized_keys")} && chmod 600 #{home}/.ssh/authorized_keys"
+  end
+
+  # Appends the line unless the file already has it, so running the command
+  # twice does not install the key twice (in braces: a failed step before it
+  # must not reach the echo).
+  def append_once(file)
+    line = "'#{authorized_keys_line}'"
+    "{ grep -qxF #{line} #{file} 2>/dev/null || echo #{line} >> #{file}; }"
   end
 
   # Only the dedicated account is named: root is root, and the sudo account
