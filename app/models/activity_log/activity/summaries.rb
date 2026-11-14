@@ -54,7 +54,11 @@ module Activity::Summaries
       where = data["image"] ? Activity::Summaries.t(:in_image, image: data["image"], server: server_name) : target
       Activity::Summaries.t(:vulnerability_found, count: data["count"].to_i, where: where, cves: Array(data["cves"]).join(", ")) + Activity::Summaries.list(data["packages"])
     end,
-    vulnerability_feed_failed: proc { Activity::Summaries.t(:vulnerability_feed_failed, feed: data["feed"], error: data["error"]) },
+    vulnerability_feed_failed: proc do
+      next Activity::Summaries.t(:vulnerability_feed_stale, feed: data["feed"], count: data["days"].to_i) if data["days"]
+
+      Activity::Summaries.t(:vulnerability_feed_failed, feed: data["feed"], error: data["error"])
+    end,
     container_unhealthy: proc { Activity::Summaries.t(:container_unhealthy, container: data["container"], server: server_name) },
     container_restarting: proc { Activity::Summaries.t(:container_restarting, container: data["container"], server: server_name) },
     image_update_available: proc { Activity::Summaries.t(:image_update_available, image: data["image"], server: server_name) },

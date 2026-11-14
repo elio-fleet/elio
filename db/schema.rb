@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_210000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_220000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -589,6 +589,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_210000) do
     t.datetime "failed_at"
     t.string "last_error"
     t.jsonb "unavailable_releases", default: [], null: false
+    t.jsonb "download_validators", default: {}, null: false
+    t.datetime "stale_alerted_at"
     t.index ["source"], name: "index_vulnerability_feeds_on_source", unique: true
   end
 

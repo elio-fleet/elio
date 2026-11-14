@@ -314,6 +314,14 @@ en:
       show:
         releases_fleet: 'Releases of the fleet: %{releases_join}'
         server_concerned: No server concerned
+        out_of_date: Out of date
+        release_servers:
+          one: "%{count} server on this release"
+          other: "%{count} servers on this release"
+        release_images:
+          one: "%{count} Docker image built on it"
+          other: "%{count} Docker images built on it"
+        release_not_in_feed: not in the feed (too old or too new), no vulnerability known for it
         failed: Failed
         vulnerabilities: "%{entries_count} vulnerabilities"
         never_updated: Never updated
@@ -341,7 +349,7 @@ en:
         minimum_severity: Minimum severity
         save: Save
         vulnerability_feeds: Vulnerability feeds
-        downloaded_every_day_releases: 'Downloaded every day for the releases on the fleet, then matched with the inventoried packages: no extra command on the servers.'
+        downloaded_every_day_releases: 'Downloaded every day, only for the releases of the servers and of their Docker images (and only when the file has changed), then matched with the inventoried packages: no extra command on the servers. Reported if a feed is not updated for 3 days.'
         update_now: Update now
         updated_html: updated %{refreshed_at} (%{origin_label})
         automation_html: 'Automation “%{label}”:'
