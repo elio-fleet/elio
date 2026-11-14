@@ -366,6 +366,9 @@ fr:
     target_account: "« %{server_name} » (compte %{account})"
   automation:
     whole_fleet: Tout le parc
+    scope_except: "%{included} sauf %{groups}"
+    any_time: À toute heure
+    window: De %{from} à %{to}
     extension_off: 'Extension désactivée : rien à faire'
     failed: 'Échec : %{message}'
     feed_failed: "%{label} : échec (%{message})"
@@ -379,6 +382,12 @@ fr:
       new_unknown_keys:
         one: "%{count} nouvelle clé inconnue"
         other: "%{count} nouvelles clés inconnues"
+      inventoried_with_waiting:
+        one: "%{done}/%{count} serveur inventorié, %{waiting}"
+        other: "%{done}/%{count} serveurs inventoriés, %{waiting}"
+      waiting:
+        one: "%{count} serveur injoignable réessayé plus tard"
+        other: "%{count} serveurs injoignables réessayés plus tard"
       reachable:
         one: "%{done}/%{count} serveur joignable"
         other: "%{done}/%{count} serveurs joignables"

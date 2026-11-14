@@ -115,6 +115,34 @@ class SettingsPagesTest < ActionDispatch::IntegrationTest
     assert_equal 60, scan.reload.interval_minutes
   end
 
+  test "hours, groups left out and durations on the automations page" do
+    scan = Automation.all_kinds.find { |automation| automation.kind == "keys_scan" }
+    sign_in users(:one)
+
+    patch settings_automations_update_path, params: { automations: { scan.id => { enabled: "1", interval_minutes: "60", window_start_hour: "22", window_end_hour: "6",
+                                                                                  excluded_server_group_ids: [ "", server_groups(:staging).id.to_s ] } } }
+    assert_equal "Automatisations enregistrées.", flash[:notice]
+    assert_equal [ 22, 6, [ server_groups(:staging).id ] ], [ scan.reload.window_start_hour, scan.window_end_hour, scan.excluded_server_group_ids ]
+
+    scan.update!(run_durations: [ 4.2, 75.0 ])
+    get settings_automations_path
+    assert_select "##{ActionView::RecordIdentifier.dom_id(scan)}" do
+      assert_select ".automation-window", "De 22:00 à 06:00"
+      assert_select "select[name=?] option[selected][value='22']", "automations[#{scan.id}][window_start_hour]"
+      assert_select ".automation-scope", "Tout le parc sauf Staging"
+      assert_select "input[type=checkbox][name=?][value=?][checked]", "automations[#{scan.id}][excluded_server_group_ids][]", server_groups(:staging).id.to_s
+      assert_select ".automation-duration", "durée 1 min 15 s"
+      assert_select "svg.sparkline"
+    end
+
+    patch settings_automations_update_path, params: { automations: { scan.id => { window_start_hour: "", window_end_hour: "6" } } }
+    assert_nil scan.reload.window_start_hour
+    assert_nil scan.window_end_hour
+
+    patch settings_automations_update_path, params: { automations: { scan.id => { window_start_hour: "6", window_end_hour: "6" } } }
+    assert_predicate flash[:alert], :present?
+  end
+
   test "enabling an automation and choosing its frequency" do
     scan = Automation.all_kinds.find { |automation| automation.kind == "keys_scan" }
     sign_in users(:one)
