@@ -136,6 +136,96 @@ class VulnerabilitiesTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "the fleet page filters on a server, combined with the group" do
+    sign_in users(:viewer)
+
+    get vulnerabilities_path(view: "cves", server: servers(:db).id)
+    assert_select "select[name=server] option[selected]", "Database"
+    assert_select "tr.fleet-vulnerability", 3
+    assert_select "tr.fleet-vulnerability[data-cve=CVE-2024-9143]", 0, "openssl is only on Web"
+    assert_select "#stat-affected .stat-value", "1"
+    assert_select "a#stat-fixable[href=?]", vulnerabilities_path(server: servers(:db).id, view: "cves", fixable: 1)
+
+    get vulnerabilities_path(view: "cves", group: server_groups(:production).id, server: servers(:db).id)
+    assert_select "tr.fleet-vulnerability", 3
+    assert_select "select[name=server] option", 3, "all servers + the two of the group"
+
+    get vulnerabilities_path(view: "cves", group: server_groups(:staging).id, server: servers(:db).id)
+    assert_select "select[name=server] option[selected]", 0, "a server outside the group is dropped"
+    assert_select "p", text: "Aucune vulnérabilité ne correspond."
+  end
+
+  test "the fleet page filters on the exploited CVEs (KEV) and on a minimum EPSS" do
+    CveScore.store("kev", [ { cve: "CVE-2024-6387", score: 1, data: { "date_added" => "2024-07-03" } } ])
+    CveScore.store("epss", [ { cve: "CVE-2024-6387", score: 0.42, data: { "percentile" => 0.99 } },
+                             { cve: "CVE-2023-44487", score: 0.95, data: { "percentile" => 0.999 } },
+                             { cve: "CVE-2024-9143", score: 0.002, data: { "percentile" => 0.3 } } ])
+    CveRating.refresh!
+    sign_in users(:viewer)
+
+    get vulnerabilities_path(view: "cves", exploited: 1)
+    assert_select "input[type=checkbox][name=exploited][checked]"
+    assert_select "tr.fleet-vulnerability", 1
+    assert_select "tr.fleet-vulnerability[data-cve=CVE-2024-6387]"
+
+    get vulnerabilities_path(view: "cves", epss: "10")
+    assert_select "select[name=epss] option[selected]", /EPSS ≥ 10[[:space:]]%/
+    assert_equal %w[CVE-2024-6387 CVE-2023-44487].sort, css_select("tr.fleet-vulnerability").map { |row| row["data-cve"] }.sort
+    get vulnerabilities_path(view: "packages", epss: "50")
+    assert_select "li.vulnerability-package", 1
+    assert_select "li.vulnerability-package[data-package=nginx]"
+    get vulnerabilities_path(view: "cves", epss: "50", exploited: 1)
+    assert_select "tr.fleet-vulnerability", 0
+    get vulnerabilities_path(view: "cves", epss: "33")
+    assert_select "tr.fleet-vulnerability", 5, "an unknown threshold is ignored"
+  end
+
+  test "a package that holds most of the CVEs is pointed out" do
+    sign_in users(:viewer)
+
+    get vulnerabilities_path
+    assert_select ".vulnerability-concentration", 0, "openssh holds 2 of 5 CVEs: not most of them"
+
+    get vulnerabilities_path(server: servers(:db).id)
+    assert_select ".vulnerability-concentration[data-package=openssh]", text: /openssh concentre à lui seul 67[[:space:]]% de ces CVE \(2 sur 3\)/
+    get vulnerabilities_path(server: servers(:db).id, view: "cves")
+    assert_select ".vulnerability-concentration[data-package=openssh]"
+
+    get vulnerabilities_path(q: "openssh")
+    assert_select ".vulnerability-concentration", 0, "a single package is not a concentration"
+  end
+
+  test "the fleet page exports its filtered rows in CSV and JSON, for every role that sees it" do
+    CveScore.store("kev", [ { cve: "CVE-2024-6387", score: 1, data: { "date_added" => "2024-07-03" } } ])
+    CveRating.refresh!
+    sign_in users(:viewer)
+
+    get vulnerabilities_path(view: "cves")
+    assert_select ".actions-menu a.export-csv[href=?][data-turbo=false]", vulnerabilities_path(format: :csv)
+    assert_select ".actions-menu a.export-json[href=?]", vulnerabilities_path(format: :json)
+    assert_select ".actions-menu form[action=?]", refresh_settings_vulnerabilities_path, 0, "the admin actions stay hidden"
+    get vulnerabilities_path(severity: "high", page: 2)
+    assert_select ".actions-menu a.export-csv[href=?]", vulnerabilities_path(severity: "high", format: :csv)
+
+    get vulnerabilities_path(format: :csv, server: servers(:db).id)
+    assert_response :success
+    assert_equal "text/csv", response.media_type
+    assert_match(/attachment; filename="elio-vulnerabilities-\d{4}-\d{2}-\d{2}\.csv"/, response.headers["Content-Disposition"])
+    csv = CSV.parse(response.body, headers: true)
+    assert_equal %w[server origin image cve severity score epss exploited source_package packages installed_version fixed_version fixable], csv.headers
+    assert_equal [ "Database" ], csv.map { |row| row["server"] }.uniq
+    row = csv.find { |line| line["cve"] == "CVE-2024-6387" }
+    assert_equal [ "host", "high", "true", "openssh", "openssh-server", "1:9.2p1-2+deb12u2", "1:9.2p1-2+deb12u3", "true" ],
+                 row.fields(*%w[origin severity exploited source_package packages installed_version fixed_version fixable])
+
+    get vulnerabilities_path(format: :json, exploited: 1)
+    json = response.parsed_body
+    assert_equal({ "origin" => "host", "exploited" => true }, json["filters"])
+    assert_equal 2, json["count"]
+    assert_equal [ "Database", "Web" ], json["vulnerabilities"].map { |line| line["server"] }
+    assert_equal [ "CVE-2024-6387" ], json["vulnerabilities"].map { |line| line["cve"] }.uniq
+  end
+
   test "the server tab searches a CVE or a package (source or installed binary), in both views" do
     sign_in users(:viewer)
 
