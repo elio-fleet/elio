@@ -86,6 +86,9 @@ fr:
       sign_out: Déconnexion
     application:
       open_menu: Ouvrir le menu
+    plain_http_notice:
+      text: "Elio est consulté en HTTP simple : les mots de passe et les cookies de session circulent en clair sur le réseau. Acceptable sur un réseau local de confiance ; sinon, placez Elio derrière un reverse proxy HTTPS (README, section « Sécurité »)."
+      hide: Masquer
   errors:
     forbidden:
       title: Accès refusé
