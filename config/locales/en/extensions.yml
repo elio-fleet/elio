@@ -84,6 +84,7 @@ en:
       alert_cert: Certificate expiring soon
       cert_days: Certificate threshold (days)
       alert_uptime: Uptime under a threshold
+      alert_uptime_hint: Uptime Kuma publishes the uptime in /metrics only in some versions (not 1.23 nor 2.0); without it, this alert never fires and the uptime column stays hidden.
       uptime_threshold: Uptime threshold (%)
       uptime_window: Over
       alert_maintenance: Monitor in maintenance for a long time
