@@ -20,6 +20,7 @@ class Activity < ApplicationRecord
     Kind.new(:key_disappeared, :security, :warning),
     Kind.new(:ssh_access_lost, :security, :critical),
     Kind.new(:host_key_changed, :security, :critical),
+    Kind.new(:host_key_mismatch, :security, :critical),
     Kind.new(:server_unreachable, :servers, :warning),
     Kind.new(:server_back_online, :servers, :info),
     Kind.new(:os_upgraded, :servers, :info),

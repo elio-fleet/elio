@@ -77,6 +77,15 @@ class DemoMultiIntegration < Integrations::Base
 end
 
 module IntegrationHelpers
+  # Enables extensions as DNS sources (OVHcloud with its DNS product), without
+  # their required fields: DnsRecord only reads the records of enabled sources.
+  def enable_dns_sources(*kinds)
+    kinds.each do |kind|
+      integration = Integration.find_or_create_by!(kind: kind.to_s)
+      integration.update_columns(enabled: true, settings: integration.settings.merge(kind.to_s == "ovh" ? { "products" => %w[dns] } : {}))
+    end
+  end
+
   def with_integrations(registry = { "demo" => "DemoIntegration" })
     previous = Integration.registry
     Integration.registry = registry

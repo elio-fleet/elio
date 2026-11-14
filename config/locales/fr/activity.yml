@@ -19,6 +19,9 @@ fr:
       ssh_access_lost:
         label: Accès SSH perdu
         description: Le serveur refuse désormais la clé d'Elio.
+      host_key_mismatch:
+        label: Empreinte serveur différente
+        description: Un serveur présente une autre clé d'hôte SSH que celle qu'Elio connaît (réinstallation, ou une machine intercalée). Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée.
       host_key_changed:
         label: Empreinte serveur remplacée
         description: Un administrateur a accepté la nouvelle empreinte d'un serveur (réinstallation…).
@@ -245,6 +248,7 @@ fr:
       unknown_key_detected: Clé inconnue « %{name} » trouvée sur %{target}
       key_disappeared: Clé « %{name} » disparue de %{target}
       ssh_access_lost: "« %{server} » refuse la clé d'Elio"
+      host_key_mismatch: "« %{server} » présente une autre empreinte : %{fingerprint}. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée."
       host_key_changed: 'Nouvelle empreinte acceptée pour « %{server} » : %{fingerprint}'
       server_unreachable: "« %{server} » ne répond plus"
       server_back_online: "« %{server} » répond à nouveau"

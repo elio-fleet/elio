@@ -10,6 +10,11 @@ class DnsRecord < ApplicationRecord
 
   belongs_to :server, optional: true
 
+  # Only the records of the enabled sources are read (page, tabs, attachments,
+  # alerts, search): a disabled extension leaves no trace, its records stay in
+  # the table for when it is enabled again. Dns::Store writes through unscoped.
+  default_scope { where(source: Dns.active_source_keys) }
+
   scope :attached, -> { where.not(server_id: nil) }
   scope :unattached, -> { where(server_id: nil) }
   scope :addresses, -> { where(record_type: %w[A AAAA]) }
