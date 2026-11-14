@@ -41,6 +41,17 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
     assert_not Ssh::Commands.render("inventory.docker").include?(".Config.Env"), "the environment (secrets) is never read"
   end
 
+test "a loop is restarts piling up on a container that never stays up, not restarts at boot" do
+  line = ->(restarts, started) { "abc123def456\t/api\tapi:1\tsha256:#{"c" * 64}\trunning\t#{restarts}\t\t#{started.iso8601}\t\t0\talways\t#{(NOW - 30.days).iso8601}\t\t\n" }
+  looping = ->(restarts, started, previous = {}) { Collector.parse_containers(line.(restarts, started), now: NOW, previous_restarts: previous).sole["looping"] }
+
+  assert_nil looping.(3, NOW - 4.minutes), "restarted 3 times at boot while waiting for its database, up since"
+  assert_nil looping.(3, NOW - 4.minutes, "abc123def456" => 0), "the same, seen by the next collection"
+  assert looping.(3, NOW - 20.seconds), "3 restarts and up for seconds: a loop"
+  assert looping.(9, NOW - 20.seconds, "abc123def456" => 5), "4 more restarts since the previous collection"
+  assert_nil looping.(12, NOW - 20.seconds, "abc123def456" => 11), "one restart since: an old count, not a loop (docker restart)"
+end
+
   test "reads the images (used or not, dangling ones without tag) and the disk usage" do
     data = Collector.parse(Collector.sections(output(:debian13)), now: NOW)
     images = data["images"].index_by { |image| image["id"].delete_prefix("sha256:").first }

@@ -11,9 +11,13 @@ class Inventory::Collectors::Docker < Inventory::Collector
   MAX_SCANS = 10
   SCAN_COMMANDS = { "trivy" => "inventory.trivy_scan", "grype" => "inventory.grype_scan" }.freeze
   SCAN_EVERY = 1.day
-  # A container restarting on its own this often has a problem.
+  # A container restarting on its own this often has a problem: at least
+  # LOOP_RESTARTS restarts since the previous collection (all of them on the
+  # first one), and up for less than LOOP_UPTIME (a loop never stays up). One
+  # that restarted at boot while waiting for its database, then stays up, is
+  # not looping.
   LOOP_RESTARTS = 3
-  LOOP_WINDOW = 15.minutes
+  LOOP_UPTIME = 2.minutes
   STOPPED_LONG = 7.days
   ZERO_TIME = "0001-01-01"
   UNITS = { "b" => 1, "kb" => 1e3, "mb" => 1e6, "gb" => 1e9, "tb" => 1e12, "kib" => 1024, "mib" => 1024**2, "gib" => 1024**3, "tib" => 1024**4 }.freeze
@@ -28,14 +32,15 @@ class Inventory::Collectors::Docker < Inventory::Collector
       return partial({ "docker" => "unreadable", "containers" => [], "images" => [] }, I18n.t("inventory.collectors.docker.unreadable", error: access.presence&.truncate(120) || I18n.t("inventory.collectors.docker.no_answer"), hint: hint))
     end
 
-    data = self.class.parse(sections).merge("docker" => "ok", "version" => access)
+    data = self.class.parse(sections, previous: previous).merge("docker" => "ok", "version" => access)
     scan_images(data)
     ok(data)
   end
 
-  def self.parse(sections, now: Time.current)
+  def self.parse(sections, now: Time.current, previous: nil)
     stats = parse_stats(sections["stats"])
-    containers = parse_containers(sections["containers"], now: now).map { |container| container.merge(stats.fetch(container["id"], {})) }
+    restarts = Array(previous&.dig("containers")).to_h { |container| [ container["id"], container["restarts"].to_i ] }
+    containers = parse_containers(sections["containers"], now: now, previous_restarts: restarts).map { |container| container.merge(stats.fetch(container["id"], {})) }
     used = containers.map { |container| container["image_id"] }.to_set
     images = parse_images(sections["images"]).map { |image| image.merge("used" => used.include?(image["id"])) }
     { "containers" => containers, "images" => images, "disk" => parse_df(sections["df"]), "scanner" => sections["scanners"].split.first }
@@ -49,7 +54,7 @@ class Inventory::Collectors::Docker < Inventory::Collector
   def self.label(value) = (value.presence unless value == "<no value>")
 
   # "<id>\t/<name>\t<image>\t<image id>\t<state>\t<restarts>\t<health>\t<started>\t<finished>\t<exit>\t<policy>\t<created>\t<project>\t<service>"
-  def self.parse_containers(text, now:)
+  def self.parse_containers(text, now:, previous_restarts: {})
     text.to_s.lines.filter_map do |line|
       id, name, image, image_id, state, restarts, health, started, finished, exit_code, policy, created, project, service = line.chomp.split("\t", -1)
       next if name.blank? || image_id.blank?
@@ -59,7 +64,8 @@ class Inventory::Collectors::Docker < Inventory::Collector
                     "restarts" => restarts.to_i, "health" => health.presence, "started_at" => started_at&.iso8601, "finished_at" => finished_at&.iso8601,
                     "exit_code" => exit_code.to_i, "restart_policy" => policy.presence, "created_at" => time(created)&.iso8601,
                     "project" => label(project), "service" => label(service) }.compact
-      container["looping"] = true if state == "restarting" || (container["restarts"] >= LOOP_RESTARTS && started_at && started_at > now - LOOP_WINDOW)
+      new_restarts = container["restarts"] - previous_restarts.fetch(container["id"], 0)
+      container["looping"] = true if state == "restarting" || (new_restarts >= LOOP_RESTARTS && started_at && started_at > now - LOOP_UPTIME)
       container["stopped_long"] = true if state == "exited" && finished_at && finished_at < now - STOPPED_LONG
       container
     end
