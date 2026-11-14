@@ -1,12 +1,8 @@
 <%= turbo_frame_tag dom_id(@server, :ssh_check), class: "group block" do %>
-  <%= render "servers/health_item", label: t(".ssh"), refresh_path: server_ssh_check_path(@server), refresh_title: t(".test_ssh_connection_again") do %>
-    <% if @result.success? %>
-      <span class="ssh-check-result inline-flex items-center gap-1.5 rounded-full bg-good-soft px-2 py-0.5 text-xs font-medium text-good-ink ring-1 ring-inset ring-good/20"
-            title="<%= @result.details %>">
-        <%= icon :check, class: "h-3.5 w-3.5" %> <%= t("server_ssh_checks.show.connection_ok") %>
-      </span>
-      <span class="text-xs text-ink-3"><%= t("server_ssh_checks.show.checked_html", current: relative_time_tag(Time.current)) %></span>
-    <% else %>
+  <% if @result.success? %>
+    <%= render "server_ssh_checks/connection_ok", server: @server, checked_at: Time.current, details: @result.details %>
+  <% else %>
+    <%= render "servers/health_item", label: t(".ssh"), refresh_path: server_ssh_check_path(@server), refresh_title: t(".test_ssh_connection_again") do %>
       <span class="ssh-check-result inline-flex items-center gap-1.5 rounded-full bg-crit-soft px-2 py-0.5 text-xs font-medium text-crit-ink ring-1 ring-inset ring-crit/20">
         <%= icon :x_mark, class: "h-3.5 w-3.5" %> <%= @result.message %>
       </span>

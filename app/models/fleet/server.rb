@@ -84,6 +84,17 @@ class Server < ApplicationRecord
     end
   end
 
+  # How long the server page trusts a port or SSH result instead of checking
+  # again on display (one SSH login per visit otherwise).
+  FRESH_CHECK = 5.minutes
+
+  # The last ping is recent enough to be shown as is.
+  def reachability_fresh? = !reachable.nil? && last_checked_at.present? && last_checked_at > FRESH_CHECK.ago
+
+  # Elio logged in recently (check, inventory, key scan). A failure is always
+  # checked again: its details (host key, setup hint) are not stored.
+  def ssh_fresh? = ssh_ok == true && ssh_checked_at.present? && ssh_checked_at > FRESH_CHECK.ago
+
   def inventory(category) = inventory_snapshots.find { |snapshot| snapshot.category == category.to_s }
 
   # Host name of the machine (os inventory), nil until collected.

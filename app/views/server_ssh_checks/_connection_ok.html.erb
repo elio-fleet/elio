@@ -1,0 +1,9 @@
+<%# SSH line of the server page after a successful login, with a button to test again.
+    Locals: server, checked_at (time of the login), details (title, optional). %>
+<%= render "servers/health_item", label: t("server_ssh_checks.show.ssh"), refresh_path: server_ssh_check_path(server), refresh_title: t("server_ssh_checks.show.test_ssh_connection_again") do %>
+  <span class="ssh-check-result inline-flex items-center gap-1.5 rounded-full bg-good-soft px-2 py-0.5 text-xs font-medium text-good-ink ring-1 ring-inset ring-good/20"
+        title="<%= local_assigns[:details] %>">
+    <%= icon :check, class: "h-3.5 w-3.5" %> <%= t("server_ssh_checks.show.connection_ok") %>
+  </span>
+  <span class="text-xs text-ink-3"><%= t("server_ssh_checks.show.checked_html", current: relative_time_tag(checked_at)) %></span>
+<% end %>
