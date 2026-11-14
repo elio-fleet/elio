@@ -139,6 +139,21 @@ class ServerTest < ActiveSupport::TestCase
     assert server.reload.reachable
   end
 
+  test "a port or SSH result is fresh for a few minutes, an SSH failure never" do
+    server = servers(:web)
+    server.assign_attributes(reachable: false, last_checked_at: 4.minutes.ago, ssh_ok: true, ssh_checked_at: 4.minutes.ago)
+    assert server.reachability_fresh?
+    assert server.ssh_fresh?
+
+    server.assign_attributes(last_checked_at: 6.minutes.ago, ssh_checked_at: 6.minutes.ago)
+    assert_not server.reachability_fresh?
+    assert_not server.ssh_fresh?
+
+    server.assign_attributes(reachable: nil, last_checked_at: Time.current, ssh_ok: false, ssh_checked_at: Time.current)
+    assert_not server.reachability_fresh?
+    assert_not server.ssh_fresh?
+  end
+
   test "a first check that finds the server down is logged" do
     servers(:backup).record_reachability!(false)
     assert_equal [ "server_unreachable" ], Activity.pluck(:kind)

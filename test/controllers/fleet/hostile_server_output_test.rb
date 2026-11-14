@@ -18,7 +18,7 @@ class HostileServerOutputTest < ActionDispatch::IntegrationTest
     Activity.record!(:service_failed, server: server, service: PAYLOAD)
     sign_in users(:one)
 
-    [ server_path(server, tab: "services"), server_path(server), activities_path, servers_path ].each do |path|
+    [ server_path(server, tab: "services"), server_path(server, tab: "overview"), activities_path, servers_path ].each do |path|
       get path
       assert_response :success
       assert_not_includes response.body, PAYLOAD, path

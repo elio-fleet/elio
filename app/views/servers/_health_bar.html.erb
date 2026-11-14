@@ -1,19 +1,30 @@
-<%# Compact reachability + SSH status of a server, both checked when the page is displayed,
-    then the state of its Docker (Inventory::DockerStatus) when it has one. %>
+<%# Compact reachability + SSH status of a server, checked when the page is displayed unless
+    a recent result exists (Server::FRESH_CHECK), then the state of its Docker
+    (Inventory::DockerStatus) when it has one. Locals: server. %>
 <section id="server-health" class="status-line card mb-4 flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-2">
   <div class="min-w-0">
-    <%= turbo_frame_tag dom_id(server, :reachability), src: server_ping_path(server), loading: :lazy, class: "group block" do %>
-      <%= render "servers/health_item", label: t(".port", port: server.port) do %>
-        <%= render "servers/status", server: server %>
-        <%= render "servers/health_checking" %>
+    <% if server.reachability_fresh? %>
+      <%= render "server_pings/frame", server: server %>
+    <% else %>
+      <%= turbo_frame_tag dom_id(server, :reachability), src: server_ping_path(server), loading: :lazy, class: "group block" do %>
+        <%= render "servers/health_item", label: t(".port", port: server.port) do %>
+          <%= render "servers/status", server: server %>
+          <%= render "servers/health_checking" %>
+        <% end %>
       <% end %>
     <% end %>
   </div>
   <div class="min-w-0">
-    <%= turbo_frame_tag dom_id(server, :ssh_check), src: server_ssh_check_path(server), loading: :lazy, class: "group block" do %>
-      <%= render "servers/health_item", label: t(".ssh") do %>
-        <%= render "servers/ssh_status", server: server %>
-        <%= render "servers/health_checking" %>
+    <% if server.ssh_fresh? %>
+      <%= turbo_frame_tag dom_id(server, :ssh_check), class: "group block" do %>
+        <%= render "server_ssh_checks/connection_ok", server: server, checked_at: server.ssh_checked_at %>
+      <% end %>
+    <% else %>
+      <%= turbo_frame_tag dom_id(server, :ssh_check), src: server_ssh_check_path(server), loading: :lazy, class: "group block" do %>
+        <%= render "servers/health_item", label: t(".ssh") do %>
+          <%= render "servers/ssh_status", server: server %>
+          <%= render "servers/health_checking" %>
+        <% end %>
       <% end %>
     <% end %>
   </div>

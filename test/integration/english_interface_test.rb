@@ -168,7 +168,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english server_path(servers(:web), tab: "monitors"), except: data
     OvhResource.create!(kind: "ip", external_id: "203.0.113.10/32", name: "203.0.113.10/32", server: servers(:web),
                         data: { "mitigation" => { "203.0.113.10" => { "permanent" => false, "state" => "ok" } } })
-    assert_english server_path(servers(:web), tab: nil), except: data
+    assert_english server_path(servers(:web), tab: "overview"), except: data
     assert_english edit_settings_integration_path("ovh"), except: data
     assert_english edit_settings_integration_path("uptime_kuma"), except: data
     Integration.find_or_initialize_by(kind: "technitium").update!(enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })

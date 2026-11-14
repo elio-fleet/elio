@@ -312,7 +312,7 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
 
     get server_path(servers(:web))
     assert_equal %w[overview vulnerabilities packages services firewall schedules keys journal], css_select("nav.server-tabs .tabs-bar > a").map { |tab| tab["data-tab"] }
-    assert_select "nav.server-tabs a[aria-current=page][data-tab=overview][href=?]", server_path(servers(:web))
+    assert_select "nav.server-tabs a[aria-current=page][data-tab=overview][href=?]", server_path(servers(:web), tab: "overview")
     assert_select "nav.server-tabs a[data-tab=packages][href=?]", server_path(servers(:web), tab: "packages"), text: "Mises à jour"
     assert_select "#server-health-details"
     assert_select "#server-system"

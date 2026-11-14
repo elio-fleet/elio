@@ -56,7 +56,12 @@ class ServersController < ApplicationController
     end
 
     @integration_tabs = Integration.server_tabs
-    @tab = params[:tab].presence_in(TABS + @integration_tabs.map { |tab| tab[:key] }) || "overview"
+    tab_keys = TABS + @integration_tabs.map { |tab| tab[:key] }
+    remembered = remembered_tabs[@server.id.to_s].presence_in(tab_keys - [ "overview" ])
+    return redirect_to server_path(@server, tab: remembered) if remembered && request.query_parameters.empty?
+
+    @tab = params[:tab].presence_in(tab_keys) || "overview"
+    remember_tab(@tab) if params[:tab] == @tab
     show_journal if @tab == "journal"
     show_vulnerabilities if @tab == "vulnerabilities"
     show_docker if @tab == "docker"
@@ -188,6 +193,28 @@ class ServersController < ApplicationController
 
     @pager = paginate(PackageVulnerabilities.new(images, server: @server).groups, per_page: VULNERABILITY_PACKAGES_PER_PAGE)
     @package_groups = @pager.records
+  end
+
+  # Last tab opened on each server page, by server id: a link to a server
+  # without ?tab= opens it again (a convenience of this browser, in a cookie
+  # like the fleet view; the Overview tab link carries ?tab=overview).
+  SERVER_TABS_COOKIE = :elio_server_tabs
+  REMEMBERED_TABS = 50 # servers, the most recent ones (cookie size)
+
+  def remembered_tabs
+    tabs = JSON.parse(cookies[SERVER_TABS_COOKIE].to_s)
+    tabs.is_a?(Hash) ? tabs : {}
+  rescue JSON::ParserError
+    {}
+  end
+
+  # A link prefetched on hover is not an opened tab.
+  def remember_tab(tab)
+    return if request.headers["X-Sec-Purpose"] == "prefetch"
+
+    tabs = remembered_tabs.except(@server.id.to_s)
+    tabs[@server.id.to_s] = tab unless tab == "overview"
+    cookies.permanent[SERVER_TABS_COOKIE] = { value: tabs.to_a.last(REMEMBERED_TABS).to_h.to_json, same_site: :lax, httponly: true }
   end
 
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.
