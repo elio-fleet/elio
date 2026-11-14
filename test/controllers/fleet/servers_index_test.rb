@@ -2,6 +2,7 @@ require "test_helper"
 
 class ServersIndexTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
+  include IntegrationHelpers
 
   test "requires authentication" do
     get servers_path
@@ -294,6 +295,7 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
 
   test "the search finds a server by one of its DNS names" do
     servers(:web).update!(extra_addresses_text: "203.0.113.10")
+    enable_dns_sources(:ovh)
     Dns::Store.replace("ovh", [ { zone: "example.test", name: "shop.example.test", record_type: "A", value: "203.0.113.10" } ])
     sign_in users(:one)
     get servers_path(q: "shop.example")
