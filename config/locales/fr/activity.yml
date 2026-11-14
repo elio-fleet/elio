@@ -39,10 +39,10 @@ fr:
         description: Un serveur a redémarré depuis le dernier inventaire.
       health_warning:
         label: Serveur à surveiller
-        description: La santé d'un serveur se dégrade (disque, mémoire, charge, redémarrage requis…).
+        description: La santé d'un serveur se dégrade (disque, mémoire, charge, redémarrage requis…), ou un serveur déjà à surveiller a un nouveau problème.
       health_critical:
         label: Serveur en état critique
-        description: Un seuil critique est dépassé sur un serveur (disque ou mémoire presque pleins…).
+        description: Un seuil critique est dépassé sur un serveur (disque ou mémoire presque pleins…), ou un serveur critique a un nouveau problème.
       health_recovered:
         label: Serveur de nouveau sain
         description: Un serveur à surveiller ou critique est revenu à la normale.
@@ -258,10 +258,14 @@ fr:
       os_upgraded: "« %{server} » est passé de %{from} à %{to}"
       server_rebooted: "« %{server} » a redémarré"
       health_warning: "« %{server} » est à surveiller : %{reasons}"
+      health_warning_new: "Nouveau problème sur « %{server} », toujours à surveiller : %{reasons}"
       health_critical: "« %{server} » est en état critique : %{reasons}"
+      health_critical_new: "Nouveau problème sur « %{server} », toujours en état critique : %{reasons}"
       health_recovered: "« %{server} » est de nouveau sain"
       docker_warning: "Docker de « %{server} » est à surveiller : %{reasons}"
+      docker_warning_new: "Nouveau problème avec Docker de « %{server} », toujours à surveiller : %{reasons}"
       docker_critical: "Docker de « %{server} » est en état critique : %{reasons}"
+      docker_critical_new: "Nouveau problème avec Docker de « %{server} », toujours en état critique : %{reasons}"
       docker_recovered: "Docker de « %{server} » est de nouveau sain"
       packages_changed: 'Paquets de « %{server} » : %{counts}'
       packages:

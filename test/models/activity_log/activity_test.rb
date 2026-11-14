@@ -86,6 +86,7 @@ test "summaries" do
       [ :server_rebooted, {} ] => "« Web » a redémarré",
       [ :health_warning, { reasons: [ "Redémarrage requis", "Mémoire à 92 %" ] } ] => "« Web » est à surveiller : Redémarrage requis, Mémoire à 92 %",
       [ :health_recovered, {} ] => "« Web » est de nouveau sain",
+      [ :docker_warning, { reasons: [ "Conteneur web arrêté" ], new_reasons: true } ] => "Nouveau problème avec Docker de « Web », toujours à surveiller : Conteneur web arrêté",
       [ :packages_changed, { installed: 2, upgraded: 1, removed: 0, examples: [ "curl" ] } ] => "Paquets de « Web » : 2 installés, 1 mis à jour (curl)",
       [ :security_updates_available, { count: 3 } ] => "3 mises à jour de sécurité disponibles sur « Web »",
       [ :service_failed, { service: "nginx.service" } ] => "nginx.service est en échec sur « Web »",

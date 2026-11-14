@@ -38,6 +38,26 @@ class Inventory::HealthStatus
     end
   end
 
+  # Parameters that measure a problem rather than name it: a disk going from
+  # 91 to 92 % is the same problem, a second failed service is a new one.
+  MEASURES = %w[percent ratio load count].freeze
+
+  # The stored reasons of `current` that were not in `previous`, or that went
+  # from warn to crit (Server#refresh_health! logs them).
+  def self.new_reasons(previous, current)
+    tones = Array(previous).to_h { |reason| [ identity(reason), reason["tone"] ] }
+    Array(current).select do |reason|
+      tone = tones[identity(reason)]
+      tone.nil? || (reason["tone"] == "crit" && tone != "crit")
+    end
+  end
+
+  def self.identity(reason)
+    return reason.to_s unless reason.is_a?(Hash)
+
+    [ reason["key"] || reason["text"], (reason["params"] || {}).to_h.except(*MEASURES) ]
+  end
+
   def self.reason(tone, key, **params) = Reason.new(tone: tone, key: key.to_s.include?(".") ? key.to_s : "health.#{key}", params: params)
 
   def self.evaluate(server, settings: AppSetting.current) = new(server, settings).evaluate
@@ -59,7 +79,7 @@ class Inventory::HealthStatus
     return if setting.health_version >= VERSION
 
     AdvisoryLock.try("health_version") do
-      Server.find_each(&:refresh_health!)
+      Server.find_each { |server| server.refresh_health!(new_reasons: false) }
       setting.update_columns(health_version: VERSION)
     end
   end

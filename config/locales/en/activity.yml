@@ -39,10 +39,10 @@ en:
         description: A server has rebooted since the last inventory.
       health_warning:
         label: Server to watch
-        description: The health of a server degrades (disk, memory, load, reboot required…).
+        description: The health of a server degrades (disk, memory, load, reboot required…), or a server already to watch has a new problem.
       health_critical:
         label: Server in critical state
-        description: A critical threshold is exceeded on a server (disk or memory almost full…).
+        description: A critical threshold is exceeded on a server (disk or memory almost full…), or a critical server has a new problem.
       health_recovered:
         label: Server healthy again
         description: A server to watch or critical is back to normal.
@@ -258,10 +258,14 @@ en:
       os_upgraded: "“%{server}” went from %{from} to %{to}"
       server_rebooted: "“%{server}” has rebooted"
       health_warning: "“%{server}” is to watch: %{reasons}"
+      health_warning_new: "New problem on “%{server}”, still to watch: %{reasons}"
       health_critical: "“%{server}” is in a critical state: %{reasons}"
+      health_critical_new: "New problem on “%{server}”, still critical: %{reasons}"
       health_recovered: "“%{server}” is healthy again"
       docker_warning: "Docker on “%{server}” is to watch: %{reasons}"
+      docker_warning_new: "New problem with Docker on “%{server}”, still to watch: %{reasons}"
       docker_critical: "Docker on “%{server}” is in a critical state: %{reasons}"
+      docker_critical_new: "New problem with Docker on “%{server}”, still critical: %{reasons}"
       docker_recovered: "Docker on “%{server}” is healthy again"
       packages_changed: 'Packages of “%{server}”: %{counts}'
       packages:
