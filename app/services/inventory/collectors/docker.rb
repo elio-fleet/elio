@@ -30,6 +30,9 @@ class Inventory::Collectors::Docker < Inventory::Collector
 
     data = self.class.parse(sections).merge("docker" => "ok", "version" => access)
     scan_images(data)
+    failed = data["scans"].values.select { |scan| !scan["kept"] && scan["error"].present? && scan["method"].in?(SCAN_COMMANDS.keys) }
+    return partial(data, I18n.t("inventory.collectors.docker.scan_failed", count: failed.size, error: failed.first["error"].truncate(160))) if failed.any?
+
     ok(data)
   end
 
@@ -124,17 +127,25 @@ class Inventory::Collectors::Docker < Inventory::Collector
   # "debian 12": a Trivy / Grype severity → ours.
   SEVERITIES = { "critical" => "critical", "high" => "high", "medium" => "medium", "low" => "low", "negligible" => "low" }.freeze
 
-  # Trivy JSON: Results[].Vulnerabilities[] (and Metadata.OS for the system).
-  def self.parse_trivy(json)
-    report = JSON.parse(json)
-    os = report.dig("Metadata", "OS")
-    rows = Array(report["Results"]).flat_map { |result| Array(result["Vulnerabilities"]) }.map do |vulnerability|
-      { cve: vulnerability["VulnerabilityID"], source_package: vulnerability["PkgName"], packages: [ vulnerability["PkgName"] ],
-        installed_version: vulnerability["InstalledVersion"], fixed_version: vulnerability["FixedVersion"].to_s.split(",").first&.strip.presence,
-        severity: SEVERITIES.fetch(vulnerability["Severity"].to_s.downcase, "unknown"),
-        description: (vulnerability["Title"].presence || vulnerability["Description"]).to_s.squish.truncate(240).presence }
+  # Output of the Trivy template of inventory.trivy_scan: "@@os\t<class>\t<type>\t<target>"
+  # before the lines of each result, then "<id>\t<package>\t<installed>\t<fixed>\t<severity>\t<title>".
+  # The system comes from the target of the os-pkgs result: "nginx:1.25 (debian 12.2)".
+  def self.parse_trivy(text)
+    os = nil
+    rows = text.to_s.each_line.filter_map do |line|
+      fields = line.chomp.split("\t", -1)
+      if fields.first == "@@os"
+        os ||= (match = fields[3].to_s.match(/\((\w+) ([\w.]+)\)\z/)) && fields[1] == "os-pkgs" && { "id" => match[1], "version_id" => match[2] }
+        next
+      end
+      cve, package, installed, fixed, severity, title = fields
+      next if cve.blank? || package.blank?
+
+      { cve: cve, source_package: package, packages: [ package ], installed_version: installed.presence,
+        fixed_version: fixed.to_s.split(",").first&.strip.presence, severity: SEVERITIES.fetch(severity.to_s.downcase, "unknown"),
+        description: title.to_s.squish.truncate(240).presence }
     end
-    [ rows, os && { "id" => os["Family"], "version_id" => os["Name"] } ]
+    [ rows.uniq, os.presence ]
   end
 
   # Grype JSON: matches[] with vulnerability and artifact (and distro).
