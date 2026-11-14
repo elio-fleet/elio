@@ -4,6 +4,12 @@ class ServerSshChecksController < ApplicationController
   def show
     @server = Server.find(params[:server_id])
     @result = Ssh::Check.call(@server)
-    @server.record_ssh_status!(@result.success?) unless @result.reason == :missing_key
+    # Only a refused key says the app lost its access: a changed host key is
+    # another problem (logged as such), a missing key a setup step.
+    if @result.success? || @result.reason == :key_refused
+      @server.record_ssh_status!(@result.success?)
+    elsif @result.reason == :host_key_changed
+      @server.record_host_key_mismatch!(@result.host_key[:new])
+    end
   end
 end

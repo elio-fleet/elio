@@ -146,10 +146,11 @@ inventory:
       echo "@@elio dpkg"; docker cp -L @{container}:/var/lib/dpkg/status - 2>/dev/null | tar -xO 2>/dev/null
 
   trivy_scan:
-    description: "Vulnerabilities of a Docker image with Trivy, when it is installed (Trivy only writes its own cache)."
+    description: "Vulnerabilities of a Docker image with Trivy, when it is installed (Trivy only writes its own cache). A template prints one line per CVE with the fields Elio keeps: the JSON report of an image weighs tens of megabytes."
     run_as: root
     timeout: 300
-    default: "trivy image --quiet --format json --scanners vuln @{image}"
+    default: |-
+      trivy image --quiet --scanners vuln --format template --template '{{- range . }}@@os{{ "\t" }}{{ .Class }}{{ "\t" }}{{ .Type }}{{ "\t" }}{{ .Target }}{{ "\n" }}{{- range .Vulnerabilities }}{{ .VulnerabilityID }}{{ "\t" }}{{ .PkgName }}{{ "\t" }}{{ .InstalledVersion }}{{ "\t" }}{{ .FixedVersion }}{{ "\t" }}{{ .Severity }}{{ "\t" }}{{ .Title }}{{ "\n" }}{{- end }}{{- end }}' @{image}
 
   grype_scan:
     description: "Vulnerabilities of a Docker image with Grype, when it is installed and Trivy is not (Grype only writes its own cache)."

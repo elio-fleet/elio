@@ -31,6 +31,7 @@ class Inventory::Collection
     outcomes
   rescue Ssh::Connection::Error => e
     @server.record_ssh_status!(false) if e.reason == :key_refused
+    @server.record_host_key_mismatch!(e.new_fingerprint) if e.is_a?(Ssh::Connection::HostKeyMismatchError)
     failed = @categories.index_with { error_outcome("#{e.title} — #{e.message}") }
     failed.each { |category, outcome| save_snapshot(category, outcome, privileged: false) }
     @server.refresh_health!
