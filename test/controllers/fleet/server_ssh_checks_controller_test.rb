@@ -49,7 +49,7 @@ class ServerSshChecksControllerTest < ActionDispatch::IntegrationTest
       assert_select ".ssh-check-details", text: /127.0.0.1/
       assert_select ".ssh-setup-hint", 0
     end
-    assert_equal false, servers(:web).reload.ssh_ok
+    assert_nil servers(:web).reload.ssh_ok, "a closed port says nothing about the Elio key"
   end
 
   test "guides the user when the Elio key is refused" do
@@ -81,7 +81,20 @@ class ServerSshChecksControllerTest < ActionDispatch::IntegrationTest
     assert_select ".ssh-setup-hint", 0
   end
 
-  test "only admins get the button to trust a new host key" do
+test "a changed host key is logged once as such, never as a refused key" do
+  servers(:web).update_columns(ssh_ok: true)
+  changed = Ssh::Check::Result.new(success: false, message: "x", details: "x", reason: :host_key_changed, host_key: { new: "SHA256:new", known: [ "SHA256:old" ] })
+  sign_in users(:one)
+
+  assert_difference -> { Activity.where(kind: "host_key_mismatch").count }, 1 do
+    2.times { stub_method(Ssh::Check, :call, changed) { get server_ssh_check_path(servers(:web)) } }
+  end
+  assert_equal 0, Activity.where(kind: "ssh_access_lost").count
+  assert servers(:web).reload.ssh_ok, "the key was not refused"
+  assert_equal "SHA256:new", Activity.where(kind: "host_key_mismatch").last.data["new_fingerprint"]
+end
+
+test "only admins get the button to trust a new host key" do
     changed = Ssh::Check::Result.new(success: false, message: "L'empreinte du serveur a changé", details: "x", reason: :host_key_changed,
                                    host_key: { new: "SHA256:new", known: [] })
     sign_in users(:operator)

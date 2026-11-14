@@ -25,6 +25,7 @@ module Activity::Summaries
     unknown_key_detected: proc { Activity::Summaries.t(:unknown_key_detected, name: key_name, target: target) },
     key_disappeared: proc { Activity::Summaries.t(:key_disappeared, name: key_name, target: target) },
     ssh_access_lost: proc { Activity::Summaries.t(:ssh_access_lost, server: server_name) },
+    host_key_mismatch: proc { Activity::Summaries.t(:host_key_mismatch, server: server_name, fingerprint: data["new_fingerprint"]) },
     host_key_changed: proc { Activity::Summaries.t(:host_key_changed, server: server_name, fingerprint: data["new_fingerprint"]) },
     server_unreachable: proc { Activity::Summaries.t(:server_unreachable, server: server_name) },
     server_back_online: proc { Activity::Summaries.t(:server_back_online, server: server_name) },
