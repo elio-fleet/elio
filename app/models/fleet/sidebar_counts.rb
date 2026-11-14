@@ -15,7 +15,7 @@ class SidebarCounts
     minimum = @settings.vulnerability_alert_severity
     return if minimum == "none"
 
-    count = ServerVulnerability.host.fixable.at_least(minimum).distinct.count(:cve)
+    count = VulnerabilityCount.fixable_now(minimum)
     Count.new(count, :crit) if count.positive?
   end
 

@@ -211,6 +211,13 @@ en:
       critical_caption: critical thresholds, unreachable
       serious_vulnerabilities: Serious vulnerabilities
       fixable: fixable, in the servers' own packages
+      fixable_more:
+        one: "fixable · %{count} more than a week ago"
+        other: "fixable · %{count} more than a week ago"
+      fixable_fewer:
+        one: "fixable · %{count} fewer than a week ago"
+        other: "fixable · %{count} fewer than a week ago"
+      fixable_same: "fixable · as many as a week ago"
       most_serious_first: most serious first
       group_crit:
         one: "Critical · %{count}"
@@ -231,6 +238,12 @@ en:
         one: "%{count} to watch"
         other: "%{count} to watch"
       group_fine: nothing to report
+      group_in_list: "Open in the server list →"
+      server_unreachable: unreachable
+      failed_runs: Failed runs
+      failed_runs_since:
+        one: "%{count} in the last 24 h"
+        other: "%{count} in the last 24 h"
       online: Online
       answer_their_ssh_port: answer on their SSH port
       watch: To watch

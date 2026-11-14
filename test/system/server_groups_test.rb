@@ -24,6 +24,21 @@ class ServerGroupsTest < ApplicationSystemTestCase
     assert_selector "#servers tbody tr", count: Server.count
   end
 
+  test "unfolding a group on the overview shows its servers" do
+    servers(:db).update_columns(reachable: false)
+    visit root_path
+
+    within("#groups") do
+      assert_no_selector "li.group-server"
+      find("summary", text: "Production").click
+      assert_selector "li.group-server", count: 2
+      assert_selector "li.group-server:first-child", text: /Database.*injoignable/m
+      click_on "Web"
+    end
+
+    assert_current_path server_path(servers(:web))
+  end
+
   test "checking a whole group in the public_key's bulk form" do
     visit public_key_path(public_keys(:alice))
 

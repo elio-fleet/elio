@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_14_220000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_14_220014) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -582,6 +582,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_14_220000) do
     t.string "description"
     t.index ["cve"], name: "index_vulnerabilities_on_cve"
     t.index ["source", "release", "package", "cve"], name: "index_vulnerabilities_uniqueness", unique: true
+  end
+
+  create_table "vulnerability_counts", force: :cascade do |t|
+    t.date "recorded_on", null: false
+    t.string "severity", null: false
+    t.integer "fixable", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recorded_on"], name: "index_vulnerability_counts_on_recorded_on", unique: true
   end
 
   create_table "vulnerability_feeds", force: :cascade do |t|

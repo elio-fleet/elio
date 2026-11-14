@@ -241,7 +241,44 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get root_path
 
     assert_select "#groups li.group-summary", ServerGroup.count
-    assert_select "#groups a[href=?]", servers_path(group: group.id), text: /#{group.name}.*1 critique/m
+    assert_select "##{ActionView::RecordIdentifier.dom_id(group, :summary)} details" do
+      assert_select "summary", text: /#{group.name}.*1 critique/m
+      assert_select "li.group-server", group.servers.count
+      assert_select "li.group-server:first-child[data-state=off]", text: /injoignable/
+      assert_select "li.group-server a[href=?]", server_path(group.servers.first)
+      assert_select "a[href=?]", servers_path(group: group.id), text: /Voir dans la liste des serveurs/
+    end
+  end
+
+  test "the failed runs of the last day, with a link to all of them" do
+    old = BackgroundTask.create!(kind: "inventory", label: "Inventaire ancien", status: "failed", finished_at: 2.days.ago)
+    BackgroundTask.create!(kind: "inventory", label: "Inventaire réussi", status: "succeeded", finished_at: 1.hour.ago)
+    partial = BackgroundTask.create!(kind: "keys_scan", label: "Scan des clés", status: "partial", finished_at: 1.hour.ago)
+    sign_in users(:viewer)
+
+    get root_path
+
+    assert_select "#failed-runs" do
+      assert_select "a[href=?]", tasks_path(status: "failed"), text: "Tout voir"
+      assert_select "li.failed-run", 1
+      assert_select "li.failed-run a[href=?]", task_path(partial), text: "Scan des clés"
+      assert_select "a[href=?]", task_path(old), 0
+    end
+
+    BackgroundTask.delete_all
+    get root_path
+    assert_select "#failed-runs", 0
+  end
+
+  test "the vulnerabilities tile compares with a week ago once there is a count of that time" do
+    ServerVulnerability.delete_all
+    sign_in users(:one)
+    get root_path
+    assert_select "#stat-vulnerabilities", text: /corrigeables, sur le système des serveurs/
+
+    VulnerabilityCount.create!(recorded_on: 7.days.ago.to_date, severity: "high", fixable: 3)
+    get root_path
+    assert_select "#stat-vulnerabilities", text: /corrigeables · 3 de moins qu'il y a 7 jours/
   end
 
   test "the temporary accesses only when there are some" do

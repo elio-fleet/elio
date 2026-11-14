@@ -211,6 +211,13 @@ fr:
       critical_caption: seuils critiques, injoignables
       serious_vulnerabilities: Vulnérabilités graves
       fixable: corrigeables, sur le système des serveurs
+      fixable_more:
+        one: "corrigeables · %{count} de plus qu'il y a 7 jours"
+        other: "corrigeables · %{count} de plus qu'il y a 7 jours"
+      fixable_fewer:
+        one: "corrigeables · %{count} de moins qu'il y a 7 jours"
+        other: "corrigeables · %{count} de moins qu'il y a 7 jours"
+      fixable_same: "corrigeables · autant qu'il y a 7 jours"
       most_serious_first: du plus grave au moins grave
       group_crit:
         one: "Critique · %{count}"
@@ -231,6 +238,12 @@ fr:
         one: "%{count} à surveiller"
         other: "%{count} à surveiller"
       group_fine: rien à signaler
+      group_in_list: "Voir dans la liste des serveurs →"
+      server_unreachable: injoignable
+      failed_runs: Exécutions en échec
+      failed_runs_since:
+        one: "%{count} ces dernières 24 h"
+        other: "%{count} ces dernières 24 h"
       online: En ligne
       answer_their_ssh_port: répondent sur leur port SSH
       watch: À surveiller
