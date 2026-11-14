@@ -208,6 +208,9 @@ fr:
       integration_disabled:
         label: Extension désactivée
         description: Un administrateur a désactivé une extension.
+      notification_channel_disabled:
+        label: Canal de notification désactivé
+        description: "Un canal de notification a échoué pendant une journée sans un seul envoi réussi : Elio l'a désactivé."
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
@@ -362,6 +365,7 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      notification_channel_disabled: 'Canal de notification « %{channel} » désactivé après une journée d''échecs : %{error}'
       coolify_deployed: "Coolify : %{application} déployée%{commit}"
       coolify_deploy_failed: "Coolify : déploiement de %{application} en échec%{commit}"
       quoted: "« %{text} »"
@@ -480,6 +484,11 @@ fr:
         signing_secret: Secret de signature
         last_delivery_failed_html: 'Dernier envoi en échec : %{last_error}'
         last_delivery_html: Dernier envoi %{last_delivered_at}.
+        verification_example: 'Vérifier un message (Python) :'
+        given_up_html: 'Désactivé par Elio : aucun envoi réussi depuis %{failing_since}. Corrigez la destination, puis réactivez le canal.'
+        backing_off_html:
+          one: 'Un échec, prochain essai %{retry_at} : les notifications attendent jusque-là.'
+          other: '%{count} échecs de suite, prochain essai %{retry_at} : les notifications attendent jusque-là.'
         notification_channel_yet: Aucun canal de notification pour le moment.
         secret_html: Secret de signature (HMAC SHA-256 de « %{body} », en-têtes %{timestamp} et %{signature} ; refusez les messages trop anciens)
     notification_channels:

@@ -5,6 +5,9 @@
 # network when the administrator allows it on the channel (allow_http). Each channel
 # picks the activity kinds it receives (Activity::KINDS), whether messages
 # mention everyone (Slack, Discord), and whether it gets a daily digest.
+# A failing channel backs off (1, 2, 4… minutes, an hour at most): what it
+# cannot send meanwhile waits in its batches, and one attempt at a time is
+# made; after a day without success it is turned off and an activity says so.
 class NotificationChannel < ApplicationRecord
   include Localized
   localized # nil: the instance's language
@@ -18,6 +21,10 @@ class NotificationChannel < ApplicationRecord
   DISCORD_WEBHOOK = %r{\Ahttps://(?:(?:ptb|canary)\.)?discord(?:app)?\.com/api/webhooks/\d+/[A-Za-z0-9_-]+\z}
   EMAIL = URI::MailTo::EMAIL_REGEXP
   MAX_RECIPIENTS = 20
+  BACKOFF_MAX = 1.hour
+  GIVE_UP_AFTER = 24.hours
+  # Time an attempt claims (claim_attempt!): the other jobs wait meanwhile.
+  ATTEMPT_WINDOW = 1.minute
 
   encrypts :webhook_url
   encrypts :signing_secret
@@ -29,6 +36,8 @@ class NotificationChannel < ApplicationRecord
 
   before_validation :generate_signing_secret, if: -> { kind == "webhook" && signing_secret.blank? }
   before_validation { self.allow_http = false unless kind.in?(%w[webhook slack_compatible]) }
+  # Turned back on, or given a new destination: the next notification is tried right away.
+  before_save :forget_failures, if: -> { will_save_change_to_enabled?(to: true) || will_save_change_to_webhook_url? || will_save_change_to_recipients? }
 
   has_many :notification_batches, dependent: :delete_all
 
@@ -76,11 +85,63 @@ class NotificationChannel < ApplicationRecord
     "…"
   end
 
-  def record_delivery!(error: nil)
-    update_columns(error ? { last_error: error } : { last_delivered_at: Time.current, last_error: nil })
+  # The channel is failing and waits before its next attempt.
+  def backing_off? = retry_at.present? && retry_at.future?
+
+  # Wait after the n-th failure in a row: 1, 2, 4… minutes, BACKOFF_MAX at most.
+  def self.backoff(failures) = [ ATTEMPT_WINDOW * (2**(failures - 1).clamp(0, 10)), BACKOFF_MAX ].min
+
+  # True when a job may try to deliver now. While the channel fails, only one
+  # job at a time gets it: the others see the channel backing off and leave
+  # their activities in its batches.
+  def claim_attempt!
+    return true if retry_at.nil?
+    return false if retry_at.future?
+
+    claimed = self.class.where(id: id, retry_at: retry_at).update_all(retry_at: ATTEMPT_WINDOW.from_now) == 1
+    reload
+    claimed
   end
 
+  # A success forgets the failures and sends what waited at once; a failure
+  # pushes the next attempt further, and turns the channel off when it has
+  # failed for GIVE_UP_AFTER.
+  def record_delivery!(error: nil)
+    now = Time.current
+    if error
+      failures = failure_count + 1
+      update_columns(last_error: error, failure_count: failures, failing_since: failing_since || now, retry_at: now + self.class.backoff(failures))
+      give_up! if enabled? && failing_since <= GIVE_UP_AFTER.ago
+    else
+      waited = failure_count.positive?
+      update_columns(last_delivered_at: now, last_error: nil, failure_count: 0, failing_since: nil, retry_at: nil)
+      send_waiting_batches if waited
+    end
+  end
+
+  # Turned off by Elio (not by an administrator) after failing for too long.
+  def given_up? = !enabled? && failing_since.present?
+
   private
+
+  def give_up!
+    update_columns(enabled: false, retry_at: nil)
+    notification_batches.undelivered.update_all(failed_at: Time.current)
+    Activity.record!(:notification_channel_disabled, user: nil, channel_name: name, error: last_error)
+  end
+
+  def send_waiting_batches
+    notification_batches.undelivered.where(send_at: Time.current..).find_each do |batch|
+      batch.update!(send_at: Time.current)
+      DeliverNotificationBatchJob.perform_later(batch)
+    end
+  end
+
+  def forget_failures
+    self.failure_count = 0
+    self.failing_since = nil
+    self.retry_at = nil
+  end
 
   def generate_signing_secret
     self.signing_secret = SecureRandom.hex(32)
