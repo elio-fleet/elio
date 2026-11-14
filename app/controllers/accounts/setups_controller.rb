@@ -42,7 +42,9 @@ class SetupsController < ApplicationController
       User.connection.execute(User.sanitize_sql_array([ "SELECT pg_advisory_xact_lock(?)", SETUP_LOCK ]))
       raise ActionController::RoutingError, "Setup already done" if User.exists?
 
-      @user.save
+      # The language the first admin set up Elio in becomes the language of the
+      # installation (emails, runs, channels without their own language).
+      @user.save && AppSetting.current.update!(default_locale: I18n.locale.to_s)
     end
   end
 end

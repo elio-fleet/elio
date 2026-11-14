@@ -93,7 +93,7 @@ module Activity::Summaries
       forced = data["forced"] ? " #{Activity::Summaries.t(:rotation_forced, count: data["failed"].to_i)}" : ""
       Activity::Summaries.t(:ssh_key_rotated, count: data["servers"].to_i) + forced
     end,
-    automation_run: proc { Activity::Summaries.t(:automation_run, automation: data["automation"] ? Automation.label_for(data["automation"]) : data["automation_label"], result: data["result"]) },
+    automation_run: proc { Activity::Summaries.t(:automation_run, automation: data["automation"] ? Automation.label_for(data["automation"]) : data["automation_label"], result: LocalizedText.render(data["result"])) },
     monitor_down: proc { Activity::Summaries.t(:monitor_down, monitor: data["monitor"]) + (server_name ? " (#{server_name})" : "") },
     monitor_up: proc { Activity::Summaries.t(:monitor_up, monitor: data["monitor"]) + (server_name ? " (#{server_name})" : "") },
     monitor_cert_expiring: proc { Activity::Summaries.t(:monitor_cert_expiring, monitor: data["monitor"], count: data["days"].to_i) },

@@ -5,7 +5,7 @@ class ServerScansController < ApplicationController
 
   def create
     servers = Server.order(:name).to_a
-    task = BackgroundTask.enqueue!(kind: "keys_scan", label: t("server_scans_controller.label", t: (helpers.t("count.servers", count: servers.size))), servers: servers) do |item|
+    task = BackgroundTask.enqueue!(kind: "keys_scan", label: LocalizedText.part("server_scans_controller.label", t: LocalizedText.part("count.servers", count: servers.size)), servers: servers) do |item|
       ScanServerJob.perform_later(item.server, task_item: item)
     end
 
