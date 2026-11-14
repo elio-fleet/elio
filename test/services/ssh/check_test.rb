@@ -83,6 +83,7 @@ class Ssh::CheckTest < ActiveSupport::TestCase
     assert_equal :host_key_changed, result.reason
     assert_equal "SHA256:abc", result.host_key[:new]
     assert_equal [], result.host_key[:known]
+    assert_not result.host_key[:new_algorithm], "nothing was pinned to compare with"
   end
 
   test "explains when the server cannot be reached" do

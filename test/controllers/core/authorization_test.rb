@@ -110,6 +110,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "save the automations" => -> { patch settings_automations_update_path, params: { automations: {} } },
       "generate the Elio key" => -> { post ssh_key_path },
       "trust a new host key" => -> { post server_host_key_path(servers(:web)), params: { fingerprint: "SHA256:new" } },
+      "changed host keys" => -> { get host_key_batch_path },
+      "trust several new host keys" => -> { post host_key_batch_path },
       "notifications" => -> { get settings_notifications_path },
       "new channel" => -> { get new_settings_notification_channel_path },
       "create channel" => -> { post settings_notification_channels_path, params: { notification_channel: { name: "#x", webhook_url: WEBHOOK, activity_kinds: [ "" ] } } },

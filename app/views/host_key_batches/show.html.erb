@@ -1,0 +1,57 @@
+<% content_for :title, t("title", page: t(".title")) %>
+
+<%= page_header t(".title"), subtitle: t("count.servers", count: @pending.size), crumbs: [ [ t("nav.fleet"), servers_path ], t(".title") ] %>
+
+<% if @pending.any? %>
+  <p class="mb-4 max-w-3xl text-sm text-ink-2"><%= t(".help_html", command: tag.code("ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub", class: "font-mono text-xs")) %></p>
+
+  <%= form_with url: host_key_batch_path, method: :post, data: { controller: "check-all" } do |form| %>
+    <div class="card overflow-x-auto">
+      <table id="pending-host-keys" class="table-dense">
+        <thead>
+          <tr>
+            <th class="pl-4"><button type="button" data-action="check-all#toggle" class="cursor-pointer text-xs font-medium text-accent"><%= t(".all") %></button></th>
+            <th><%= t(".server") %></th>
+            <th><%= t(".change") %></th>
+            <th><%= t("words.known") %></th>
+            <th><%= t(".presented") %></th>
+            <th class="pr-4 col-nowrap"><%= t(".detected") %></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% @pending.each do |pending| %>
+            <tr id="<%= dom_id(pending.server, :pending_host_key) %>" class="pending-host-key align-top">
+              <td class="pl-4">
+                <%= check_box_tag "fingerprints[#{pending.server.id}]", pending.new_fingerprint, false, id: dom_id(pending.server, :trust_host_key),
+                                  data: { check_all_target: "checkbox" }, aria: { label: t(".trust_for", server_name: pending.server.name) }, class: "rounded border-line" %>
+              </td>
+              <td><%= server_chip pending.server.name, server_path(pending.server) %></td>
+              <td class="col-nowrap">
+                <%= pending.new_algorithm? ? status_badge(:warn, t(".new_algorithm")) : status_badge(:crit, t(".key_changed")) %>
+              </td>
+              <td class="font-mono text-xs break-all text-ink-2">
+                <% known = pending.known %>
+                <% if known.any? %>
+                  <% known.each do |entry| %><span class="block"><%= entry.type %> <%= entry.fingerprint %></span><% end %>
+                <% else %>
+                  —
+                <% end %>
+              </td>
+              <td class="font-mono text-xs break-all">
+                <span class="host-key-new block"><%= [ pending.key_type, pending.new_fingerprint ].compact.join(" ") %></span>
+                <code class="mt-1 block select-all text-ink-3"><%= Ssh::HostKeyTrust.verify_command(pending.key_type) %></code>
+              </td>
+              <td class="pr-4 col-nowrap text-xs text-ink-3"><%= relative_time_tag pending.detected_at %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <div class="mt-4">
+      <%= form.button t(".trust_selected"), class: "btn btn-primary",
+                      data: { turbo_confirm: t(".trust_selected_confirm"), confirm_label: t(".trust"), confirm_variant: "danger" } %>
+    </div>
+  <% end %>
+<% else %>
+  <div class="card"><%= empty_state t(".none"), t(".none_text"), icon: :check_circle %></div>
+<% end %>

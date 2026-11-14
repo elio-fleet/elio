@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   resource :server_import, only: %i[new create], path: "servers/import" do
     post :preview
   end
+  resource :host_key_batch, only: %i[show create], path: "servers/host-keys"
   resources :servers do
     resource :ping, only: %i[show create], controller: "server_pings"
     resource :ssh_check, only: :show, controller: "server_ssh_checks"

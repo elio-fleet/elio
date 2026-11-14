@@ -61,12 +61,13 @@ class Server < ApplicationRecord
   end
 
   # Logs host_key_mismatch the first time the server presents a fingerprint
-  # Elio does not know (once per new fingerprint, until it is accepted).
-  def record_host_key_mismatch!(new_fingerprint)
+  # Elio does not know (once per new fingerprint, until it is accepted), with
+  # the key type and whether it is a new algorithm rather than a changed key.
+  def record_host_key_mismatch!(new_fingerprint, key_type: nil, new_algorithm: false)
     last = activities.where(kind: %w[host_key_mismatch host_key_changed]).order(:id).last
     return if last&.kind == "host_key_mismatch" && last.data["new_fingerprint"] == new_fingerprint
 
-    Activity.record!(:host_key_mismatch, server: self, new_fingerprint: new_fingerprint)
+    Activity.record!(:host_key_mismatch, server: self, new_fingerprint: new_fingerprint, key_type: key_type, new_algorithm: new_algorithm)
   end
 
   # Remembers a ping result (see Servers::Ping) and logs when the server goes
