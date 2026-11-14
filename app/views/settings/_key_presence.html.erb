@@ -1,0 +1,15 @@
+<%# Where Elio's key is, server by server, from the last key scans and SSH checks (presence: a KeyPresence). %>
+<div id="ssh-key-presence" class="mt-6">
+  <h3 class="text-sm font-semibold"><%= t("settings.key_presence.title") %></h3>
+  <p class="mt-1 max-w-3xl text-xs text-ink-3"><%= t("settings.key_presence.source") %></p>
+  <% if presence.any? %>
+    <%= attention_list class: "mt-3 rounded-md border border-line" do %>
+      <% presence.by_state.each do |state, servers| %>
+        <%= attention_item KeyPresence::TONES.fetch(state), KeyPresence.state_label(state, servers.size),
+              servers: servers.first(KeyPresence::SHOWN).map { |server| [ server.name, server_path(server) ] }, id: "key-presence-#{state}" %>
+      <% end %>
+    <% end %>
+  <% else %>
+    <p class="mt-3 text-sm text-ink-3"><%= t("settings.key_presence.no_servers") %></p>
+  <% end %>
+</div>

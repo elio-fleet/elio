@@ -5,7 +5,7 @@
 
 <%= form_with url: two_factor_challenge_path, class: "space-y-5" do |f| %>
   <% if request.post? %>
-    <p id="error_explanation" class="rounded-md border border-crit/40 bg-crit-soft px-4 py-3 text-sm text-crit-ink"><%= t(".invalid") %></p>
+    <p id="error_explanation" class="rounded-md border border-crit/40 bg-crit-soft px-4 py-3 text-sm text-crit-ink"><%= t(".invalid") %> <%= t(".attempts_left", count: @user.attempts_left, duration: User.lock_duration) %></p>
   <% end %>
   <div>
     <%= f.label :code, t(".code"), class: "label" %>

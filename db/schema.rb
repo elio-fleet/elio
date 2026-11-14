@@ -80,6 +80,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_100000) do
     t.datetime "updated_at", null: false
     t.jsonb "state", default: {}, null: false
     t.jsonb "server_group_ids", default: [], null: false
+    t.integer "window_start_hour"
+    t.integer "window_end_hour"
+    t.jsonb "excluded_server_group_ids", default: [], null: false
+    t.jsonb "run_durations", default: [], null: false
     t.index ["kind"], name: "index_automations_on_kind", unique: true
   end
 

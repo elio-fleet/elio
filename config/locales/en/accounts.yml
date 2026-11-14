@@ -82,6 +82,9 @@ en:
       title: Two-factor authentication
       intro: Enter the 6-digit code of your authenticator app, or a backup code.
       invalid: Invalid or already used code.
+      attempts_left:
+        one: 'One attempt left: after another failure, your account is locked for %{duration}.'
+        other: '%{count} attempts left before your account is locked for %{duration}.'
       code: Code
       submit: Verify
       cancel: Cancel and go back to sign in
@@ -101,6 +104,8 @@ en:
       title: Backup codes
       keep_html: Keep these codes somewhere safe (a password manager). Each allows <strong>one</strong> sign in if you lose your phone. <strong>They will not be shown again.</strong>
       saved: I have saved my codes
+      download: Download
+      file_heading: Elio backup codes for %{email} (%{host}), generated on %{date}. Each code works once.
     new:
       title: Turn on two-factor authentication
       back: "← My account"
@@ -110,6 +115,18 @@ en:
       enter: 2. Enter the code shown by the app
       code: Confirmation code
       submit: Turn on
+      mandatory: 'Two-factor authentication is mandatory for your role (%{role}): turn it on to continue.'
+  account_mailer:
+    backup_code_used:
+      subject: A backup code was used to sign in to Elio
+      hello: Hello,
+      text: 'A backup code was used to sign in to your Elio account %{email} on %{date} (IP address: %{ip}).'
+      left:
+        one: You have %{count} backup code left.
+        other: You have %{count} backup codes left.
+      none_left: 'You have no backup code left: generate new ones in your account.'
+      not_you: 'If it was not you, someone knows your password and had one of your codes: change your password, generate new backup codes and tell an administrator.'
+      account: 'Your account: %{url}'
   invitation_mailer:
     invite:
       subject: Invitation to join Elio
@@ -133,7 +150,7 @@ en:
     two_factor:
       signed_in: Signed in.
       too_many: 'Too many attempts: sign in again.'
-      locked: 'Too many failed attempts: your account is locked for 15 minutes.'
+      locked: 'Too many failed attempts: your account is locked for %{duration}.'
       expired: 'Sign in session expired: sign in again.'
       already_enabled: Two-factor authentication is already on.
       enabled: Two-factor authentication turned on.
@@ -151,6 +168,7 @@ en:
       deactivated: "%{email} is deactivated: they can no longer sign in."
       reactivated: "%{email} can sign in again."
       two_factor_reset: The two-factor authentication of %{email} is reset.
+      unlocked: "%{email} can sign in again."
     security:
       mandatory_admins: Two-factor authentication is mandatory for administrators.
       mandatory_operators: Two-factor authentication is mandatory for operators.

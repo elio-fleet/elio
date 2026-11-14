@@ -31,6 +31,7 @@ fr:
         activity_kinds: Les activités
       automation:
         interval_minutes: La fréquence
+        window_end_hour: Les heures
       invitation:
         email: L'email
         role: Le rôle
@@ -41,6 +42,10 @@ fr:
         password_confirmation: Confirmation du mot de passe
     errors:
       models:
+        automation:
+          attributes:
+            window_end_hour:
+              same_as_start: doivent finir à une autre heure que leur début
         server:
           attributes:
             host:
@@ -77,6 +82,10 @@ fr:
               already_invited: a déjà une invitation en attente
   devise:
     failure:
+      invalid: "%{authentication_keys} ou mot de passe incorrect. Après %{maximum_attempts} échecs de suite, un compte est verrouillé pendant %{duration}."
+      not_found_in_database: "%{authentication_keys} ou mot de passe incorrect. Après %{maximum_attempts} échecs de suite, un compte est verrouillé pendant %{duration}."
+      last_attempt: "%{authentication_keys} ou mot de passe incorrect. Encore un essai : après un nouvel échec, ce compte est verrouillé pendant %{duration}."
+      locked: "Trop d'essais ratés : ce compte est verrouillé pendant %{duration} au plus. Un administrateur peut le déverrouiller avant."
       deactivated: Ce compte a été désactivé. Contactez un administrateur.
   time:
     formats:

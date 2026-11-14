@@ -82,6 +82,9 @@ fr:
       title: Double authentification
       intro: Saisissez le code à 6 chiffres de votre application d'authentification, ou un code de secours.
       invalid: Code invalide ou déjà utilisé.
+      attempts_left:
+        one: 'Encore un essai : après un nouvel échec, votre compte est verrouillé pendant %{duration}.'
+        other: Encore %{count} essais avant que votre compte soit verrouillé pendant %{duration}.
       code: Code
       submit: Vérifier
       cancel: Annuler et revenir à la connexion
@@ -101,6 +104,8 @@ fr:
       title: Codes de secours
       keep_html: Conservez ces codes en lieu sûr (gestionnaire de mots de passe). Chacun permet <strong>une</strong> connexion si vous perdez votre téléphone. <strong>Ils ne seront plus affichés.</strong>
       saved: J'ai enregistré mes codes
+      download: Télécharger
+      file_heading: Codes de secours Elio de %{email} (%{host}), générés le %{date}. Chaque code ne sert qu'une fois.
     new:
       title: Activer la double authentification
       back: "← Mon compte"
@@ -110,6 +115,18 @@ fr:
       enter: 2. Saisissez le code affiché par l'application
       code: Code de confirmation
       submit: Activer
+      mandatory: 'La double authentification est obligatoire pour votre rôle (%{role}) : activez-la pour continuer.'
+  account_mailer:
+    backup_code_used:
+      subject: Un code de secours a servi à vous connecter à Elio
+      hello: Bonjour,
+      text: 'Un code de secours a servi à vous connecter à votre compte Elio %{email} le %{date} (adresse IP : %{ip}).'
+      left:
+        one: Il vous reste %{count} code de secours.
+        other: Il vous reste %{count} codes de secours.
+      none_left: 'Il ne vous reste aucun code de secours : générez-en de nouveaux dans votre compte.'
+      not_you: "Si ce n'était pas vous, quelqu'un connaît votre mot de passe et avait l'un de vos codes : changez votre mot de passe, générez de nouveaux codes de secours et prévenez un administrateur."
+      account: 'Votre compte : %{url}'
   invitation_mailer:
     invite:
       subject: Invitation à rejoindre Elio
@@ -133,7 +150,7 @@ fr:
     two_factor:
       signed_in: Connexion réussie.
       too_many: 'Trop de tentatives : reconnectez-vous.'
-      locked: 'Trop d''essais ratés : votre compte est verrouillé pendant 15 minutes.'
+      locked: 'Trop d''essais ratés : votre compte est verrouillé pendant %{duration}.'
       expired: 'Session de connexion expirée : reconnectez-vous.'
       already_enabled: La double authentification est déjà activée.
       enabled: Double authentification activée.
@@ -151,6 +168,7 @@ fr:
       deactivated: "%{email} est désactivé : il ne peut plus se connecter."
       reactivated: "%{email} peut de nouveau se connecter."
       two_factor_reset: La double authentification de %{email} est réinitialisée.
+      unlocked: "%{email} peut de nouveau se connecter."
     security:
       mandatory_admins: Double authentification obligatoire pour les administrateurs.
       mandatory_operators: Double authentification obligatoire pour les opérateurs.

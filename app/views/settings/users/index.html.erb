@@ -72,6 +72,8 @@
           <p class="text-xs text-ink-3">
             <% if user.deactivated? %>
               <span class="user-state font-medium text-crit-ink"><%= t(".deactivated") %></span> <%= relative_time_tag user.deactivated_at %>
+            <% elsif user.access_locked? %>
+              <span class="user-state font-medium text-warn-ink"><%= t(".locked") %></span>, <%= relative_time_tag user.locked_at + User.unlock_in, prefix: t(".lock_ends") %>
             <% elsif user.last_sign_in_at %>
               <%= t(".last_sign_in") %> <%= relative_time_tag user.last_sign_in_at %>
             <% else %>
@@ -89,11 +91,14 @@
         <% elsif user != current_user || user.two_factor_enabled? %>
           <% if user != current_user %>
             <%= actions_menu label: t(".actions_of", email: user.email) do %>
+              <% if user.access_locked? %>
+                <%= menu_item t(".unlock"), unlock_settings_user_path(user), icon: :lock_closed, method: :post %>
+              <% end %>
               <% if user.two_factor_enabled? %>
                 <%= menu_item t(".reset_two_factor"), reset_two_factor_settings_user_path(user), icon: :key, method: :post,
                               confirm: t(".reset_two_factor_confirm", email: user.email), data: { confirm_label: t(".reset") } %>
-                <%= menu_separator %>
               <% end %>
+              <%= menu_separator if user.access_locked? || user.two_factor_enabled? %>
               <%= menu_item t(".deactivate"), deactivate_settings_user_path(user), icon: :x_mark, method: :post, danger: true,
                             confirm: t(".deactivate_confirm", email: user.email), data: { confirm_label: t(".deactivate") } %>
             <% end %>

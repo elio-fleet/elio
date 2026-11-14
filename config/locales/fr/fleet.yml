@@ -400,6 +400,7 @@ fr:
       elio_has_ssh_key: Elio n'a pas encore de clé SSH pour se connecter aux serveurs.
       ask_administrator_generate: Demandez à un administrateur de la générer.
       elio_s_key_install: Commande d'installation de la clé Elio
+      other_accounts: Autre compte (sudo, compte dédié) ou restriction à l'adresse d'Elio
       install_html: 'Le serveur ne connaît pas encore la clé d''Elio. Connectez-vous-y en %{login} et lancez cette commande, puis réessayez :'
   server_group:
     colors:

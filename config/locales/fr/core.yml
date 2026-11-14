@@ -206,7 +206,6 @@ fr:
       inactive: "%{tool} inactif"
   flash:
     two_factor:
-      mandatory: 'La double authentification est obligatoire pour votre rôle : activez-la pour continuer.'
       mandatory_role: La double authentification est obligatoire pour votre rôle (%{role}).
   nouns:
     servers: serveurs

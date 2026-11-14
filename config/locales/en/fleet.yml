@@ -400,6 +400,7 @@ en:
       elio_has_ssh_key: Elio has no SSH key yet to log in to the servers.
       ask_administrator_generate: Ask an administrator to generate it.
       elio_s_key_install: Elio's key install command
+      other_accounts: Another account (sudo, dedicated account) or a restriction to Elio's address
       install_html: 'The server does not know Elio''s key yet. Log in to it as %{login} and run this command, then try again:'
   server_group:
     colors:
