@@ -15,7 +15,7 @@ class InvitationsController < ApplicationController
   def accept
     passwords = params.expect(user: %i[password password_confirmation])
     @user = @invitation.accept!(password: passwords[:password], password_confirmation: passwords[:password_confirmation])
-    Activity.record!(:invitation_accepted, user: @user, email: @user.email, role_label: @user.role_label)
+    Activity.record!(:invitation_accepted, user: @user, email: @user.email, role: @user.role)
 
     sign_in(@user)
     redirect_to root_path, notice: t("flash.invitations.welcome")

@@ -48,7 +48,25 @@ class ActivityTest < ActiveSupport::TestCase
     assert_equal "« Alice » ajoutée sur « Web »", activity.summary
   end
 
-  test "summaries" do
+test "roles, durations and OVH kinds are stored as keys and written in the reader's language" do
+  invited = Activity.record!(:user_invited, email: "ann@example.com", role: "operator")
+  changed = Activity.record!(:user_role_changed, email: "ann@example.com", from_role: "viewer", to_role: "admin")
+  added = Activity.record!(:key_added, server: servers(:web), public_key: public_keys(:alice), unix_user: "deploy", duration_seconds: 3600)
+  unmanaged = Activity.record!(:ovh_service_unmanaged, service: "ns123.ip-1-2-3.eu", kind: "dedicated")
+
+  assert_equal "ann@example.com invité (Opérateur)", invited.summary
+  I18n.with_locale(:en) do
+    assert_equal "ann@example.com invited (Operator)", invited.summary
+    assert_match "Read-only → Admin", changed.summary
+    assert_match "for 1 hour", added.summary
+    assert_no_match(/serveur dédié/i, unmanaged.summary)
+  end
+
+  older = Activity.record!(:user_invited, email: "bob@example.com", role_label: "Lecture")
+  assert_equal "bob@example.com invité (Lecture)", older.summary, "activities recorded before keep their label"
+end
+
+test "summaries" do
     web = servers(:web)
     {
       [ :key_added, { public_key: public_keys(:alice), unix_user: "deploy", duration_label: "10 minutes" } ] => "« Alice » ajoutée sur « Web » pendant 10 minutes",

@@ -6,6 +6,9 @@
 module Activity::Summaries
   def self.t(key, **options) = I18n.t("activity.summaries.#{key}", **options)
 
+  # A role in the reader's language; the label stored by older activities otherwise.
+  def self.role(key, stored_label) = key.present? ? User.role_label(key) : stored_label
+
   # " (a, b)" or "".
   # " (623a4be « fix: export »)", " (623a4be)" or "".
   def self.coolify_commit(data)
@@ -17,8 +20,8 @@ module Activity::Summaries
 
   BY_KIND = {
     key_added: proc do
-      key = data["duration_label"] ? :key_added_for : :key_added
-      Activity::Summaries.t(key, name: public_key_name, target: target, duration: data["duration_label"])
+      duration = data["duration_seconds"] ? TemporaryAccess.label_for(data["duration_seconds"].to_i) : data["duration_label"]
+      Activity::Summaries.t(duration ? :key_added_for : :key_added, name: public_key_name, target: target, duration: duration)
     end,
     key_removed: proc { Activity::Summaries.t(:key_removed, name: key_name, target: target) },
     key_expired: proc { Activity::Summaries.t(:key_expired, name: public_key_name || key_name, target: target) },
@@ -70,10 +73,10 @@ module Activity::Summaries
     server_deleted: proc { Activity::Summaries.t(:server_deleted, server: server_name) },
     server_group_created: proc { Activity::Summaries.t(:server_group_created, group: data["group_name"], count: data["servers"].to_i) },
     server_group_deleted: proc { Activity::Summaries.t(:server_group_deleted, group: data["group_name"]) },
-    user_invited: proc { Activity::Summaries.t(:user_invited, email: data["email"], role: data["role_label"]) },
-    invitation_accepted: proc { Activity::Summaries.t(:invitation_accepted, email: data["email"], role: data["role_label"]) },
+    user_invited: proc { Activity::Summaries.t(:user_invited, email: data["email"], role: Activity::Summaries.role(data["role"], data["role_label"])) },
+    invitation_accepted: proc { Activity::Summaries.t(:invitation_accepted, email: data["email"], role: Activity::Summaries.role(data["role"], data["role_label"])) },
     invitation_revoked: proc { Activity::Summaries.t(:invitation_revoked, email: data["email"]) },
-    user_role_changed: proc { Activity::Summaries.t(:user_role_changed, email: data["email"], from: data["from"], to: data["to"]) },
+    user_role_changed: proc { Activity::Summaries.t(:user_role_changed, email: data["email"], from: Activity::Summaries.role(data["from_role"], data["from"]), to: Activity::Summaries.role(data["to_role"], data["to"])) },
     user_deactivated: proc { Activity::Summaries.t(:user_deactivated, email: data["email"]) },
     user_reactivated: proc { Activity::Summaries.t(:user_reactivated, email: data["email"]) },
     user_locked: proc { Activity::Summaries.t(:user_locked, email: data["email"], count: data["attempts"].to_i) },
@@ -99,7 +102,7 @@ module Activity::Summaries
     dns_record_outside_fleet: proc { Activity::Summaries.t(:dns_record_outside_fleet, record: data["record"], target: data["target"]) },
     dns_record_conflict: proc { Activity::Summaries.t(:dns_record_conflict, record: data["record"], sources: Array(data["sources"]).join(", ")) },
     dns_manual_updated: proc { Activity::Summaries.t(:dns_manual_updated, source: data["source"], count: data["count"].to_i, added: data["added"].to_i, removed: data["removed"].to_i) },
-    ovh_service_unmanaged: proc { Activity::Summaries.t(:ovh_service_unmanaged, kind: data["kind_label"], service: data["service"]) },
+    ovh_service_unmanaged: proc { Activity::Summaries.t(:ovh_service_unmanaged, kind: data["kind"] ? I18n.t("ovh_resource.kinds.#{data["kind"]}", default: data["kind"]) : data["kind_label"], service: data["service"]) },
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },
     integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) },

@@ -24,7 +24,7 @@ class Keys::AccessGrant
   def self.log(server, public_key, account, duration, expires_at)
     Activity.record!(:key_added, server: server, public_key: public_key, unix_user: account.unix_user,
                                  key_name: public_key.authorized_key.comment || public_key.name, fingerprint: public_key.fingerprint,
-                                 duration_label: duration && TemporaryAccess.label_for(duration), expires_at: expires_at&.iso8601)
+                                 duration_seconds: duration&.to_i, expires_at: expires_at&.iso8601)
   end
   private_class_method :log
 
