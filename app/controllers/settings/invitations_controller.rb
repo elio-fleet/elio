@@ -6,7 +6,7 @@ module Settings
       @invitation = Invitation.new(params.expect(invitation: %i[email role locale]).merge(invited_by: current_user))
 
       if @invitation.save
-        Activity.record!(:user_invited, email: @invitation.email, role_label: @invitation.role_label)
+        Activity.record!(:user_invited, email: @invitation.email, role: @invitation.role)
         if Rails.configuration.x.mail_enabled
           InvitationMailer.invite(@invitation).deliver_later
           redirect_to settings_users_path, notice: t("flash.invitations.emailed", email: @invitation.email)
