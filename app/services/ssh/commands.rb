@@ -18,10 +18,13 @@ module Ssh::Commands
     def root? = run_as == "root"
     def writes? = writes == true
     def distro_specific? = variants.keys != [ "default" ]
+    def role = key.split(".", 2).first
 
-    # Variant for a distribution: its ID, then each ID_LIKE, then default.
+    # Name of the variant for a distribution: its ID, then each ID_LIKE, then default.
+    def variant(distros = []) = distros.map(&:to_s).find { |distro| variants.key?(distro) } || "default"
+
     def template(distros = [])
-      distros.map(&:to_s).find { |distro| variants.key?(distro) }.then { |distro| variants.fetch(distro || "default") { raise UnknownCommand, "#{key}: no variant for #{distros.inspect}" } }
+      variants.fetch(variant(distros)) { raise UnknownCommand, "#{key}: no variant for #{distros.inspect}" }
     end
 
     # The command line to send: values escaped, scripts wrapped in `sh -c`.

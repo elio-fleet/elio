@@ -142,7 +142,7 @@ Supported: **Debian and Ubuntu** (others get health and system only), Docker, sn
 
 ## What Elio runs on your servers
 
-**Every command is in [`config/ssh_commands.yml`](config/ssh_commands.yml)**, sorted by role then by distribution. It is the only place they are written: the application reads them from there, and a test fails if a command is sent from anywhere else. Values are always shell-escaped.
+**Every command is in [`config/ssh_commands.yml`](config/ssh_commands.yml)**, sorted by role then by distribution. It is the only place they are written: the application reads them from there, and a test fails if a command is sent from anywhere else. Values are always shell-escaped. The server page shows them too (⋯ menu → **Commands run by Elio**), as the variant for that server's distribution.
 
 | For | Commands (read-only) |
 |---|---|

@@ -26,6 +26,7 @@ Rails.application.routes.draw do
     match :test_connection, on: :collection, via: %i[post patch]
     resource :ping, only: %i[show create], controller: "server_pings"
     resource :ssh_check, only: :show, controller: "server_ssh_checks"
+    resources :commands, only: :index, controller: "server_commands"
     resource :inventory, only: :create, controller: "server_inventories"
     resources :packages, only: :index, controller: "server_packages"
     resource :host_key, only: :create, controller: "server_host_keys"

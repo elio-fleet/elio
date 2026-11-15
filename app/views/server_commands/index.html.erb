@@ -1,0 +1,39 @@
+<% content_for :title, "#{t(".title")} · #{@server.name} · Elio" %>
+
+<div>
+  <%= page_header t(".title"), crumbs: [ [ t("nav.fleet"), servers_path ], [ @server.name, server_path(@server) ], t(".title") ],
+                  subtitle: (@distros.any? ? t(".distribution", distros: @distros.join(", ")) : t(".distribution_unknown")) %>
+
+  <p class="server-commands-intro mb-5 max-w-3xl text-sm text-ink-2"><%= t(".intro_html") %></p>
+
+  <div class="space-y-5">
+    <% @commands_by_role.each do |role, commands| %>
+      <%= panel t("server_commands.index.roles.#{role}", default: role.humanize), meta: t(".count", count: commands.size), id: "commands-#{role}", class: "server-commands-role" do %>
+        <ul>
+          <% commands.each do |command| %>
+            <% variant = command.variant(@distros) %>
+            <li class="server-command min-w-0 border-t border-line px-4 py-3 first:border-t-0" id="command-<%= command.key.tr(".", "-") %>" data-writes="<%= command.writes? %>">
+              <div class="flex flex-wrap items-center gap-2">
+                <code class="font-mono text-sm font-medium text-ink"><%= command.key %></code>
+                <% if command.writes? %>
+                  <%= status_badge :warn, t(".writes"), class: "command-writes" %>
+                <% end %>
+                <% if command.root? %>
+                  <%= status_badge :neutral, t(".root"), icon: :lock_closed %>
+                <% end %>
+                <span class="text-xs text-ink-3"><%= command.distro_specific? ? t(".variant", variant: variant) : t(".any_system") %></span>
+              </div>
+              <p class="mt-1 text-sm text-ink-2"><%= command.description %></p>
+              <pre class="command-template mt-2 overflow-x-auto rounded-lg bg-subtle px-3 py-2 font-mono text-xs text-ink-2"><%= command.template(@distros).strip %></pre>
+              <p class="mt-1 text-xs text-ink-3">
+                <%= [ (t(".shell") if command.shell),
+                      (t(".sudo") if command.root? && @server.privilege == "sudo"),
+                      t(".timeout", count: command.timeout) ].compact.join(" · ") %>
+              </p>
+            </li>
+          <% end %>
+        </ul>
+      <% end %>
+    <% end %>
+  </div>
+</div>

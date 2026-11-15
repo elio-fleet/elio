@@ -96,6 +96,7 @@ en:
       scan_keys_whole_fleet: Scan the keys of the whole fleet
       import_servers: Import servers
     show:
+      commands: Commands run by Elio
       duplicate: Duplicate
       add_note: Add a note
       see_keys: SSH keys of the server
@@ -469,6 +470,28 @@ en:
     add_failed: "Key not added: %{error_title} — %{error_details}"
     removed: "“%{name}” removed from the account %{account}."
     remove_failed: "Key not removed: %{error_title} — %{error_details}"
+  server_commands:
+    index:
+      title: Commands run by Elio
+      distribution: "Variants for this server's distribution: %{distros}."
+      distribution_unknown: Distribution not known yet (no inventory); the default variants are shown, Elio picks the right one when it connects.
+      intro_html: Every command Elio may run on this server, as written in <code class="font-mono">config/ssh_commands.yml</code>, the only place commands are written. They only read, except the SSH key commands, run only when you add or remove a key. Values shown as <code class="font-mono">@{name}</code> are filled in at run time, always shell-escaped.
+      count:
+        one: 1 command
+        other: "%{count} commands"
+      writes: May write
+      root: Root
+      variant: "Variant: %{variant}"
+      any_system: Any system
+      shell: Sent as a script (sh -c)
+      sudo: Prefixed with sudo -n
+      timeout:
+        one: Stopped after 1 second
+        other: Stopped after %{count} seconds
+      roles:
+        connection: Connection
+        inventory: Inventory
+        keys: SSH keys
   server_expected_ports_controller:
     added: "%{port} is now expected on “%{server_name}”: it is no longer flagged."
     invalid: Invalid port.

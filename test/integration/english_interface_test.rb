@@ -84,6 +84,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
       assert_english server_path(servers(:web), tab: tab), except: data
     end
     assert_english server_packages_path(servers(:web)), except: data
+    assert_english server_commands_path(servers(:web)), except: data
     assert_english packages_path, except: data
     assert_english packages_path(q: "openssl"), except: data
     assert_english ports_path, except: data
