@@ -125,8 +125,10 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
 
   test "the activity, tasks and notifications pages" do
     data = [ ".sidebar-groups", ".account-link", "#activities li span.font-medium" ]
-    Activity.record!(:server_unreachable, server: servers(:web))
+    activity = Activity.record!(:server_unreachable, server: servers(:web))
     assert_english activities_path, except: data
+    assert_english activities_path(severity: "warning", kind: "server_unreachable"), except: data
+    assert_english activity_path(activity), except: data
     assert_english tasks_path, except: data
     assert_english activities_path(q: "web", from: "2026-01-01"), except: data
     assert_english tasks_path(q: "web"), except: data

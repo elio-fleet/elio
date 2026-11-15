@@ -66,6 +66,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server groups" => -> { get server_groups_path },
       "public_key page" => -> { get public_key_path(public_keys(:alice)) },
       "activities" => -> { get activities_path },
+      "export the journal" => -> { get activities_path(format: :csv) },
+      "one event" => -> { get activity_path(Activity.record!(:server_created, server: servers(:web))) },
       "tasks" => -> { get tasks_path },
       "ovh" => -> { Integration.create!(kind: "ovh", enabled: true, settings: { "application_key" => "a" }, secrets: { "application_secret" => "s", "consumer_key" => "c" }) && get(ovh_path) },
       "coolify" => -> { Integration.create!(kind: "coolify", enabled: true) && get(coolify_path) },

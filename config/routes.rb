@@ -115,7 +115,8 @@ Rails.application.routes.draw do
       end
     end
   end
-  resources :activities, only: :index, path: "journal"
+  # One event by its id only: /journal/runs stays the runs tab.
+  resources :activities, only: %i[index show], path: "journal", constraints: { id: /\d+/ }
   resources :tasks, only: %i[index show], path: "journal/runs"
   resources :packages, only: :index, path: "updates"
   resources :ports, only: :index

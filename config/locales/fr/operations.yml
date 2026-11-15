@@ -76,7 +76,31 @@ fr:
       activity_yet: Aucune activité pour le moment.
       history: Historique de ce qui s'est passé
       history_on: Historique de ce qui s'est passé sur « %{server_name} »
-      remove_kind_filter: Retirer le filtre
+      export_csv: Exporter en CSV
+      export_json: Exporter en JSON
+      all_severities: Toutes gravités
+      at_least_warning: Avertissement ou plus
+      critical_only: Critique
+      minimum_severity: Gravité minimale
+      all_kinds: Tous les types
+      kind: Type
+    activity:
+      repeated:
+        one: Arrivé une fois
+        other: Arrivé %{count} fois de suite
+      earlier:
+        one: 1 fois avant
+        other: "%{count} fois avant"
+    show:
+      same_kind: Événements semblables
+      details: Détails
+      kind: Type
+      category: Catégorie
+      date: Date
+      author: Auteur
+      server: Serveur
+      account: Compte
+      key: Clé
   tasks:
     progress:
       progress: Progression

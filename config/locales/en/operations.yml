@@ -76,7 +76,31 @@ en:
       activity_yet: No activity yet.
       history: History of what happened
       history_on: History of what happened on “%{server_name}”
-      remove_kind_filter: Remove the filter
+      export_csv: Export as CSV
+      export_json: Export as JSON
+      all_severities: All severities
+      at_least_warning: Warning or worse
+      critical_only: Critical
+      minimum_severity: Minimum severity
+      all_kinds: All kinds
+      kind: Kind
+    activity:
+      repeated:
+        one: Happened once
+        other: Happened %{count} times in a row
+      earlier:
+        one: 1 earlier time
+        other: "%{count} earlier times"
+    show:
+      same_kind: Same events
+      details: Details
+      kind: Kind
+      category: Category
+      date: Date
+      author: Author
+      server: Server
+      account: Account
+      key: Key
   tasks:
     progress:
       progress: Progress
