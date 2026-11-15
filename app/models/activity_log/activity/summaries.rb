@@ -104,6 +104,10 @@ module Activity::Summaries
     two_factor_disabled: proc { data["reset_by"] ? Activity::Summaries.t(:two_factor_reset, email: data["email"], by: data["reset_by"]) : Activity::Summaries.t(:two_factor_disabled, email: data["email"]) },
     two_factor_backup_code_used: proc { Activity::Summaries.t(:two_factor_backup_code_used, email: data["email"], count: data["left"].to_i) },
     public_key_created: proc { Activity::Summaries.t(:public_key_created, name: public_key_name) },
+    public_key_expiring: proc do
+      expires_on = Date.iso8601(data["expires_on"])
+      Activity::Summaries.t(expires_on <= created_at.to_date ? :public_key_expired : :public_key_expiring, name: public_key_name, date: I18n.l(expires_on, format: :long))
+    end,
     public_key_owner_changed: proc { data["owner"] ? Activity::Summaries.t(:public_key_owner_set, name: public_key_name, owner: data["owner"]) : Activity::Summaries.t(:public_key_owner_removed, name: public_key_name) },
     public_key_deleted: proc { Activity::Summaries.t(:public_key_deleted, name: public_key_name) },
     ssh_key_generated: proc { Activity::Summaries.t(data["regenerated"] ? :ssh_key_regenerated : :ssh_key_generated) },

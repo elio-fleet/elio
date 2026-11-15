@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_110067) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -395,6 +395,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
     t.string "kind", default: "person", null: false
     t.text "description"
     t.bigint "user_id"
+    t.date "expires_on"
+    t.datetime "expiry_reminded_at"
     t.index "lower((name)::text)", name: "index_public_keys_on_lower_name", unique: true
     t.index ["fingerprint"], name: "index_public_keys_on_fingerprint", unique: true
     t.index ["user_id"], name: "index_public_keys_on_user_id"
