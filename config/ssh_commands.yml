@@ -195,7 +195,7 @@ inventory:
       else echo unsupported; fi
 
   ports:
-    description: "Ports: listening sockets with their process and systemd unit, firewall state (ufw, else nftables, else iptables). Read-only: Elio never changes the firewall."
+    description: "Ports: listening sockets with their process and systemd unit, firewall state (ufw, else firewalld, else nftables, else iptables), the IPv6 INPUT chain, and the DOCKER-USER chain (Docker's published ports bypass ufw / firewalld; rules there filter them). Read-only: Elio never changes the firewall."
     run_as: root
     shell: true
     default: |
@@ -204,6 +204,17 @@ inventory:
       echo "@@elio ufw"; if command -v ufw >/dev/null 2>&1; then ufw status verbose 2>&1; else echo absent; fi
       echo "@@elio nft"; if command -v nft >/dev/null 2>&1; then nft list ruleset 2>&1 | head -c 200000; else echo absent; fi
       echo "@@elio iptables"; if command -v iptables >/dev/null 2>&1; then iptables -S INPUT 2>&1; else echo absent; fi
+      echo "@@elio ip6tables"; if command -v ip6tables >/dev/null 2>&1; then ip6tables -S INPUT 2>&1; else echo absent; fi
+      echo "@@elio docker_user"; if command -v iptables >/dev/null 2>&1; then iptables -S DOCKER-USER 2>&1; else echo absent; fi
+      echo "@@elio firewalld"
+      if ! command -v firewall-cmd >/dev/null 2>&1; then echo absent
+      elif ! firewall-cmd --state >/dev/null 2>&1; then echo "not running"
+      else
+        zones=$({ firewall-cmd --get-default-zone; firewall-cmd --get-active-zones | grep -v '^[[:space:]]' | cut -d' ' -f1; } 2>/dev/null | sort -u)
+        for zone in $zones; do firewall-cmd --list-all --zone="$zone" 2>&1; done
+        echo "@@elio firewalld_services"
+        for service in $(for zone in $zones; do firewall-cmd --list-services --zone="$zone" 2>/dev/null; done | tr ' ' '\n' | sort -u); do firewall-cmd --info-service="$service" 2>&1; done
+      fi
 
 # The only commands that change something: the authorized_keys file of the
 # account Elio logs in as (~/.ssh/authorized_keys), or of another account

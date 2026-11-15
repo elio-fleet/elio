@@ -158,7 +158,7 @@ Elio **never changes the firewall** nor installs anything: suggested ufw rules a
 
 ### The Firewall tab
 
-Each server has a **Firewall** tab: the rules of its own firewall (ufw, nftables or iptables, read as root), the OVHcloud network firewall of its OVH IPs and its anti-DDoS, and a table of its public ports with the verdict of each firewall side by side. The OVHcloud firewall filters **only IPv4**: on a server with a public IPv6 address, the ports listening in IPv6 are shown *not covered (IPv6)*, and a health reason can report them (*Settings → Firewall*).
+Each server has a **Firewall** tab: the rules of its own firewall (ufw, firewalld, nftables or iptables, read as root), IPv4 and IPv6 rules apart, with a warning when IPv6 is left unfiltered, the DOCKER-USER chain of Docker (published ports skip ufw and firewalld: a port published by a container is shown as such, or as filtered by DOCKER-USER rules when the chain has some), the OVHcloud network firewall of its OVH IPs and its anti-DDoS, and a table of its public ports with the verdict of each firewall side by side. The OVHcloud firewall filters **only IPv4**: on a server with a public IPv6 address, the ports listening in IPv6 are shown *not covered (IPv6)*, and a health reason can report them (*Settings → Firewall*).
 
 The **suggested ufw rules** can open SSH only to the sources you list in *Settings → Firewall* (Elio's own address, Coolify, your office… — each group of servers can choose some of them; include Elio's address, or applying the rules cuts its access), and can **block all the incoming IPv6** (the ports are then allowed from IPv4 only). The firewall prompt for an AI ends with your own instructions (*Settings → General*), e.g. "for the SSH port, always put the rules last".
 

@@ -48,6 +48,35 @@ class ServerPortsCardTest < ActionDispatch::IntegrationTest
     assert_select "#server-firewall .server-prompt[data-kind=firewall] dialog textarea.server-prompt-text", text: /Propose les règles de son firewall.*commandes ufw/m
   end
 
+  test "the Firewall tab: IPv4 and IPv6 rules apart, an IPv6 left open, the DOCKER-USER chain and the prompt" do
+    server = servers(:db)
+    server.update_columns(port: 22, extra_addresses: [ "2001:db8::10" ])
+    record_ports(server, :ufw_docker)
+    record_containers(server, [ { "name" => "web", "state" => "running", "ports" => "0.0.0.0:8080->80/tcp" } ])
+    sign_in users(:viewer)
+
+    get server_path(server, tab: "firewall")
+
+    assert_select "#server-local-firewall h3.local-firewall-family", text: "IPv4"
+    assert_select "#server-local-firewall h3.local-firewall-family", text: "IPv6"
+    assert_select "#server-local-firewall ul.local-firewall-rules[data-family=ipv6] .local-firewall-rule", text: %r{443/tcp.*depuis 2001:db8::/32}m
+    assert_select "#server-local-firewall ul.local-firewall-rules[data-family=ipv4] .local-firewall-rule", text: %r{22/tcp.*depuis partout}m
+    assert_select "#server-local-firewall .ipv6-open", text: /ufw ne filtre que l'IPv4.*22\/tcp.*2001:db8::10/m
+    assert_select "#server-local-firewall .docker-user .docker-user-rule", 3
+    assert_select "#server-local-firewall .docker-user-rule", text: "-p tcp -m tcp --dport 8080 -j DROP"
+    assert_select "#server-firewall-ports tr.firewall-port[data-port='8080/tcp']", text: /Docker, règles DOCKER-USER/
+    assert_select "#server-firewall-ports .docker-bypass", 0
+    assert_select "textarea.server-prompt-text", text: %r{autorise 443/tcp depuis 2001:db8::/32 \(IPv6 seulement\).*IPv6 non filtré.*DOCKER-USER \(Docker\) : -j ufw-user-forward}m
+
+    server.inventory_snapshots.where(category: "ports").destroy_all
+    record_ports(server, :debian12, firewall: { "tool" => "ufw", "active" => true, "default_incoming" => "deny", "allowed" => [ { "rule" => "22/tcp" } ], "docker_user" => [] })
+    get server_path(server, tab: "firewall")
+    assert_select "#server-local-firewall .local-firewall-family", 0
+    assert_select "#server-local-firewall .ipv6-open", 0
+    assert_select "#server-local-firewall .docker-user", text: /Aucune règle : les ports publiés par Docker contournent/
+    assert_select "#server-firewall-ports tr.firewall-port[data-port='8080/tcp']", text: /publié par Docker/
+  end
+
   test "the Firewall tab without inventory, and without root" do
     sign_in users(:viewer)
     get server_path(servers(:web), tab: "firewall")

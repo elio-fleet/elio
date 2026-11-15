@@ -134,6 +134,14 @@ fr:
       from: depuis %{source}
       from_anywhere: depuis partout
       no_allow_rule: Aucune règle d'autorisation.
+      family:
+        both: IPv4 et IPv6
+        ipv4: IPv4
+        ipv6: IPv6
+      ipv6_open: "%{tool} ne filtre que l'IPv4 : l'IPv6 n'est pas filtré (aucune règle, tout est accepté). Joignables en IPv6 : %{ports}, sur %{addresses}."
+      docker_user: Règles Docker (chaîne DOCKER-USER)
+      docker_user_rules: "Les ports publiés par Docker contournent les règles ci-dessus ; ces règles-ci s'y appliquent :"
+      docker_user_empty: "Aucune règle : les ports publiés par Docker contournent le firewall ci-dessus et rien ne les filtre. Publiez-les sur 127.0.0.1 ou ajoutez des règles à cette chaîne."
       public_ports: Ports publics et firewalls
       all_ports: Tous les ports
       ovh_ip: OVH %{ip}
@@ -159,7 +167,7 @@ fr:
       public_out_listening_html: publics sur %{count} en écoute
       firewall_html: 'Firewall : %{firewall_label}'
       expected_ports_html: 'Ports attendus : %{filter_map}'
-      docker_publishes_ports_adding: 'Docker publie des ports en ajoutant ses propres règles : ufw ne les filtre pas. Publiez-les sur 127.0.0.1 (« 127.0.0.1:8080:80 ») ou filtrez-les dans la chaîne DOCKER-USER.'
+      docker_publishes_ports_adding: 'Docker publie des ports en ajoutant ses propres règles : le firewall (ufw, firewalld) ne les filtre pas. Publiez-les sur 127.0.0.1 (« 127.0.0.1:8080:80 ») ou filtrez-les dans la chaîne DOCKER-USER.'
       port: Port
       listening: Écoute
       service_container: Service / conteneur
@@ -175,7 +183,9 @@ fr:
       blocked: bloqué
       firewall_blocks_port_default: Le firewall bloque ce port par défaut
       published_docker: publié par Docker
-      docker_bypasses_ufw_port: 'Docker contourne ufw : le port est joignable même sans règle'
+      docker_bypasses_ufw_port: 'Docker contourne le firewall : le port est joignable même sans règle'
+      docker_user: Docker, règles DOCKER-USER
+      docker_user_hint: "Docker contourne le firewall, mais sa chaîne DOCKER-USER a des règles qui peuvent filtrer ce port : vérifiez-les dans le firewall du serveur plus bas"
       not_filtered: non filtré
       firewall_filters_port: Aucun firewall ne filtre ce port
       firewall_unreadable_without_root: Firewall illisible sans accès root
