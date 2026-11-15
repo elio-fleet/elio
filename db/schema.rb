@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_110000) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_110006) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -485,6 +485,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110000) do
     t.datetime "vulnerabilities_checked_at"
     t.string "docker_status"
     t.jsonb "docker_reasons", default: [], null: false
+    t.string "expected_ports"
     t.index "lower((host)::text), port, username", name: "index_servers_on_lower_host_port_username", unique: true
     t.index "lower((name)::text)", name: "index_servers_on_lower_name", unique: true
     t.index ["ip_addresses"], name: "index_servers_on_ip_addresses", using: :gin
@@ -518,6 +519,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110000) do
     t.datetime "ended_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "extensions_count", default: 0, null: false
+    t.datetime "expiry_reminded_at"
     t.index ["expires_at"], name: "index_temporary_accesses_active_expiry", where: "(ended_at IS NULL)"
     t.index ["public_key_id"], name: "index_temporary_accesses_on_public_key_id"
     t.index ["server_id", "unix_user", "fingerprint"], name: "index_temporary_accesses_active_key", unique: true, where: "(ended_at IS NULL)"
@@ -571,6 +574,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110000) do
     t.string "unlock_token"
     t.datetime "locked_at"
     t.string "locale"
+    t.jsonb "preferences", default: {}, null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true

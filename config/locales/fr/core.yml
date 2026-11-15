@@ -103,6 +103,7 @@ fr:
   throttled:
     too_many: 'Trop de tentatives : réessayez dans quelques minutes.'
   ui:
+    since_prefix: "apparu "
     extension_settings: Réglages de l'extension
     trend: Tendance
     over_24_hours: "%{label} sur 24 heures"
@@ -121,6 +122,7 @@ fr:
       one: "%{count} modification non enregistrée"
       other: "%{count} modifications non enregistrées"
     clear_filters: Effacer les filtres
+    sort_by: Trier par %{column}
   count:
     servers:
       one: "%{count} serveur"

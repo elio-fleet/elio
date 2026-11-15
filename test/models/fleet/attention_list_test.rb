@@ -77,6 +77,48 @@ class AttentionListTest < ActiveSupport::TestCase
     assert_equal [ "1 serveur" ], attention.docker_items.map(&:subject)
   end
 
+  test "since when each problem of a server has been there, from the journal" do
+    Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
+    reboot = Inventory::HealthStatus.reason("warn", :reboot_required).to_h
+    servers(:web).update_columns(health_status: "warn", health_reasons: [ reboot ])
+    servers(:db).update_columns(reachable: false)
+    servers(:backup).update_columns(inventoried_at: nil, created_at: 4.days.ago)
+    Activity.create!(kind: "health_warning", server: servers(:web), data: { reasons: [ reboot ] }, created_at: 3.days.ago)
+    Activity.create!(kind: "server_unreachable", server: servers(:db), created_at: 2.hours.ago)
+
+    since = list.items.to_h { |item| [ item.subject, item.since ] }
+    assert_in_delta 3.days.ago, since["Web"], 1
+    assert_in_delta 2.hours.ago, since["Database"], 1
+    assert_in_delta 4.days.ago, since["Backup"], 1
+  end
+
+  test "a vulnerability reason opens the packages to update, where each one has its command" do
+    server = servers(:web)
+    _, path = AttentionList.action_for(server, Inventory::HealthStatus.reason("crit", :vulnerabilities, count: 2).to_h)
+    assert_equal "/servers/#{server.id}?fixable=1&tab=vulnerabilities&view=packages", path
+  end
+
+  test "the fixable CVEs of a single server: straight to its fixes" do
+    Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
+    ServerVulnerability.create!(server: servers(:web), origin: "host", source: "debian", cve: "CVE-2026-0001", source_package: "openssl",
+                                installed_version: "1", fixed_version: "2", severity: "critical")
+
+    item = list.items.sole
+    assert_equal "Voir les correctifs", item.action
+    assert_equal "/servers/#{servers(:web).id}?fixable=1&severity=#{AppSetting.current.vulnerability_alert_severity}&tab=vulnerabilities&view=packages", item.path
+  end
+
+  test "by gravity, the most serious first up to a limit; the counts cover everything" do
+    Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
+    servers(:db).update_columns(reachable: false)
+    servers(:web).update_columns(health_status: "warn", health_reasons: [ Inventory::HealthStatus.reason("warn", :reboot_required).to_h ])
+    servers(:backup).update_columns(health_status: "warn", health_reasons: [ Inventory::HealthStatus.reason("warn", :reboot_required).to_h ])
+
+    attention = list
+    assert_equal({ "crit" => [ "Database" ], "warn" => [ "Backup" ] }, attention.by_tone(limit: 2).transform_values { |items| items.map(&:subject) })
+    assert_equal({ "crit" => 1, "warn" => 2 }, attention.tone_counts)
+  end
+
   test "nothing to report" do
     Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current)
     assert_not list.any?

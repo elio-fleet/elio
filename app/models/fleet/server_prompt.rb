@@ -57,7 +57,8 @@ class ServerPrompt
       (t("fields.system", value: [ os["name"], os["kernel"] ].compact.join(", ")) if os["name"]),
       (t("fields.virtualization", value: os["virtualization"]) if os["virtualization"].present?),
       t("fields.ssh", value: "#{@server.host}:#{@server.port}"),
-      (t("fields.groups", value: groups.join(" ; ")) if groups.any?)
+      (t("fields.groups", value: groups.join(" ; ")) if groups.any?),
+      (t("fields.expected_ports", value: @server.expected_ports) if @server.expected_ports.present?)
     ].compact)
   end
 
@@ -115,7 +116,15 @@ class ServerPrompt
     analysis = Inventory::PortAnalysis.new(@server)
     firewall = analysis.firewall
     lines = [ analysis.firewall_label ]
-    lines += Array(firewall["allowed"]).map { |rule| t("allowed_rule", rule: rule["rule"], from: rule["from"] || t("anywhere")) }
+    lines += Array(firewall["allowed"]).map do |rule|
+      from = rule["from"] || t("anywhere")
+      family = { "ipv4" => "IPv4", "ipv6" => "IPv6" }[rule["family"]]
+      family ? t("allowed_rule_family", rule: rule["rule"], from: from, family: family) : t("allowed_rule", rule: rule["rule"], from: from)
+    end
+    lines << t("ipv6_open") if analysis.ipv6_open?
+    unless (docker_rules = analysis.docker_user_rules).nil?
+      lines += docker_rules.any? ? docker_rules.map { |rule| t("docker_user_rule", rule: rule) } : [ t("docker_user_empty") ]
+    end
     section(:local_firewall, lines)
   end
 

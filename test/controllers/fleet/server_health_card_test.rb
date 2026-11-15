@@ -43,6 +43,18 @@ class ServerHealthCardTest < ActionDispatch::IntegrationTest
     assert_select "#server-attention li.attention-item a.attention-action[href=?]", server_path(@server, anchor: "disks"), text: /Voir les disques/
   end
 
+  test "each reason says since when it has been there, when the journal knows" do
+    collect
+    disk = @server.health_reasons.find { |reason| reason["key"] == "health.disk" }
+    Activity.create!(kind: "health_critical", server: @server, data: { reasons: [ disk ] }, created_at: 2.days.ago)
+    sign_in users(:viewer)
+
+    get server_path(@server)
+
+    assert_select "#server-attention li.attention-item[data-tone=crit] time.attention-since", text: "apparu il y a 2 jours"
+    assert_select "#server-attention time.attention-since", 2
+  end
+
   test "says when there is nothing to report" do
     collect(:minimal)
     sign_in users(:viewer)

@@ -78,6 +78,11 @@ fr:
       refresh_statuses: Actualiser les statuts
       groups: Groupes
       display: Affichage
+      columns: Colonnes
+      columns_shown: Colonnes affichées
+      apply: Appliquer
+      export_csv: Exporter la liste (CSV)
+      load_now: Charge actuelle
       server: Serveur
       load_24_h: Charge 24 h
       memory: Mémoire
@@ -102,6 +107,10 @@ fr:
       server_sections: Sections du serveur
       authorized_ssh_keys: Clés SSH autorisées
       public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur, sur chaque compte qu'Elio peut lire. Les clés s'ajoutent au compte de connexion d'Elio, ou à un autre compte si Elio a root.
+      temporary_accesses:
+        zero: Accès temporaires et leur historique
+        one: Accès temporaires (%{count} en cours) et leur historique
+        other: Accès temporaires (%{count} en cours) et leur historique
       activity_server_yet: Aucune activité sur ce serveur pour le moment.
     row:
       load_over_24_h: Charge sur 24 h (en % des processeurs)
@@ -140,6 +149,8 @@ fr:
       extra_addresses: Adresses supplémentaires
       optional: "(facultatif)"
       ip_addresses_through_which: Adresses IP par lesquelles ce serveur est joint mais qu'il ne voit pas lui-même (NAT, IP de basculement…). Les adresses de ses interfaces sont relevées par l'inventaire.
+      expected_ports: Ports attendus
+      expected_ports_help: Ports que ce serveur peut exposer publiquement, en plus de ceux de ses groupes. Tout autre port public est signalé comme inattendu.
       groups: Groupes
     new:
       copy_subtitle: 'Copie de « %{name} » : même port, même utilisateur et mêmes groupes. Renseignez le nom et l''hôte.'
@@ -227,6 +238,10 @@ fr:
         other: "corrigeables · %{count} de moins qu'il y a 7 jours"
       fixable_same: "corrigeables · autant qu'il y a 7 jours"
       most_serious_first: du plus grave au moins grave
+      attention_all:
+        one: "Tout voir (%{count} de plus) →"
+        other: "Tout voir (%{count} de plus) →"
+      attention_fewer: Voir seulement les plus graves
       group_crit:
         one: "Critique · %{count}"
         other: "Critique · %{count}"
@@ -477,3 +492,6 @@ fr:
         connection: Connexion
         inventory: Inventaire
         keys: Clés SSH
+  server_expected_ports_controller:
+    added: "%{port} est désormais attendu sur « %{server_name} » : il n'est plus signalé."
+    invalid: Port invalide.

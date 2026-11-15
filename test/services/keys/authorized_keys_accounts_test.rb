@@ -227,7 +227,7 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     assert_includes runs, "bob"
     assert_includes runs, "root", "root's own file is read as root"
     assert_equal %w[bob carol root], runs.uniq.sort, "each file read as its own account, mallory's link and eve's file never opened"
-    %w[append_to_account replace_in_account remove_from_account].each do |command|
+    %w[append_to_account replace_in_account extend_in_account remove_from_account].each do |command|
       script = YAML.load_file(Rails.root.join("config/ssh_commands.yml")).dig("keys", command, "default")
       assert_match(/^runuser -u @{user} -- sh -s --/, script, command)
       assert_no_match(/^(cat|printf)\b.*> ?"\$file"$/, script.split("<<'ELIO'").first, "#{command}: root writes nothing")
@@ -265,5 +265,25 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     result = Keys::AuthorizedKeyRemoval.call(servers(:web), access.key_blob, account: access.account, transport: fake, known_hosts_file: @known_hosts)
     assert result.removed?
     assert_not_includes file.read, "Alice"
+  end
+
+  test "a temporary access on another account is extended in place, as that account; a link is refused" do
+    without_chown
+    assert authorize("bob", expires_at: 10.minutes.from_now).added?
+    access = TemporaryAccess.create!(server: servers(:web), public_key: public_keys(:alice), unix_user: "bob", key_blob: public_keys(:alice).authorized_key.key,
+                                     fingerprint: public_keys(:alice).fingerprint, expires_at: 10.minutes.from_now)
+    @root.join("runuser.log").delete
+
+    result = Keys::AccessExtension.call(access, 1.hour, transport: fake, known_hosts_file: @known_hosts)
+
+    assert result.success?, result.error_details
+    line = @root.join("bob", ".ssh", "authorized_keys").read.lines.grep(/Alice/).sole
+    assert_equal %(expiry-time="#{access.reload.expires_at.utc.strftime("%Y%m%d%H%M%S")}Z"), line.split.first
+    assert_equal %w[bob], @root.join("runuser.log").readlines(chomp: true).uniq
+
+    mallory = TemporaryAccess.create!(server: servers(:web), public_key: public_keys(:alice), unix_user: "mallory", key_blob: access.key_blob,
+                                      fingerprint: access.fingerprint, expires_at: 10.minutes.from_now)
+    refused = Keys::AccessExtension.call(mallory, 1.hour, transport: fake, known_hosts_file: @known_hosts)
+    assert_equal [ :error, "Fichier refusé" ], [ refused.status, refused.error_title ]
   end
 end

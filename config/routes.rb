@@ -15,6 +15,7 @@ Rails.application.routes.draw do
 
   # Before `resources :servers`, or /servers/groups would be a server's page.
   resources :server_groups, except: :show, path: "servers/groups"
+  resource :server_columns, only: :update, path: "servers/columns"
   resource :server_inventories, only: :create, path: "servers/inventory"
   resource :server_import, only: %i[new create], path: "servers/import" do
     post :preview
@@ -29,10 +30,12 @@ Rails.application.routes.draw do
     resource :inventory, only: :create, controller: "server_inventories"
     resources :packages, only: :index, controller: "server_packages"
     resource :host_key, only: :create, controller: "server_host_keys"
+    resource :expected_port, only: :create, controller: "server_expected_ports"
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
     resource :authorized_key, only: :destroy, controller: "server_authorized_keys"
     resources :authorizations, only: :create, controller: "server_authorizations"
     resources :my_key_accesses, only: %i[create destroy], path: "my-key"
+    resources :temporary_accesses, only: %i[index update], path: "temporary-accesses"
     resources :notes, only: %i[create edit update destroy], controller: "server_notes" do
       post :preview, on: :collection
     end

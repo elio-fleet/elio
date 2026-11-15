@@ -103,6 +103,7 @@ en:
   throttled:
     too_many: 'Too many attempts: try again in a few minutes.'
   ui:
+    since_prefix: "started "
     extension_settings: Extension settings
     trend: Trend
     over_24_hours: "%{label} over 24 hours"
@@ -121,6 +122,7 @@ en:
       one: "%{count} unsaved change"
       other: "%{count} unsaved changes"
     clear_filters: Clear the filters
+    sort_by: Sort by %{column}
   count:
     servers:
       one: "%{count} server"

@@ -37,10 +37,15 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "dashboard" => -> { get root_path },
       "own language" => -> { patch locale_account_path, params: { user: { locale: "en" } } },
       "servers index" => -> { get servers_path },
+      "export the fleet list" => -> { get servers_path(format: :csv) },
+      "choose the fleet columns" => -> { patch server_columns_path, params: { columns: %w[disk] } },
+      "export the fleet list" => -> { get servers_path(format: :csv) },
+      "choose the fleet columns" => -> { patch server_columns_path, params: { columns: %w[disk] } },
       "server page" => -> { get server_path(servers(:web)) },
       "server port check" => -> { get server_ping_path(servers(:web)) },
       "server SSH check" => -> { get server_ssh_check_path(servers(:web)) },
       "server keys" => -> { get server_authorized_keys_path(servers(:web)) },
+      "server temporary accesses" => -> { get server_temporary_accesses_path(servers(:web)) },
       "server packages" => -> { get server_packages_path(servers(:web)) },
       "server commands" => -> { get server_commands_path(servers(:web)) },
       "fleet packages" => -> { get packages_path(q: "ssl") },
@@ -82,6 +87,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "edit server" => -> { get edit_server_path(servers(:web)) },
       "update server" => -> { patch server_path(servers(:web)), params: { server: { name: "Renamed" } } },
       "delete server" => -> { delete server_path(servers(:web)) },
+      "ignore an unexpected port" => -> { post server_expected_port_path(servers(:web)), params: { port: 8081, proto: "tcp" } },
       "import servers form" => -> { get new_server_import_path },
       "preview a server import" => -> { post preview_server_import_path, params: { content: "a,10.0.0.1", import_format: "csv" } },
       "import servers" => -> { post server_import_path, params: { content: "a,10.0.0.1", import_format: "csv" } },
@@ -105,7 +111,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "claim a keyring key as mine" => -> { post account_keys_path, params: { public_key_id: public_keys(:alice).id } },
       "release one of my keys" => -> { delete account_key_path(public_keys(:alice)) },
       "add my key to a server" => -> { post server_my_key_accesses_path(servers(:web)) },
-      "remove my key from a server" => -> { delete server_my_key_access_path(servers(:web), 0) }
+      "remove my key from a server" => -> { delete server_my_key_access_path(servers(:web), 0) },
+      "extend a temporary access" => -> { patch server_temporary_access_path(servers(:web), 0), params: { duration: "60" } }
     },
     administer: {
       "DNS alerts" => -> { patch settings_dns_alerts_path, params: { dns_alerts: { outside: "1" } } },

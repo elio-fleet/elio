@@ -134,6 +134,14 @@ fr:
       from: depuis %{source}
       from_anywhere: depuis partout
       no_allow_rule: Aucune règle d'autorisation.
+      family:
+        both: IPv4 et IPv6
+        ipv4: IPv4
+        ipv6: IPv6
+      ipv6_open: "%{tool} ne filtre que l'IPv4 : l'IPv6 n'est pas filtré (aucune règle, tout est accepté). Joignables en IPv6 : %{ports}, sur %{addresses}."
+      docker_user: Règles Docker (chaîne DOCKER-USER)
+      docker_user_rules: "Les ports publiés par Docker contournent les règles ci-dessus ; ces règles-ci s'y appliquent :"
+      docker_user_empty: "Aucune règle : les ports publiés par Docker contournent le firewall ci-dessus et rien ne les filtre. Publiez-les sur 127.0.0.1 ou ajoutez des règles à cette chaîne."
       public_ports: Ports publics et firewalls
       all_ports: Tous les ports
       ovh_ip: OVH %{ip}
@@ -159,7 +167,7 @@ fr:
       public_out_listening_html: publics sur %{count} en écoute
       firewall_html: 'Firewall : %{firewall_label}'
       expected_ports_html: 'Ports attendus : %{filter_map}'
-      docker_publishes_ports_adding: 'Docker publie des ports en ajoutant ses propres règles : ufw ne les filtre pas. Publiez-les sur 127.0.0.1 (« 127.0.0.1:8080:80 ») ou filtrez-les dans la chaîne DOCKER-USER.'
+      docker_publishes_ports_adding: 'Docker publie des ports en ajoutant ses propres règles : le firewall (ufw, firewalld) ne les filtre pas. Publiez-les sur 127.0.0.1 (« 127.0.0.1:8080:80 ») ou filtrez-les dans la chaîne DOCKER-USER.'
       port: Port
       listening: Écoute
       service_container: Service / conteneur
@@ -167,12 +175,17 @@ fr:
       suggested_ufw_rules: Règles ufw suggérées
       elio_never_changes_firewall: 'Elio ne modifie jamais le firewall : relisez puis appliquez-les vous-même.'
       ports_inventory_yet: Pas encore d'inventaire des ports.
+    unexpected_port:
+      ignore: Ignorer
+      ignore_hint: Ajouter %{port} aux ports attendus de ce serveur
     port_firewall:
       allowed: autorisé
       blocked: bloqué
       firewall_blocks_port_default: Le firewall bloque ce port par défaut
       published_docker: publié par Docker
-      docker_bypasses_ufw_port: 'Docker contourne ufw : le port est joignable même sans règle'
+      docker_bypasses_ufw_port: 'Docker contourne le firewall : le port est joignable même sans règle'
+      docker_user: Docker, règles DOCKER-USER
+      docker_user_hint: "Docker contourne le firewall, mais sa chaîne DOCKER-USER a des règles qui peuvent filtrer ce port : vérifiez-les dans le firewall du serveur plus bas"
       not_filtered: non filtré
       firewall_filters_port: Aucun firewall ne filtre ce port
       firewall_unreadable_without_root: Firewall illisible sans accès root
@@ -396,6 +409,11 @@ fr:
       vxlan: VXLAN
       other: Autre
   inventory_helper:
+    listen_address:
+      all_ipv4: toutes les interfaces IPv4
+      all_ipv6: toutes les interfaces (IPv6, souvent IPv4 aussi)
+      all: toutes les interfaces
+      loopback: cette machine seulement
     virtualization:
       none: Machine physique
       kvm: KVM
@@ -438,6 +456,19 @@ fr:
       running: en cours
       stopped: arrêté
       stopped_code: arrêté (code %{code})
+      privileged: privilégié
+      privileged_hint: "Conteneur privilégié : il peut tout faire sur l'hôte, en root."
+      docker_socket: socket Docker
+      docker_socket_hint: "Le socket Docker est monté dans ce conteneur : il peut lancer n'importe quel conteneur sur l'hôte, il est donc root sur l'hôte."
+      networks: "réseaux : %{list}"
+      mounts: "montages : %{list}"
+      exposure:
+        all: public
+        all_hint: "Publié sur toutes les interfaces : joignable depuis le réseau sauf si un pare-feu le bloque (les règles de Docker contournent en général ufw)."
+        loopback: local
+        loopback_hint: "Publié sur l'adresse locale seulement, joignable depuis ce serveur uniquement."
+        address: une adresse
+        address_hint: Publié sur cette adresse seulement.
     image_update:
       available: nouvelle version
       newer: "%{version} disponible"

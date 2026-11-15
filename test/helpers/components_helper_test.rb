@@ -3,6 +3,7 @@ require "test_helper"
 class ComponentsHelperTest < ActionView::TestCase
   include UiHelper
   include IconsHelper
+  include ApplicationHelper
 
   test "page_header: breadcrumb, title, badges, subtitle and the actions of the block" do
     render html: page_header("db-prod", subtitle: "admin@198.51.100.20", crumbs: [ [ "Serveurs", "/servers" ], "db-prod" ], badges: status_badge(:crit, "Critique")) { tag.a("Modifier", class: "btn") }
@@ -38,6 +39,17 @@ class ComponentsHelperTest < ActionView::TestCase
 
     assert_select ".stat-tiles a.stat-tile[href=?][aria-current=true] .stat-value.text-crit-ink", "/servers?status=crit", text: "2"
     assert_select ".stat-tiles div.stat-tile .stat-value", "7"
+  end
+
+  test "sort_header: a link, the arrow and aria-sort on the current column only" do
+    headers = safe_join([ sort_header("Disque", "/servers?sort=disk&dir=asc", direction: "desc"),
+                          sort_header("Charge 24 h", "/servers?sort=load", sorted_on: "Charge actuelle") ])
+    render html: tag.table(tag.thead(tag.tr(headers)))
+
+    assert_select "th[scope=col][aria-sort=descending][data-sort-direction=desc] a.sort-header[href='/servers?sort=disk&dir=asc'][title='Trier par disque']", text: "Disque" do
+      assert_select "svg", 1
+    end
+    assert_select "th:not([aria-sort]) a.sort-header[title='Trier par charge actuelle'] svg", 0
   end
 
   test "filter_chip: active, count and dot" do
@@ -88,6 +100,13 @@ class ComponentsHelperTest < ActionView::TestCase
     assert_select "ul.attention-list li.attention-item[data-tone=crit]", text: /Disque \/ à 94 %/
     assert_select "li.attention-item a.server-chip[href='/servers/1']", "db-prod"
     assert_select "li.attention-item a.attention-action[href='/servers/1#disks']", text: /Voir le disque/
+    assert_select "li.attention-item time.attention-since", 0
+  end
+
+  test "attention_item: since when, with the date as tooltip" do
+    render html: attention_list { attention_item(:warn, "Redémarrage requis", since: 2.days.ago) }
+
+    assert_select "li.attention-item time.attention-since[title]", text: "apparu il y a 2 jours"
   end
 
   test "status_line, empty_state, timeline_item, group_tag and source_tag" do

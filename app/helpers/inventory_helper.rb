@@ -21,6 +21,19 @@ module InventoryHelper
     end
   end
 
+  # A listen address of ss, with what it means when it is not a plain IP:
+  # "0.0.0.0 every IPv4 interface", "127.0.0.1 this machine only".
+  def listen_address(address)
+    meaning = case address.to_s
+    when "0.0.0.0" then "all_ipv4"
+    when "::" then "all_ipv6"
+    when "*", "" then "all"
+    else "loopback" if Inventory::IpScope.of(address) == "local"
+    end
+    hint = tag.span(t("inventory_helper.listen_address.#{meaning}"), class: "font-sans text-ink-3") if meaning
+    tag.span(safe_join([ tag.span(address.presence || "*", class: "font-mono"), hint ].compact, " "), class: "listen-address block")
+  end
+
   def period_label(period) = t("inventory_helper.periods.#{period}", default: period.to_s)
 
   # Readable schedules of a timer ("OnCalendar=*-*-* 06:00:00" → "every day at 6:00").
@@ -49,6 +62,41 @@ module InventoryHelper
     elsif container["state"] == "exited" then status_badge(:neutral, container["exit_code"].to_i.zero? ? t("inventory_helper.container.stopped") : t("inventory_helper.container.stopped_code", code: container["exit_code"]), class: "container-state")
     else status_badge(:warn, container["state"], class: "container-state")
     end
+  end
+
+  # Privileged container or Docker socket mounted: whoever controls the
+  # container is root on the host.
+  def container_risk_badges(container)
+    badges = %w[privileged docker_socket].select { |key| container[key] }.map do |key|
+      status_badge(:warn, t("inventory_helper.container.#{key}"), class: "container-risk ml-1", title: t("inventory_helper.container.#{key}_hint"))
+    end
+    safe_join(badges)
+  end
+
+  # Published ports with their exposure: every interface, the machine only,
+  # or one address.
+  def container_ports(container)
+    ports = Array(container["ports"])
+    return if ports.empty?
+
+    items = ports.map do |port|
+      address = port["address"].include?(":") ? "[#{port["address"]}]" : port["address"]
+      tag.span(title: t("inventory_helper.container.exposure.#{port["exposure"]}_hint")) do
+        safe_join([ "#{address}:#{port["port"]}→#{port["target"]} ", tag.span(t("inventory_helper.container.exposure.#{port["exposure"]}"), class: ("text-ink-2" if port["exposure"] == "all")) ])
+      end
+    end
+    tag.span(safe_join(items, ", "), class: "container-ports block max-w-xs truncate font-mono text-[11px] text-ink-3")
+  end
+
+  # Networks and mounts (volume or host path → path in the container).
+  def container_attachments(container)
+    mounts = Array(container["mounts"]).map { |mount| "#{mount["source"] || mount["type"]}:#{mount["destination"]}#{":ro" if mount["read_only"]}" }
+    parts = [ (t("inventory_helper.container.networks", list: container["networks"].join(", ")) if container["networks"].present?),
+              (t("inventory_helper.container.mounts", list: mounts.join(", ")) if mounts.any?) ].compact
+    return if parts.empty?
+
+    text = parts.join(" · ")
+    tag.span(text, class: "container-attachments block max-w-xs truncate text-[11px] text-ink-3", title: text)
   end
 
   # `update` (ImageUpdate): names the newer fix of a pinned version, and the last version of its major below.

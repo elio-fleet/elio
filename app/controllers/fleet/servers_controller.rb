@@ -32,6 +32,10 @@ class ServersController < ApplicationController
     servers = servers.select { |server| server.matches_search?(@q) } if @q.present?
     @view = fleet_view
     servers = servers.to_a.sort_by { |server| [ STATE_ORDER.fetch(server.health_state, 2), server.name.downcase ] } if @view == "grid"
+    @sort = ServerSort.new(params[:sort], params[:dir])
+    servers = @sort.apply(servers) if @sort.active?
+    return send_csv(ServerExport.new(servers)) if request.format.csv?
+
     @pager = paginate(servers, per_page: PER_PAGE)
     @servers = @pager.records
     @load_history = Inventory::HealthSample.where(server_id: @servers.map(&:id)).since(24.hours.ago)
@@ -107,8 +111,9 @@ class ServersController < ApplicationController
 
   def update
     if @server.update(server_params)
-      changed = @server.saved_changes.keys & %w[name host port username]
+      changed = @server.saved_changes.keys & %w[name host port username expected_ports]
       Activity.record!(:server_updated, server: @server, changed: changed) if changed.any?
+      @server.refresh_health! if changed.include?("expected_ports") && @server.health_status.present?
       redirect_to server_path(@server), notice: t("servers_controller.updated", server_name: @server.name)
     else
       render :edit, status: :unprocessable_entity
@@ -161,6 +166,8 @@ class ServersController < ApplicationController
     @vulnerability_counts = { total: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve),
                               by_severity: scope.group(:severity).distinct.count(:cve),
                               images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
+    # What to run to fix everything that can be, whatever the filters (the system and the Docker images).
+    @fix_commands = Vulnerabilities::FixCommands.new(@server, all.fixable) if @vulnerability_counts[:fixable].positive? || all.images.fixable.exists?
     @fixable_only = params[:fixable] == "1"
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     scope = scope.fixable if @fixable_only
@@ -217,6 +224,10 @@ class ServersController < ApplicationController
     cookies.permanent[SERVER_TABS_COOKIE] = { value: tabs.to_a.last(REMEMBERED_TABS).to_h.to_json, same_site: :lax, httponly: true }
   end
 
+  def send_csv(export)
+    send_data export.to_csv, filename: export.filename, type: :csv, disposition: "attachment"
+  end
+
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.
   def fleet_view
     view = params[:view].presence_in(VIEWS)
@@ -229,6 +240,6 @@ class ServersController < ApplicationController
   end
 
   def server_params
-    params.expect(server: [ :name, :host, :port, :username, :extra_addresses_text, server_group_ids: [] ])
+    params.expect(server: [ :name, :host, :port, :username, :extra_addresses_text, :expected_ports, server_group_ids: [] ])
   end
 end

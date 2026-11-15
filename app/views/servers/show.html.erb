@@ -90,6 +90,9 @@
         <div>
           <h2 class="flex items-center gap-2 font-semibold"><%= icon :key, class: "h-4 w-4 text-ink-3" %> <%= t(".authorized_ssh_keys") %></h2>
           <p class="mt-1 text-xs text-ink-3"><%= t(".public_keys_can_log") %></p>
+          <%= link_to server_temporary_accesses_path(@server), class: "temporary-accesses-link mt-2 inline-flex items-center gap-1 text-xs text-accent hover:underline" do %>
+            <%= icon :clock, class: "h-3.5 w-3.5" %> <%= t(".temporary_accesses", count: @server.temporary_accesses.active.count) %>
+          <% end %>
         </div>
         <% if can?(:operate) %><%= render "servers/add_key_dialog", server: @server %><% end %>
       </div>

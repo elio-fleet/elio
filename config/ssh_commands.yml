@@ -127,7 +127,7 @@ inventory:
     default: "docker ps -a --no-trunc --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Label \"com.docker.compose.project\"}}\t{{.Label \"com.docker.compose.project.working_dir\"}}\t{{.Label \"com.docker.compose.project.config_files\"}}\t{{.Label \"com.docker.compose.service\"}}'"
 
   docker:
-    description: "Docker: containers (state, health check, restarts, Compose project; never their environment), their CPU / memory, images (tags, digests, age, size), disk usage, scanners installed (Trivy, Grype). Needs the docker group or root."
+    description: "Docker: containers (state, health check, restarts, Compose project, privileged or not, mounts, networks, published ports; never their environment), their CPU / memory, images (tags, digests, age, size), scanners installed (Trivy, Grype). Needs the docker group or root."
     run_as: root
     shell: true
     timeout: 120
@@ -137,12 +137,17 @@ inventory:
       if [ -z "$version" ]; then docker version 2>&1 | grep -i -m 1 -E 'denied|cannot|error' || echo unreadable; exit 0; fi
       echo "$version"
       echo "@@elio containers"; ids=$(docker ps -aq --no-trunc 2>/dev/null)
-      if [ -n "$ids" ]; then docker inspect --format '{{.Id}}	{{.Name}}	{{.Config.Image}}	{{.Image}}	{{.State.Status}}	{{.RestartCount}}	{{with index .State "Health"}}{{index . "Status"}}{{end}}	{{.State.StartedAt}}	{{.State.FinishedAt}}	{{.State.ExitCode}}	{{.HostConfig.RestartPolicy.Name}}	{{.Created}}	{{with .Config.Labels}}{{index . "com.docker.compose.project"}}{{end}}	{{with .Config.Labels}}{{index . "com.docker.compose.service"}}{{end}}' $ids 2>/dev/null; fi
+      if [ -n "$ids" ]; then docker inspect --format '{{.Id}}	{{.Name}}	{{.Config.Image}}	{{.Image}}	{{.State.Status}}	{{.RestartCount}}	{{with index .State "Health"}}{{index . "Status"}}{{end}}	{{.State.StartedAt}}	{{.State.FinishedAt}}	{{.State.ExitCode}}	{{.HostConfig.RestartPolicy.Name}}	{{.Created}}	{{with .Config.Labels}}{{index . "com.docker.compose.project"}}{{end}}	{{with .Config.Labels}}{{index . "com.docker.compose.service"}}{{end}}	{{.HostConfig.Privileged}}	{{json .Mounts}}	{{range $name, $network := .NetworkSettings.Networks}}{{$name}} {{end}}	{{json .NetworkSettings.Ports}}' $ids 2>/dev/null; fi
       echo "@@elio stats"; if [ -n "$ids" ]; then docker stats --no-stream --no-trunc --format '{{.ID}}	{{.CPUPerc}}	{{.MemUsage}}	{{.MemPerc}}' 2>/dev/null; fi
       echo "@@elio images"; images=$(docker image ls -q --no-trunc 2>/dev/null | sort -u)
       if [ -n "$images" ]; then docker image inspect --format '{{.Id}}	{{json .RepoTags}}	{{json .RepoDigests}}	{{.Created}}	{{.Size}}	{{.Os}}/{{.Architecture}}' $images 2>/dev/null; fi
-      echo "@@elio df"; docker system df --format '{{.Type}}	{{.TotalCount}}	{{.Active}}	{{.Size}}	{{.Reclaimable}}' 2>/dev/null
       echo "@@elio scanners"; for tool in trivy grype; do if command -v $tool >/dev/null 2>&1; then echo $tool; fi; done
+
+  docker_df:
+    description: "Docker disk usage (docker system df). Slow on big hosts: read every few hours, not at every collection. Needs the docker group or root."
+    run_as: root
+    timeout: 120
+    default: "docker system df --format '{{.Type}}\t{{.TotalCount}}\t{{.Active}}\t{{.Size}}\t{{.Reclaimable}}'"
 
   docker_image_packages:
     description: "System and Debian / Ubuntu packages of an image, copied out of one of its containers (docker cp, read-only), for Elio to match with the vulnerability feeds when neither Trivy nor Grype is installed."
@@ -190,7 +195,7 @@ inventory:
       else echo unsupported; fi
 
   ports:
-    description: "Ports: listening sockets with their process and systemd unit, firewall state (ufw, else nftables, else iptables). Read-only: Elio never changes the firewall."
+    description: "Ports: listening sockets with their process and systemd unit, firewall state (ufw, else firewalld, else nftables, else iptables), the IPv6 INPUT chain, and the DOCKER-USER chain (Docker's published ports bypass ufw / firewalld; rules there filter them). Read-only: Elio never changes the firewall."
     run_as: root
     shell: true
     default: |
@@ -199,6 +204,17 @@ inventory:
       echo "@@elio ufw"; if command -v ufw >/dev/null 2>&1; then ufw status verbose 2>&1; else echo absent; fi
       echo "@@elio nft"; if command -v nft >/dev/null 2>&1; then nft list ruleset 2>&1 | head -c 200000; else echo absent; fi
       echo "@@elio iptables"; if command -v iptables >/dev/null 2>&1; then iptables -S INPUT 2>&1; else echo absent; fi
+      echo "@@elio ip6tables"; if command -v ip6tables >/dev/null 2>&1; then ip6tables -S INPUT 2>&1; else echo absent; fi
+      echo "@@elio docker_user"; if command -v iptables >/dev/null 2>&1; then iptables -S DOCKER-USER 2>&1; else echo absent; fi
+      echo "@@elio firewalld"
+      if ! command -v firewall-cmd >/dev/null 2>&1; then echo absent
+      elif ! firewall-cmd --state >/dev/null 2>&1; then echo "not running"
+      else
+        zones=$({ firewall-cmd --get-default-zone; firewall-cmd --get-active-zones | grep -v '^[[:space:]]' | cut -d' ' -f1; } 2>/dev/null | sort -u)
+        for zone in $zones; do firewall-cmd --list-all --zone="$zone" 2>&1; done
+        echo "@@elio firewalld_services"
+        for service in $(for zone in $zones; do firewall-cmd --list-services --zone="$zone" 2>/dev/null; done | tr ' ' '\n' | sort -u); do firewall-cmd --info-service="$service" 2>&1; done
+      fi
 
 # The only commands that change something: the authorized_keys file of the
 # account Elio logs in as (~/.ssh/authorized_keys), or of another account
@@ -248,6 +264,22 @@ keys:
       if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
       printf '%s\n' @{line} >> "$file"
       echo added
+
+  extend:
+    description: "Extends a temporary access: changes only the expiry-time option of the lines of a key (its other options, comment and the other lines are kept byte for byte). Prints absent (no expiring line for the key) or extended."
+    writes: true
+    shell: true
+    default: |
+      set -e
+      file="$HOME/.ssh/authorized_keys"
+      if [ ! -f "$file" ]; then echo absent; exit 0; fi
+      matches=$(awk -v blob=@{blob} '/expiry-time="/ { for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
+      if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
+      tmp=$(mktemp "$HOME/.ssh/authorized_keys.XXXXXX")
+      trap 'rm -f "$tmp"' EXIT
+      awk -v blob=@{blob} -v expiry=@{expiry} '{ for (i = 1; i <= NF; i++) if ($i == blob) { sub(/expiry-time="[0-9]+Z?"/, "expiry-time=\"" expiry "\""); break } print }' "$file" > "$tmp"
+      cat "$tmp" > "$file"
+      echo extended
 
   remove:
     description: "Removes every line whose key is the given one. Prints absent or removed."
@@ -340,6 +372,33 @@ keys:
         if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
         printf '%s\n' "$line" >> "$file"
         echo added
+        ELIO
+
+  extend_in_account:
+    description: "Extends a temporary access on another account: changes only the expiry-time option of the lines of a key in its authorized_keys. Same as remove_from_account: root only finds the account, the file is read and written as the account. Prints absent or extended."
+    writes: true
+    run_as: root
+    shell: true
+    default: |
+        set -e
+        home=$(getent passwd @{user} | cut -d: -f6)
+        if [ -z "$home" ]; then echo "unknown user" >&2; exit 3; fi
+        if [ ! -f "$home/.ssh/authorized_keys" ]; then echo absent; exit 0; fi
+        runuser -u @{user} -- sh -s -- "$home" @{user} @{blob} @{expiry} <<'ELIO'
+        set -e
+        home=$1 user=$2
+        refuse() { echo "not owned by the account" >&2; exit 4; }
+        if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then refuse; fi
+        blob=$3 expiry=$4
+        file="$home/.ssh/authorized_keys"
+        if [ "$(ls -ld "$file" | awk '{ print $3 }')" != "$user" ]; then refuse; fi
+        matches=$(awk -v blob="$blob" '/expiry-time="/ { for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
+        if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
+        tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
+        trap 'rm -f "$tmp"' EXIT
+        awk -v blob="$blob" -v expiry="$expiry" '{ for (i = 1; i <= NF; i++) if ($i == blob) { sub(/expiry-time="[0-9]+Z?"/, "expiry-time=\"" expiry "\""); break } print }' "$file" > "$tmp"
+        cat "$tmp" > "$file"
+        echo extended
         ELIO
 
   remove_from_account:

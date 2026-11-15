@@ -134,6 +134,14 @@ en:
       from: from %{source}
       from_anywhere: from anywhere
       no_allow_rule: No allow rule.
+      family:
+        both: IPv4 and IPv6
+        ipv4: IPv4
+        ipv6: IPv6
+      ipv6_open: "%{tool} filters IPv4 only: IPv6 is not filtered (no rule, everything accepted). Reachable in IPv6: %{ports}, on %{addresses}."
+      docker_user: Docker rules (DOCKER-USER chain)
+      docker_user_rules: "Docker's published ports skip the rules above; these rules apply to them:"
+      docker_user_empty: "No rule: the ports published by Docker skip the firewall above and are filtered by nothing. Publish them on 127.0.0.1 or add rules to this chain."
       public_ports: Public ports and firewalls
       all_ports: All the ports
       ovh_ip: OVH %{ip}
@@ -159,7 +167,7 @@ en:
       public_out_listening_html: public out of %{count} listening
       firewall_html: 'Firewall: %{firewall_label}'
       expected_ports_html: 'Expected ports: %{filter_map}'
-      docker_publishes_ports_adding: 'Docker publishes ports by adding its own rules: ufw does not filter them. Publish them on 127.0.0.1 (“127.0.0.1:8080:80”) or filter them in the DOCKER-USER chain.'
+      docker_publishes_ports_adding: 'Docker publishes ports by adding its own rules: the firewall (ufw, firewalld) does not filter them. Publish them on 127.0.0.1 (“127.0.0.1:8080:80”) or filter them in the DOCKER-USER chain.'
       port: Port
       listening: Listening on
       service_container: Service / container
@@ -167,12 +175,17 @@ en:
       suggested_ufw_rules: Suggested ufw rules
       elio_never_changes_firewall: 'Elio never changes the firewall: read them, then apply them yourself.'
       ports_inventory_yet: No ports inventory yet.
+    unexpected_port:
+      ignore: Ignore
+      ignore_hint: Add %{port} to the expected ports of this server
     port_firewall:
       allowed: allowed
       blocked: blocked
       firewall_blocks_port_default: The firewall blocks this port by default
       published_docker: published by Docker
-      docker_bypasses_ufw_port: 'Docker bypasses ufw: the port is reachable even without a rule'
+      docker_bypasses_ufw_port: 'Docker bypasses the firewall: the port is reachable even without a rule'
+      docker_user: Docker, DOCKER-USER rules
+      docker_user_hint: "Docker bypasses the firewall, but its DOCKER-USER chain has rules that may filter this port: check them in the server's firewall below"
       not_filtered: not filtered
       firewall_filters_port: No firewall filters this port
       firewall_unreadable_without_root: Firewall unreadable without root access
@@ -396,6 +409,11 @@ en:
       vxlan: VXLAN
       other: Other
   inventory_helper:
+    listen_address:
+      all_ipv4: every IPv4 interface
+      all_ipv6: every interface (IPv6, often IPv4 too)
+      all: every interface
+      loopback: this machine only
     virtualization:
       none: Physical machine
       kvm: KVM
@@ -438,6 +456,19 @@ en:
       running: running
       stopped: stopped
       stopped_code: stopped (code %{code})
+      privileged: privileged
+      privileged_hint: "Privileged container: it can do anything on the host, as root."
+      docker_socket: Docker socket
+      docker_socket_hint: "The Docker socket is mounted in this container: it can start any container on the host, so it is root on the host."
+      networks: "networks: %{list}"
+      mounts: "mounts: %{list}"
+      exposure:
+        all: public
+        all_hint: "Published on every interface: reachable from the network unless a firewall blocks it (Docker's own rules usually bypass ufw)."
+        loopback: local
+        loopback_hint: Published on the loopback address only, reachable from this server only.
+        address: one address
+        address_hint: Published on this address only.
     image_update:
       available: new version
       newer: "%{version} available"

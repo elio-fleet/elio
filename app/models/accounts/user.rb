@@ -33,6 +33,15 @@ class User < ApplicationRecord
 
   def can?(permission) = PERMISSIONS.fetch(permission).include?(role)
 
+  # Columns of the fleet list the user may hide (state, name and actions stay).
+  FLEET_COLUMNS = %w[system load memory disk updates notes].freeze
+
+  def hidden_fleet_columns = Array(preferences["hidden_fleet_columns"]) & FLEET_COLUMNS
+
+  def fleet_column?(column) = hidden_fleet_columns.exclude?(column.to_s)
+
+  def hide_fleet_columns!(columns) = update!(preferences: preferences.merge("hidden_fleet_columns" => Array(columns).map(&:to_s) & FLEET_COLUMNS))
+
   def role_label = I18n.t("users.roles.#{role}")
 
   def self.role_label(role) = I18n.t("users.roles.#{role}")

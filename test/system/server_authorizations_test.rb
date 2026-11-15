@@ -6,6 +6,8 @@ class ServerAuthorizationsTest < ApplicationSystemTestCase
 
   setup do
     sign_in users(:one)
+    # The changes run on the stubbed services below, without a connection.
+    stub_method_until_teardown(Keys::WriteSession, :open, ->(*, ssh: nil, **, &block) { block.call(ssh) })
   end
 
   # Simulates the authorized_keys file in memory: the reader lists it and the
@@ -105,6 +107,39 @@ class ServerAuthorizationsTest < ApplicationSystemTestCase
         assert PublicKey.exists?(name: "Bob")
       end
     end
+  end
+
+  test "adding a key on two accounts, restricted to a network" do
+    AccountSnapshot.create!(server: servers(:web), unix_user: "root", content: "", read_at: Time.current)
+    files = { "deploy" => [ ssh_keys(:main).public_key ], "root" => [] }
+    reader = ->(*, **) { Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse(files["deploy"].join("\n")), error_title: nil, error_details: nil) }
+    read_all = lambda do |server, **options|
+      keys_read(reader, others: { "root" => files["root"] }).call(server, **options)
+    end
+    authorizer = lambda do |_server, public_key, account:, expires_at:, options:, **|
+      files[account.unix_user] << Keys::PublicKeyAuthorization.line_for(public_key, expires_at, options)
+      Keys::PublicKeyAuthorization::Result.new(status: :added, error_title: nil, error_details: nil)
+    end
+
+    stub_method(Keys::AuthorizedKeysReader, :call_all, read_all) do
+      stub_method(Keys::PublicKeyAuthorization, :call, authorizer) do
+        visit server_path(servers(:web), tab: "keys")
+
+        open_add_key_dialog
+        within("dialog.add-key-dialog[open]") do
+          select "CI", from: "Clé du trousseau"
+          check "root"
+          find("summary", text: "Restrictions").click
+          fill_in "Adresses d'origine autorisées (from=)", with: "10.0.0.0/8"
+          check "Pas de redirection de ports (no-port-forwarding)"
+          click_on "Ajouter sur le serveur"
+        end
+
+        assert_selector "#flash", text: "La clé « CI » a été ajoutée sur « Web ». La clé « CI » a été ajoutée sur « Web (root) »."
+        within("#server-authorized-keys") { assert_selector ".key-keyring", text: "CI", count: 2 }
+      end
+    end
+    assert_equal [ %(from="10.0.0.0/8",no-port-forwarding) ] * 2, files.values.map { |lines| AuthorizedKey.parse(lines.join("\n")).last.options }
   end
 
   private

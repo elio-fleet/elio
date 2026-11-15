@@ -108,7 +108,18 @@ module ComponentsHelper
     end
   end
 
-  # The one style of tabs: items [{ key:, label:, path:, count:, tone: }]; those
+  # A column header of a dense table that sorts the list (a link): direction
+  # "asc" / "desc" on the current column (arrow, aria-sort), nil otherwise;
+  # sorted_on: what it sorts on, when not the label ("Sort by current load").
+  def sort_header(label, path, direction: nil, sorted_on: label, **options)
+    tag.th(scope: "col", aria: { sort: { "asc" => "ascending", "desc" => "descending" }[direction] }, data: { sort_direction: direction }, **options) do
+      link_to path, class: "sort-header inline-flex items-center gap-1 uppercase hover:text-ink #{"text-ink" if direction}", title: t("ui.sort_by", column: sorted_on.downcase_first) do
+        safe_join([ tag.span(label), (icon(direction == "asc" ? :chevron_up : :chevron_down, class: "h-3 w-3") if direction) ].compact)
+      end
+    end
+  end
+
+  # The one style of tabs:items [{ key:, label:, path:, count:, tone: }]; those
   # that do not fit go into a "More" menu (overflow-tabs controller).
   def tabs(items, current:, label:, **options)
     render "shared/tabs", items: items, current: current.to_s, label: label, extra_class: options[:class]
@@ -147,13 +158,15 @@ module ComponentsHelper
     end
   end
 
-  # A line of "To handle": gravity icon, text, servers as chips, a named action.
-  def attention_item(tone, text, action: nil, servers: [], icon: nil, **options)
+  # A line of "To handle": gravity icon, text, servers as chips, since when
+  # (optional: a relative time, the date as tooltip), a named action.
+  def attention_item(tone, text, action: nil, servers: [], icon: nil, since: nil, **options)
     tag.li(class: "attention-item grid grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-2 first:border-t-0", data: { tone: tone }, **options) do
       safe_join([
         icon(icon || UiHelper::TONES.fetch(tone)[:icon] || :information_circle, class: "h-4 w-4 #{TONE_TEXT.fetch(tone, "text-ink-3")}"),
         tag.div(class: "min-w-0") do
-          safe_join([ tag.span(text), *Array(servers).map { |name, path| server_chip(name, path) } ], " ")
+          safe_join([ tag.span(text), *Array(servers).map { |name, path| server_chip(name, path) },
+                      (relative_time_tag(since, prefix: t("ui.since_prefix"), class: "attention-since text-xs whitespace-nowrap text-ink-3") if since) ].compact, " ")
         end,
         (link_to(safe_join([ action[0], " →" ]), action[1], class: "attention-action text-sm whitespace-nowrap text-accent hover:underline", data: action[2]) if action)
       ].compact)

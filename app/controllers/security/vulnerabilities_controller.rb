@@ -16,7 +16,8 @@ class VulnerabilitiesController < ApplicationController
   end
 
   # Everything about a CVE: description, the score of each provider with its
-  # vector, exploitation, the packages and versions on the server it was
+  # vector (asked at once when a provider never answered), exploitation, its
+  # advisories and fixes, the packages and versions on the server it was
   # opened from (?server_id=), the other servers and images touched. In the
   # modal of the vulnerabilities lists (turbo-frame), or as a page.
   def show
@@ -36,6 +37,9 @@ class VulnerabilitiesController < ApplicationController
     @provider_scores = providers.select(&:cvss?).filter_map do |provider|
       [ provider, scored[provider.key] ] if provider.enabled? || scored[provider.key]&.score
     end
+    # A provider that never answered for a CVE of the fleet is asked now, in the background (the page reloads itself meanwhile).
+    @scores_pending = @rows.any? && (Vulnerabilities::Scores::OnDemand.request(@cve, providers: providers) || Vulnerabilities::Scores::OnDemand.pending?(@cve))
+    @references = Vulnerabilities::References.of(@scores)
     @description = @feed_entries.filter_map(&:description).first || @rows.filter_map(&:description).first ||
                    @scores.filter_map { |score| score.data["description"] }.first
     @servers = @rows.group_by(&:server).sort_by { |server, _| server.name }

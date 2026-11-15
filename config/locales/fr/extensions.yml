@@ -698,6 +698,7 @@ fr:
       virtualization: 'Virtualisation : %{value}'
       ssh: 'Adresse SSH utilisée par Elio : %{value}'
       groups: 'Groupes : %{value}'
+      expected_ports: 'Ports publics attendus de ce serveur (en plus de ses groupes) : %{value}'
     expected_ports: "(ports publics attendus : %{ports})"
     scopes:
       public: publique
@@ -720,9 +721,14 @@ fr:
       allowed: autorisé par le firewall de la machine
       blocked: bloqué par le firewall de la machine
       open: aucun filtrage sur la machine
-      docker: publié par Docker, qui contourne ufw
+      docker: publié par Docker, qui contourne le firewall de la machine
+      docker_user: publié par Docker, qui contourne le firewall de la machine ; la chaîne DOCKER-USER a des règles
       unknown: firewall de la machine illisible
     allowed_rule: autorise %{rule} depuis %{from}
+    allowed_rule_family: autorise %{rule} depuis %{from} (%{family} seulement)
+    ipv6_open: 'IPv6 non filtré : le firewall ne filtre que l''IPv4'
+    docker_user_rule: 'DOCKER-USER (Docker) : %{rule}'
+    docker_user_empty: 'DOCKER-USER (Docker) : aucune règle, les ports publiés par Docker ne sont pas filtrés'
     anywhere: partout
     ovh:
       not_read: "%{block} : firewall non lu (produit non choisi dans l'extension)"

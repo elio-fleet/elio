@@ -113,6 +113,11 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english new_public_key_path, except: data
     assert_english edit_public_key_path(public_keys(:alice)), except: data
     assert_english server_path(servers(:web), tab: "keys"), except: data
+    blob = public_keys(:alice).authorized_key.key
+    servers(:web).temporary_accesses.create!(public_key: public_keys(:alice), unix_user: "deploy", key_blob: blob, fingerprint: public_keys(:alice).fingerprint, expires_at: 1.hour.from_now)
+    servers(:web).temporary_accesses.create!(public_key: public_keys(:alice), unix_user: "root", key_blob: blob, fingerprint: public_keys(:alice).fingerprint,
+                                             expires_at: 1.hour.ago, ended_at: 1.hour.ago, extensions_count: 2)
+    assert_english server_temporary_accesses_path(servers(:web)), except: data + [ ".temporary-access .font-medium", ".past-temporary-access td:first-child" ]
     servers(:web).notes.create!(body: "Front **nginx**", user: users(:one))
     assert_english server_path(servers(:web), tab: "journal"), except: data + [ ".note-body" ]
     assert_english settings_path, except: data
@@ -157,6 +162,8 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     end
     assert_english server_path(servers(:web), tab: "vulnerabilities"), except: data
     assert_english server_path(servers(:web), tab: "vulnerabilities", containers: "1", view: "cves"), except: data
+    CveScore.store("nvd", [ { cve: "CVE-2024-9143", score: 4.3, data: { "references" => [ { "url" => "https://www.debian.org/security/2024/dsa-5800", "kind" => "advisory" },
+                                                                                          { "url" => "https://github.com/openssl/openssl/commit/72ae83ad214d2eef262461365a1975707f862712", "kind" => "fix" } ] } } ])
     assert_english vulnerability_path("CVE-2024-9143", server_id: servers(:web).id), except: data
     assert_english vulnerability_path("CVE-2024-9143"), except: data
     assert_english docker_path(tab: "cves"), except: data

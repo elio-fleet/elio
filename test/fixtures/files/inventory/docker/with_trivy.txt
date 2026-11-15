@@ -16,10 +16,5 @@ sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc	["postgr
 sha256:dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd	["alpine:3.20"]	["alpine@sha256:4444444444444444444444444444444444444444444444444444444444444444"]	2024-07-22T22:26:43Z	7800000	linux/amd64
 sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee	["redis:latest"]	["redis@sha256:5555555555555555555555555555555555555555555555555555555555555555"]	2024-01-10T00:00:00Z	138000000	linux/amd64
 sha256:ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff	["<none>:<none>"]	[]	2023-05-01T00:00:00Z	90000000	linux/amd64
-@@elio df
-Images	6	4	1.221GB	228MB (18%)
-Containers	4	3	61.4kB	0B (0%)
-Local Volumes	2	2	412.5MB	0B (0%)
-Build Cache	0	0	0B	0B
 @@elio scanners
 trivy

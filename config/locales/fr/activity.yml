@@ -10,6 +10,12 @@ fr:
       key_expired:
         label: Accès temporaire expiré
         description: Un accès temporaire a expiré et sa clé a été retirée.
+      key_expiring:
+        label: Accès temporaire bientôt terminé
+        description: Un accès temporaire se termine dans quelques minutes (envoyé une fois, pour les accès de plus de 30 minutes).
+      key_access_extended:
+        label: Accès temporaire prolongé
+        description: La fin d'un accès temporaire a été repoussée.
       unknown_key_detected:
         label: Clé inconnue détectée
         description: Une clé absente du trousseau a été trouvée sur un serveur.
@@ -111,7 +117,7 @@ fr:
         description: Un serveur a été ajouté à Elio.
       server_updated:
         label: Serveur modifié
-        description: Les informations de connexion d'un serveur ont changé.
+        description: Les informations de connexion ou les ports attendus d'un serveur ont changé.
       servers_imported:
         label: Serveurs importés
         description: Des serveurs ont été importés depuis un fichier CSV ou un ~/.ssh/config.
@@ -251,6 +257,8 @@ fr:
       key_added_for: "« %{name} » ajoutée sur %{target} pendant %{duration}"
       key_removed: Clé « %{name} » supprimée de %{target}
       key_expired: Accès temporaire de « %{name} » retiré de %{target}
+      key_expiring: L'accès temporaire de « %{name} » sur %{target} se termine à %{time}
+      key_access_extended: Accès temporaire de « %{name} » sur %{target} prolongé de %{duration}, jusqu'à %{time}
       unknown_key_detected: Clé inconnue « %{name} » trouvée sur %{target}
       key_disappeared: Clé « %{name} » disparue de %{target}
       ssh_access_lost: "« %{server} » refuse la clé d'Elio"

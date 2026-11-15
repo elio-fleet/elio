@@ -1,0 +1,30 @@
+@@elio ss
+tcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:* users:(("sshd",pid=1,fd=3))
+tcp LISTEN 0 128 [::]:22 [::]:* users:(("sshd",pid=1,fd=4))
+tcp LISTEN 0 4096 0.0.0.0:8080 0.0.0.0:* users:(("docker-proxy",pid=2,fd=4))
+@@elio cgroups
+@@elio ufw
+Status: active
+Logging: on (low)
+Default: deny (incoming), allow (outgoing), deny (routed)
+New profiles: skip
+
+To                         Action      From
+--                         ------      ----
+22/tcp                     ALLOW IN    Anywhere
+443/tcp                    ALLOW IN    2001:db8::/32
+@@elio nft
+absent
+@@elio iptables
+-P INPUT DROP
+-A INPUT -j ufw-before-logging-input
+@@elio ip6tables
+-P INPUT ACCEPT
+@@elio docker_user
+-N DOCKER-USER
+-A DOCKER-USER -j ufw-user-forward
+-A DOCKER-USER -s 10.0.0.0/8 -j RETURN
+-A DOCKER-USER -p tcp -m tcp --dport 8080 -j DROP
+-A DOCKER-USER -j RETURN
+@@elio firewalld
+absent
