@@ -28,6 +28,16 @@ class Ssh::CheckTest < ActiveSupport::TestCase
     assert_match(/\Aecho elio-check-\h{8}\z/, fake.commands.sole)
   end
 
+  test "with privilege, also probes sudo -n once the login works" do
+    without = FakeSsh.new(handler: echo_handler, responses: { "sudo -n true" => FakeSsh::Response.new("", "a password is required\n", 1) })
+    with = FakeSsh.new(handler: echo_handler, responses: { "sudo -n true" => FakeSsh::Response.new("", "", 0) })
+
+    assert_equal "none", Ssh::Check.call(servers(:web), privilege: true, transport: without, known_hosts_file: @known_hosts).privilege
+    assert_equal "sudo", Ssh::Check.call(servers(:web), privilege: true, transport: with, known_hosts_file: @known_hosts).privilege
+    assert_nil check(with).privilege, "not probed unless asked"
+    assert_equal 3, with.commands.size
+  end
+
   test "uses a different token on each call" do
     fake = FakeSsh.new(handler: echo_handler)
 

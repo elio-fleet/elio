@@ -16,7 +16,7 @@ class Inventory::Collectors::Packages < Inventory::Collector
     docker_error = nil
     if sections["docker"].strip == "present"
       images = run("inventory.docker_images")
-      images.success? ? packages.concat(self.class.parse_docker(images.stdout)) : docker_error = I18n.t("inventory.collectors.packages.docker_unreadable", truncate: (images.stderr.strip.truncate(120)))
+      images.success? ? packages.concat(self.class.parse_docker(images.stdout)) : docker_error = docker_failure(images.stderr, I18n.t("inventory.collectors.packages.docker_unreadable", truncate: (images.stderr.strip.truncate(120))))
     end
 
     data = self.class.summarize(packages).merge("history" => self.class.parse_history(sections["history"]))
