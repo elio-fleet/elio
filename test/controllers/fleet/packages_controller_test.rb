@@ -48,4 +48,19 @@ class PackagesControllerTest < ActionDispatch::IntegrationTest
     get packages_path(q: "zzz")
     assert_select "p", text: "Aucun paquet ne contient « zzz »."
   end
+
+  test "compares a package across servers: exact name first, newest dpkg version first, with its repositories" do
+    record_packages(servers(:web), [ { manager: "dpkg", name: "curl", version: "7.88.1-10+deb12u10", arch: "amd64", origin: "Debian/bookworm-security" },
+                                     { manager: "dpkg", name: "libcurl4", version: "7.88.1-10+deb12u10", arch: "amd64" } ])
+    record_packages(servers(:db), [ { manager: "dpkg", name: "curl", version: "7.88.1-10+deb12u9", arch: "amd64", origin: "Debian/bookworm" },
+                                    { manager: "dpkg", name: "acurl", version: "1", arch: "amd64" } ])
+    sign_in users(:viewer)
+
+    get packages_path(q: "curl")
+
+    assert_equal %w[curl acurl libcurl4], css_select(".package-result h2").map { |heading| heading.text.split.first }
+    versions = css_select(".package-result").first.css("tr.package-version")
+    assert_equal [ "7.88.1-10+deb12u10", "7.88.1-10+deb12u9" ], versions.map { |row| row.at_css("td").text.strip }
+    assert_equal [ "Debian/bookworm-security", "Debian/bookworm" ], versions.map { |row| row.at_css("td.package-origin").text.strip }
+  end
 end

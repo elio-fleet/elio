@@ -226,6 +226,15 @@ fr:
       security: sécurité
       up_date: à jour
       package_matches: Aucun paquet ne correspond.
+      origin: Dépôt
+      outside_only: Hors distribution
+      outside_only_help: Rétroportages (backports), dépôts tiers et paquets qu'aucun dépôt ne fournit
+      compare_versions: Comparer ses versions entre les serveurs
+      history:
+        one: Dernier changement (dpkg.log)
+        other: "%{count} derniers changements (dpkg.log)"
+      history_date: Date (heure du serveur)
+      history_action: Changement
   packages:
     index:
       search_placeholder: Chercher un paquet installé (openssl, nginx, postgres…)
@@ -243,6 +252,7 @@ fr:
       available_version: Version disponible
       servers_concerned: Serveurs concernés
       pending_security_update: Aucune mise à jour de sécurité en attente.
+      origin: Dépôt
   ports:
     index:
       all_groups: Tous les groupes
@@ -344,6 +354,13 @@ fr:
         dpkg: Debian (dpkg)
         snap: Snap
         docker: Image Docker
+      origins:
+        local: Hors dépôt
+      history_actions:
+        install: Installé
+        upgrade: Mis à jour
+        remove: Supprimé
+        purge: Purgé
     collection:
       internal_error: Erreur interne pendant la collecte (%{class})
     collector:

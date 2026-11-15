@@ -148,7 +148,7 @@ Pris en charge : **Debian et Ubuntu** (les autres systèmes : santé et système
 |---|---|
 | Système, réseau | `/etc/os-release`, `uname`, `hostname`, `systemd-detect-virt`, `/proc`, `timedatectl`, `ip -j addr`, `ip -j link` |
 | Santé | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (et `show` des unités en échec), `apt-get -s dist-upgrade` (simulation, seulement si la base des paquets a changé), `/proc/vmstat` (processus tués faute de mémoire) |
-| Paquets | `dpkg-query -W`, `apt list --upgradable`, `snap list` |
+| Paquets | `dpkg-query -W`, `apt list --upgradable`, `apt-cache policy` (dépôt de chaque paquet), les dernières lignes de `/var/log/dpkg.log`, `snap list` |
 | Services, tâches planifiées | `systemctl list-units`, `list-unit-files`, `show` des timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (état, santé, redémarrages — **jamais les variables d'environnement**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` s'ils sont installés, `docker cp` de `os-release` et de l'état dpkg |
 | Ports | `ss -tulpn`, `/proc/<pid>/cgroup`, `ufw status verbose`, `nft list ruleset`, `iptables -S INPUT` |

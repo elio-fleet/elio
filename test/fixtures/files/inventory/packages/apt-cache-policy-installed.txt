@@ -1,0 +1,55 @@
+adduser:
+  Installed: 3.134
+  Candidate: 3.134
+  Version table:
+ *** 3.134 500
+        500 http://deb.debian.org/debian bookworm/main amd64 Packages
+        100 /var/lib/dpkg/status
+curl:
+  Installed: 7.88.1-10+deb12u7
+  Candidate: 7.88.1-10+deb12u8
+  Version table:
+     7.88.1-10+deb12u8 500
+        500 http://deb.debian.org/debian bookworm/main amd64 Packages
+        500 http://security.debian.org/debian-security bookworm-security/main amd64 Packages
+ *** 7.88.1-10+deb12u7 100
+        100 /var/lib/dpkg/status
+libssl3:
+  Installed: 3.0.14-1~deb12u1
+  Candidate: 3.0.15-1~deb12u1
+  Version table:
+     3.0.15-1~deb12u1 500
+        500 http://security.debian.org/debian-security bookworm-security/main amd64 Packages
+ *** 3.0.14-1~deb12u1 500
+        500 http://deb.debian.org/debian bookworm/main amd64 Packages
+        100 /var/lib/dpkg/status
+libssl3:i386:
+  Installed: 3.0.14-1~deb12u1
+  Candidate: 3.0.14-1~deb12u1
+  Version table:
+ *** 3.0.14-1~deb12u1 500
+        500 http://deb.debian.org/debian bookworm/main i386 Packages
+        100 /var/lib/dpkg/status
+linux-image-amd64:
+  Installed: 6.1.106-3
+  Candidate: 6.10.6-1~bpo12+1
+  Version table:
+     6.10.6-1~bpo12+1 100
+        100 http://deb.debian.org/debian bookworm-backports/main amd64 Packages
+ *** 6.1.106-3 500
+        500 http://deb.debian.org/debian bookworm-backports/main amd64 Packages
+        500 http://deb.debian.org/debian bookworm/main amd64 Packages
+        100 /var/lib/dpkg/status
+docker-ce:
+  Installed: 5:27.3.1-1~debian.12~bookworm
+  Candidate: 5:27.3.1-1~debian.12~bookworm
+  Version table:
+ *** 5:27.3.1-1~debian.12~bookworm 500
+        500 https://download.docker.com/linux/debian bookworm/stable amd64 Packages
+        100 /var/lib/dpkg/status
+elio-tool:
+  Installed: 1.0
+  Candidate: 1.0
+  Version table:
+ *** 1.0 100
+        100 /var/lib/dpkg/status

@@ -24,7 +24,7 @@ class Inventory::Collectors::PackagesTest < ActiveSupport::TestCase
     dpkg = packages.select { |package| package["manager"] == "dpkg" }
     assert_equal %w[adduser curl libssl3 libssl3 linux-image-amd64 openssl postgresql-15], dpkg.map { |package| package["name"] }
     assert_equal({ "manager" => "dpkg", "name" => "openssl", "version" => "3.0.14-1~deb12u1", "arch" => "amd64",
-                   "available_version" => "3.0.15-1~deb12u1", "security" => true }, dpkg.find { |package| package["name"] == "openssl" })
+                   "available_version" => "3.0.15-1~deb12u1", "security" => true, "origin" => "Debian/bookworm" }, dpkg.find { |package| package["name"] == "openssl" })
     assert_equal [ "7.88.1-10+deb12u8", false ], dpkg.find { |package| package["name"] == "curl" }.values_at("available_version", "security")
     assert_equal [ [ "nginx", "1.27-alpine" ], [ "postgres", "16" ], [ "ghcr.io/acme/api", "fedcba987654" ] ],
                  packages.select { |package| package["manager"] == "docker" }.map { |package| package.values_at("name", "version") }
@@ -93,5 +93,49 @@ class Inventory::Collectors::PackagesTest < ActiveSupport::TestCase
     Collector.record(servers(:web), Collector.summarize(packages), Time.current)
     assert_equal [ [ "curl", "curl", "7.88.1-10+deb12u12" ], [ "libc6", "glibc", "2.36-9+deb12u10" ], [ "libssl3", "openssl", "3.0.14-1~deb12u1" ] ],
                  servers(:web).packages.order(:name).pluck(:name, :source_name, :source_version)
+  end
+
+  test "the repository of each dpkg package, and the last dpkg.log changes newest first" do
+    outcome, = collect(:debian12)
+
+    origins = outcome.data["packages"].select { |package| package["manager"] == "dpkg" }.to_h { |package| [ package.values_at("name", "arch").join(":"), package["origin"] ] }
+    assert_equal({ "adduser:all" => "Debian/bookworm", "curl:amd64" => "Debian/bookworm", "libssl3:amd64" => "Debian/bookworm-security",
+                   "libssl3:i386" => "Debian/bookworm", "linux-image-amd64:amd64" => "Debian Backports/bookworm-backports",
+                   "openssl:amd64" => "Debian/bookworm", "postgresql-15:amd64" => "apt.example.org/bookworm-pgdg" }, origins)
+    history = outcome.data["history"]
+    assert_equal [ "2024-09-11 09:12:40", "remove", "old-package", "1.0", nil ], history.first.values_at("at", "action", "name", "from", "to")
+    assert_equal [ "install", "postgresql-15", nil, "15.7-1.pgdg120+1" ], history.last.values_at("action", "name", "from", "to")
+    assert_equal history, Collector.snapshot_data(outcome.data)["history"]
+
+    Collector.record(servers(:web), outcome.data, Time.current)
+    assert_equal "apt.example.org/bookworm-pgdg", servers(:web).packages.find_by(name: "postgresql-15").origin
+  end
+
+  test "a package no repository provides is local; without origins nothing is guessed" do
+    origins = Collector.parse_origins("@1\thttp://deb.debian.org/debian bookworm/main amd64 Packages\nelio-tool\t\ncurl\t1\n", "")
+    assert_equal({ "elio-tool" => "local", "curl" => "deb.debian.org/bookworm" }, origins)
+    assert_empty Collector.parse_origins("", "")
+    assert_nil Collector.parse_dpkg("ii \tcurl\t1\tamd64\n", {}).sole["origin"]
+  end
+
+  test "the origins script reads apt-cache policy for real (awk) and keeps one short line per package" do
+    Dir.mktmpdir do |dir|
+      fixtures = file_fixture("inventory/packages")
+      { "dpkg-query" => 'echo "$*" | grep -q binary: && printf "ii  adduser\\nii  curl\\nrc  gone\\n"',
+        "apt-cache" => "if [ $# -eq 1 ]; then cat '#{fixtures.join("apt-cache-policy.txt")}'; else cat '#{fixtures.join("apt-cache-policy-installed.txt")}'; fi",
+        "apt" => "true" }.each do |name, body|
+        File.write(File.join(dir, name), "#!/bin/sh\n#{body}\n")
+        File.chmod(0o755, File.join(dir, name))
+      end
+      script = Ssh::Commands.fetch("inventory.packages").template(%w[debian])
+      stdout, status = Open3.capture2({ "PATH" => "#{dir}:#{ENV["PATH"]}" }, "sh", "-c", script)
+      assert status.success?
+
+      sections = Collector.sections(stdout)
+      assert_includes sections["sources"].lines, "http://deb.debian.org/debian bookworm/main amd64 Packages\tv=12.7,o=Debian,a=stable,n=bookworm,l=Debian,c=main,b=amd64\n"
+      assert_equal({ "adduser" => "Debian/bookworm", "curl" => "Debian/bookworm", "libssl3" => "Debian/bookworm", "libssl3:i386" => "Debian/bookworm",
+                     "linux-image-amd64" => "Debian Backports/bookworm-backports", "docker-ce" => "Docker/bookworm", "elio-tool" => "local" },
+                   Collector.parse_origins(sections["origins"], sections["sources"]))
+    end
   end
 end

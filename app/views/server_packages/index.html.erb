@@ -25,17 +25,20 @@
       <label class="flex cursor-pointer items-center gap-1.5 text-xs text-ink-2">
         <%= f.check_box :updates, { checked: @updates, data: { action: "change->auto-submit#submit" } }, "1", nil %> <%= t(".updates_only") %>
       </label>
+      <label class="flex cursor-pointer items-center gap-1.5 text-xs text-ink-2" title="<%= t(".outside_only_help") %>">
+        <%= f.check_box :outside, { checked: @outside, data: { action: "change->auto-submit#submit" } }, "1", nil %> <%= t(".outside_only") %>
+      </label>
       <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
     <% end %>
 
     <%= turbo_frame_tag dom_id(@server, :package_results), class: "block" do %>
     <% if @packages.any? %>
       <table class="packages table-dense">
-        <thead><tr><th class="pl-4"><%= t(".package") %></th><th><%= t("words.version") %></th><th><%= t(".update_2") %></th><th class="pr-4">Type</th></tr></thead>
+        <thead><tr><th class="pl-4"><%= t(".package") %></th><th><%= t("words.version") %></th><th><%= t(".update_2") %></th><th><%= t(".origin") %></th><th class="pr-4">Type</th></tr></thead>
         <tbody>
           <% @packages.each do |package| %>
             <tr class="package">
-              <td class="pl-4 font-medium"><%= package.name %><% if package.arch && package.arch != "all" %><span class="ml-1 text-xs font-normal text-ink-3"><%= package.arch %></span><% end %></td>
+              <td class="pl-4 font-medium"><%= link_to package.name, packages_path(q: package.name), target: "_top", title: t(".compare_versions"), class: "hover:text-accent hover:underline" %><% if package.arch && package.arch != "all" %><span class="ml-1 text-xs font-normal text-ink-3"><%= package.arch %></span><% end %></td>
               <td class="font-mono text-xs text-ink-2"><%= package.version %></td>
               <td class="text-xs">
                 <% if package.upgradable? %>
@@ -43,6 +46,12 @@
                   <% if package.security %><span class="badge ml-1 bg-crit-soft text-crit-ink"><%= t(".security") %></span><% end %>
                 <% else %>
                   <span class="text-ink-3"><%= t(".up_date") %></span>
+                <% end %>
+              </td>
+              <td class="package-origin col-truncate text-xs" title="<%= package.origin_label %>">
+                <% if package.origin_kind == "distribution" %><span class="text-ink-3"><%= package.origin_label %></span>
+                <% elsif package.origin_kind == "local" %><span class="badge bg-warn-soft text-warn-ink"><%= package.origin_label %></span>
+                <% elsif package.origin %><span class="badge bg-subtle text-ink-2"><%= package.origin_label %></span>
                 <% end %>
               </td>
               <td class="pr-4 text-xs text-ink-3"><%= package.manager_label %></td>
@@ -54,6 +63,25 @@
     <% else %>
       <p class="px-4 py-4 text-sm text-ink-3"><%= t(".package_matches") %></p>
     <% end %>
+    <% end %>
+
+    <% if (history = counts["history"]).present? %>
+      <details class="package-history border-t border-line">
+        <summary class="cursor-pointer px-4 py-2.5 text-xs font-semibold text-ink-2"><%= t(".history", count: history.size) %></summary>
+        <table class="table-dense">
+          <thead><tr><th class="pl-4"><%= t(".history_date") %></th><th><%= t(".history_action") %></th><th><%= t(".package") %></th><th class="pr-4"><%= t("words.version") %></th></tr></thead>
+          <tbody>
+            <% history.each do |entry| %>
+              <tr class="package-change">
+                <td class="pl-4 col-nowrap font-mono text-xs text-ink-3"><%= entry["at"] %></td>
+                <td class="text-xs"><%= t("inventory.package.history_actions.#{entry["action"]}") %></td>
+                <td class="font-medium"><%= entry["name"] %></td>
+                <td class="pr-4 font-mono text-xs text-ink-2"><%= [ entry["from"], entry["to"] ].compact.join(" → ") %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </details>
     <% end %>
   <% end %>
 </turbo-frame>
