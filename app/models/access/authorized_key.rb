@@ -61,6 +61,28 @@ class AuthorizedKey
     Ssh::KeyGenerator.fingerprint(Base64.strict_decode64(key))
   end
 
+  # Below this size an RSA key is weak (NIST SP 800-57: 3072 bits for use past 2030).
+  RSA_MIN_BITS = 3072
+
+  # Why the key is weak, or nil: :dsa (refused by OpenSSH since 7.0) or
+  # :rsa_short (fewer than RSA_MIN_BITS bits). The SHA-1 signature of the old
+  # ssh-rsa algorithm is chosen by the client at each connection, so it cannot
+  # be read from the public key: an RSA key of enough bits is not flagged.
+  def weakness
+    return :dsa if type == "ssh-dss"
+
+    :rsa_short if type == "ssh-rsa" && rsa_bits.to_i.between?(1, RSA_MIN_BITS - 1)
+  end
+
+  def weak? = weakness.present?
+
+  # Size of an RSA key's modulus, nil for another type.
+  def rsa_bits
+    return unless type == "ssh-rsa"
+
+    @rsa_bits ||= Net::SSH::Buffer.new(Base64.strict_decode64(key)).read_key.n.num_bits
+  end
+
   # True when this is the public key of the given SshKey, or of one of them
   # (compared on the key itself, not the comment, which anyone can change).
   def matches?(ssh_keys)

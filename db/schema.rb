@@ -402,6 +402,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_125317) do
     t.string "kind", default: "person", null: false
     t.text "description"
     t.bigint "user_id"
+    t.date "expires_on"
+    t.datetime "expiry_reminded_at"
     t.index "lower((name)::text)", name: "index_public_keys_on_lower_name", unique: true
     t.index ["fingerprint"], name: "index_public_keys_on_fingerprint", unique: true
     t.index ["user_id"], name: "index_public_keys_on_user_id"

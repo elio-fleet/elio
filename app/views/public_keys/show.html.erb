@@ -18,15 +18,28 @@
   <section id="keyring-key" class="card p-5">
     <h2 class="text-sm font-semibold"><%= t(".ssh_key") %></h2>
 
+    <% if @public_key.weak? %>
+      <p class="key-weak-warning mt-3 flex items-start gap-2 rounded-md border border-warn/40 bg-warn-soft px-3 py-2 text-sm text-warn-ink">
+        <%= icon :exclamation_triangle, class: "mt-0.5 h-4 w-4 shrink-0" %>
+        <span><strong><%= t(".weak_key") %></strong> — <%= weak_key_reason(@public_key) %></span>
+      </p>
+    <% end %>
+
     <dl class="mt-4 grid grid-cols-1 gap-4 text-sm sm:grid-cols-3">
       <div>
         <dt class="font-medium text-ink-2">Type</dt>
-        <dd class="mt-1 font-mono text-ink-2"><%= key.type %></dd>
+        <dd class="mt-1 font-mono text-ink-2"><%= key.type %><%= " (#{key.rsa_bits} bits)" if key.rsa_bits %></dd>
       </div>
       <div class="sm:col-span-2">
         <dt class="font-medium text-ink-2"><%= t("words.fingerprint") %></dt>
         <dd id="keyring-fingerprint" class="mt-1 break-all font-mono text-ink-2"><%= @public_key.fingerprint %></dd>
       </div>
+      <% if @public_key.expires_on %>
+        <div class="sm:col-span-3">
+          <dt class="font-medium text-ink-2"><%= t(".expires_on") %></dt>
+          <dd id="keyring-expiry" class="mt-1 flex flex-wrap items-center gap-2 text-ink-2"><%= l(@public_key.expires_on, format: :long) %> <%= public_key_expiry_badge(@public_key) %></dd>
+        </div>
+      <% end %>
       <div class="sm:col-span-3">
         <dt class="font-medium text-ink-2"><%= t("words.comment") %></dt>
         <dd class="mt-1 text-ink-2"><%= key.comment || tag.span(t(".none"), class: "italic text-ink-3") %></dd>
