@@ -123,7 +123,7 @@ docker compose up -d
 | `ELIO_HOST` | Elio's domain: links in emails and notifications, and the only host name it answers to. |
 | `ELIO_SETUP_TOKEN` | If set, asked when creating the first account (useful when Elio is reachable before you set it up). |
 | `ELIO_FORCE_SSL` | `false` only to try Elio over plain HTTP. HTTPS is forced otherwise. |
-| `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails: invitations, password reset, notifications. Without `SMTP_ADDRESS`, invitation links are to be copied. Without `SMTP_USERNAME`, no authentication (a local relay, Postfix). |
+| `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails: invitations, password reset, notifications. Without `SMTP_ADDRESS`, invitation links are to be copied and the sign-in page has no "forgot password" link. Without `SMTP_USERNAME`, no authentication (a local relay, Postfix). |
 | `ELIO_PARALLEL_LIMIT` | Servers collected at the same time (4). |
 | `ELIO_ACTIVITY_RETENTION_DAYS` | How long the activity log is kept (365, `0` = forever). |
 | `ELIO_DEBIAN_TRACKER_URL`, `ELIO_UBUNTU_OSV_URL`, `ELIO_NVD_FEED_URL`, `ELIO_EPSS_URL`, `ELIO_KEV_URL` | Mirrors of the vulnerability feeds, for a closed network (they can also be imported by hand). |

@@ -24,4 +24,15 @@ class AccountMailerTest < ActionMailer::TestCase
     assert_equal "A backup code was used to sign in to Elio", mail.subject
     assert_match "You have no backup code left", mail.body.to_s
   end
+
+  test "a password changed: when, and what to do if it was not them" do
+    mail = AccountMailer.password_changed(users(:operator), at: Time.zone.local(2026, 11, 14, 9, 30))
+
+    assert_equal [ "operator@example.com" ], mail.to
+    assert_equal "Votre mot de passe Elio a été changé", mail.subject
+    body = mail.body.to_s
+    assert_match "votre compte Elio operator@example.com a été changé le samedi 14 novembre 2026 09h30", body
+    assert_match "prévenez tout de suite un administrateur", body
+    assert_match "http://example.com/account", body
+  end
 end
