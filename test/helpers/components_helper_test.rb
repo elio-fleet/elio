@@ -3,6 +3,7 @@ require "test_helper"
 class ComponentsHelperTest < ActionView::TestCase
   include UiHelper
   include IconsHelper
+  include ApplicationHelper
 
   test "page_header: breadcrumb, title, badges, subtitle and the actions of the block" do
     render html: page_header("db-prod", subtitle: "admin@198.51.100.20", crumbs: [ [ "Serveurs", "/servers" ], "db-prod" ], badges: status_badge(:crit, "Critique")) { tag.a("Modifier", class: "btn") }
@@ -99,6 +100,13 @@ class ComponentsHelperTest < ActionView::TestCase
     assert_select "ul.attention-list li.attention-item[data-tone=crit]", text: /Disque \/ à 94 %/
     assert_select "li.attention-item a.server-chip[href='/servers/1']", "db-prod"
     assert_select "li.attention-item a.attention-action[href='/servers/1#disks']", text: /Voir le disque/
+    assert_select "li.attention-item time.attention-since", 0
+  end
+
+  test "attention_item: since when, with the date as tooltip" do
+    render html: attention_list { attention_item(:warn, "Redémarrage requis", since: 2.days.ago) }
+
+    assert_select "li.attention-item time.attention-since[title]", text: "apparu il y a 2 jours"
   end
 
   test "status_line, empty_state, timeline_item, group_tag and source_tag" do

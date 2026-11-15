@@ -233,6 +233,10 @@ fr:
         other: "corrigeables · %{count} de moins qu'il y a 7 jours"
       fixable_same: "corrigeables · autant qu'il y a 7 jours"
       most_serious_first: du plus grave au moins grave
+      attention_all:
+        one: "Tout voir (%{count} de plus) →"
+        other: "Tout voir (%{count} de plus) →"
+      attention_fewer: Voir seulement les plus graves
       group_crit:
         one: "Critique · %{count}"
         other: "Critique · %{count}"
