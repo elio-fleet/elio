@@ -57,7 +57,8 @@ class ServerPrompt
       (t("fields.system", value: [ os["name"], os["kernel"] ].compact.join(", ")) if os["name"]),
       (t("fields.virtualization", value: os["virtualization"]) if os["virtualization"].present?),
       t("fields.ssh", value: "#{@server.host}:#{@server.port}"),
-      (t("fields.groups", value: groups.join(" ; ")) if groups.any?)
+      (t("fields.groups", value: groups.join(" ; ")) if groups.any?),
+      (t("fields.expected_ports", value: @server.expected_ports) if @server.expected_ports.present?)
     ].compact)
   end
 

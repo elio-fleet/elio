@@ -13,6 +13,7 @@ en:
         host: Host
         port: Port
         username: User
+        expected_ports: The expected ports
         extra_addresses_text: The extra addresses
       server_group:
         name: Name
@@ -50,6 +51,8 @@ en:
           attributes:
             host:
               address_taken: is already used by another server with the same port and user
+            expected_ports:
+              invalid_ports: 'contain invalid values: %{ports} (for example: “22, 80, 443/tcp, 51820/udp”)'
             extra_addresses_text:
               invalid_ips: 'contain values that are not IP addresses: %{addresses}'
         notification_channel:

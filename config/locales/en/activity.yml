@@ -111,7 +111,7 @@ en:
         description: A server has been added to Elio.
       server_updated:
         label: Server updated
-        description: The connection details of a server have changed.
+        description: The connection details or the expected ports of a server have changed.
       servers_imported:
         label: Servers imported
         description: Servers have been imported from a CSV file or a ~/.ssh/config.

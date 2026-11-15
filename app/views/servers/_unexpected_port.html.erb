@@ -1,0 +1,10 @@
+<%# "unexpected" badge of a public port and, for operators, the button that
+    adds it to the server's own expected ports. Locals: server, port (Inventory::PortAnalysis::Port). %>
+<% if port.unexpected %>
+  <%= status_badge :warn, t("words.unexpected"), class: "port-unexpected ml-1" %>
+  <% if can?(:operate) %>
+    <%= button_to t("servers.unexpected_port.ignore"), server_expected_port_path(server), params: { port: port.port, proto: port.proto },
+                  form_class: "inline", class: "ignore-port ml-1 font-sans text-xs font-medium text-accent hover:underline",
+                  title: t("servers.unexpected_port.ignore_hint", port: port.key) %>
+  <% end %>
+<% end %>

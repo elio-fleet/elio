@@ -36,6 +36,14 @@
   </div>
   <% end %>
 
+  <%= form_section t(".expected_ports"), t(".optional") do %>
+  <div>
+    <%= f.label :expected_ports, t(".expected_ports"), class: label_class %>
+    <%= f.text_field :expected_ports, placeholder: "8081/tcp, 51820/udp", autocomplete: "off", spellcheck: false, class: "#{input_class} font-mono" %>
+    <p class="mt-1 text-xs text-ink-3"><%= t(".expected_ports_help") %></p>
+  </div>
+  <% end %>
+
   <% if ServerGroup.exists? %>
     <%= form_section t(".groups"), t(".groups_help") do %>
     <fieldset>

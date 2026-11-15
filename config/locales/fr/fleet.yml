@@ -144,6 +144,8 @@ fr:
       extra_addresses: Adresses supplémentaires
       optional: "(facultatif)"
       ip_addresses_through_which: Adresses IP par lesquelles ce serveur est joint mais qu'il ne voit pas lui-même (NAT, IP de basculement…). Les adresses de ses interfaces sont relevées par l'inventaire.
+      expected_ports: Ports attendus
+      expected_ports_help: Ports que ce serveur peut exposer publiquement, en plus de ceux de ses groupes. Tout autre port public est signalé comme inattendu.
       groups: Groupes
     new:
       copy_subtitle: 'Copie de « %{name} » : même port, même utilisateur et mêmes groupes. Renseignez le nom et l''hôte.'
@@ -459,3 +461,6 @@ fr:
     add_failed: "Clé non ajoutée : %{error_title} — %{error_details}"
     removed: "« %{name} » retirée du compte %{account}."
     remove_failed: "Clé non retirée : %{error_title} — %{error_details}"
+  server_expected_ports_controller:
+    added: "%{port} est désormais attendu sur « %{server_name} » : il n'est plus signalé."
+    invalid: Port invalide.

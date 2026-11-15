@@ -32,6 +32,7 @@ class ServerPromptTest < ActiveSupport::TestCase
     assert_includes text, "- Nom d'hôte : web-1"
     assert_includes text, "- Système : Debian GNU/Linux 13 (trixie), 6.12.48+deb13-amd64"
     assert_includes text, "- Adresse SSH utilisée par Elio : #{@server.host}:22"
+    assert_not_includes text, "Ports publics attendus de ce serveur"
     assert_includes text, "- 203.0.113.10/24 (ipv4, publique, eth0)"
     assert_includes text, "- 10.8.0.100/24 (ipv4, privée / VPN, wg0, wireguard)"
     assert_not_includes text, "2001:db8::abcd", "temporary IPv6 addresses are left out"
@@ -91,5 +92,10 @@ class ServerPromptTest < ActiveSupport::TestCase
       assert_includes text, "## Listening ports\n(no inventory of the ports yet)"
       assert_includes text, "## Active systemd services\n(none)"
     end
+  end
+
+  test "the server's own expected ports are in the prompt" do
+    @server.update!(expected_ports: "8081/tcp")
+    assert_includes ServerPrompt.new(@server).firewall, "- Ports publics attendus de ce serveur (en plus de ses groupes) : 8081/tcp"
   end
 end

@@ -231,6 +231,10 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
 
     patch server_path(servers(:web)), params: { server: { host: "10.0.0.9", port: 2200 } }
     assert_equal %w[host port], Activity.of_kind(:server_updated).sole.data["changed"]
+
+    patch server_path(servers(:web)), params: { server: { expected_ports: "8081/tcp" } }
+    assert_equal "8081/tcp", servers(:web).reload.expected_ports
+    assert_equal %w[expected_ports], Activity.of_kind(:server_updated).order(:id).last.data["changed"]
   end
 
   test "the server page shows its history" do

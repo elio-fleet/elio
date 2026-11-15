@@ -85,6 +85,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "edit server" => -> { get edit_server_path(servers(:web)) },
       "update server" => -> { patch server_path(servers(:web)), params: { server: { name: "Renamed" } } },
       "delete server" => -> { delete server_path(servers(:web)) },
+      "ignore an unexpected port" => -> { post server_expected_port_path(servers(:web)), params: { port: 8081, proto: "tcp" } },
       "import servers form" => -> { get new_server_import_path },
       "preview a server import" => -> { post preview_server_import_path, params: { content: "a,10.0.0.1", import_format: "csv" } },
       "import servers" => -> { post server_import_path, params: { content: "a,10.0.0.1", import_format: "csv" } },

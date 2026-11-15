@@ -1,7 +1,7 @@
 # What a server exposes, from its last inventory: the listening ports (ports
 # category) merged with the ports published by Docker containers (services
 # category, they may not show in ss), the firewall state, the ports expected
-# by its groups, and the ufw rules to copy. Elio never applies them.
+# by its groups and by itself, and the ufw rules to copy. Elio never applies them.
 class Inventory::PortAnalysis
   # firewall: allowed (rule found), blocked (default deny, no rule), open (no
   # filtering firewall), docker (published by Docker, which bypasses ufw) or
@@ -25,9 +25,13 @@ class Inventory::PortAnalysis
 
   def snapshot = @snapshot
 
+  # The lists of its groups plus its own (Server#expected_ports).
   def expected_ports
-    @expected_ports ||= server.server_groups.filter_map(&:expected_port_list)
+    @expected_ports ||= [ *server.server_groups.filter_map(&:expected_port_list), server.expected_port_list ].compact
   end
+
+  # "22, 443 · 8081/tcp": the texts of these lists, for the summary.
+  def expected_ports_text = [ *server.server_groups.filter_map(&:expected_ports), server.expected_ports ].compact_blank.join(" · ")
 
   def ports
     @ports ||= begin

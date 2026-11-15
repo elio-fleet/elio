@@ -19,7 +19,8 @@ class ServerPortsCardTest < ActionDispatch::IntegrationTest
       assert_select ".ports-summary", text: /Ports attendus : 22, 6432/
       assert_select ".docker-bypass", text: /DOCKER-USER/
       assert_select "tr.port", 8
-      assert_select "tr.port:first-child", text: /22\/tcp.*0\.0\.0\.0, ::.*public.*sshd.*ssh.*autorisé/m
+      assert_select "tr.port:first-child", text: /22\/tcp.*0\.0\.0\.0 toutes les interfaces IPv4.*:: toutes les interfaces.*public.*sshd.*ssh.*autorisé/m
+      assert_select "tr.port[data-scope=local] .listen-address", text: /cette machine seulement/
       assert_select "tr.port", text: /6432\/tcp.*conteneur pgbouncer.*publié par Docker/m
       assert_select "tr.port", text: /9100\/tcp\s+inattendu.*bloqué/m
       assert_select "tr.port[data-scope=local]", 3
