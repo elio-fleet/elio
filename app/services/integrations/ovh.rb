@@ -61,6 +61,19 @@ class Integrations::Ovh < Integrations::Base
       Integrations::Ovh::Sync.new(integration, resources).call
     end
 
+    # A consumer key can be created for a limited time (its "expiration").
+    def credential_expires_at(integration)
+      expiration = client(integration).get("/auth/currentCredential")["expiration"]
+      Time.zone.parse(expiration.to_s) if expiration.present?
+    rescue ArgumentError
+      nil
+    end
+
+    def purge(_integration)
+      OvhResource.delete_all
+      Dns::Store.forget(key)
+    end
+
     def products(integration) = Array(integration.value(:products))
 
     # With the DNS product, its records are in the DNS of the fleet.

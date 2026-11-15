@@ -85,6 +85,42 @@ class IntegrationsControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to task_path(BackgroundTask.recent.first)
   end
 
+  test "the last sync with its duration, and when the API key expires" do
+    enable_demo.update_columns(last_synced_at: 3.minutes.ago, last_sync_duration_ms: 1234, credential_expires_at: Time.zone.local(2030, 3, 4, 12))
+    get settings_integrations_path
+    assert_select "#integration-demo .integration-duration", text: "· en 1,2 s"
+    assert_select "#integration-demo .integration-credential:not(.text-warn-ink)", text: "Clé d'API valable jusqu'au 4 mars 2030"
+
+    Integration.find_by!(kind: "demo").update_columns(credential_expires_at: 3.days.from_now)
+    get edit_settings_integration_path("demo")
+    assert_select ".integration-duration", text: "· en 1,2 s"
+    assert_select ".integration-credential.text-warn-ink"
+    assert_select "#integration-actions", 0, "nothing to delete while on"
+  end
+
+  test "deleting the data of a turned off extension: confirmed, logged" do
+    integration = enable_demo
+    integration.update_columns(last_synced_at: 1.hour.ago)
+    delete data_settings_integration_path("demo")
+    assert_redirected_to edit_settings_integration_path("demo")
+    assert_match "Désactivez", flash[:alert]
+    assert integration.reload.last_synced_at
+
+    integration.update!(enabled: false)
+    get edit_settings_integration_path("demo")
+    assert_select ".integration-kept"
+    assert_select "#integration-actions form[action=?][data-turbo-confirm*=?]", data_settings_integration_path("demo"), "Supprimer tout ce que Démo a lu"
+
+    delete data_settings_integration_path("demo")
+    assert_redirected_to edit_settings_integration_path("demo")
+    assert_equal "Données de l'extension Démo supprimées.", flash[:notice]
+    assert_nil integration.reload.last_synced_at
+    assert Activity.of_kind(:integration_data_deleted).exists?(user: users(:one))
+
+    get edit_settings_integration_path("demo")
+    assert_select "#integration-actions", 0
+  end
+
   test "unknown extension" do
     get edit_settings_integration_path("nope")
     assert_response :not_found

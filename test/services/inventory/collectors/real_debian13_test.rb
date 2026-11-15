@@ -36,7 +36,8 @@ class Inventory::Collectors::RealDebian13Test < ActiveSupport::TestCase
 
   test "services" do
     services = Inventory::Collectors::Services
-    units = services.parse_units(sections(:services)["units"], services.parse_unit_files(sections(:services)["unit-files"]))
+    # Read before the unit details were collected: units only.
+    units = services.parse_units(sections(:services)["units"], services.parse_unit_details(sections(:services)["unit-details"]))
 
     assert_equal 107, units.size
     assert_equal "running", units.find { |unit| unit["name"] == "ssh.service" }["sub"]

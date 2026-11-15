@@ -68,6 +68,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.boolean "ovh_ipv6_health", default: false, null: false
     t.integer "health_version", default: 0, null: false
     t.boolean "docker_alert_vulnerabilities", default: true, null: false
+    t.integer "health_inodes_warn", default: 80, null: false
+    t.integer "health_inodes_crit", default: 90, null: false
+    t.integer "health_swap_warn"
+    t.integer "health_swap_crit"
+    t.integer "health_sustained_minutes", default: 0, null: false
   end
 
   create_table "automations", force: :cascade do |t|
@@ -245,6 +250,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "last_sync_duration_ms"
+    t.datetime "credential_expires_at"
+    t.boolean "credential_expiry_logged", default: false, null: false
     t.index ["kind"], name: "index_integrations_on_kind", unique: true
   end
 
@@ -399,6 +407,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.string "kind", default: "person", null: false
     t.text "description"
     t.bigint "user_id"
+    t.date "expires_on"
+    t.datetime "expiry_reminded_at"
     t.index "lower((name)::text)", name: "index_public_keys_on_lower_name", unique: true
     t.index ["fingerprint"], name: "index_public_keys_on_fingerprint", unique: true
     t.index ["user_id"], name: "index_public_keys_on_user_id"
@@ -436,6 +446,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.datetime "updated_at", null: false
     t.string "expected_ports"
     t.jsonb "ssh_source_ids", default: [], null: false
+    t.jsonb "health_thresholds", default: {}, null: false
     t.index "lower((name)::text)", name: "index_server_groups_on_lower_name", unique: true
   end
 
@@ -495,6 +506,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.datetime "last_reachable_at"
     t.string "expected_ports"
     t.string "expected_containers"
+    t.jsonb "health_thresholds", default: {}, null: false
     t.index "lower((host)::text), port, username", name: "index_servers_on_lower_host_port_username", unique: true
     t.index "lower((name)::text)", name: "index_servers_on_lower_name", unique: true
     t.index ["docker_status"], name: "index_servers_on_docker_status"

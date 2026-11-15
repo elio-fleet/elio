@@ -12,6 +12,8 @@
   <% unless @result.success? %>
     <div class="mt-2 group-aria-busy:opacity-50">
       <p class="ssh-check-details break-all font-mono text-xs text-crit-ink"><%= @result.details %></p>
+      <%= link_to t(".diagnose"), server_ssh_diagnosis_path(@server), data: { turbo_prefetch: false }, title: t(".diagnose_help"),
+            class: "ssh-diagnose mt-1 inline-block text-xs font-medium text-accent hover:underline" %>
       <% if @result.reason == :host_key_changed %>
         <%= render "servers/host_key_changed", server: @server, host_key: @result.host_key %>
       <% elsif @result.reason %>
