@@ -125,11 +125,11 @@ inventory:
     default: "docker image ls --format '{{.Repository}}\t{{.Tag}}\t{{.ID}}'"
 
   services:
-    description: "Services: systemd units (state, enabled at boot), Docker presence."
+    description: "Services: systemd units (state), then for those loaded only (not every unit file on disk) their type, whether they start at boot, when they last started and stopped (systemctl show); Docker presence."
     shell: true
     default: |
-      echo "@@elio units"; systemctl list-units --type=service --all --no-legend --plain --no-pager 2>/dev/null || echo unsupported
-      echo "@@elio unit-files"; systemctl list-unit-files --type=service --no-legend --plain --no-pager 2>/dev/null || true
+      echo "@@elio units"; if list=$(systemctl list-units --type=service --all --no-legend --plain --no-pager 2>/dev/null); then printf '%s\n' "$list"; else echo unsupported; fi
+      echo "@@elio unit-details"; units=$(printf '%s\n' "$list" | awk '$1 ~ /\.service$/ { print $1 }'); [ -z "$units" ] || systemctl show --timestamp=unix -p Id -p Type -p UnitFileState -p ActiveEnterTimestamp -p InactiveEnterTimestamp $units 2>/dev/null || systemctl show -p Id -p Type -p UnitFileState -p ActiveEnterTimestamp -p InactiveEnterTimestamp $units 2>/dev/null || true
       echo "@@elio docker"; if command -v docker >/dev/null 2>&1; then echo present; fi
 
   unit_journal:
