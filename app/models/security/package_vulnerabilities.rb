@@ -9,7 +9,7 @@ class PackageVulnerabilities
   REBOOT = %w[linux].freeze
 
   Group = Data.define(:source_package, :image, :source, :rows, :ratings, :servers, :installed_version, :target_version, :available,
-                      :upgrade_packages) do
+                      :upgrade_packages, :installed_kernel) do
     def cves = rows.map(&:cve).uniq
     def count = cves.size
     def fixable = rows.select(&:fixable?).map(&:cve).uniq
@@ -46,12 +46,20 @@ class PackageVulnerabilities
       "apt-get install --only-upgrade #{upgrade_packages.join(" ")}" if upgrade_packages.any?
     end
 
+    # The kernel: a newer one is already installed (but not running yet)
+    # and has every fix, so a reboot is all it takes.
+    def awaiting_reboot?
+      reboot? && target_version.present? && installed_kernel.present? && !Inventory::DebianVersion.older?(installed_kernel, target_version)
+    end
+
     # :available (the repositories offer the fix), :pending (the fix exists
-    # but not in the repositories yet: apt update?), :image (rebuild / pull
-    # the image), :none (no fix at all).
+    # but not in the repositories yet: apt update?), :reboot (the fixed kernel
+    # is installed, the server still runs an older one), :image (rebuild /
+    # pull the image), :none (no fix at all).
     def state
       return :none if target_version.nil?
       return :image if image
+      return :reboot if awaiting_reboot?
 
       available ? :available : :pending
     end
@@ -86,7 +94,7 @@ class PackageVulnerabilities
         available = target && offer[:version] && !Inventory::DebianVersion.older?(offer[:version], target)
         Group.new(source_package: package, image: image, source: source, rows: list, ratings: ratings, servers: list.flat_map(&:servers).uniq.sort_by(&:name),
                   installed_version: installed, target_version: target, available: available.present?,
-                  upgrade_packages: image ? [] : Array(offer[:packages]))
+                  upgrade_packages: image ? [] : Array(offer[:packages]), installed_kernel: (newest_kernel if @server && !image && REBOOT.include?(package)))
       end.sort_by { |group| sort_key(group) }
     end
   end
@@ -122,6 +130,18 @@ class PackageVulnerabilities
   def row_of(row)
     Row.new(cve: row.cve, severity: row.severity, source_package: row.source_package, image: row.image, source: row.source,
             fixed_version: row.fixed_version, installed_version: row.installed_version, packages: row.packages, servers: [ row.server ].compact)
+  end
+
+  # The version of the newest kernel image installed on the server (the
+  # matcher counts the running one: after an upgrade without a reboot, the
+  # new image is installed but its fixes do not apply yet).
+  def newest_kernel
+    return @newest_kernel if defined?(@newest_kernel)
+
+    images = @server.packages.where(manager: "dpkg").where("name LIKE ?", "linux-image-%").pluck(:name, :version, :source_name, :source_version)
+    @newest_kernel = images.map { |name, version, source, source_version| Vulnerabilities::Matcher.package(name, version, source: source, source_version: source_version) }
+                           .select { |package| REBOOT.include?(package.source) }.map(&:version)
+                           .max { |left, right| Inventory::DebianVersion.compare(left, right) }
   end
 
   # { source package => { version: highest available, packages: binaries with an update } }

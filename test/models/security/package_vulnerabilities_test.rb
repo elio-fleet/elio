@@ -45,6 +45,22 @@ class PackageVulnerabilitiesTest < ActiveSupport::TestCase
     assert_equal [ :image, nil, false ], groups.fetch("openssl@nginx:1.27").then { [ it.state, it.command, it.reboot? ] }
   end
 
+  test "the fixed kernel already installed but not running yet: a reboot is all it takes (real DB-3 case)" do
+    record_packages(servers(:web), [ dpkg("linux-image-6.12.107+deb13-amd64", "6.12.107-1", source: "linux-signed-amd64", source_version: "6.12.107+1"),
+                                     dpkg("linux-image-6.12.113+deb13-amd64", "6.12.113-1", source: "linux-signed-amd64", source_version: "6.12.113+1"),
+                                     dpkg("linux-image-amd64", "6.12.113-1", source: "linux-signed-amd64", source_version: "6.12.113+1") ])
+
+    linux = groups.fetch("linux")
+    assert_equal [ :reboot, "6.12.113-1", "6.12.107-1" ], [ linux.state, linux.installed_kernel, linux.installed_version ]
+    assert_nil groups.fetch("openssl").installed_kernel, "only the kernel"
+  end
+
+  test "a newer kernel installed that does not hold every fix: not a reboot only" do
+    record_packages(servers(:web), [ dpkg("linux-image-6.12.111+deb13-amd64", "6.12.111-1", source: "linux-signed-amd64", source_version: "6.12.111+1") ])
+
+    assert_equal :pending, groups.fetch("linux").state, "6.12.111 fixes CVE-2026-0001, not CVE-2026-0002 (6.12.113)"
+  end
+
   test "the most worth updating first" do
     assert_equal %w[linux openssl openssl@nginx:1.27 curl], groups.keys
   end
