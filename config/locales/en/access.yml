@@ -113,13 +113,19 @@ en:
       key_will_be_removed_from: The key “%{nom}” will be removed from the %{account} account of “%{server_name}”. It will no longer be able to log in to that account.
   servers:
     add_key_dialog:
-      account: Unix account
+      accounts: Unix accounts
       login_account: "%{user} (Elio's login)"
-      other_account: Another account…
-      other_account_name: Account name
+      other_account_name: Another account (name)
       account_hint: An account other than Elio's needs root; its ~/.ssh is created if missing, never the account.
       other_accounts_need_root: "Elio has no root on this server: only its own account."
-      subtitle: In the ~/.ssh/authorized_keys file of the chosen account.
+      subtitle: In the ~/.ssh/authorized_keys file of each chosen account.
+      restrictions: Restrictions
+      restrictions_optional: "(optional)"
+      from: Allowed source addresses (from=)
+      from_hint: Addresses, networks (CIDR) or host names, comma separated; the key is refused from anywhere else.
+      command: Forced command (command=)
+      command_hint: The only command this key may run, whatever is asked (e.g. a backup script).
+      no_port_forwarding: No port forwarding (no-port-forwarding)
       keyring: From the keyring
       new_key: New key
       keyring_key: Keyring key
@@ -192,6 +198,11 @@ en:
       unknown_account_details: The account %{account} does not exist on this server (or has no home directory). Elio never creates an account.
       not_owned_title: File refused
       not_owned_details: The ~/.ssh directory or the authorized_keys file of %{account} is a link or is not owned by this account; Elio does not write there as root.
+    server_keys_change:
+      not_written_title: Key not found after writing
+      not_written_details: The key is not in the authorized_keys file of %{account} when read again right after it was added.
+      still_there_title: Key still present
+      still_there_details: The key is still in the authorized_keys file of %{account} when read again right after it was removed.
     bulk_access:
       added_for: added for %{label_for}
       added: added
@@ -229,6 +240,9 @@ en:
     deleted: The key “%{public_key_name}” has been removed from the keyring.
   server_authorizations_controller:
     invalid_account: 'Invalid account name: lowercase letters, digits, "_", "-" or ".", 32 characters at most.'
+    no_account: Choose at least one account.
+    invalid_options: 'Invalid restrictions: %{errors}'
+    present_options_kept: "%{name} was already present on %{target}; its line, and its restrictions, were left as they were."
     not_saved: 'Key not saved: %{full_messages_to_sentence}'
     target: "“%{server_name}”"
     added_for: "%{name} is added on %{target} for %{label_for}, until %{date}."
@@ -386,6 +400,10 @@ en:
   health_thresholds_controller:
     saved: Health thresholds saved.
     invalid: 'Invalid thresholds: %{full_messages_to_sentence}'
+  key_options:
+    errors:
+      from: 'the source addresses must be addresses, networks (CIDR) or host names separated by commas (200 characters at most)'
+      command: 'the forced command must be printable characters only, without a trailing backslash (300 characters at most)'
   key_install_guide:
     accounts:
       root: root

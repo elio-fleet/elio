@@ -49,11 +49,13 @@ class ServerAddKeyTest < ActionDispatch::IntegrationTest
 
   test "a new key is saved to the keyring then added to the server" do
     sign_in users(:operator)
+    params = new_key_params(duration: "60")
+    stub_key_write_session(params[:public_key][:content])
     granted = []
 
     assert_difference -> { PublicKey.count } do
       stub_method(Keys::AccessGrant, :call, ->(server, public_key, **options) { granted << [ server, public_key.name, options[:duration] ] && added }) do
-        post server_authorizations_path(servers(:web)), params: new_key_params(duration: "60"), as: :turbo_stream
+        post server_authorizations_path(servers(:web)), params: params, as: :turbo_stream
       end
     end
 
@@ -94,6 +96,7 @@ class ServerAddKeyTest < ActionDispatch::IntegrationTest
 
   test "when the server refuses, the new key stays in the keyring" do
     sign_in users(:one)
+    stub_key_write_session
     failed = Keys::PublicKeyAuthorization::Result.new(status: :error, error_title: "Connexion impossible", error_details: "refusée")
 
     stub_method(Keys::AccessGrant, :call, failed) do
