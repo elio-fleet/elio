@@ -22,8 +22,17 @@ module Dns::Store
       DnsRecord.upsert_all(rows, unique_by: %i[source source_id], update_only: %i[zone name record_type value ttl disabled]) if rows.any?
     end
     servers = Dns::Matcher.call
-    servers.each(&:refresh_health!)
+    Server.refresh_extension_health!(servers)
     Dns::Alerts.call
     rows.size
+  end
+
+  # Deletes the records of a source and forgets the alerts they raised: its
+  # next records are a first sync again (nothing logged for what is there).
+  def self.forget(source)
+    replace(source, [])
+    settings = AppSetting.current
+    outside = settings.dns_alert_state["outside"]
+    settings.update_columns(dns_alert_state: settings.dns_alert_state.merge("outside" => outside.except(source.to_s))) if outside.is_a?(Hash)
   end
 end

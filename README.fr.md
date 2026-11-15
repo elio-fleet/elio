@@ -164,7 +164,7 @@ Les **règles ufw proposées** peuvent n'ouvrir le SSH qu'aux sources que vous l
 
 ## Extensions
 
-Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque serveur. Activez-les dans *Paramètres → Extensions* (administrateurs). Elles **ne font que lire** : Elio ne crée, ne modifie et ne supprime jamais rien sur ces services, et une extension désactivée ne laisse aucune trace dans l'interface. Chaque alerte qu'elles lèvent est au choix, avec son seuil.
+Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque serveur. Activez-les dans *Paramètres → Extensions* (administrateurs). Elles **ne font que lire** : Elio ne crée, ne modifie et ne supprime jamais rien sur ces services, et une extension désactivée ne laisse aucune trace dans l'interface. Chaque alerte qu'elles lèvent est au choix, avec son seuil. Chaque extension affiche sa dernière synchronisation et sa durée ; une extension désactivée garde ce qu'elle a lu jusqu'à ce qu'un administrateur le supprime (*Supprimer les données*, inscrit au journal).
 
 ### Uptime Kuma
 
@@ -175,7 +175,7 @@ Elio peut lire ce que savent vos autres outils et l'afficher à côté de chaque
 
 ### OVHcloud
 
-- **Réglage** : le point d'accès de l'API (EU, CA, US), une Application Key, un Application Secret et une Consumer Key **limitée aux requêtes GET**. *Droits à donner à la clé API* liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie. *Tester la connexion* signale les droits manquants, et **prévient si la clé permet d'écrire** — refaites-en une dans ce cas.
+- **Réglage** : le point d'accès de l'API (EU, CA, US), une Application Key, un Application Secret et une Consumer Key **limitée aux requêtes GET**. *Droits à donner à la clé API* liste les droits exacts pour les produits cochés et ouvre la page de création de jeton d'OVH déjà remplie. *Tester la connexion* signale les droits manquants, et **prévient si la clé permet d'écrire** — refaites-en une dans ce cas. Une clé créée pour une durée limitée affiche sa date de fin dans les réglages et est annoncée dans le journal (et les notifications qui le suivent) deux semaines avant d'expirer.
 - Chaque produit est une case à cocher : IP et reverse DNS, firewall réseau, anti-DDoS, zones DNS (toutes ou certaines), serveurs dédiés, VPS, instances Public Cloud (tous les projets ou certains).
 - Une carte **Hébergement** dans la vue d'ensemble de chaque serveur : le service OVH (offre, datacenter, expiration), ses IP et reverse ; les règles du firewall réseau, **si elles laissent passer chaque port public** et l'anti-DDoS sont dans l'[onglet Firewall](#longlet-firewall). Une page **Hébergement** : services, IP, ressources rattachées à aucun serveur. Ses enregistrements DNS vont dans le [DNS du parc](#dns-du-parc).
 - Alertes au choix : service bientôt expiré (renouvellement automatique pris en compte), firewall réseau désactivé (blocs IPv4 : OVHcloud n'a pas de firewall réseau pour l'IPv6), reverse DNS qui ne correspond pas, service OVH non suivi par Elio.

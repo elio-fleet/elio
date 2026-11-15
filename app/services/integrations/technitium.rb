@@ -38,6 +38,8 @@ class Integrations::Technitium < Integrations::Base
 
     def sync(integration) = Integrations::Technitium::Sync.new(integration, client(integration)).call
 
+    def purge(_integration) = Dns::Store.forget(Integrations::Technitium::Sync::SOURCE)
+
     # Its records are in the DNS of the fleet (DNS page and tab, see Dns).
     def dns_source?(_integration) = true
 

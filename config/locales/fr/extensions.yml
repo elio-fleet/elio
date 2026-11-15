@@ -600,6 +600,8 @@ fr:
         edit: Modifier
         delete: Supprimer la connexion
         delete_confirm: "Supprimer la connexion « %{label} » et tout ce qu'elle a lu ?"
+      credential:
+        expires: Clé d'API valable jusqu'au %{date}
       test_result:
         succeeded: 'Connexion réussie : '
         failed: 'Échec : '
@@ -607,7 +609,11 @@ fr:
         save: Enregistrer
         sync_now: Synchroniser maintenant
         last_sync_failed_html: 'Dernière synchronisation impossible : %{last_error}'
-        synchronized_html: Synchronisée %{last_synced_at}.
+        synchronized_html: Synchronisée %{last_synced_at}
+        took: " · en %{duration}"
+        data_kept: Les données lues sur le service sont gardées pour une prochaine activation.
+        delete_data: Supprimer les données
+        delete_data_confirm: "Supprimer tout ce que %{label} a lu sur son service ? Les réglages restent ; la prochaine synchronisation relira tout."
         turn_extension: Activer l'extension
         tabs_pages_alerts_appear: "— ses onglets, pages et alertes apparaissent ; une synchronisation est lancée."
         test_connection: Tester la connexion
@@ -618,6 +624,7 @@ fr:
         configure_turn: Configurer et activer
         synchronized_html: Synchronisée %{last_synced_at}
         not_synchronized_yet: Pas encore synchronisée
+        took: " · en %{duration}"
         extension_available: Aucune extension disponible.
         intro_html: 'Les extensions relient Elio à vos autres outils, <strong class="font-medium text-ink-2">en lecture seule</strong> : Elio n''y crée, ne modifie et ne supprime rien. Une extension désactivée n''apparaît nulle part dans l''interface.'
     integration_connections:
@@ -651,6 +658,8 @@ fr:
     sync_started: Synchronisation %{label} lancée.
     saved: Extension %{label} enregistrée.
     saved_enabled: 'Extension %{label} enregistrée et activée : première synchronisation lancée.'
+    data_deleted: Données de l'extension %{label} supprimées.
+    turn_off_first: Désactivez l'extension avant de supprimer ses données.
   ovh_helper:
     from_source: depuis %{source}
     no_firewall: 'OVH : pas de firewall'

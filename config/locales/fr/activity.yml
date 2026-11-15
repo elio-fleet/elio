@@ -220,6 +220,12 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      integration_credential_expiring:
+        label: Clé d'extension bientôt expirée
+        description: La clé d'API d'une extension expire dans moins de deux semaines (signalé une fois par clé).
+      integration_data_deleted:
+        label: Données d'extension supprimées
+        description: Un administrateur a supprimé ce qu'une extension désactivée avait lu de son service.
       coolify_deployed:
         label: Déploiement Coolify
         description: Coolify a fini de déployer une application sur un serveur.
@@ -373,6 +379,10 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      integration_credential_expiring:
+        one: "Clé d'API %{integration} : expire dans %{count} jour (%{date})"
+        other: "Clé d'API %{integration} : expire dans %{count} jours (%{date})"
+      integration_data_deleted: Données de l'extension %{integration} supprimées
       notification_channel_disabled: 'Canal de notification « %{channel} » désactivé après une journée d''échecs : %{error}'
       coolify_deployed: "Coolify : %{application} déployée%{commit}"
       coolify_deploy_failed: "Coolify : déploiement de %{application} en échec%{commit}"

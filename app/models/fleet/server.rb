@@ -192,6 +192,23 @@ class Server < ApplicationRecord
     record_state_change(previous[:docker], (previous[:docker_reasons] if new_reasons), docker, DOCKER_KINDS)
   end
 
+  # Translation keys of the reasons raised by the extensions (Integration.health_reasons).
+  EXTENSION_REASON_PREFIXES = %w[integrations. dns.health.].freeze
+
+  # After an extension sync: only the reasons of the extensions can have
+  # changed, so the whole health (inventory, vulnerabilities…) is computed
+  # again only for the servers whose extension reasons differ from the
+  # stored ones, not for the whole fleet.
+  def self.refresh_extension_health!(servers)
+    servers.each { |server| server.refresh_health! if server.extension_reasons_changed? }
+  end
+
+  def extension_reasons_changed?
+    stored = Array(health_reasons).select { |reason| reason["key"].to_s.start_with?(*EXTENSION_REASON_PREFIXES) }
+    current = Integration.health_reasons(self).map(&:to_h).as_json
+    stored.sort_by(&:to_json) != current.sort_by(&:to_json)
+  end
+
   private
 
   # A server already to watch that gains a problem (reboot required on top of
