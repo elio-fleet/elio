@@ -11,7 +11,7 @@ class DockerTest < ActionDispatch::IntegrationTest
     data = Inventory::Collectors::Docker.parse(Inventory::Collectors::Docker.sections(file_fixture("inventory/docker/debian13.txt").read), now: NOW)
     data["disk"] = Inventory::Collectors::Docker.parse_df(file_fixture("inventory/docker/df.txt").read)
     data["images"].each { |image| image["reference"] = image["tags"].first || image["id"] }
-    data["scans"] = { "sha256:#{"a" * 64}" => { "method" => "elio", "at" => NOW.iso8601, "count" => 2 },
+    data["scans"] = { "sha256:#{"a" * 64}" => { "method" => "elio", "at" => NOW.iso8601, "count" => 2, "shared_from" => "Database" },
                       "sha256:#{"c" * 64}" => { "method" => "elio", "at" => NOW.iso8601, "error" => "Base Debian Security Tracker pas encore téléchargée" } }
     server.inventory_snapshots.create!(category: "docker", status: "ok", collected_at: NOW, checked_at: NOW, data: data.merge("docker" => "ok", "version" => "27.3.1"))
   end
@@ -56,6 +56,7 @@ class DockerTest < ActionDispatch::IntegrationTest
       assert_select "tr.docker-container-row", 0
       assert_select "tr.docker-image[data-reference='nginx:1.27']", text: /nouvelle version.*2\s+dont 1 corrigeable/m
       assert_select "tr.docker-image[data-reference='nginx:1.27'] a[href=?]", server_path(servers(:web), tab: "docker", section: "vulnerabilities")
+      assert_select "tr.docker-image[data-reference='nginx:1.27'] .scan-shared", "même image analysée sur Database"
       assert_select "tr.docker-image[data-reference='postgres:16'] .image-update", text: "à jour"
       assert_select "tr.docker-image[data-reference='postgres:16']", text: /pas encore téléchargée/
       assert_select "tr.docker-image[data-reference='redis:latest']", text: /latest.*non/m

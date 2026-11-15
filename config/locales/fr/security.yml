@@ -284,6 +284,7 @@ fr:
       vulnerabilities: Vulnérabilités
       including_fixable_html: dont %{fixable} corrigeables
       none: aucune
+      shared_from: même image analysée sur %{server}
       image: Aucune image.
       docker_inventory_yet: Pas encore d'inventaire Docker.
   docker:
@@ -333,7 +334,10 @@ fr:
         other: "%{count} corrigeables"
       used_by: 'Utilisée par :'
       on_servers: 'Sur :'
-      advice_update: 'Mettez à jour l''image : téléchargez un tag plus récent (ou reconstruisez-la sur une image de base à jour), puis recréez les conteneurs. La commande pour chaque serveur est dans la fenêtre d''une CVE.'
+      advice_update: 'Mettez à jour l''image : téléchargez un tag plus récent (ou reconstruisez-la sur une image de base à jour), puis recréez les conteneurs. La commande pour chaque serveur est ci-dessous.'
+      update_commands:
+        one: Commande de mise à jour
+        other: Commandes de mise à jour (%{count} serveurs)
       advice_none: 'Pas de correctif dans la distribution de l''image pour l''instant : un tag plus récent repose peut-être sur une version corrigée.'
       by_package:
         one: "%{count} paquet"

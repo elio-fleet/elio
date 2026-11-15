@@ -108,7 +108,7 @@
                   <% elsif scan["error"] %><span class="text-warn-ink" title="<%= scan["error"] %>"><%= scan["error"].truncate(60) %></span>
                   <% elsif scan["count"] %><span class="text-good-ink"><%= t(".none") %></span>
                   <% else %><span class="text-ink-3"><%= scan_label(scan["method"]) %></span><% end %>
-                  <% if scan["at"] && scan["method"] != "none" %><span class="block text-[11px] text-ink-3"><%= scan_label(scan["method"]) %> · <%= relative_time_tag Time.zone.parse(scan["at"]) %></span><% end %>
+                  <% if scan["at"] && scan["method"] != "none" %><span class="block text-[11px] text-ink-3"><%= scan_label(scan["method"]) %> · <%= relative_time_tag Time.zone.parse(scan["at"]) %><% if scan["shared_from"] %> · <span class="scan-shared"><%= t(".shared_from", server: scan["shared_from"]) %></span><% end %></span><% end %>
                 </td>
               </tr>
             <% end %>
