@@ -32,6 +32,10 @@ class ServersController < ApplicationController
     servers = servers.select { |server| server.matches_search?(@q) } if @q.present?
     @view = fleet_view
     servers = servers.to_a.sort_by { |server| [ STATE_ORDER.fetch(server.health_state, 2), server.name.downcase ] } if @view == "grid"
+    @sort = ServerSort.new(params[:sort], params[:dir])
+    servers = @sort.apply(servers) if @sort.active?
+    return send_csv(ServerExport.new(servers)) if request.format.csv?
+
     @pager = paginate(servers, per_page: PER_PAGE)
     @servers = @pager.records
     @load_history = Inventory::HealthSample.where(server_id: @servers.map(&:id)).since(24.hours.ago)
@@ -215,6 +219,10 @@ class ServersController < ApplicationController
     tabs = remembered_tabs.except(@server.id.to_s)
     tabs[@server.id.to_s] = tab unless tab == "overview"
     cookies.permanent[SERVER_TABS_COOKIE] = { value: tabs.to_a.last(REMEMBERED_TABS).to_h.to_json, same_site: :lax, httponly: true }
+  end
+
+  def send_csv(export)
+    send_data export.to_csv, filename: export.filename, type: :csv, disposition: "attachment"
   end
 
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.

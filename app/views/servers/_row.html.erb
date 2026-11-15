@@ -1,4 +1,5 @@
-<%# One server of the fleet table (servers/index). %>
+<%# One server of the fleet table (servers/index): the columns the user shows (User#fleet_column?).
+    The notes take the room left and are cut, so the table fits its card. %>
 <% health = server.inventory("health")&.data || {} %>
 <tr id="<%= dom_id(server) %>" class="hover:bg-subtle/60">
   <td class="pl-4"><span class="inline-flex items-center gap-1.5 whitespace-nowrap"><%= render "servers/status", server: server, health: true %><%= render "servers/docker_pill", server: server %></span></td>
@@ -6,15 +7,16 @@
     <%= link_to server.name, server_path(server), class: "font-medium hover:text-accent hover:underline" %>
     <p class="flex flex-wrap items-center gap-x-2 text-[11px] text-ink-3">
       <% server.server_groups.each do |group| %><%= group_tag group, path: servers_path(group: group.id) %><% end %>
-      <span class="server-address font-mono"><%= server.username %>@<%= server.host %><%= ":#{server.port}" unless server.port == 22 %></span>
-      <% if (hostname = server.distinct_hostname) %><span class="server-hostname truncate font-mono" title="<%= t(".host_name_machine") %>"><%= hostname %></span><% end %>
+      <% address = "#{server.username}@#{server.host}#{":#{server.port}" unless server.port == 22}" %>
+      <span class="server-address max-w-48 truncate font-mono" title="<%= address %>"><%= address %></span>
+      <% if (hostname = server.distinct_hostname) %><span class="server-hostname max-w-48 truncate font-mono" title="<%= t(".host_name_machine") %>"><%= hostname %></span><% end %>
     </p>
   </td>
-  <td class="server-os col-secondary whitespace-nowrap text-xs"><%= render "servers/os", server: server %></td>
-  <td class="server-load"><%= sparkline @load_history.fetch(server.id, []), max: 100, width: 60, title: t(".load_over_24_h") %></td>
-  <td class="server-memory"><%= meter health.dig("memory", "used_percent"), warn: app_settings.health_memory_warn, crit: app_settings.health_memory_crit, width: "w-12" %></td>
-  <td class="server-disk"><%= meter health["disk_max_percent"], warn: app_settings.health_disk_warn, crit: app_settings.health_disk_crit, width: "w-12" %></td>
-  <td class="server-updates whitespace-nowrap text-xs">
+  <% if current_user.fleet_column?(:system) %><td class="server-os hidden whitespace-nowrap text-xs 2xl:table-cell"><%= render "servers/os", server: server %></td><% end %>
+  <% if current_user.fleet_column?(:load) %><td class="server-load"><%= sparkline @load_history.fetch(server.id, []), max: 100, width: 60, title: t(".load_over_24_h") %></td><% end %>
+  <% if current_user.fleet_column?(:memory) %><td class="server-memory"><%= meter health.dig("memory", "used_percent"), warn: app_settings.health_memory_warn, crit: app_settings.health_memory_crit, width: "w-10" %></td><% end %>
+  <% if current_user.fleet_column?(:disk) %><td class="server-disk"><%= meter health["disk_max_percent"], warn: app_settings.health_disk_warn, crit: app_settings.health_disk_crit, width: "w-10" %></td><% end %>
+  <% if current_user.fleet_column?(:updates) %><td class="server-updates whitespace-nowrap text-xs">
     <% if (updates = health["updates"]) %>
       <span class="tabular-nums"><%= updates["total"] %></span>
       <% if updates["security"].to_i.positive? %>
@@ -23,8 +25,8 @@
     <% else %>
       <span class="text-ink-3">—</span>
     <% end %>
-  </td>
-  <td class="server-notes max-w-64 text-xs">
+  </td><% end %>
+  <% if current_user.fleet_column?(:notes) %><td class="server-notes w-full max-w-0 min-w-32 text-xs">
     <div class="flex min-w-0 items-center gap-1.5">
       <% if (reason = server.health_reason_texts.first) %>
         <span class="truncate <%= server.health_state == "crit" ? "text-crit-ink" : "text-warn-ink" %>" title="<%= reason %>"><%= reason %></span>
@@ -36,7 +38,7 @@
         <%= render "servers/orphan_keys", server: server, insights: @insights %>
       <% end %>
     </div>
-  </td>
+  </td><% end %>
   <td class="pr-4">
     <div class="flex items-center justify-end gap-1">
       <%= button_to server_ping_path(server), params: { badge: "health" }, form: server_ping_form(dom_id(server, :status)),

@@ -1,5 +1,6 @@
 <% content_for :title, t("title", page: t("nav.fleet")) %>
-<% filters = { group: @group&.id, os: @os, state: @state, q: @q.presence, view: (@view if @view == "grid") }.compact %>
+<% filters = { group: @group&.id, os: @os, state: @state, q: @q.presence, view: (@view if @view == "grid"), sort: @sort.key, dir: (@sort.direction if @sort.active?) }.compact %>
+<% column_labels = { "system" => t(".system"), "load" => t(".load_24_h"), "memory" => t(".memory"), "disk" => t(".disk"), "updates" => t(".updates"), "notes" => t(".notes") } %>
 
 <section data-controller="server-ping">
   <%= render "servers/checking_badge_template" %>
@@ -17,12 +18,18 @@
         <% if @summary.total.positive? %>
           <%= menu_item t(".inventory_whole_fleet"), server_inventories_path, icon: :pulse, method: :post, title: t(".read_again_system_health") %>
           <%= menu_item t(".scan_keys_whole_fleet"), server_scans_path, icon: :key, method: :post, title: t(".read_keys_every_server") %>
+          <%= menu_item t(".export_csv"), servers_path(filters.except(:view).merge(format: :csv)), icon: :arrow_down_tray, class: "export-csv", data: { turbo: false } %>
         <% end %>
         <%= menu_item t(".import_servers"), new_server_import_path, icon: :arrow_up_circle %>
         <%= menu_item t(".manage_groups"), server_groups_path, icon: :list_bullet %>
       <% end %>
     <% else %>
-      <%= actions_menu id: "fleet-actions" do %><%= menu_item t(".manage_groups"), server_groups_path, icon: :list_bullet %><% end %>
+      <%= actions_menu id: "fleet-actions" do %>
+        <% if @summary.total.positive? %>
+          <%= menu_item t(".export_csv"), servers_path(filters.except(:view).merge(format: :csv)), icon: :arrow_down_tray, class: "export-csv", data: { turbo: false } %>
+        <% end %>
+        <%= menu_item t(".manage_groups"), server_groups_path, icon: :list_bullet %>
+      <% end %>
     <% end %>
   <% end %>
 
@@ -44,6 +51,8 @@
     <%= filter_bar do %>
       <%= hidden_field_tag :state, @state if @state %>
       <%= hidden_field_tag :view, @view if @view == "grid" %>
+      <%= hidden_field_tag :sort, filters[:sort] if filters[:sort] %>
+      <%= hidden_field_tag :dir, filters[:dir] if filters[:dir] %>
       <%= f.search_field :q, value: @q, placeholder: t(".name_hostname_ip"), aria: { label: t(".search_server") },
             data: { action: "input->auto-submit#submitLater" }, class: "fleet-search input w-56 py-1.5" %>
       <% if @groups.any? %>
@@ -70,11 +79,30 @@
       </nav>
       <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
       <%= filter_bar_end do %>
+        <% if @view == "list" %>
+          <%# The columns of the list (a preference of the account): checkboxes of the form below, outside this search form. %>
+          <details id="fleet-columns" class="dropdown relative inline-block" data-controller="dropdown" data-action="keydown->dropdown#keydown">
+            <summary class="btn btn-secondary list-none cursor-pointer px-2.5 py-1 text-xs [&::-webkit-details-marker]:hidden" title="<%= t(".columns_shown") %>">
+              <%= icon :view_columns, class: "h-3.5 w-3.5" %> <%= t(".columns") %>
+            </summary>
+            <div role="group" aria-label="<%= t(".columns_shown") %>" class="absolute right-0 z-30 mt-1 w-56 rounded-lg border border-line bg-surface p-3 shadow-lg">
+              <p class="mb-1 text-xs font-medium text-ink-3"><%= t(".columns_shown") %></p>
+              <% column_labels.each do |column, label| %>
+                <label class="flex items-center gap-2 py-1 text-sm text-ink-2">
+                  <%= check_box_tag "columns[]", column, current_user.fleet_column?(column), id: "fleet-column-#{column}", form: "fleet-columns-form" %>
+                  <%= label %>
+                </label>
+              <% end %>
+              <%= button_tag t(".apply"), type: "submit", form: "fleet-columns-form", class: "btn btn-secondary mt-2 w-full" %>
+            </div>
+          </details>
+        <% end %>
         <%= view_toggle [ [ "list", t(".list"), :list_bullet, servers_path(filters.merge(view: "list")) ], [ "grid", t(".grid"), :squares_2x2, servers_path(filters.merge(view: "grid")) ] ],
                         current: @view, label: t(".display") %>
       <% end %>
     <% end %>
   <% end %>
+  <%= form_with url: server_columns_path, method: :patch, id: "fleet-columns-form", class: "hidden" do %><% end %>
 
   <%= search_results_frame "fleet-results" do %>
     <% if @servers.any? && @view == "grid" %>
@@ -88,13 +116,15 @@
           <thead>
             <tr>
               <th scope="col" class="pl-4"><%= t(".state") %></th>
-              <th scope="col"><%= t(".server") %></th>
-              <th scope="col" class="col-secondary"><%= t(".system") %></th>
-              <th scope="col"><%= t(".load_24_h") %></th>
-              <th scope="col"><%= t(".memory") %></th>
-              <th scope="col"><%= t(".disk") %></th>
-              <th scope="col"><%= t(".updates") %></th>
-              <th scope="col"><%= t(".notes") %></th>
+              <% sort_path = ->(column) { servers_path(filters.merge(sort: column, dir: @sort.next_direction(column))) } %>
+              <% sort_direction = ->(column) { @sort.direction if @sort.sorted_by?(column) } %>
+              <%= sort_header t(".server"), sort_path.("name"), direction: sort_direction.("name") %>
+              <% if current_user.fleet_column?(:system) %><th scope="col" class="hidden 2xl:table-cell"><%= t(".system") %></th><% end %>
+              <% if current_user.fleet_column?(:load) %><%= sort_header t(".load_24_h"), sort_path.("load"), direction: sort_direction.("load"), sorted_on: t(".load_now") %><% end %>
+              <% %w[memory disk updates].each do |column| %>
+                <% if current_user.fleet_column?(column) %><%= sort_header column_labels[column], sort_path.(column), direction: sort_direction.(column) %><% end %>
+              <% end %>
+              <% if current_user.fleet_column?(:notes) %><th scope="col"><%= t(".notes") %></th><% end %>
               <th scope="col" class="pr-4"><span class="sr-only"><%= t("words.actions") %></span></th>
             </tr>
           </thead>

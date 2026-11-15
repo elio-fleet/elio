@@ -121,6 +121,7 @@ fr:
       one: "%{count} modification non enregistrée"
       other: "%{count} modifications non enregistrées"
     clear_filters: Effacer les filtres
+    sort_by: Trier par %{column}
   count:
     servers:
       one: "%{count} serveur"

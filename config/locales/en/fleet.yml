@@ -78,6 +78,11 @@ en:
       refresh_statuses: Refresh the statuses
       groups: Groups
       display: Display
+      columns: Columns
+      columns_shown: Columns shown
+      apply: Apply
+      export_csv: Export the list (CSV)
+      load_now: Current load
       server: Server
       load_24_h: Load 24 h
       memory: Memory

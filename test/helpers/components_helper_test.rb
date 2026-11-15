@@ -40,6 +40,17 @@ class ComponentsHelperTest < ActionView::TestCase
     assert_select ".stat-tiles div.stat-tile .stat-value", "7"
   end
 
+  test "sort_header: a link, the arrow and aria-sort on the current column only" do
+    headers = safe_join([ sort_header("Disque", "/servers?sort=disk&dir=asc", direction: "desc"),
+                          sort_header("Charge 24 h", "/servers?sort=load", sorted_on: "Charge actuelle") ])
+    render html: tag.table(tag.thead(tag.tr(headers)))
+
+    assert_select "th[scope=col][aria-sort=descending][data-sort-direction=desc] a.sort-header[href='/servers?sort=disk&dir=asc'][title='Trier par disque']", text: "Disque" do
+      assert_select "svg", 1
+    end
+    assert_select "th:not([aria-sort]) a.sort-header[title='Trier par charge actuelle'] svg", 0
+  end
+
   test "filter_chip: active, count and dot" do
     render html: safe_join([ filter_chip("Tous", "/servers", active: true, count: 7), filter_chip("Production", "/servers?group=1", dot: "bg-red-500") ])
 

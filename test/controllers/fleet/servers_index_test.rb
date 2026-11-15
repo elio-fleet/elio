@@ -260,7 +260,8 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
 
     assert_select "details#fleet-actions[data-controller=dropdown]" do
       assert_select "summary[aria-haspopup=menu][aria-label=?]", "Plus d'actions"
-      assert_select "[role=menu] [role=menuitem]", 4
+      assert_select "[role=menu] [role=menuitem]", 5
+      assert_select "a[role=menuitem][href=?]", servers_path(format: :csv), text: /Exporter la liste/
       assert_select "form[action=?] button[role=menuitem]", server_inventories_path, text: /Inventorier tout le parc/
       assert_select "form[action=?] button[role=menuitem]", server_scans_path, text: /Scanner les clés de tout le parc/
       assert_select "a[role=menuitem][href=?]", new_server_import_path, text: /Importer des serveurs/
@@ -271,12 +272,13 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     assert_select "a.btn-primary[href=?]", new_server_path
   end
 
-  test "a viewer refreshes the statuses and sees the groups, nothing else" do
+  test "a viewer refreshes the statuses, exports the list and sees the groups, nothing else" do
     sign_in users(:viewer)
     get servers_path
 
     assert_select "form[action=?] button", server_pings_path, text: /Actualiser les statuts/
-    assert_select "#fleet-actions [role=menuitem]", 1
+    assert_select "#fleet-actions [role=menuitem]", 2
+    assert_select "#fleet-actions [role=menuitem]", text: /Exporter la liste/
     assert_select "#fleet-actions [role=menuitem]", text: /Gérer les groupes/
     assert_select ".btn-primary", 0
   end

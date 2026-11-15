@@ -108,7 +108,18 @@ module ComponentsHelper
     end
   end
 
-  # The one style of tabs: items [{ key:, label:, path:, count:, tone: }]; those
+  # A column header of a dense table that sorts the list (a link): direction
+  # "asc" / "desc" on the current column (arrow, aria-sort), nil otherwise;
+  # sorted_on: what it sorts on, when not the label ("Sort by current load").
+  def sort_header(label, path, direction: nil, sorted_on: label, **options)
+    tag.th(scope: "col", aria: { sort: { "asc" => "ascending", "desc" => "descending" }[direction] }, data: { sort_direction: direction }, **options) do
+      link_to path, class: "sort-header inline-flex items-center gap-1 uppercase hover:text-ink #{"text-ink" if direction}", title: t("ui.sort_by", column: sorted_on.downcase_first) do
+        safe_join([ tag.span(label), (icon(direction == "asc" ? :chevron_up : :chevron_down, class: "h-3 w-3") if direction) ].compact)
+      end
+    end
+  end
+
+  # The one style of tabs:items [{ key:, label:, path:, count:, tone: }]; those
   # that do not fit go into a "More" menu (overflow-tabs controller).
   def tabs(items, current:, label:, **options)
     render "shared/tabs", items: items, current: current.to_s, label: label, extra_class: options[:class]
