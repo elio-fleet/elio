@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# Checks this Elio installation and says what to fix: secrets, databases,
+# encrypted data, address, emails, vulnerability feeds (Installation::Doctor).
+# Writes nothing; exits with 1 when a check failed.
+#
+#   docker compose exec elio bin/elio-doctor
+#   bin/elio-doctor --offline    # without trying the SMTP server and the feeds
+if ARGV.intersect?(%w[-h --help])
+  puts File.readlines(__FILE__).drop(1).take_while { |line| line.start_with?("#") }.map { |line| line.delete_prefix("#").delete_prefix(" ") }
+  exit
+end
+
+# Without it, Elio cannot even start in production: said before trying to.
+if ENV["RAILS_ENV"] == "production" && [ ENV["SECRET_KEY_BASE"], ENV["RAILS_MASTER_KEY"] ].all? { |value| value.to_s.strip.empty? } &&
+   !File.exist?(File.expand_path("../config/master.key", __dir__))
+  puts "FAILED  Secrets  SECRET_KEY_BASE is not set: Elio cannot start.",
+       "        To fix: for a new installation, generate the secrets with bin/elio-keys and put them in .env;",
+       "        for an installation with data, put back those of its original .env."
+  exit 1
+end
+
+require_relative "../config/environment"
+
+exit(Installation::Doctor.report($stdout, network: !ARGV.include?("--offline")) ? 0 : 1)

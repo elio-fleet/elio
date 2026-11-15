@@ -2,6 +2,7 @@ require "test_helper"
 
 class Vulnerabilities::DownloadTest < ActiveSupport::TestCase
   include HttpsServerHelpers
+  include TcpHelpers
 
   HANDLER = lambda do |_method, path, _headers|
     case path
@@ -48,5 +49,15 @@ class Vulnerabilities::DownloadTest < ActiveSupport::TestCase
       assert_raises(Vulnerabilities::Error) { Vulnerabilities::Download.open("https://#{host}/big", max_size: 1000) { } }
     end
     assert_match "HTTPS seulement", assert_raises(Vulnerabilities::Error) { Vulnerabilities::Download.open("http://example.com/feed") { } }.message
+  end
+
+  test "checks that a feed answers without downloading it (HEAD, a redirect is an answer)" do
+    with_https_server(Vulnerabilities::Download, handler: HANDLER) do |host, requests|
+      assert_nil Vulnerabilities::Download.check("https://#{host}/feed")
+      assert_equal "HEAD", requests.pop.first
+      assert_match "HTTP 404", assert_raises(Vulnerabilities::Error) { Vulnerabilities::Download.check("https://#{host}/missing") }.message
+    end
+    assert_match "HTTPS seulement", assert_raises(Vulnerabilities::Error) { Vulnerabilities::Download.check("http://example.com/feed") }.message
+    assert_raises(Vulnerabilities::Error) { Vulnerabilities::Download.check("https://127.0.0.1:#{closed_port}/feed") }
   end
 end

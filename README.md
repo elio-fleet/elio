@@ -88,9 +88,30 @@ Open <http://localhost:8080> and create the first account: it is the administrat
 Elio is a Rails application with PostgreSQL. Put it behind a reverse proxy with HTTPS (Caddy, Traefik, nginx).
 
 - **Docker Compose**: the [`docker-compose.yml`](docker-compose.yml) above. Behind your HTTPS proxy, set `ELIO_HOST` (your domain) and remove `ELIO_FORCE_SSL: "false"`.
+- **Docker Compose with Caddy**: [`docker-compose.caddy.yml`](docker-compose.caddy.yml) adds Caddy in front of Elio, with a Let's Encrypt certificate it renews by itself. Point your domain to the machine, open its ports 80 and 443, put `ELIO_HOST=<your domain>` in `.env`, then `docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d`.
 - **Kamal**: [`config/deploy.yml`](config/deploy.yml) is ready (HTTPS with Let's Encrypt); put the secrets in `.kamal/secrets` and run `bin/kamal setup`.
 - **Updates**: pull the new image (`docker compose pull && docker compose up -d`); migrations run on start.
-- **Backups**: the PostgreSQL databases and the `storage` volume (known host keys of the servers).
+- **Health**: the image has a Docker health check on `/up` (`docker compose ps` shows *healthy*). When something does not work, `docker compose exec elio bin/elio-doctor` checks the secrets, the databases, the encrypted data, the address, the SMTP server (without sending anything) and the vulnerability feeds, and says what to fix (`--offline`: neither the SMTP server nor the feeds).
+
+### Backups
+
+What to keep: the `elio_production` database, the `storage` volume (the host keys of the servers), and **`.env`** (without its keys, the encrypted data cannot be read back: store it apart from the backups). The other three databases (cache, jobs, live updates) are rebuilt on start. From the folder of `docker-compose.yml`:
+
+```sh
+docker compose exec -T db pg_dump -U elio -Fc elio_production > elio_production.dump
+docker compose exec -T elio tar czf - -C /rails storage > elio-storage.tgz
+```
+
+To restore, on a new installation with the same `.env`:
+
+```sh
+docker compose up -d --wait db
+docker compose exec -T db pg_restore -U elio -d postgres --create --clean --if-exists < elio_production.dump
+docker compose run --rm --no-deps -T elio tar xzf - -C /rails < elio-storage.tgz
+docker compose up -d
+```
+
+`--clean` replaces the database if it exists. Then `docker compose exec elio bin/elio-doctor` must say that the encrypted data can be decrypted.
 
 ### Configuration
 

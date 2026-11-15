@@ -88,9 +88,30 @@ Ouvrez <http://localhost:8080> et créez le premier compte : c'est l'administrat
 Elio est une application Rails avec PostgreSQL. Placez-la derrière un reverse proxy en HTTPS (Caddy, Traefik, nginx).
 
 - **Docker Compose** : le [`docker-compose.yml`](docker-compose.yml) ci-dessus. Derrière votre proxy HTTPS, définissez `ELIO_HOST` (votre domaine) et retirez `ELIO_FORCE_SSL: "false"`.
+- **Docker Compose avec Caddy** : [`docker-compose.caddy.yml`](docker-compose.caddy.yml) ajoute Caddy devant Elio, avec un certificat Let's Encrypt qu'il renouvelle tout seul. Faites pointer votre domaine vers la machine, ouvrez ses ports 80 et 443, mettez `ELIO_HOST=<votre domaine>` dans `.env`, puis `docker compose -f docker-compose.yml -f docker-compose.caddy.yml up -d`.
 - **Kamal** : [`config/deploy.yml`](config/deploy.yml) est prêt (HTTPS avec Let's Encrypt) ; mettez les secrets dans `.kamal/secrets` puis `bin/kamal setup`.
 - **Mises à jour** : récupérez la nouvelle image (`docker compose pull && docker compose up -d`) ; les migrations se lancent au démarrage.
-- **Sauvegardes** : les bases PostgreSQL et le volume `storage` (empreintes connues des serveurs).
+- **État** : l'image a un contrôle de santé Docker sur `/up` (`docker compose ps` affiche *healthy*). Quand quelque chose ne marche pas, `docker compose exec elio bin/elio-doctor` vérifie les secrets, les bases, les données chiffrées, l'adresse, le serveur SMTP (sans rien envoyer) et les bases de vulnérabilités, et dit quoi corriger (`--offline` : ni le serveur SMTP ni les bases de vulnérabilités).
+
+### Sauvegardes
+
+À garder : la base `elio_production`, le volume `storage` (les empreintes des serveurs) et **`.env`** (sans ses clés, les données chiffrées ne peuvent plus être relues : rangez-le à part des sauvegardes). Les trois autres bases (cache, tâches, mises à jour en direct) sont recréées au démarrage. Depuis le dossier du `docker-compose.yml` :
+
+```sh
+docker compose exec -T db pg_dump -U elio -Fc elio_production > elio_production.dump
+docker compose exec -T elio tar czf - -C /rails storage > elio-storage.tgz
+```
+
+Pour restaurer, sur une nouvelle installation avec le même `.env` :
+
+```sh
+docker compose up -d --wait db
+docker compose exec -T db pg_restore -U elio -d postgres --create --clean --if-exists < elio_production.dump
+docker compose run --rm --no-deps -T elio tar xzf - -C /rails < elio-storage.tgz
+docker compose up -d
+```
+
+`--clean` remplace la base si elle existe. Ensuite, `docker compose exec elio bin/elio-doctor` doit dire que les données chiffrées se déchiffrent.
 
 ### Configuration
 
