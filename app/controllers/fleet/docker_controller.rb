@@ -3,12 +3,17 @@
 # the tags in use on each server, the new versions published by the
 # registries and the vulnerabilities (vulnerable images first). Filters: ?q=
 # (image), ?group=, ?updates=1, ?fixable=1 (images with fixable CVEs).
-# ?tab=cves: the vulnerabilities of the images, by image then by package,
-# with the commands that update a fixable image on each server.
+# ?sort=cves|age|size orders the images (most CVEs, oldest, biggest first);
+# the unused images and the disk space they take, by server, come below.
+# ?tab=containers: every container of the fleet, ?show= one kind of them
+# (CONTAINER_FILTERS). ?tab=cves: the vulnerabilities of the images, by image
+# then by package, with the commands that update a fixable image on each server.
 class DockerController < ApplicationController
   PER_PAGE = 100
   IMAGES_PER_PAGE = 20
-  TABS = %w[images cves].freeze
+  TABS = %w[images containers cves].freeze
+  SORTS = %w[cves age size].freeze
+  CONTAINER_FILTERS = %w[trouble host_access public].freeze
   # The CVEs of an image, counted in SQL, with the servers and containers
   # that run it; its packages are loaded when it is unfolded (#image_cves).
   ImageVulnerabilities = Data.define(:image, :cve_count, :fixable_count, :severity, :max_score, :servers, :package_count, :uses) do
@@ -16,9 +21,15 @@ class DockerController < ApplicationController
     def frame_id = self.class.frame_id(image)
   end
   PACKAGES_PER_PAGE = 50
-  Version = Data.define(:tag, :image, :servers, :state, :update, :cves, :fixable, :severity)
+  # servers: those with a container of the version; hosts: those that have it.
+  Version = Data.define(:tag, :image, :servers, :hosts, :state, :update, :cves, :fixable, :severity, :created_at, :size)
+  # The unused images of a server, their size, and what `docker system df`
+  # says can be reclaimed (images shared layers: less than their sum).
+  UnusedImages = Data.define(:server, :count, :size, :reclaimable)
   Repository = Data.define(:name, :versions) do
     def servers = versions.flat_map(&:servers).uniq
+    def created_at = versions.filter_map(&:created_at).min
+    def size = versions.sum(&:size)
     def updates? = versions.any? { |version| version.state == :available }
     def cves = versions.sum(&:cves)
     def fixable? = versions.any? { |version| version.fixable.positive? }
@@ -44,6 +55,12 @@ class DockerController < ApplicationController
     @fixable_only = params[:fixable] == "1"
     servers = (@group ? Server.in_group(@group) : Server.all).order(:name).includes(:inventory_snapshots).to_a
     dockers = servers.filter_map { |server| [ server, server.inventory("docker").data ] if server.inventory("docker")&.collected? && server.inventory("docker").data["docker"] == "ok" }
+    @tab = params[:tab].presence_in(TABS) || "images"
+    image_rows = ServerVulnerability.images.where(server: servers)
+    @image_vulnerability_count = image_rows.distinct.count(:cve)
+    @container_count = dockers.sum { |_, data| Array(data["containers"]).size }
+    return index_cves(servers, dockers) if @tab == "cves"
+    return index_containers(dockers) if @tab == "containers"
 
     @troubled = dockers.flat_map { |server, data| Array(data["containers"]).select { |container| container["looping"] || container["health"] == "unhealthy" || container["stopped_long"] }.map { |container| [ server, container ] } }
     @troubled.sort_by! { |server, container| [ container["stopped_long"] && !container["looping"] && container["health"] != "unhealthy" ? 1 : 0, server.name, container["name"] ] }
@@ -51,20 +68,68 @@ class DockerController < ApplicationController
     @repositories.select! { |repository| repository.name.downcase.include?(@q.downcase) } if @q.present?
     @repositories.select!(&:updates?) if @updates_only
     @repositories.select!(&:fixable?) if @fixable_only
-    @tab = params[:tab].presence_in(TABS) || "images"
-    image_rows = ServerVulnerability.images.where(server: servers)
-    @image_vulnerability_count = image_rows.distinct.count(:cve)
-    return index_cves(servers, dockers) if @tab == "cves"
+    @sort = params[:sort].presence_in(SORTS)
+    @unused_images = unused_images(dockers)
 
-    @summary = { servers: dockers.size, containers: dockers.sum { |_, data| Array(data["containers"]).size },
+    @summary = { servers: dockers.size, containers: @container_count,
                  running: dockers.sum { |_, data| Array(data["containers"]).count { |container| container["state"] == "running" } },
                  updates: @repositories.count(&:updates?), troubled: @troubled.count { |_, container| container["looping"] || container["health"] == "unhealthy" },
                  image_cves: @image_vulnerability_count, vulnerable_images: image_rows.distinct.count(:image), image_fixable: image_rows.fixable.distinct.count(:cve) }
-    @pager = paginate(@repositories.sort_by { |repository| [ repository.fixable? ? 0 : 1, repository.updates? ? 0 : 1, -repository.cves, repository.name ] }, per_page: PER_PAGE)
+    @pager = paginate(@repositories.sort_by { |repository| sort_key(repository) }, per_page: PER_PAGE)
     @repositories = @pager.records
   end
 
+  # Whether a container is of this kind (CONTAINER_FILTERS): to watch (looping,
+  # unhealthy, stopped for long), root on the host (privileged or Docker
+  # socket), or with a port published on every interface.
+  def self.container_kind?(container, kind)
+    case kind
+    when "trouble" then container["looping"] || container["health"] == "unhealthy" || container["stopped_long"]
+    when "host_access" then container["privileged"] || container["docker_socket"]
+    when "public" then Array(container["ports"]).any? { |port| port["exposure"] == "all" }
+    end.present?
+  end
+
   private
+
+  def sort_key(repository)
+    case @sort
+    when "cves" then [ -repository.cves, repository.name ]
+    when "age" then [ repository.created_at || Time.current, repository.name ]
+    when "size" then [ -repository.size, repository.name ]
+    else [ repository.fixable? ? 0 : 1, repository.updates? ? 0 : 1, -repository.cves, repository.name ]
+    end
+  end
+
+  # Every container of the fleet: in trouble first, then running, then by
+  # server; ?show= keeps one kind, ?q= matches the name, image or project.
+  def index_containers(dockers)
+    containers = dockers.flat_map { |server, data| Array(data["containers"]).map { |container| [ server, container ] } }
+    @summary = { servers: dockers.size, containers: containers.size, running: containers.count { |_, container| container["state"] == "running" },
+                 **CONTAINER_FILTERS.to_h { |kind| [ kind.to_sym, containers.count { |_, container| self.class.container_kind?(container, kind) } ] } }
+    @show = params[:show].presence_in(CONTAINER_FILTERS)
+    containers.select! { |_, container| self.class.container_kind?(container, @show) } if @show
+    if @q.present?
+      query = @q.downcase
+      containers.select! { |_, container| container.values_at("name", "image", "project", "service").compact.any? { |text| text.downcase.include?(query) } }
+    end
+    sorted = containers.sort_by do |server, container|
+      [ container["looping"] || container["health"] == "unhealthy" ? 0 : container["state"] == "running" ? 1 : 2, server.name, container["name"] ]
+    end
+    @pager = paginate(sorted, per_page: PER_PAGE)
+    @containers = @pager.records
+    render :containers
+  end
+
+  # The servers with images no container uses, the most space to reclaim first.
+  def unused_images(dockers)
+    dockers.filter_map do |server, data|
+      unused = Array(data["images"]).reject { |image| image["used"] }
+      next if unused.empty?
+
+      UnusedImages.new(server: server, count: unused.size, size: unused.sum { |image| image["size"].to_i }, reclaimable: data.dig("disk", "images", "reclaimable"))
+    end.sort_by { |unused| [ -(unused.reclaimable || unused.size), unused.server.name ] }
+  end
 
   def index_cves(servers, dockers)
     rows = ServerVulnerability.images.where(server: servers)
@@ -103,7 +168,9 @@ class DockerController < ApplicationController
       versions = uses.group_by { |_, image| image["tags"].first }.map do |tag, tag_uses|
         counts = tag_uses.map { |server, image| cves.fetch([ server.id, image["reference"] || tag ], [ 0, 0, nil ]) }
         severities = counts.filter_map(&:last)
+        created = tag_uses.filter_map { |_, image| Time.zone.parse(image["created_at"]) if image["created_at"] }.min
         Version.new(tag: tag.rpartition(":").last, image: tag_uses.first.last, servers: tag_uses.select { |_, image| image["used"] }.map(&:first).uniq,
+                    hosts: tag_uses.map(&:first).uniq, created_at: created, size: tag_uses.map { |_, image| image["size"].to_i }.max,
                     state: tag_uses.map { |_, image| ImageUpdate.state_for(image, updates) }.then { |states| states.include?(:available) ? :available : states.include?(:current) ? :current : :unknown },
                     update: updates[tag],
                     cves: counts.map(&:first).max.to_i, fixable: counts.map(&:second).max.to_i,
