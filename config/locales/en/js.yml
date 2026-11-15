@@ -17,6 +17,13 @@ en:
     theme:
       light: Light theme
       dark: Dark theme
+    password_strength:
+      too_short:
+        one: 'Too short: at least %{count} character.'
+        other: 'Too short: at least %{count} characters.'
+      weak: 'Weak: a longer password, or a mix of letters, digits and symbols, would be harder to guess.'
+      fair: 'Fair: a few more characters would make it strong.'
+      strong: Strong password.
     confirm:
       accept: Confirm
     command_palette:
