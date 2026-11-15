@@ -14,6 +14,7 @@ en:
         port: Port
         username: User
         expected_ports: The expected ports
+        expected_containers: The expected containers
         extra_addresses_text: The extra addresses
         health_thresholds: The health thresholds
       server_group:
@@ -58,6 +59,8 @@ en:
               address_taken: is already used by another server with the same port and user
             expected_ports:
               invalid_ports: 'contain invalid values: %{ports} (for example: “22, 80, 443/tcp, 51820/udp”)'
+            expected_containers:
+              invalid_names: 'contain values that are not container names: %{names} (for example: “nginx, shop-db-1”)'
             extra_addresses_text:
               invalid_ips: 'contain values that are not IP addresses: %{addresses}'
         notification_channel:

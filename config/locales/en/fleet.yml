@@ -32,8 +32,8 @@ en:
     docker_pill:
       fine: "Docker: nothing to report"
       problems:
-        one: "Docker, %{count} problem: %{reasons}"
-        other: "Docker, %{count} problems: %{reasons}"
+        one: "Docker, %{count} problem:\n%{reasons}"
+        other: "Docker, %{count} problems:\n%{reasons}"
     tabs:
       overview: Overview
       packages: Updates
@@ -152,6 +152,8 @@ en:
       expected_ports: Expected ports
       health_thresholds: Health thresholds
       expected_ports_help: Public ports this server may expose, on top of those of its groups. Any other public port is flagged as unexpected.
+      expected_containers: Expected containers
+      expected_containers_help: Docker containers that must run on this server, by name. One that is stopped or missing makes its Docker state critical.
       groups: Groups
     new:
       copy_subtitle: 'Copy of “%{name}”: same port, user and groups. Fill in the name and the host.'

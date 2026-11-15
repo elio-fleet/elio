@@ -32,12 +32,16 @@ fr:
       other: "%{count} tâches planifiées en retard"
     container_unhealthy: Conteneur %{name} en mauvaise santé
     containers_unhealthy:
-      one: "%{count} conteneur en mauvaise santé"
-      other: "%{count} conteneurs en mauvaise santé"
+      one: "%{count} conteneur en mauvaise santé : %{containers}"
+      other: "%{count} conteneurs en mauvaise santé : %{containers}"
     container_looping: Conteneur %{name} redémarre en boucle
     containers_looping:
-      one: "%{count} conteneur redémarre en boucle"
-      other: "%{count} conteneurs redémarrent en boucle"
+      one: "%{count} conteneur redémarre en boucle : %{containers}"
+      other: "%{count} conteneurs redémarrent en boucle : %{containers}"
+    container_missing: Conteneur attendu %{name} arrêté ou absent
+    containers_missing:
+      one: "%{count} conteneur attendu arrêté ou absent : %{containers}"
+      other: "%{count} conteneurs attendus arrêtés ou absents : %{containers}"
     images_to_update:
       one: "%{count} image Docker à mettre à jour"
       other: "%{count} images Docker à mettre à jour"

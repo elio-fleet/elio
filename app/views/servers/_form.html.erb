@@ -44,6 +44,14 @@
   </div>
   <% end %>
 
+  <%= form_section t(".expected_containers"), t(".optional") do %>
+  <div>
+    <%= f.label :expected_containers, t(".expected_containers"), class: label_class %>
+    <%= f.text_field :expected_containers, placeholder: "nginx, shop-db-1", autocomplete: "off", spellcheck: false, class: "#{input_class} font-mono" %>
+    <p class="mt-1 text-xs text-ink-3"><%= t(".expected_containers_help") %></p>
+  </div>
+  <% end %>
+
   <%= form_section t(".health_thresholds"), t(".optional") do %>
     <%= render "shared/health_threshold_fields", f: f %>
   <% end %>

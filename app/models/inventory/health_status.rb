@@ -24,6 +24,8 @@ class Inventory::HealthStatus
       name.to_s.end_with?("_key") ? [ name.to_s.delete_suffix("_key").to_sym, I18n.t(value) ] : [ name.to_sym, format_param(name.to_s, value) ]
     end
     params[:count] = reason.dig("params", "count") if reason.dig("params", "count")
+    # Docker reasons about several containers stored before they were named (activities).
+    params[:containers] ||= "…" if reason["key"].to_s.start_with?("health.containers_")
     I18n.t(reason["key"], **params)
   end
 
@@ -33,7 +35,7 @@ class Inventory::HealthStatus
     when "ratio" then ActiveSupport::NumberHelper.number_to_percentage(value, precision: 2, locale: I18n.locale)
     when "load" then ActiveSupport::NumberHelper.number_to_rounded(value, precision: 1, strip_insignificant_zeros: true, locale: I18n.locale)
     when "names" then Array(value).to_sentence(locale: I18n.locale)
-    when "first_names" then Array(value).join(", ")
+    when "first_names", "containers" then Array(value).join(", ")
     else value
     end
   end
@@ -41,9 +43,10 @@ class Inventory::HealthStatus
   # Parameters that measure a problem rather than name it: a disk going from
   # 91 to 92 % is the same problem, a second failed service is a new one.
   MEASURES = %w[percent ratio load count].freeze
-  # Parameters kept only to compare two readings, never shown: every failed
-  # unit, when the text names only the first ones.
-  DETAILS = %w[names_all].freeze
+  # Parameters that detail a problem without being part of it: every failed
+  # unit (kept only to compare two readings, never shown), the containers
+  # named in a Docker reason about several.
+  DETAILS = %w[names_all containers].freeze
   FAILED_UNITS_KEYS = %w[health.service_failed health.units_failed health.units_failed_more].freeze
 
   # The stored reasons of `current` that were not in `previous`, or that went
@@ -91,6 +94,8 @@ class Inventory::HealthStatus
   # 5: failed units named (health.units_failed / units_failed_more).
   # 6: processes killed for lack of memory in the last 24 hours (health.oom_kills).
   # 7: every failed unit kept with the reason that names only the first ones (names_all).
+  # 8: Docker reasons name their containers, expected containers not running
+  #    (containers_missing), nothing about containers just after a boot.
   # 9: thresholds of the server and its groups, inodes and swap thresholds of their own (health.swap).
   VERSION = 9
 
