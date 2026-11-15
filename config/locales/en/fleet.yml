@@ -46,6 +46,11 @@ en:
       journal: Journal
       server_sections: Server sections
     index:
+      inventory_selection: Inventory
+      scan_keys_selection: Scan the keys
+      clear_selection: Untick
+      selection_actions: Actions on the ticked servers
+      select_all: Tick every server of the page
       all_groups: All groups
       check_every_server_answers: Check that every server answers
       read_again_system_health: Read again the system, health and services of every server
@@ -113,6 +118,7 @@ en:
         other: Temporary accesses (%{count} in progress) and their history
       activity_server_yet: No activity on this server yet.
     row:
+      select_server: Tick “%{server_name}”
       load_over_24_h: Load over 24 h (in % of the processors)
       refresh_status: Refresh the status
       refresh_status_2: Refresh the status of %{server_name}
@@ -382,9 +388,16 @@ en:
       one: "%{count} server imported. Its first inventory runs in the background if Elio can already log in; otherwise install Elio's key on it."
       other: "%{count} servers imported. Their first inventory runs in the background on those Elio can already log in to; install Elio's key on the others."
   server_inventories_controller:
+    label_selection: Inventory of %{t}
     label_one: Inventory of “%{first_name}”
     label_fleet: Fleet inventory (%{t})
     started: "%{label} started."
+  fleet_runs:
+    none_selected: No server ticked.
+    already_running: Already running on these servers.
+    skipped:
+      one: "%{count} server already being read was left out."
+      other: "%{count} servers already being read were left out."
   server_scans_controller:
     label: Key scan (%{t})
     started: Key scan started.

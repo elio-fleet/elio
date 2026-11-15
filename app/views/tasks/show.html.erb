@@ -12,6 +12,9 @@
       <% if @task.rerunnable? %>
         <%= button_to task_rerun_path(@task), class: "btn btn-secondary task-rerun", form: { data: { turbo_confirm: t(".rerun_confirm") } } do %><%= icon :arrow_path %> <%= t(".rerun") %><% end %>
       <% end %>
+      <% if @task.cancellable? %>
+        <%= button_to task_cancellation_path(@task), class: "btn btn-secondary task-cancel", form: { data: { turbo_confirm: t(".cancel_confirm") } } do %><%= icon :x_mark %> <%= t(".cancel") %><% end %>
+      <% end %>
     <% end %>
   <% end %>
 

@@ -1,15 +1,17 @@
 <%# One server of the fleet table (servers/index): the columns the user shows (User#fleet_column?).
-    The notes take the room left and are cut, so the table fits its card. %>
+    The notes take the room left and are cut, so the table fits its card.
+    selectable: a checkbox of the #fleet-selection form before the state (operators). %>
 <% health = server.inventory("health")&.data || {} %>
 <tr id="<%= dom_id(server) %>" class="hover:bg-subtle/60">
-  <td class="pl-4"><span class="inline-flex items-center gap-1.5 whitespace-nowrap"><%= render "servers/status", server: server, health: true %><%= render "servers/docker_pill", server: server %></span></td>
-  <td class="min-w-0">
+  <td class="pl-4"><span class="inline-flex items-center gap-1.5 whitespace-nowrap"><% if local_assigns[:selectable] %><%= check_box_tag "server_ids[]", server.id, false, id: dom_id(server, :select), form: "fleet-selection", class: "select-server mr-1",
+        aria: { label: t(".select_server", server_name: server.name) }, data: { selection_target: "checkbox", action: "selection#update" } %><% end %><%= render "servers/status", server: server, health: true %><%= render "servers/docker_pill", server: server %></span></td>
+  <td class="server-name min-w-0">
     <%= link_to server.name, server_path(server), class: "font-medium hover:text-accent hover:underline" %>
     <p class="flex flex-wrap items-center gap-x-2 text-[11px] text-ink-3">
       <% server.server_groups.each do |group| %><%= group_tag group, path: servers_path(group: group.id) %><% end %>
       <% address = "#{server.username}@#{server.host}#{":#{server.port}" unless server.port == 22}" %>
-      <span class="server-address max-w-48 truncate font-mono" title="<%= address %>"><%= address %></span>
-      <% if (hostname = server.distinct_hostname) %><span class="server-hostname max-w-48 truncate font-mono" title="<%= t(".host_name_machine") %>"><%= hostname %></span><% end %>
+      <span class="server-address max-w-40 truncate font-mono" title="<%= address %>"><%= address %></span>
+      <% if (hostname = server.distinct_hostname) %><span class="server-hostname max-w-40 truncate font-mono" title="<%= t(".host_name_machine") %>"><%= hostname %></span><% end %>
     </p>
   </td>
   <% if current_user.fleet_column?(:system) %><td class="server-os hidden whitespace-nowrap text-xs 2xl:table-cell"><%= render "servers/os", server: server %></td><% end %>

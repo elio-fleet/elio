@@ -11,9 +11,9 @@
   <%= page_header t("nav.overview"),
                   subtitle: safe_join([ t("count.servers", count: @summary.total), (t(".inventory_html", last_inventory_at: relative_time_tag(@summary.last_inventory_at)) if @summary.last_inventory_at) ].compact, " ") do %>
     <% if can?(:operate) %>
-      <%= button_to server_inventories_path, class: "btn btn-secondary" do %><%= icon :arrow_path %> <%= t(".refresh_fleet") %><% end %>
+      <%= button_to server_inventories_path, class: "btn btn-secondary", form: { data: { turbo_confirm: fleet_run_confirm("inventory", @summary.total) } } do %><%= icon :arrow_path %> <%= t(".refresh_fleet") %><% end %>
       <%= actions_menu do %>
-        <%= menu_item t(".scan_keys"), server_scans_path, icon: :key, method: :post %>
+        <%= menu_item t(".scan_keys"), server_scans_path, icon: :key, method: :post, confirm: fleet_run_confirm("keys_scan", @summary.total) %>
       <% end %>
     <% end %>
   <% end %>

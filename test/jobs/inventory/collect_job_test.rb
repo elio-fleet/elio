@@ -45,4 +45,13 @@ class Inventory::CollectJobTest < ActiveJob::TestCase
     assert_equal "failed", task.reload.status
     assert task.finished_at
   end
+
+  test "a server called off while it waited is not collected" do
+    task = BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: [ servers(:web) ], user: users(:one))
+    task.cancel!
+
+    stub_method(Inventory::Collection, :call, ->(*) { flunk "collected" }) { Inventory::CollectJob.perform_now(servers(:web), task_item: task.items.sole) }
+
+    assert_equal [ "failed", "Annulé" ], [ task.items.sole.reload.status, task.items.sole.message ]
+  end
 end
