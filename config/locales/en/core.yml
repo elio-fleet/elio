@@ -106,11 +106,21 @@ en:
     since_prefix: "started "
     extension_settings: Extension settings
     trend: Trend
-    over_24_hours: "%{label} over 24 hours"
     now: "%{value} now"
     no_measure: no measure yet
-    hours_ago_24: 24 h ago
-    hours_12: 12 h
+    chart_periods:
+      24h:
+        over: "%{label} over 24 hours"
+        start: 24 h ago
+        middle: 12 h
+      7d:
+        over: "%{label} over 7 days"
+        start: 7 days ago
+        middle: 3.5 days
+      30d:
+        over: "%{label} over 30 days"
+        start: 30 days ago
+        middle: 15 days
     now_axis: now
     breadcrumb: Breadcrumb
     more_actions: More actions
@@ -198,6 +208,13 @@ en:
     import:
       no_server: No server found in the file.
       group_too_long: Group “%{name}” too long
+      empty: Paste or choose a file.
+      too_big: The file is too big (%{size} KB at most).
+      not_utf8: The file is not in UTF-8.
+      unknown_format: Unknown format.
+      invalid_csv: 'Invalid CSV: %{message}'
+      too_many: Too many lines (%{max} servers at most per import).
+      option_ignored: "%{option} ignored: Elio connects straight to the host."
   image_registry:
     client:
       auth_https_only: Authentication address refused (HTTPS only)

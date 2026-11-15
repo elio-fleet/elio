@@ -1,14 +1,16 @@
 # Checks that the app can open an SSH session on a server and run a command,
-# by echoing a random token and comparing the output.
+# by echoing a random token and comparing the output. `ssh`: a connection
+# already open (the check then runs on it instead of opening one).
 class Ssh::Check
   Result = Data.define(:success, :message, :details, :reason, :host_key) do
     def initialize(success:, message:, details:, reason: nil, host_key: nil) = super
     def success? = success
   end
 
-  def self.call(server, **connection_options)
+  def self.call(server, ssh: nil, **connection_options)
     token = "elio-check-#{SecureRandom.hex(4)}"
-    output = Ssh::Connection.open(server, **connection_options) { |ssh| ssh.run_command!("connection.check", token: token).stdout.strip }
+    echo = ->(connection) { connection.run_command!("connection.check", token: token).stdout.strip }
+    output = ssh ? echo.call(ssh) : Ssh::Connection.open(server, **connection_options, &echo)
 
     if output == token
       Result.new(success: true, message: I18n.t("ssh.check.succeeded"), details: I18n.t("ssh.check.answered", username: server.username, host: server.host, token: token))

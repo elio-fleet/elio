@@ -68,13 +68,23 @@ en:
       last_attempt_html: 'Last attempt %{checked_at}: %{message}'
       inventory_yet_elio_reads: 'No inventory yet: Elio reads the system, health and services of the server over SSH, read-only.'
       run_inventory: Run the inventory
+    events_card:
+      title: Latest events
+      all: All events
+      empty: No event yet for this server.
     attention_card:
       do: To handle
       points:
         one: "%{count} point"
         other: "%{count} points"
     health_card:
-      charts_24_h: Charts of the last 24 hours
+      charts: History charts
+      chart_period: Period of the charts
+      full_in_days:
+        one: full in about %{count} day
+        other: full in about %{count} days
+      full_within_a_day: full within a day
+      disk_trend_title: 'At the pace of the last 7 days: full around %{date}'
       load_over_24_h: Load over 24 h
       synchronized: synchronized
       not_synchronized: not synchronized
@@ -342,6 +352,11 @@ en:
         one: "%{count} second"
         other: "%{count} seconds"
   inventory:
+    health_history:
+      periods:
+        24h: 24 h
+        7d: 7 days
+        30d: 30 days
     port_analysis:
       no_firewall: no active firewall
       unknown_firewall: unknown firewall (root access required)

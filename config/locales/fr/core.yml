@@ -106,11 +106,21 @@ fr:
     since_prefix: "apparu "
     extension_settings: Réglages de l'extension
     trend: Tendance
-    over_24_hours: "%{label} sur 24 heures"
     now: "%{value} maintenant"
     no_measure: pas encore de mesure
-    hours_ago_24: il y a 24 h
-    hours_12: 12 h
+    chart_periods:
+      24h:
+        over: "%{label} sur 24 heures"
+        start: il y a 24 h
+        middle: 12 h
+      7d:
+        over: "%{label} sur 7 jours"
+        start: il y a 7 jours
+        middle: 3,5 jours
+      30d:
+        over: "%{label} sur 30 jours"
+        start: il y a 30 jours
+        middle: 15 jours
     now_axis: maintenant
     breadcrumb: Fil d'Ariane
     more_actions: Plus d'actions
@@ -198,6 +208,13 @@ fr:
     import:
       no_server: Aucun serveur trouvé dans le fichier.
       group_too_long: Groupe « %{name} » trop long
+      empty: Collez ou choisissez un fichier.
+      too_big: Le fichier est trop gros (%{size} Ko maximum).
+      not_utf8: Le fichier n'est pas en UTF-8.
+      unknown_format: Format inconnu.
+      invalid_csv: 'CSV invalide : %{message}'
+      too_many: Trop de lignes (%{max} serveurs maximum par import).
+      option_ignored: "%{option} ignoré : Elio se connecte directement à l'hôte."
   image_registry:
     client:
       auth_https_only: Adresse d'authentification refusée (HTTPS seulement)

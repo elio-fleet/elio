@@ -17,7 +17,8 @@ require "shellwords"
 #
 # Plan#state: :available (the repositories offer the fix), :pending (a fixed
 # version exists but the server had not seen it at its last inventory:
-# refresh the package lists first), :image (pull the image again and
+# refresh the package lists first), :reboot (the fixed kernel is already
+# installed: only a reboot is left), :image (pull the image again and
 # recreate its containers), :none (no fix yet).
 class Vulnerabilities::FixCommands
   Plan = Data.define(:image, :state, :commands, :packages, :reboot, :containers) do
@@ -26,7 +27,8 @@ class Vulnerabilities::FixCommands
   end
 
   # One step of the ordered plan. kind: :packages (the system packages whose
-  # most serious fixed CVE has this severity), :compose (one Compose project:
+  # most serious fixed CVE has this severity), :reboot (the fixed kernel is
+  # installed, the server runs an older one: no command), :compose (one Compose project:
   # `name`, its directory in `directory`), :image (one image, `name`, pulled
   # again; its containers started without Compose are recreated by hand).
   Step = Data.define(:kind, :severity, :name, :directory, :commands, :packages, :images, :containers, :cves, :reboot)
@@ -63,13 +65,16 @@ class Vulnerabilities::FixCommands
     fixable = host_groups.select(&:target_version)
     return Plan.new(image: nil, state: :none, commands: [], packages: [], reboot: false, containers: []) if fixable.empty?
 
-    pending = fixable.reject(&:available)
-    packages = packages_of(fixable)
+    to_install = fixable.reject(&:awaiting_reboot?)
+    pending = to_install.reject(&:available)
+    packages = packages_of(to_install)
     commands = []
     commands << root("apt-get update") if pending.any?
     commands << root("apt-get install --only-upgrade #{packages.shelljoin}") if packages.any?
+    state = :reboot if to_install.empty?
+    state ||= pending.any? ? :pending : :available
     # The reboot is a note, not a command: pasting the whole block must not reboot the server.
-    Plan.new(image: nil, state: pending.any? ? :pending : :available, commands: commands, packages: packages, reboot: fixable.any?(&:reboot?), containers: [])
+    Plan.new(image: nil, state: state, commands: commands, packages: packages, reboot: fixable.any?(&:reboot?), containers: [])
   end
 
   # Every binary built from the source with an update, or (not seen yet)
@@ -107,10 +112,10 @@ class Vulnerabilities::FixCommands
   # The system packages, one step per severity (that of the most serious
   # CVE each update fixes); refreshing the package lists comes first.
   def package_steps
-    fixable = host_groups.select(&:target_version)
+    waiting, fixable = host_groups.select(&:target_version).partition(&:awaiting_reboot?)
     refresh = fixable.any? { |group| !group.available }
     seen = []
-    fixable.group_by(&:fixable_severity).sort_by { |severity, _| Vulnerability::SEVERITIES.keys.index(severity) || 9 }.filter_map do |severity, list|
+    reboot_steps(waiting) + fixable.group_by(&:fixable_severity).sort_by { |severity, _| Vulnerability::SEVERITIES.keys.index(severity) || 9 }.filter_map do |severity, list|
       packages = packages_of(list) - seen
       next if packages.empty?
 
@@ -119,6 +124,15 @@ class Vulnerabilities::FixCommands
       commands.unshift(root("apt-get update")) if refresh && seen.size == packages.size
       Step.new(kind: :packages, severity: severity, name: nil, directory: nil, commands: commands, packages: packages, images: [], containers: [],
                cves: list.flat_map(&:fixable).uniq.sort, reboot: list.any?(&:reboot?))
+    end
+  end
+
+  # The kernel already updated, waiting for a reboot: a step without a
+  # command (Elio does not hand out a reboot to paste).
+  def reboot_steps(groups)
+    groups.map do |group|
+      Step.new(kind: :reboot, severity: group.fixable_severity, name: group.installed_kernel, directory: nil, commands: [], packages: [ group.source_package ],
+               images: [], containers: [], cves: group.fixable, reboot: true)
     end
   end
 

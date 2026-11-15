@@ -44,6 +44,23 @@ class Vulnerabilities::FixCommandsTest < ActiveSupport::TestCase
     assert_equal [ "apt-get install --only-upgrade linux-image-6.1.0-25-amd64" ], plan.commands, "the reboot is a note, never in the block to paste"
   end
 
+  test "the fixed kernel already installed: a reboot, nothing to install" do
+    server = servers(:backup)
+    record_packages(server, [ dpkg("linux-image-6.1.0-25-amd64", "6.1.106-3", source: "linux"), dpkg("linux-image-6.1.0-26-amd64", "6.1.112-1", source: "linux"),
+                              dpkg("libssl3", "3.0.14-1~deb12u1", source: "openssl").merge("available_version" => "3.0.15-1~deb12u1") ])
+    kernel = row(server, cve: "CVE-2024-1", source_package: "linux", packages: [ "linux-image-6.1.0-25-amd64" ], installed: "6.1.106-3", fixed: "6.1.112-1", severity: "critical")
+
+    plan = plans(server, [ kernel ]).sole
+    assert_equal [ :reboot, [], true ], [ plan.state, plan.commands, plan.reboot ]
+    assert plan.fixable?
+
+    ssl = row(server, cve: "CVE-2024-9143", source_package: "openssl", packages: [ "libssl3" ], installed: "3.0.14-1~deb12u1", fixed: "3.0.15-1~deb12u1", severity: "medium")
+    fix = Vulnerabilities::FixCommands.new(server, [ kernel, ssl ])
+    assert_equal [ :available, [ "apt-get install --only-upgrade libssl3" ] ], [ fix.system_plan.state, fix.system_plan.commands ], "the kernel is not reinstalled"
+    assert_equal [ [ :reboot, "critical", "6.1.112-1", [], [ "CVE-2024-1" ] ], [ :packages, "medium", nil, [ "apt-get install --only-upgrade libssl3" ], [ "CVE-2024-9143" ] ] ],
+                 fix.steps.map { [ it.kind, it.severity, it.name, it.commands, it.cves ] }
+  end
+
   test "no fixed version: nothing to run" do
     server = servers(:web)
     vulnerability = row(server, cve: "CVE-2023-51767", source_package: "openssh", packages: [ "openssh-server" ], installed: "1:9.2p1-2+deb12u2", fixed: nil)

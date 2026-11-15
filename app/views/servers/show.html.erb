@@ -63,6 +63,7 @@
       <div class="min-w-0 space-y-4">
         <%= render "servers/attention_card", server: @server %>
         <%= render "servers/health_card", server: @server %>
+        <%= render "servers/events_card", server: @server, events: @latest_events %>
       </div>
     </div>
   <% when "packages" %>

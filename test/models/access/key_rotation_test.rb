@@ -59,4 +59,18 @@ class KeyRotationTest < ActiveSupport::TestCase
     step = KeyRotationStep.new(phase: "cleanup")
     assert_equal "retrait de l'ancienne clé", step.phase_label
   end
+
+  test "a running rotation without progress for a while is stalled; each step counts as progress" do
+    rotation = KeyRotation.start!(by: users(:one))
+    assert_not rotation.stalled?
+
+    rotation.update_column(:updated_at, 20.minutes.ago)
+    assert rotation.stalled?
+
+    rotation.steps.create!(server: servers(:web), server_name: "Web", status: :rotated)
+    assert_not rotation.reload.stalled?
+
+    rotation.update_columns(updated_at: 20.minutes.ago, finished_at: 20.minutes.ago)
+    assert_not rotation.stalled?, "a finished rotation is never stalled"
+  end
 end

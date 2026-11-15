@@ -351,6 +351,18 @@ fr:
         nom,hôte,port,utilisateur,groupes
         API,10.0.0.12,22,deploy,Production|API
       ssh_config_help_html: Un serveur par bloc %{host} (sans %{star}), avec %{host_name}, %{port} et %{user}.
+      check_again: Vérifier à nouveau
+      host: Hôte
+      port: Port
+      includes_not_read_html: 'Fichiers inclus non lus (%{files}) : seul le texte collé est lu, collez aussi leur contenu.'
+      collect_inventory: Lancer le premier inventaire des serveurs importés
+      collect_inventory_help: En tâche de fond, sur ceux où Elio peut déjà se connecter ; les autres attendent que sa clé y soit installée.
+      from_extensions: Depuis les extensions
+      from_extensions_text:
+        one: "%{count} serveur connu de %{sources} n'est pas encore dans Elio."
+        other: "%{count} serveurs connus de %{sources} ne sont pas encore dans Elio."
+      from_extensions_preview: Les voir dans l'aperçu
+      limits: "%{size} Ko et %{rows} serveurs au plus par import."
   servers_controller:
     created: Le serveur « %{server_name} » a été ajouté. Si Elio peut déjà s'y connecter, son premier inventaire se lance en tâche de fond ; sinon installez-y la clé d'Elio puis testez la connexion.
     connection_invalid: Vérifiez les champs de connexion
@@ -366,6 +378,9 @@ fr:
     imported:
       one: "%{count} serveur importé. Installez-y la clé d'Elio puis lancez un scan des clés."
       other: "%{count} serveurs importés. Installez-y la clé d'Elio puis lancez un scan des clés."
+    imported_and_collecting:
+      one: "%{count} serveur importé. Son premier inventaire se lance en tâche de fond si Elio peut déjà s'y connecter ; sinon installez-y la clé d'Elio."
+      other: "%{count} serveurs importés. Leur premier inventaire se lance en tâche de fond sur ceux où Elio peut déjà se connecter ; installez la clé d'Elio sur les autres."
   server_inventories_controller:
     label_one: Inventaire de « %{first_name} »
     label_fleet: Inventaire du parc (%{t})

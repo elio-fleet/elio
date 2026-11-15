@@ -15,6 +15,7 @@
         <% if @rotation %>
           <%= menu_item t(".follow_rotation"), settings_key_rotation_path(@rotation), icon: :arrow_path %>
         <% else %>
+          <%= menu_item t(".simulate_rotation"), settings_key_rotation_check_path, icon: :shield_check, method: :post %>
           <%= menu_item t(".rotate_key"), settings_key_rotations_path, icon: :arrow_path, method: :post,
                         confirm: t(".rotation_confirm", count: Server.count), data: { confirm_label: t(".start_rotation") } %>
         <% end %>
@@ -54,7 +55,13 @@
         <p class="rounded-md border border-accent/40 bg-accent-soft/50 px-3 py-2 text-accent"><%= t(".key_rotation_progress_elio") %>
           <%= link_to t(".follow_rotation"), settings_key_rotation_path(@rotation), class: "font-medium underline" %></p>
       <% else %>
-        <p><%= t(".new_key_installed_each") %> <%= t(".only_if_key_compromised") %></p>
+        <% if @ssh_key.rotation_due? %>
+          <div id="key-rotation-reminder" class="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-warn/40 bg-warn-soft/50 px-3 py-2 text-warn-ink">
+            <p><%= t(".rotation_reminder", age: time_ago_in_words(@ssh_key.created_at)) %></p>
+            <%= button_to t(".simulate_rotation"), settings_key_rotation_check_path, class: "cursor-pointer font-medium underline" %>
+          </div>
+        <% end %>
+        <p><%= t(".new_key_installed_each") %> <%= t(".simulation_hint") %> <%= t(".only_if_key_compromised") %></p>
       <% end %>
     </div>
   <% else %>

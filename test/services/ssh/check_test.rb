@@ -36,6 +36,15 @@ class Ssh::CheckTest < ActiveSupport::TestCase
     assert_equal 2, fake.commands.uniq.size
   end
 
+  test "runs on a connection already open instead of opening one" do
+    fake = FakeSsh.new(handler: echo_handler)
+
+    result = Ssh::Connection.open(servers(:web), transport: fake, known_hosts_file: @known_hosts) { |ssh| Ssh::Check.call(servers(:web), ssh: ssh) }
+
+    assert result.success?
+    assert_equal 1, fake.sessions.size
+  end
+
   test "fails when the output does not match the token" do
     fake = FakeSsh.new(handler: ->(_command) { FakeSsh::Response.new("Welcome!\n", "", 0) })
 
