@@ -84,19 +84,25 @@
   <% end %>
 
   <%= form_section t(".health_thresholds"), safe_join([ t(".beyond_them_server_watch"), ". ", t(".also_watch_reboot_required") ]), id: "health-thresholds" do %>
-    <div class="grid gap-4 sm:grid-cols-3">
-      <% [ [ :health_disk_warn, t(".disk_warning") ], [ :health_disk_crit, t(".disk_critical") ], [ :health_memory_warn, t(".memory_warning") ],
-           [ :health_memory_crit, t(".memory_critical") ] ].each do |field, label| %>
+    <div class="grid gap-4 sm:grid-cols-2">
+      <% [ [ :health_disk_warn, t(".disk_warning") ], [ :health_disk_crit, t(".disk_critical") ], [ :health_inodes_warn, t(".inodes_warning") ],
+           [ :health_inodes_crit, t(".inodes_critical") ], [ :health_memory_warn, t(".memory_warning") ], [ :health_memory_crit, t(".memory_critical") ],
+           [ :health_swap_warn, t(".swap_warning") ], [ :health_swap_crit, t(".swap_critical") ] ].each do |field, label| %>
         <div>
           <%= f.label field, label, class: "label text-xs" %>
-          <%= f.number_field field, in: 1..100, step: 1, required: true, class: "input mt-1" %>
+          <%= f.number_field field, in: 1..100, step: 1, required: !field.start_with?("health_swap"), placeholder: (t(".not_watched") if field.start_with?("health_swap")), class: "input mt-1" %>
         </div>
       <% end %>
       <div>
         <%= f.label :health_load_warn, t(".load_warning_processors"), class: "label text-xs" %>
         <%= f.number_field :health_load_warn, in: 0.1..50, step: 0.1, required: true, class: "input mt-1" %>
       </div>
+      <div>
+        <%= f.label :health_sustained_minutes, t(".sustained_minutes"), class: "label text-xs" %>
+        <%= f.number_field :health_sustained_minutes, in: 0..1440, step: 1, required: true, class: "input mt-1" %>
+      </div>
     </div>
+    <p class="mt-2 text-xs text-ink-3"><%= t(".thresholds_help") %></p>
   <% end %>
 
   <%= form_section t(".prompt_instructions"), safe_join([ t(".prompt_instructions_hint"), " ", t(".prompt_instructions_footer", count: AppSetting::PROMPT_INSTRUCTIONS_MAX) ]), id: "prompt-instructions" do %>

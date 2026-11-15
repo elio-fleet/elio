@@ -14,7 +14,11 @@
   <div class="px-6 py-5">
     <dl class="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 text-sm">
       <dt class="text-ink-3">Type</dt>
-      <dd class="font-mono text-ink"><%= key.type %></dd>
+      <dd class="font-mono text-ink"><%= key.type %><%= " (#{key.rsa_bits} bits)" if key.rsa_bits %></dd>
+      <% if key.weak? %>
+        <dt class="text-ink-3"><%= t("public_key.weakness.badge") %></dt>
+        <dd class="key-weak-reason text-warn-ink"><%= weak_key_reason(key) %></dd>
+      <% end %>
       <dt class="text-ink-3"><%= t("words.fingerprint") %></dt>
       <dd class="key-fingerprint break-all font-mono text-xs leading-5 text-ink"><%= key.fingerprint %></dd>
       <dt class="text-ink-3"><%= t("words.comment") %></dt>

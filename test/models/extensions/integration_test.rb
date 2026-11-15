@@ -2,6 +2,7 @@ require "test_helper"
 
 class IntegrationTest < ActiveSupport::TestCase
   include IntegrationHelpers
+  include StubHelpers
 
   setup { Integration.registry = { "demo" => "DemoIntegration" } }
   teardown { Integration.registry = nil }
@@ -97,5 +98,61 @@ class IntegrationTest < ActiveSupport::TestCase
     integration.links.create!(external_id: "74", server: nil)
     assert_equal({ "73" => servers(:web).id, "74" => nil }, integration.manual_links)
     assert_not integration.links.build(external_id: "73").valid?
+  end
+
+  test "sync! remembers how long the sync took" do
+    integration = enable_demo
+    integration.sync!
+    assert_kind_of Integer, integration.reload.last_sync_duration_ms
+    assert_operator integration.last_sync_duration_ms, :>=, 0
+  end
+
+  test "an API key about to expire is logged once, again for a new key, never when far or unknown" do
+    integration = enable_demo
+    expires = 10.days.from_now.change(usec: 0)
+    stub_method(DemoIntegration, :credential_expires_at, ->(_integration) { expires }) do
+      2.times { integration.sync! }
+      assert_equal expires, integration.reload.credential_expires_at
+      assert integration.credential_expiring?
+      activity = Activity.of_kind(:integration_credential_expiring).sole
+      assert_equal "Clé d'API Démo : expire dans 10 jours (#{I18n.l(expires.to_date, format: :long)})", activity.summary
+
+      expires = 9.days.from_now.change(usec: 0)
+      integration.sync!
+      assert_equal 2, Activity.of_kind(:integration_credential_expiring).count, "a new key is announced again"
+
+      expires = 1.year.from_now.change(usec: 0)
+      integration.sync!
+      assert_not integration.reload.credential_expiring?
+      assert_not integration.credential_expiry_logged?
+      assert_equal 2, Activity.of_kind(:integration_credential_expiring).count
+    end
+
+    stub_method(DemoIntegration, :credential_expires_at, ->(_integration) { raise Integrations::Error, "refusé" }) do
+      assert_equal "3 éléments", integration.sync!, "a key that cannot be read does not fail the sync"
+      assert_nil integration.reload.last_error
+    end
+  end
+
+  test "purge_data! deletes what the syncs stored, only while off, and logs it" do
+    integration = enable_demo
+    integration.sync!
+    integration.update_columns(state: { "seen" => [ 1 ] }, credential_expires_at: 3.days.from_now)
+    purged = []
+    stub_method(DemoIntegration, :purge, ->(record) { purged << record.kind }) do
+      assert_not integration.purge_data!(user: users(:one)), "refused while on"
+      assert_empty purged
+
+      integration.update!(enabled: false)
+      assert integration.stored_data?
+      assert integration.purge_data!(user: users(:one))
+    end
+    assert_equal [ "demo" ], purged
+    integration.reload
+    assert_equal [ {}, nil, nil, nil ], [ integration.state, integration.last_synced_at, integration.last_sync_duration_ms, integration.credential_expires_at ]
+    assert_equal "https://demo.example", integration.value(:url), "the settings stay"
+    assert_not integration.stored_data?
+    activity = Activity.of_kind(:integration_data_deleted).sole
+    assert_equal [ "Données de l'extension Démo supprimées", users(:one) ], [ activity.summary, activity.user ]
   end
 end

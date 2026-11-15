@@ -7,17 +7,30 @@
     <h2 class="mt-1 flex items-center gap-2 text-lg font-semibold"><%= icon @integration.icon, class: "h-5 w-5 text-ink-3" %><%= @integration.label %></h2>
     <p class="mt-1 text-sm text-ink-2"><%= @integration.description %></p>
   </div>
-  <% if @integration.enabled? && @integration.persisted? %>
-    <%= button_to sync_settings_integration_path(@integration.kind), class: "btn btn-secondary" do %>
-      <%= icon :arrow_path %> <%= t(".sync_now") %>
+  <div class="flex items-center gap-2">
+    <% if @integration.enabled? && @integration.persisted? %>
+      <%= button_to sync_settings_integration_path(@integration.kind), class: "btn btn-secondary" do %>
+        <%= icon :arrow_path %> <%= t(".sync_now") %>
+      <% end %>
     <% end %>
-  <% end %>
+    <% if !@integration.enabled? && @integration.stored_data? %>
+      <%= actions_menu id: "integration-actions" do %>
+        <%= menu_item t(".delete_data"), data_settings_integration_path(@integration.kind), icon: :trash, method: :delete, danger: true,
+                      confirm: t(".delete_data_confirm", label: @integration.label) %>
+      <% end %>
+    <% end %>
+  </div>
 </div>
 
 <% if @integration.enabled? && @integration.last_error %>
   <p class="integration-error mt-4 rounded-lg bg-crit-soft px-4 py-2.5 text-sm text-crit-ink"><%= t(".last_sync_failed_html", last_error: @integration.last_error) %></p>
 <% elsif @integration.enabled? && @integration.last_synced_at %>
-  <p class="mt-4 text-xs text-ink-3"><%= t(".synchronized_html", last_synced_at: (relative_time_tag @integration.last_synced_at)) %></p>
+  <p class="mt-4 text-xs text-ink-3"><%= t(".synchronized_html", last_synced_at: (relative_time_tag @integration.last_synced_at)) %><% if @integration.last_sync_duration_ms %><span class="integration-duration tabular-nums"><%= t(".took", duration: short_duration(@integration.last_sync_duration_ms)) %></span><% end %></p>
+<% elsif @integration.stored_data? %>
+  <p class="integration-kept mt-4 text-xs text-ink-3"><%= t(".data_kept") %></p>
+<% end %>
+<% if @integration.enabled? %>
+  <%= render "settings/integrations/credential", integration: @integration %>
 <% end %>
 
 <% if (help = @integration.definition.help_partial) %>

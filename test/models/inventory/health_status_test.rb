@@ -106,4 +106,44 @@ class Inventory::HealthStatusTest < ActiveSupport::TestCase
   test "a reason stored before the translations is still read" do
     assert_equal "Redémarrage requis", Inventory::HealthStatus.text({ "tone" => "warn", "text" => "Redémarrage requis" })
   end
+
+  test "the thresholds of the server come before those of its groups and of the settings" do
+    health
+    server_groups(:production).update!(health_thresholds: { "disk_crit" => "96" })
+    assert_equal [ [ "warn", "Disque / à 94 %" ], [ "warn", "fail2ban en échec" ] ], evaluate.reasons.map { |reason| [ reason.tone, reason.text ] }
+
+    @server.update!(health_thresholds: { "disk_warn" => "95" })
+    assert_equal [ "fail2ban en échec" ], evaluate.reasons.map(&:text)
+  end
+
+  test "a server in several groups takes the strictest threshold" do
+    health(:minimal, memory: { "used_percent" => 75.0 })
+    @server.server_groups << server_groups(:staging)
+    server_groups(:production).update!(health_thresholds: { "memory_warn" => "70" })
+    server_groups(:staging).update!(health_thresholds: { "memory_warn" => "85" })
+
+    assert_equal [ [ "warn", "Mémoire à 75 %" ] ], evaluate.reasons.map { |reason| [ reason.tone, reason.text ] }
+  end
+
+  test "the inodes and the swap have thresholds of their own, the swap watched only once set" do
+    health(:minimal, disks: [ { "mount" => "/", "used_percent" => 50, "inodes_used_percent" => 85 } ], swap: { "total" => 1024, "used_percent" => 70.4 })
+    assert_equal [ "Inodes / à 85 %" ], evaluate.reasons.map(&:text)
+
+    AppSetting.current.update!(health_inodes_warn: 90, health_inodes_crit: 95, health_swap_warn: 50, health_swap_crit: 70)
+    assert_equal [ [ "crit", "Swap à 70 %" ] ], evaluate.reasons.map { |reason| [ reason.tone, reason.text ] }
+  end
+
+  test "load and memory count once beyond their threshold for the sustained minutes" do
+    AppSetting.current.update!(health_sustained_minutes: 10)
+    health(:minimal, memory: { "used_percent" => 92.0 }, load: [ 2.5, 1, 1 ], cpus: 1, disks: [ { "mount" => "/", "used_percent" => 85 } ])
+    assert_equal [ "Disque / à 85 %" ], evaluate.reasons.map(&:text), "a disk counts at once, a first peak does not"
+
+    @server.health_samples.create!(collected_at: 15.minutes.ago, memory_percent: 93, load_percent: 260)
+    @server.health_samples.create!(collected_at: 5.minutes.ago, memory_percent: 91, load_percent: 150)
+    @server.health_samples.create!(collected_at: Time.current, memory_percent: 92, load_percent: 250)
+    assert_equal [ "Disque / à 85 %", "Mémoire à 92 %" ], evaluate.reasons.map(&:text), "the load fell below in between"
+
+    @server.health_samples.create!(collected_at: 5.minutes.ago, memory_percent: 40)
+    assert_equal [ "Disque / à 85 %" ], evaluate.reasons.map(&:text)
+  end
 end

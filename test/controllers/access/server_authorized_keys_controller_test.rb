@@ -83,6 +83,18 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
     assert_select "li.authorized-key .key-option-from", "depuis 10.0.0.1"
   end
 
+  test "flags a weak key found on the server, with its reason in the details" do
+    sign_in users(:one)
+    dsa = OpenSSL::PKey::DSA.generate(1024)
+
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(keys_result("ssh-dss #{[ dsa.to_blob ].pack("m0")} old", public_keys(:alice).content))) do
+      get server_authorized_keys_path(servers(:web))
+    end
+
+    assert_select "li.authorized-key .key-weak", count: 1, text: "Clé faible"
+    assert_select "dialog.key-details .key-weak-reason", /Clé DSA, refusée par OpenSSH/
+  end
+
   test "shows an empty state when there are no keys" do
     sign_in users(:one)
 

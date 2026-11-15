@@ -26,6 +26,7 @@ Rails.application.routes.draw do
     match :test_connection, on: :collection, via: %i[post patch]
     resource :ping, only: %i[show create], controller: "server_pings"
     resource :ssh_check, only: :show, controller: "server_ssh_checks"
+    resource :ssh_diagnosis, only: :show, controller: "server_ssh_diagnoses"
     resources :commands, only: :index, controller: "server_commands"
     resource :inventory, only: :create, controller: "server_inventories"
     resources :packages, only: :index, controller: "server_packages"
@@ -109,6 +110,7 @@ Rails.application.routes.draw do
       member do
         match :test, via: %i[post patch] # (the button shares the settings form, sent as PATCH)
         post :sync
+        delete :data, action: :purge
       end
       resources :connections, controller: "integration_connections", only: %i[new create edit update destroy] do
         post :test, on: :collection # (an unsaved connection)

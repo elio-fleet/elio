@@ -117,4 +117,19 @@ class AuthorizedKeyTest < ActiveSupport::TestCase
     assert_nil AuthorizedKey.parse(%(expiry-time="20301399" #{@ed25519})).sole.expires_at
     assert_nil AuthorizedKey.parse(@ed25519).sole.expires_at
   end
+
+  test "flags DSA keys and RSA keys under 3072 bits as weak" do
+    line = ->(pkey) { "#{pkey.ssh_type} #{[ pkey.to_blob ].pack("m0")} test" }
+    dsa = AuthorizedKey.parse(line.(OpenSSL::PKey::DSA.generate(1024))).sole
+    short_rsa = AuthorizedKey.parse(line.(OpenSSL::PKey::RSA.generate(2048))).sole
+    long_rsa = AuthorizedKey.parse(line.(OpenSSL::PKey::RSA.generate(3072))).sole
+
+    assert_equal :dsa, dsa.weakness
+    assert_equal :rsa_short, short_rsa.weakness
+    assert_equal 2048, short_rsa.rsa_bits
+    assert_nil long_rsa.weakness
+    assert_equal 3072, long_rsa.rsa_bits
+    assert_not AuthorizedKey.parse(@ed25519).sole.weak?
+    assert_nil AuthorizedKey.parse(@ed25519).sole.rsa_bits
+  end
 end

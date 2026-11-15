@@ -3,8 +3,13 @@ class AppSetting < ApplicationRecord
   include Localized
   localized :default_locale, allow_nil: false
 
-  validates :health_disk_warn, :health_disk_crit, :health_memory_warn, :health_memory_crit,
+  validates :health_disk_warn, :health_disk_crit, :health_inodes_warn, :health_inodes_crit, :health_memory_warn, :health_memory_crit,
             numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 100 }
+  # Blank: the swap is not watched.
+  validates :health_swap_warn, :health_swap_crit, numericality: { only_integer: true, greater_than: 0, less_than_or_equal_to: 100 }, allow_nil: true
+  # How long a load or memory reading must stay beyond its threshold before it
+  # counts (Inventory::HealthStatus), so that a short peak raises nothing.
+  validates :health_sustained_minutes, numericality: { only_integer: true, greater_than_or_equal_to: 0, less_than_or_equal_to: 1440 }
   validates :health_load_warn, numericality: { greater_than: 0, less_than_or_equal_to: 50 }
   validate :warning_thresholds_below_critical
   # From which severity a fixable CVE is a critical health reason and an activity ("none": never).
@@ -64,7 +69,9 @@ class AppSetting < ApplicationRecord
   end
 
   def warning_thresholds_below_critical
-    errors.add(:health_disk_warn, :less_than, count: health_disk_crit) if health_disk_warn.to_i >= health_disk_crit.to_i
-    errors.add(:health_memory_warn, :less_than, count: health_memory_crit) if health_memory_warn.to_i >= health_memory_crit.to_i
+    Inventory::HealthThresholds::PAIRS.each do |pair|
+      warn, crit = public_send("health_#{pair}_warn"), public_send("health_#{pair}_crit")
+      errors.add(:"health_#{pair}_warn", :less_than, count: crit) if Inventory::HealthThresholds.below_critical?(warn, crit) == false
+    end
   end
 end
