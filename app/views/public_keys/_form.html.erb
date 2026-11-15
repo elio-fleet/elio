@@ -39,6 +39,12 @@
     <%= f.text_field :description, placeholder: t(".work_laptop_github_actions"), class: input_class %>
   </div>
 
+  <div>
+    <%= f.label :expires_on, class: label_class do %><%= t(".expires_on") %> <span class="font-normal text-ink-3"><%= t(".optional") %></span><% end %>
+    <%= f.date_field :expires_on, class: "#{input_class} sm:w-56" %>
+    <p class="mt-1 text-xs text-ink-3"><%= t(".expires_on_hint") %></p>
+  </div>
+
   <% if can?(:administer) %>
     <div class="public-key-owner">
       <%= f.label :user_id, class: label_class do %><%= t(".owner") %> <span class="font-normal text-ink-3"><%= t(".optional") %></span><% end %>

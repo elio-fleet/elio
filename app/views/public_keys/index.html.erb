@@ -34,6 +34,8 @@
             <tr id="<%= dom_id(public_key) %>" class="hover:bg-subtle">
               <td class="px-4 py-3">
                 <%= link_to public_key.name, public_key_path(public_key), class: "font-medium hover:text-accent hover:underline" %>
+                <%= weak_key_badge(public_key) %>
+                <%= public_key_expiry_badge(public_key) %>
                 <% if public_key.description %>
                   <p class="key-description text-xs text-ink-3"><%= public_key.description %></p>
                 <% end %>
