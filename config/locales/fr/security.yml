@@ -130,8 +130,10 @@ fr:
       available: correctif disponible
       pending: pas encore vu par le serveur
       update_image: mettre à jour l'image
+      awaiting_reboot: redémarrage nécessaire
       hint_available: Les dépôts du serveur proposent la version corrigée.
       hint_pending: 'Une version corrigée existe, mais le serveur ne la proposait pas à son dernier inventaire : rafraîchissez d''abord la liste des paquets. Si apt ne propose toujours rien, le correctif n''est pas encore arrivé dans les dépôts.'
+      hint_reboot: 'Le noyau corrigé est déjà installé, mais le serveur tourne encore sur l''ancien : redémarrez-le pour charger le nouveau noyau.'
       hint_image: Téléchargez à nouveau l'image (ou reconstruisez-la si elle est construite sur place), puis recréez ses conteneurs.
       reboot: Le noyau n'est remplacé qu'au prochain redémarrage.
       containers: 'Conteneurs : %{containers}. Un conteneur lancé sans Compose doit être recréé avec ses options.'
@@ -153,6 +155,8 @@ fr:
         other: "%{count} paquets du système"
       compose_html: Projet Compose %{name}
       image_html: Image %{image}
+      reboot_step_html: Redémarrer sur le noyau %{version}
+      reboot_step_hint: Déjà installé, rien à installer.
       images_containers: 'Images : %{images} · conteneurs : %{containers}'
       recreate: Les conteneurs lancés sans Compose doivent ensuite être recréés avec leurs options.
       after: Après les mises à jour
@@ -221,6 +225,9 @@ fr:
       repositories_server_already_offer: Les dépôts du serveur proposent déjà cette version
       not_repositories_yet: pas encore dans les dépôts
       fix_exists_but_server: 'Le correctif existe mais le serveur ne le voit pas : apt update, ou dépôt de sécurité manquant'
+      awaiting_reboot: installé, redémarrage nécessaire
+      awaiting_reboot_title: 'Le noyau %{version} est installé, mais le serveur tourne encore sur %{running} : ses correctifs s''appliquent au prochain redémarrage'
+      awaiting_reboot_html: 'Le noyau %{version} est déjà installé, mais le serveur tourne encore sur %{running}. Redémarrez le serveur pour le charger et corriger ces CVE.'
       update_image: mettre à jour l'image
       fix: aucun correctif
       fixed: corrigée en %{fixed_version}

@@ -150,9 +150,12 @@ class ServersController < ApplicationController
   private
 
   # By package (default) or by CVE, remembered in a cookie like the fleet view;
-  # a package filter (?package=) asks for the CVE view.
+  # a package filter (?package=) asks for the CVE view without remembering it:
+  # opening the CVEs of one package is not choosing the CVE view for good.
   def vulnerability_view
-    view = params[:view].presence_in(VULNERABILITY_VIEWS) || ("cves" if params[:package].present?)
+    return "cves" if params[:package].present?
+
+    view = params[:view].presence_in(VULNERABILITY_VIEWS)
     cookies.permanent[:elio_vulnerability_view] = { value: view, same_site: :lax, httponly: true } if view
     view || cookies[:elio_vulnerability_view].presence_in(VULNERABILITY_VIEWS) || "packages"
   end

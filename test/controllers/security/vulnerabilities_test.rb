@@ -121,6 +121,9 @@ class VulnerabilitiesTest < ActionDispatch::IntegrationTest
     assert_select ".package-filter", /openssh/
     assert_select "tr.server-vulnerability", 2
     get server_path(servers(:web), tab: "vulnerabilities")
+    assert_select ".vulnerability-view-toggle a[data-view=packages][aria-pressed=true]", 1, "the CVEs of one package are not a choice of the CVE view"
+    get server_path(servers(:web), tab: "vulnerabilities", view: "cves")
+    get server_path(servers(:web), tab: "vulnerabilities")
     assert_select ".vulnerability-view-toggle a[data-view=cves][aria-pressed=true]", 1, "the choice is remembered"
   end
 
