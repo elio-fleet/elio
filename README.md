@@ -134,7 +134,7 @@ Everything else — thresholds, notifications, automations, score providers, Doc
 
 1. In *Settings → General*, generate Elio's SSH key (Ed25519, kept encrypted).
 2. Add its public key to `~/.ssh/authorized_keys` of the account Elio will use (the page gives the command for root, an account with sudo or a dedicated account, optionally restricted to Elio's address with `from=`, and shows on which servers the key was found).
-3. Add the server (*Test the connection* checks the access before saving; *Duplicate* in its menu starts another one with the same port, user and groups): its first inventory runs on its own when Elio can already log in. Or import many from a CSV or your `~/.ssh/config`, then run an inventory.
+3. Add the server (*Test the connection* checks the access before saving; *Duplicate* in its menu starts another one with the same port, user and groups): its first inventory runs on its own when Elio can already log in. Or import many from a CSV, your `~/.ssh/config` or the servers your OVHcloud and Coolify extensions already know: lines in error are corrected in the preview, and the first inventory of the imported servers can run right away.
 
 Elio reads everything an unprivileged account can read. Some details need root — the process behind each port, the firewall, Docker, the users' crontabs, the SSH keys of the other accounts: log in as root, or give the account password-less `sudo`. Without it, those collections are marked *partial*, and only the keys of Elio's account are listed.
 

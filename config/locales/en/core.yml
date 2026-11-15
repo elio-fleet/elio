@@ -198,6 +198,13 @@ en:
     import:
       no_server: No server found in the file.
       group_too_long: Group “%{name}” too long
+      empty: Paste or choose a file.
+      too_big: The file is too big (%{size} KB at most).
+      not_utf8: The file is not in UTF-8.
+      unknown_format: Unknown format.
+      invalid_csv: 'Invalid CSV: %{message}'
+      too_many: Too many lines (%{max} servers at most per import).
+      option_ignored: "%{option} ignored: Elio connects straight to the host."
   image_registry:
     client:
       auth_https_only: Authentication address refused (HTTPS only)

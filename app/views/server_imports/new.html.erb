@@ -1,6 +1,7 @@
 <% content_for :title, t("title", page: t("command_palette.import_servers")) %>
 <% input_class = "input mt-1" %>
 <% label_class = "label" %>
+<% cell_input = "input py-1 text-xs" %>
 
 <div class="max-w-5xl">
   <%= page_header t("command_palette.import_servers"), crumbs: [ [ t("nav.fleet"), servers_path ], t("command_palette.import_servers") ] %>
@@ -8,58 +9,105 @@
   <% if @rows %>
     <% counts = @rows.group_by(&:status).transform_values(&:size) %>
     <section id="import-preview" class="card mb-5 p-5">
-      <div class="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h2 class="text-lg font-semibold"><%= t(".preview") %></h2>
-          <p class="import-counts text-sm text-ink-3">
-            <%= t("count.servers_to_import", count: counts[:valid].to_i) %> ·
-            <%= t("count.duplicates_ignored", count: counts[:duplicate].to_i) %> ·
-            <%= t("count.lines_in_error", count: counts[:invalid].to_i) %>
-          </p>
-        </div>
-        <% if counts[:valid].to_i.positive? %>
-          <%= form_with url: server_import_path, class: "import-confirm" do |f| %>
-            <%# A hidden textarea: an input's value would not keep the line breaks reliably. %>
-            <%= text_area_tag :content, @text, id: nil, hidden: true %>
-            <%= hidden_field_tag :import_format, @format, id: nil %>
-            <%= hidden_field_tag :default_username, @default_username, id: nil %>
-            <%= f.submit t(".import", t: (t("count.servers", count: counts[:valid]))),
-                  class: "btn btn-primary" %>
-          <% end %>
-        <% end %>
-      </div>
+      <%# One form: the rows in error are fields, "Check again" sends them back to the preview, "Import" creates the valid ones. %>
+      <%= form_with url: server_import_path, data: { turbo: false }, class: "import-confirm" do |f| %>
+        <%# A hidden textarea: an input's value would not keep the line breaks reliably. %>
+        <%= text_area_tag :content, @text, id: nil, hidden: true %>
+        <%= hidden_field_tag :import_format, @format, id: nil %>
+        <%= hidden_field_tag :default_username, @default_username, id: nil %>
 
-      <div class="mt-4 overflow-x-auto rounded-md border border-line">
-        <table class="min-w-full divide-y divide-line text-sm">
-          <thead class="bg-subtle text-left text-xs font-medium uppercase tracking-wide text-ink-3">
-            <tr>
-              <th class="px-3 py-2"><%= t("words.line") %></th><th class="px-3 py-2"><%= t("words.name") %></th><th class="px-3 py-2"><%= t("words.address") %></th>
-              <th class="px-3 py-2"><%= t(".groups") %></th><th class="px-3 py-2"><%= t(".state") %></th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-line">
-            <% @rows.each do |row| %>
-              <tr class="import-row is-<%= row.status %> <%= { invalid: "bg-crit-soft/50", duplicate: "bg-subtle text-ink-3" }[row.status] %>">
-                <td class="px-3 py-2 text-ink-3"><%= row.line %></td>
-                <td class="px-3 py-2 font-medium"><%= row.name.presence || "—" %></td>
-                <td class="px-3 py-2 font-mono text-xs"><%= row.username %>@<%= row.host.presence || "?" %>:<%= row.port %></td>
-                <td class="px-3 py-2 text-xs"><%= row.group_names.join(", ") %></td>
-                <td class="px-3 py-2 text-xs">
-                  <% case row.status %>
-                  <% when :valid %>
-                    <span class="font-medium text-good-ink"><%= t(".import_2") %></span>
-                  <% when :duplicate %>
-                    <%= t(".duplicate_html", duplicate_of: row.duplicate_of) %>
-                  <% else %>
-                    <span class="text-crit-ink"><%= row.errors.join(", ") %></span>
-                  <% end %>
-                </td>
-              </tr>
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 class="text-sm font-semibold"><%= t(".preview") %></h2>
+            <p class="import-counts text-sm text-ink-3">
+              <%= t("count.servers_to_import", count: counts[:valid].to_i) %> ·
+              <%= t("count.duplicates_ignored", count: counts[:duplicate].to_i) %> ·
+              <%= t("count.lines_in_error", count: counts[:invalid].to_i) %>
+            </p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <% if counts[:invalid].to_i.positive? %>
+              <%= f.button t(".check_again"), type: "submit", formaction: preview_server_import_path, name: nil, class: "btn btn-secondary import-recheck" %>
             <% end %>
-          </tbody>
-        </table>
+            <% if counts[:valid].to_i.positive? %>
+              <%= f.submit t(".import", t: (t("count.servers", count: counts[:valid]))), name: nil, class: "btn btn-primary" %>
+            <% end %>
+          </div>
+        </div>
+
+        <% if @includes.present? %>
+          <p class="import-includes mt-3 rounded-lg bg-warn-soft px-3 py-2 text-xs text-warn-ink"><%= t(".includes_not_read_html", files: safe_join(@includes.map { |path| tag.code(path) }, ", ")) %></p>
+        <% end %>
+
+        <div class="mt-4 overflow-x-auto rounded-md border border-line">
+          <table class="min-w-full divide-y divide-line text-sm">
+            <thead class="bg-subtle text-left text-xs font-medium uppercase tracking-wide text-ink-3">
+              <tr>
+                <th class="px-3 py-2"><%= t("words.line") %></th><th class="px-3 py-2"><%= t("words.name") %></th><th class="px-3 py-2"><%= t("words.address") %></th>
+                <th class="px-3 py-2"><%= t(".groups") %></th><th class="px-3 py-2"><%= t(".state") %></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-line">
+              <% @rows.each_with_index do |row, index| %>
+                <% field = ->(key) { "rows[#{index}][#{key}]" } %>
+                <% values = { "line" => row.line, "name" => row.name, "host" => row.host, "port" => row.port, "username" => row.username, "groups" => row.group_names.join(", ") } %>
+                <tr class="import-row is-<%= row.status %> <%= { invalid: "bg-crit-soft/50", duplicate: "bg-subtle text-ink-3" }[row.status] %>">
+                  <td class="px-3 py-2 text-ink-3"><%= hidden_field_tag field["line"], row.line, id: nil %><%= row.line %></td>
+                  <% if row.status == :invalid %>
+                    <td class="px-3 py-2"><%= text_field_tag field["name"], row.name, id: nil, class: "#{cell_input} w-32", "aria-label": t("words.name") %></td>
+                    <td class="px-3 py-2">
+                      <div class="flex items-center gap-1 font-mono text-xs">
+                        <%= text_field_tag field["username"], row.username, id: nil, spellcheck: false, class: "#{cell_input} w-20 font-mono", "aria-label": t("words.user") %>@
+                        <%= text_field_tag field["host"], row.host, id: nil, spellcheck: false, class: "#{cell_input} w-36 font-mono", "aria-label": t(".host") %>:
+                        <%= text_field_tag field["port"], row.port, id: nil, inputmode: "numeric", class: "#{cell_input} w-16 font-mono", "aria-label": t(".port") %>
+                      </div>
+                    </td>
+                    <td class="px-3 py-2"><%= text_field_tag field["groups"], values["groups"], id: nil, class: "#{cell_input} w-32", "aria-label": t(".groups") %></td>
+                  <% else %>
+                    <% values.except("line").each do |key, value| %>
+                      <%= hidden_field_tag field[key], value, id: nil %>
+                    <% end %>
+                    <td class="px-3 py-2 font-medium"><%= row.name.presence || "—" %></td>
+                    <td class="px-3 py-2 font-mono text-xs"><%= row.username %>@<%= row.host.presence || "?" %>:<%= row.port %></td>
+                    <td class="px-3 py-2 text-xs"><%= row.group_names.join(", ") %></td>
+                  <% end %>
+                  <td class="px-3 py-2 text-xs">
+                    <% if row.status == :valid %>
+                      <span class="font-medium text-good-ink"><%= t(".import_2") %></span>
+                    <% elsif row.status == :duplicate %>
+                      <%= t(".duplicate_html", duplicate_of: row.duplicate_of) %>
+                    <% else %>
+                      <span class="text-crit-ink"><%= row.errors.join(", ") %></span>
+                    <% end %>
+                    <% row.warnings.each do |warning| %>
+                      <span class="import-warning block text-warn-ink"><%= warning %></span>
+                    <% end %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-2 text-xs text-ink-3"><%= t(".groups_do_not_exist") %></p>
+        <% if counts[:valid].to_i.positive? %>
+          <label class="mt-3 flex items-start gap-2 text-sm">
+            <%# The hidden "0" keeps the choice when the rows are checked again (checked the first time). %>
+            <%= hidden_field_tag :collect_inventory, "0", id: nil %>
+            <%= check_box_tag :collect_inventory, "1", params[:collect_inventory] != "0", class: "mt-0.5 h-4 w-4 border-line text-accent" %>
+            <span><%= t(".collect_inventory") %> <span class="block text-xs text-ink-3"><%= t(".collect_inventory_help") %></span></span>
+          </label>
+        <% end %>
+      <% end %>
+    </section>
+  <% end %>
+
+  <% if @candidates.present? && !@rows %>
+    <section class="extension-candidates card mb-5 flex flex-wrap items-center justify-between gap-4 p-5">
+      <div>
+        <h2 class="text-sm font-semibold"><%= t(".from_extensions") %></h2>
+        <p class="text-sm text-ink-3"><%= t(".from_extensions_text", count: @candidates.size, sources: @candidates.map(&:source).uniq.join(", ")) %></p>
       </div>
-      <p class="mt-2 text-xs text-ink-3"><%= t(".groups_do_not_exist") %></p>
+      <%= button_to t(".from_extensions_preview"), preview_server_import_path, params: { source: "extensions" }, data: { turbo: false }, class: "btn btn-secondary" %>
     </section>
   <% end %>
 
@@ -99,6 +147,7 @@
       <div>
         <%= label_tag :file, t(".file"), class: label_class %>
         <%= file_field_tag :file, accept: ".csv,.txt,text/csv,text/plain", class: "mt-1 block text-sm text-ink-2" %>
+        <p class="import-limits mt-1 text-xs text-ink-3"><%= t(".limits", size: Servers::Import::MAX_SIZE / 1.kilobyte, rows: Servers::Import::MAX_ROWS) %></p>
       </div>
       <div class="max-w-xs">
         <%= label_tag :default_username, t(".default_user"), class: label_class %>

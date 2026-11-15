@@ -349,6 +349,18 @@ en:
         name,host,port,user,groups
         API,10.0.0.12,22,deploy,Production|API
       ssh_config_help_html: One server per %{host} block (without %{star}), with %{host_name}, %{port} and %{user}.
+      check_again: Check again
+      host: Host
+      port: Port
+      includes_not_read_html: 'Included files not read (%{files}): only the pasted text is read, paste their content too.'
+      collect_inventory: Run the first inventory of the imported servers
+      collect_inventory_help: In the background, on those Elio can already log in to; the others wait until its key is installed on them.
+      from_extensions: From the extensions
+      from_extensions_text:
+        one: "%{count} server known by %{sources} is not in Elio yet."
+        other: "%{count} servers known by %{sources} are not in Elio yet."
+      from_extensions_preview: See them in the preview
+      limits: "%{size} KB and %{rows} servers at most per import."
   servers_controller:
     created: The server “%{server_name}” has been added. If Elio can already log in, its first inventory runs in the background; otherwise install Elio's key on it, then test the connection.
     connection_invalid: Check the connection fields
@@ -364,6 +376,9 @@ en:
     imported:
       one: "%{count} server imported. Install Elio's key on it, then run a key scan."
       other: "%{count} servers imported. Install Elio's key on them, then run a key scan."
+    imported_and_collecting:
+      one: "%{count} server imported. Its first inventory runs in the background if Elio can already log in; otherwise install Elio's key on it."
+      other: "%{count} servers imported. Their first inventory runs in the background on those Elio can already log in to; install Elio's key on the others."
   server_inventories_controller:
     label_one: Inventory of “%{first_name}”
     label_fleet: Fleet inventory (%{t})
