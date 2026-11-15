@@ -156,6 +156,8 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     end
     assert_english server_path(servers(:web), tab: "vulnerabilities"), except: data
     assert_english server_path(servers(:web), tab: "vulnerabilities", containers: "1", view: "cves"), except: data
+    CveScore.store("nvd", [ { cve: "CVE-2024-9143", score: 4.3, data: { "references" => [ { "url" => "https://www.debian.org/security/2024/dsa-5800", "kind" => "advisory" },
+                                                                                          { "url" => "https://github.com/openssl/openssl/commit/72ae83ad214d2eef262461365a1975707f862712", "kind" => "fix" } ] } } ])
     assert_english vulnerability_path("CVE-2024-9143", server_id: servers(:web).id), except: data
     assert_english vulnerability_path("CVE-2024-9143"), except: data
     assert_english docker_path(tab: "cves"), except: data

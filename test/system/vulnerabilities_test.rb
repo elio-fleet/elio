@@ -33,7 +33,10 @@ class VulnerabilitiesSystemTest < ApplicationSystemTestCase
 
     find("a.vulnerability-link", text: "CVE-2024-0002").click
     assert_selector "dialog.vulnerability-dialog[open] .vulnerability-detail[data-cve='CVE-2024-0002']"
-    assert_selector "li.detail-provider-score[data-provider=nvd] .provider-pending", text: "pas encore demandé"
+    # Never asked: asked at once, the modal reloads itself meanwhile (the job does not run here).
+    assert_selector "li.detail-provider-score[data-provider=nvd] .provider-asking", text: "demande en cours"
+    sleep 3.5
+    assert_selector "dialog.vulnerability-dialog[open] .vulnerability-detail[data-cve='CVE-2024-0002'] li.detail-provider-score[data-provider=nvd] .provider-asking"
   end
 
   test "on the Docker CVE tab, the packages of an image load when it is unfolded, and a CVE opens its detail" do

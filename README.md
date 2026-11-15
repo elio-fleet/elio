@@ -49,7 +49,7 @@ Elio watches a fleet of Debian and Ubuntu servers from one place: which ones are
 | | |
 |:---:|:---:|
 | ![Vulnerabilities grouped by package](docs/screenshots/en/vulnerabilities-by-package.png) | ![A CVE in detail](docs/screenshots/en/vulnerability-detail.png) |
-| **Vulnerabilities by package**, with the update to make | **A CVE in detail**: scores per provider, CVSS vector in words |
+| **Vulnerabilities by package**, with the update to make | **A CVE in detail**: scores per provider (asked at once when missing), CVSS vector in words, Debian / Ubuntu advisories and fixes |
 | ![A server](docs/screenshots/en/server.png) | ![Docker](docs/screenshots/en/docker.png) |
 | **A server**: health, 24-hour charts, system | **Docker**: containers, images, updates, CVEs |
 | ![Overview](docs/screenshots/en/overview.png) | ![Dark theme](docs/screenshots/en/fleet-dark.png) |
