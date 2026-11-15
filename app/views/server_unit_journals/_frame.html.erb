@@ -1,0 +1,13 @@
+<%# The journal frame of a failed unit (Services tab). Locals: server, unit (its name), journal (an Inventory::UnitJournal::Result, or nil: loaded lazily when the frame shows, i.e. when its <details> opens). %>
+<%= turbo_frame_tag "unit_journal_#{Digest::SHA256.hexdigest(unit).first(16)}", src: (server_unit_journal_path(server, unit: unit) unless journal), loading: :lazy, class: "unit-journal-lines block" do %>
+  <% if journal.nil? %>
+    <p class="py-2 text-xs text-ink-3"><%= t("server_unit_journals.frame.loading") %></p>
+  <% elsif !journal.success? %>
+    <p class="unit-journal-error py-2 text-xs text-crit-ink"><%= t("server_unit_journals.frame.unreadable") %> <span class="font-mono"><%= journal.error %></span></p>
+  <% elsif journal.lines.empty? %>
+    <p class="unit-journal-empty py-2 text-xs text-ink-3"><%= t("server_unit_journals.frame.empty") %></p>
+  <% else %>
+    <pre class="max-h-80 overflow-auto rounded-md bg-subtle p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap text-ink-2"><%= journal.lines.join("\n") %></pre>
+    <p class="mt-1 text-xs text-ink-3"><%= t("server_unit_journals.frame.last_lines", count: journal.lines.size) %></p>
+  <% end %>
+<% end %>

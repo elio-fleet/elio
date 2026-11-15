@@ -149,7 +149,7 @@ Supported: **Debian and Ubuntu** (others get health and system only), Docker, sn
 | System, network | `/etc/os-release`, `uname`, `hostname`, `systemd-detect-virt`, `/proc`, `timedatectl`, `ip -j addr`, `ip -j link` |
 | Health | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (and `show` of the failed units), `apt-get -s dist-upgrade` (simulation, only when the package database changed), `/proc/vmstat` (out-of-memory kills) |
 | Packages | `dpkg-query -W`, `apt list --upgradable`, `snap list` |
-| Services, scheduled tasks | `systemctl list-units`, `list-unit-files`, `show` of the timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
+| Services, scheduled tasks | `systemctl list-units`, `list-unit-files`, `show` of the timers, `journalctl -u` of a failed unit (only when you open its journal), `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (state, health, restarts — **never the environment variables**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` if installed, `docker cp` of `os-release` and the dpkg status |
 | Ports | `ss -tulpn`, `/proc/<pid>/cgroup`, `ufw status verbose`, `nft list ruleset`, `iptables -S INPUT` |
 | SSH keys | reading `~/.ssh/authorized_keys` (with root, of every account with a login shell — never through a link, nor a file the account does not own); **writing only** when you add a key (to Elio's account, or with root to another existing account: its `~/.ssh` is created if missing, never the account), extend a temporary access (only its `expiry-time` option changes) or remove one. Another account's file is read and written **as that account** (`runuser`): root only finds it |

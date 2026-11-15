@@ -1,4 +1,4 @@
-<%# A systemd unit in the Services section of the server page. %>
+<%# A systemd unit in the Services section of the server page. Locals: unit (Inventory::FailedUnits or services inventory), server. A failed unit opens on the last lines of its journal (read when opened) and the command to restart it. %>
 <% tone, label = case unit["active"]
                  when "active" then [ :good, unit["sub"] == "running" ? "actif" : unit["sub"] ]
                  when "failed" then [ :crit, t(".failed") ]
@@ -8,7 +8,23 @@
   <span class="w-24 shrink-0"><%= status_badge tone, label %></span>
   <span class="font-mono text-xs"><%= unit["name"].delete_suffix(".service") %></span>
   <% if unit["enabled"] == "enabled" %><span class="badge bg-subtle text-ink-3"><%= t(".boot") %></span><% end %>
-  <% if unit["since"] %><span class="unit-failed-since text-xs text-crit-ink"><%= t(".failed_since_html", time: relative_time_tag(Time.zone.parse(unit["since"]))) %></span><% end %>
+  <% if unit["since"] %>
+    <% time = relative_time_tag(Time.zone.parse(unit["since"])) %>
+    <span class="unit-failed-since text-xs text-crit-ink"><%= unit["at_boot"] ? t(".failed_at_boot_html", time: time) : t(".failed_since_html", time: time) %></span>
+  <% end %>
   <% if unit["seen_at"] %><span class="unit-seen-by-health text-xs text-ink-3" title="<%= t(".seen_by_health_hint") %>"><%= t(".seen_by_health_html", time: relative_time_tag(unit["seen_at"])) %></span><% end %>
   <span class="ml-auto truncate text-xs text-ink-3"><%= unit["description"] %></span>
+  <% if unit["active"] == "failed" && Inventory::UnitJournal.valid_name?(unit["name"]) %>
+    <details class="unit-journal basis-full">
+      <summary class="cursor-pointer py-1 text-xs font-medium text-accent hover:underline"><%= t(".journal") %></summary>
+      <div class="space-y-2 pb-1">
+        <div class="unit-restart flex flex-wrap items-center gap-2" data-controller="clipboard">
+          <span class="text-xs text-ink-3"><%= t(".restart_hint") %></span>
+          <code data-clipboard-target="source" class="rounded bg-subtle px-2 py-1 font-mono text-xs"><%= Inventory::UnitJournal.restart_command(server, unit["name"]) %></code>
+          <%= render "settings/copy_button" %>
+        </div>
+        <%= render "server_unit_journals/frame", server: server, unit: unit["name"], journal: nil %>
+      </div>
+    </details>
+  <% end %>
 </li>

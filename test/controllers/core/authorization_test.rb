@@ -48,6 +48,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server temporary accesses" => -> { get server_temporary_accesses_path(servers(:web)) },
       "server packages" => -> { get server_packages_path(servers(:web)) },
       "server commands" => -> { get server_commands_path(servers(:web)) },
+      "journal of a failed unit" => -> { get server_unit_journal_path(servers(:web), unit: "nginx.service") },
       "fleet packages" => -> { get packages_path(q: "ssl") },
       "fleet ports" => -> { get ports_path },
       "fleet scheduled tasks" => -> { get scheduled_tasks_path },

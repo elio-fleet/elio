@@ -20,6 +20,24 @@ class Inventory::FailedUnitsTest < ActiveSupport::TestCase
     assert_equal 2, failed.count
   end
 
+  test "a unit that failed within minutes of the boot failed at boot; one that failed later did not" do
+    record("os", "booted_at" => "2026-11-12T08:00:00Z")
+    record("health", "failed_units" => %w[mnt-backup.mount nginx.service old.service],
+                     "failed_units_details" => [ { "name" => "mnt-backup.mount", "since" => "2026-11-12T08:01:30Z" },
+                                                 { "name" => "nginx.service", "since" => "2026-11-13T10:00:00Z" },
+                                                 { "name" => "old.service", "since" => "2026-11-11T10:00:00Z" } ])
+
+    failed = Inventory::FailedUnits.new(servers(:web))
+    assert_equal [ true, false, nil ], failed.units.map { |unit| unit["at_boot"] },
+                 "a failure older than the known boot: the system inventory is out of date, nothing said"
+    assert_equal %w[mnt-backup.mount nginx.service old.service], failed.names
+  end
+
+  test "without the boot time, nothing is said about the boot" do
+    record("health", "failed_units" => %w[nginx.service], "failed_units_details" => [ { "name" => "nginx.service", "since" => "2026-11-13T10:00:00Z" } ])
+    assert_not Inventory::FailedUnits.new(servers(:web)).units.first.key?("at_boot")
+  end
+
   test "nothing read yet: no failed unit" do
     assert_equal 0, Inventory::FailedUnits.new(servers(:web)).count
   end

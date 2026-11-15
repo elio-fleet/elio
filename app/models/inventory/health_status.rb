@@ -41,12 +41,21 @@ class Inventory::HealthStatus
   # Parameters that measure a problem rather than name it: a disk going from
   # 91 to 92 % is the same problem, a second failed service is a new one.
   MEASURES = %w[percent ratio load count].freeze
+  # Parameters kept only to compare two readings, never shown: every failed
+  # unit, when the text names only the first ones.
+  DETAILS = %w[names_all].freeze
+  FAILED_UNITS_KEYS = %w[health.service_failed health.units_failed health.units_failed_more].freeze
 
   # The stored reasons of `current` that were not in `previous`, or that went
-  # from warn to crit (Server#refresh_health! logs them).
+  # from warn to crit (Server#refresh_health! logs them). Failed units are one
+  # problem whatever their number: new only when a unit fails that had not
+  # (a unit that recovers changes the text, not the problems).
   def self.new_reasons(previous, current)
     tones = Array(previous).to_h { |reason| [ identity(reason), reason["tone"] ] }
+    failed_before = Array(previous).select { |reason| failed_units?(reason) }.flat_map { |reason| failed_unit_names(reason) }
     Array(current).select do |reason|
+      next (failed_unit_names(reason) - failed_before).any? if failed_units?(reason) && failed_before.any?
+
       tone = tones[identity(reason)]
       tone.nil? || (reason["tone"] == "crit" && tone != "crit")
     end
@@ -55,7 +64,16 @@ class Inventory::HealthStatus
   def self.identity(reason)
     return reason.to_s unless reason.is_a?(Hash)
 
-    [ reason["key"] || reason["text"], (reason["params"] || {}).to_h.except(*MEASURES) ]
+    [ reason["key"] || reason["text"], (reason["params"] || {}).to_h.except(*MEASURES, *DETAILS) ]
+  end
+
+  def self.failed_units?(reason) = reason.is_a?(Hash) && FAILED_UNITS_KEYS.include?(reason["key"])
+
+  # Every unit a failed-units reason names (only the first ones in a reason
+  # stored before `names_all`).
+  def self.failed_unit_names(reason)
+    params = reason["params"] || {}
+    Array(params["names_all"]).presence || [ params["name"], *params["names"], *params["first_names"] ].compact
   end
 
   def self.reason(tone, key, **params) = Reason.new(tone: tone, key: key.to_s.include?(".") ? key.to_s : "health.#{key}", params: params)
@@ -72,7 +90,8 @@ class Inventory::HealthStatus
   # 4: Coolify backups (integrations.coolify.health.*).
   # 5: failed units named (health.units_failed / units_failed_more).
   # 6: processes killed for lack of memory in the last 24 hours (health.oom_kills).
-  VERSION = 6
+  # 7: every failed unit kept with the reason that names only the first ones (names_all).
+  VERSION = 7
 
   def self.refresh_outdated!
     setting = AppSetting.current
@@ -156,7 +175,7 @@ class Inventory::HealthStatus
     return self.class.reason("warn", :service_failed, name: names.first) if names.one?
     return self.class.reason("warn", :units_failed, names: names) if names.size <= FAILED_UNITS_NAMED
 
-    self.class.reason("warn", :units_failed_more, first_names: names.first(FAILED_UNITS_NAMED - 1), count: names.size - (FAILED_UNITS_NAMED - 1))
+    self.class.reason("warn", :units_failed_more, first_names: names.first(FAILED_UNITS_NAMED - 1), count: names.size - (FAILED_UNITS_NAMED - 1), names_all: names)
   end
 
   def scheduled_task_reasons
