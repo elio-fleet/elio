@@ -105,7 +105,26 @@ class Integrations::Coolify::Fetch
     { "service_type" => service["service_type"].presence, "domains" => applications.flat_map { |app| self.class.domains(app["fqdn"]) }.uniq,
       "urls" => applications.flat_map { |app| self.class.urls(app["fqdn"]) }.uniq.presence,
       "images" => (applications + Array(service["databases"])).filter_map { |part| part["image"].presence }.uniq,
-      "parts" => (applications + Array(service["databases"])).filter_map { |part| { "name" => part["name"], "status" => part["status"] }.compact if part["name"] } }
+      "parts" => (applications + Array(service["databases"])).filter_map { |part| { "name" => part["name"], "status" => part["status"] }.compact if part["name"] },
+      "databases" => Array(service["databases"]).filter_map { |database| service_database(database) }.presence }
+  end
+
+  # Engine of a database inside a service, from its image ("postgres:16-alpine" → "postgresql").
+  SERVICE_ENGINES = { /\A(postgres|postgis|timescale)/ => "postgresql", /\Amysql/ => "mysql", /\Amariadb/ => "mariadb", /\Amongo/ => "mongodb",
+                      /\A(redis|valkey)/ => "redis", /\Akeydb/ => "keydb", /\Adragonfly/ => "dragonfly", /\Aclickhouse/ => "clickhouse" }.freeze
+
+  # A database inside a service (Coolify's ServiceDatabase: a part of the
+  # Compose file, e.g. the PostgreSQL of n8n): its state and whether it is
+  # made public, like a standalone database. Its backups are not readable
+  # through the API (GET /databases/{uuid}/backups only finds standalone ones).
+  def service_database(database)
+    return if database["name"].blank?
+
+    image = database["image"].to_s.strip
+    name = image.split("@").first.to_s.sub(/:[^\/]*\z/, "").split("/").last.to_s.downcase
+    engine = SERVICE_ENGINES.find { |pattern, _| name.match?(pattern) }&.last
+    { "name" => database["name"], "engine" => engine, "image" => image.presence, "status" => database["status"].presence,
+      "public" => (true if database["is_public"]), "public_port" => (database["public_port"] if database["is_public"]) }.compact
   end
 
   def database_data(database)

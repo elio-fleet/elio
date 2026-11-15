@@ -48,6 +48,17 @@ fr:
     index:
       subtitle: Les clés publiques connues d'Elio et les serveurs où elles donnent accès
       scan_keys: Scanner les clés du parc
+      last_scan: Dernier scan
+      scan_never: jamais
+      scan_running: "en cours (%{done}/%{count})"
+      scan_read:
+        one: "%{done}/%{count} serveur lu"
+        other: "%{done}/%{count} serveurs lus"
+      scan_failed:
+        one: "%{count} en échec"
+        other: "%{count} en échec"
+      outside_keyring: Hors trousseau
+      see_task: Voir la tâche
       keyring_empty_hint: Ajoutez les clés des personnes et des services pour savoir qui a accès à quoi, et repérer les clés inconnues sur les serveurs.
       all: Toutes
       people: Personnes

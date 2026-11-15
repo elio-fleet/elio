@@ -33,6 +33,8 @@ class BackgroundTask < ApplicationRecord
   # Failed or partly failed, finished since `time` (the overview links to them).
   scope :failed_since, ->(time) { where(status: FILTERS["failed"], finished_at: time..) }
   scope :expired, -> { finished.where(created_at: ...RETENTION.ago) }
+  # Keys scans, started by hand or by the planned "keys_scan" automation (the Keys page sums up the last one).
+  scope :keys_scans, -> { where(kind: "keys_scan").or(where(kind: "automation", automation_id: Automation.where(kind: "keys_scan").select(:id))) }
 
   # Text search: the task's label and result, who started it, and the
   # servers and messages of its items ("Inventaire", "web-1", "timeout").

@@ -309,8 +309,11 @@ fr:
           failed: dernière en échec
           late: en retard
           none: aucune sauvegarde planifiée
+          unknown: sauvegardes non lisibles
         none_hint: Si elle garde des données utiles, planifiez une sauvegarde dans Coolify (onglet Backups de la base).
-        services_note: Les bases des services Coolify (n8n, etc.) ne sont pas encore suivies.
+        in_service: base du service
+        public: "joignable depuis Internet (port %{port})"
+        service_hint: "L'API de Coolify ne donne pas les sauvegardes d'une base à l'intérieur d'un service : vérifiez-les dans Coolify (onglet Backups du service)."
       server_tab:
         instance: Instance
         team: Équipe
@@ -464,6 +467,14 @@ fr:
       empty: Aucune ressource Coolify
       empty_text: Les connexions ne voient encore aucune application, aucun service ni aucune base.
       not_synchronized: Coolify n'a pas encore été synchronisé.
+      unconnected: Équipes non connectées
+      unconnected_meta:
+        one: "%{count} serveur"
+        other: "%{count} serveurs"
+      unconnected_text:
+        one: "Coolify gère ce serveur (conteneur coolify-proxy), mais aucune connexion ne le rattache : son équipe ou son instance n'est pas connectée, ou son adresse dans Coolify n'est pas celle connue d'Elio."
+        other: "Coolify gère ces serveurs (conteneur coolify-proxy), mais aucune connexion ne les rattache : leur équipe ou leur instance n'est pas connectée, ou leur adresse dans Coolify n'est pas celle connue d'Elio."
+      add_connection: Ajouter une connexion
   coolify_helper:
     states:
       healthy: En cours · sain

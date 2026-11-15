@@ -71,9 +71,10 @@
   <% end %>
 
   <% databases = resources.select { |resource| resource.kind == "database" } %>
-  <% if databases.any? %>
+  <% service_databases = resources.flat_map { |service| service.service_databases.map { |database| [ service, database ] } } %>
+  <% if databases.any? || service_databases.any? %>
     <% max_age = integration.value(:backup_max_age_hours).to_f.nonzero? || 26 %>
-    <%= panel t("integrations.coolify.backups.title"), meta: t("integrations.coolify.backups.count", count: databases.size), icon: :clock, id: "coolify-backups" do %>
+    <%= panel t("integrations.coolify.backups.title"), meta: t("integrations.coolify.backups.count", count: databases.size + service_databases.size), icon: :clock, id: "coolify-backups" do %>
       <ul>
         <% databases.each do |database| %>
           <% state = database.backup_state(max_age) %>
@@ -104,10 +105,20 @@
             <% end %>
           </li>
         <% end %>
+        <% service_databases.each do |service, database| %>
+          <li class="coolify-service-database border-t border-line px-4 py-3 first:border-t-0" data-service="<%= service.uuid %>" data-name="<%= database["name"] %>">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <span class="font-medium"><%= service.name %> › <%= database["name"] %> <span class="text-xs font-normal text-ink-3"><%= [ t("integrations.coolify.backups.in_service"), coolify_engine(database["engine"]) ].compact.join(" · ") %></span></span>
+              <% if database["public"] %>
+                <%= status_badge :crit, t("integrations.coolify.backups.public", port: database["public_port"] || "?"), class: "service-database-public" %>
+              <% else %>
+                <%= status_badge :neutral, t("integrations.coolify.backups.states.unknown"), class: "backup-state" %>
+              <% end %>
+            </div>
+            <p class="mt-1 text-xs text-ink-3"><%= t("integrations.coolify.backups.service_hint") %></p>
+          </li>
+        <% end %>
       </ul>
-      <% if resources.any? { |resource| resource.kind == "service" } %>
-        <p class="border-t border-line px-4 py-2 text-xs text-ink-3"><%= t("integrations.coolify.backups.services_note") %></p>
-      <% end %>
     <% end %>
   <% end %>
 </div>
