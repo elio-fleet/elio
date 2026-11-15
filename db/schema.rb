@@ -588,6 +588,15 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110000) do
     t.index ["source", "release", "package", "cve"], name: "index_vulnerabilities_uniqueness", unique: true
   end
 
+  create_table "vulnerability_counts", force: :cascade do |t|
+    t.date "recorded_on", null: false
+    t.string "severity", null: false
+    t.integer "fixable", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["recorded_on"], name: "index_vulnerability_counts_on_recorded_on", unique: true
+  end
+
   create_table "vulnerability_feeds", force: :cascade do |t|
     t.string "source", null: false
     t.datetime "refreshed_at"

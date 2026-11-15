@@ -28,6 +28,9 @@ shared: &shared
   purge_background_tasks:
     class: PurgeBackgroundTasksJob
     schedule: every day at 4:15am
+  record_vulnerability_count:
+    class: RecordVulnerabilityCountJob
+    schedule: every hour at minute 50
   sweep_stale_tasks:
     class: SweepStaleTasksJob
     schedule: every 15 minutes

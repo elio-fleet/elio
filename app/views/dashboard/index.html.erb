@@ -30,7 +30,9 @@
                   href: servers_path(state: "crit") %>
     <%= stat_tile t(".watch"), @summary.to_watch, t(".reboot_disk_service"), tone: (:warn if @summary.to_watch.positive?), icon: :exclamation_triangle, id: "stat-to-watch",
                   href: servers_path(state: "warn") %>
-    <%= stat_tile t(".serious_vulnerabilities"), @vulnerabilities&.value || 0, t(".fixable"), tone: (:crit if @vulnerabilities), icon: :shield_exclamation, id: "stat-vulnerabilities",
+    <% trend = { 1 => "more", 0 => "same", -1 => "fewer" }[@vulnerability_change <=> 0] if @vulnerability_change %>
+    <% vulnerability_caption = trend ? t(".fixable_#{trend}", count: @vulnerability_change.abs) : t(".fixable") %>
+    <%= stat_tile t(".serious_vulnerabilities"), @vulnerabilities&.value || 0, vulnerability_caption, tone: (:crit if @vulnerabilities), icon: :shield_exclamation, id: "stat-vulnerabilities",
                   href: vulnerabilities_path(fixable: 1, origin: "host") %>
   <% end %>
 
@@ -51,6 +53,22 @@
     <% end %>
 
     <div class="min-w-0 space-y-4">
+      <% if @failed_tasks.any? %>
+        <%= panel t(".failed_runs"), meta: t(".failed_runs_since", count: @failed_tasks_count), link: [ t(".see_all"), tasks_path(status: "failed") ], id: "failed-runs" do %>
+          <ul class="divide-y divide-line">
+            <% @failed_tasks.each do |task| %>
+              <li class="failed-run flex min-w-0 items-center gap-2 px-4 py-2 text-sm">
+                <span class="min-w-0 flex-1">
+                  <%= link_to task.label, task_path(task), class: "block truncate font-medium hover:text-accent" %>
+                  <span class="block text-xs text-ink-3"><%= relative_time_tag(task.finished_at) %></span>
+                </span>
+                <%= task_status_badge(task.status) %>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
+      <% end %>
+
       <%= panel t(".recent_activity"), link: [ t(".journal"), activities_path ], id: "recent-activity" do %>
         <% if @activities.any? %>
           <ul class="divide-y divide-line px-4"><%= render partial: "activities/activity", collection: @activities %></ul>
@@ -62,22 +80,37 @@
       <% if @groups.any? %>
         <%= panel t(".by_group"), id: "groups" do %>
           <ul class="divide-y divide-line">
-            <% @groups.each do |group| %>
-              <% members = @servers.select { |server| server.server_groups.include?(group) } %>
-              <% critical = members.count { |server| %w[crit off].include?(server.health_state) } %>
-              <% watch = members.count { |server| server.health_state == "warn" } %>
-              <li class="group-summary">
-                <%= link_to servers_path(group: group.id), class: "flex items-center gap-3 px-4 py-2 hover:bg-subtle" do %>
-                  <span class="h-2 w-2 shrink-0 rounded-full <%= group.dot_classes %>"></span>
-                  <span class="min-w-0 flex-1">
-                    <span class="block text-sm"><%= group.name %></span>
-                    <span class="block text-xs text-ink-3">
-                      <% parts = [ (t(".group_critical", count: critical) if critical.positive?), (t(".group_watch", count: watch) if watch.positive?) ].compact %>
-                      <%= parts.any? ? parts.join(" · ") : t(".group_fine") %>
+            <% @groups.rows.each do |row| %>
+              <li class="group-summary" id="<%= dom_id(row.group, :summary) %>">
+                <details class="group/summary">
+                  <summary class="flex cursor-pointer list-none items-center gap-3 px-4 py-2 hover:bg-subtle [&::-webkit-details-marker]:hidden">
+                    <span class="h-2 w-2 shrink-0 rounded-full <%= row.group.dot_classes %>"></span>
+                    <span class="min-w-0 flex-1">
+                      <span class="block text-sm"><%= row.group.name %></span>
+                      <span class="block text-xs text-ink-3">
+                        <% parts = [ (t(".group_critical", count: row.critical) if row.critical.positive?), (t(".group_watch", count: row.to_watch) if row.to_watch.positive?) ].compact %>
+                        <%= parts.any? ? parts.join(" · ") : t(".group_fine") %>
+                      </span>
                     </span>
-                  </span>
-                  <span class="text-xs tabular-nums text-ink-3"><%= members.size %></span>
-                <% end %>
+                    <span class="text-xs tabular-nums text-ink-3"><%= row.servers.size %></span>
+                    <%= icon :chevron_right, class: "h-4 w-4 shrink-0 text-ink-3 transition-transform group-open/summary:rotate-90" %>
+                  </summary>
+                  <ul class="group-servers border-t border-line bg-subtle/40 py-1">
+                    <% row.servers.each do |server| %>
+                      <% tone = { "off" => :off, "crit" => :crit, "warn" => :warn }[server.health_state] %>
+                      <li class="group-server flex min-w-0 items-center gap-2 px-4 py-1 pl-9 text-sm" data-state="<%= server.health_state %>">
+                        <%= link_to server.name, server_path(server), class: "truncate hover:text-accent hover:underline" %>
+                        <% if tone %>
+                          <% reason = tone == :off ? t(".server_unreachable") : server.health_reason_texts.first %>
+                          <span class="min-w-0 flex-1 truncate text-xs <%= tone == :warn ? "text-warn-ink" : "text-crit-ink" %>" title="<%= reason %>"><%= reason %></span>
+                        <% end %>
+                      </li>
+                    <% end %>
+                    <li class="px-4 py-1 pl-9 text-xs">
+                      <%= link_to t(".group_in_list"), servers_path(group: row.group.id), class: "text-accent hover:underline" %>
+                    </li>
+                  </ul>
+                </details>
               </li>
             <% end %>
           </ul>

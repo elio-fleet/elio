@@ -22,6 +22,8 @@ class BackgroundTask < ApplicationRecord
   scope :unfinished, -> { where(status: %w[queued running]) }
   scope :finished, -> { where(status: FINISHED) }
   scope :filtered, ->(filter) { FILTERS.key?(filter.to_s) ? where(status: FILTERS[filter.to_s]) : all }
+  # Failed or partly failed, finished since `time` (the overview links to them).
+  scope :failed_since, ->(time) { where(status: FILTERS["failed"], finished_at: time..) }
   scope :expired, -> { finished.where(created_at: ...RETENTION.ago) }
 
   # Text search: the task's label and result, who started it, and the
