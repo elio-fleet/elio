@@ -90,6 +90,17 @@ class UiHelperTest < ActionView::TestCase
     end
   end
 
+  test "history_chart over 7 days: axis labels and tooltips with the day" do
+    now = Time.zone.parse("2026-10-31 12:00")
+    points = [ [ now - 3.days, 10.0 ], [ now, 20.0 ] ]
+
+    render html: history_chart(points, label: "Charge", from: now - 7.days, to: now, period: "7d")
+
+    assert_select "svg[aria-label='Charge sur 7 jours']"
+    assert_select "div", text: /il y a 7 jours\s*3,5 jours\s*maintenant/
+    assert_select "rect.chart-point title", text: /\A28 oct\. 12:00 — 10\u00A0%\z/
+  end
+
   test "history_chart without any point" do
     render html: history_chart([], label: "Disque")
     assert_select "figcaption", text: /pas encore de mesure/
