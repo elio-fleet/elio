@@ -793,6 +793,13 @@ en:
       synchronized_html: synchronized %{time}
       last_sync_failed: "· last sync failed: %{error}"
       conflicts: Differs by source
+      ip_names:
+        zero: "No name leads to %{ip}."
+        one: "1 name leads to %{ip}:"
+        other: "%{count} names lead to %{ip}:"
+      select: Select %{name}
+      bulk_attach: Attach the ticked names to
+      bulk_choose: "— choose —"
     link:
       server: "— no server —"
       server_of: Server of %{name}
@@ -812,6 +819,17 @@ en:
       manual: attached by hand
       address: by its IP %{address}
       cname: CNAME to one of its names
+  dns_link_batches_controller:
+    none_selected: Tick at least one record and choose where to attach it.
+    attached:
+      one: "1 name is attached to “%{server_name}”."
+      other: "%{count} names are attached to “%{server_name}”."
+    detached:
+      one: 1 name is attached to no server.
+      other: "%{count} names are attached to no server."
+    automatic:
+      one: 1 name goes back to the automatic attachment.
+      other: "%{count} names go back to the automatic attachment."
   dns_links_controller:
     attached: "%{name} is attached to “%{server_name}”."
     detached: "%{name} is attached to no server."

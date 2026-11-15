@@ -93,6 +93,10 @@ class Vulnerabilities::FixCommandsTest < ActiveSupport::TestCase
                    "cd /srv/my\\ shop && sudo docker compose pull web && sudo docker compose up -d web" ], nginx.commands
     assert_equal :none, redis.state
     assert_equal %w[cache], redis.containers
+
+    fix = Vulnerabilities::FixCommands.new(server.reload, ServerVulnerability.none)
+    assert_equal nginx.commands, fix.image_update("nginx:1.27"), "the same commands without the rows"
+    assert_equal [ "sudo docker pull postgres:16" ], fix.image_update("postgres:16"), "no container: pulled only"
   end
 
   test "the system and each image get their own plan" do

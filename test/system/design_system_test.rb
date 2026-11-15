@@ -24,12 +24,13 @@ class DesignSystemTest < ApplicationSystemTestCase
     [ root_path, servers_path, servers_path(view: "grid"), new_server_path, edit_server_path(web), server_groups_path, new_server_import_path, host_key_batch_path, server_commands_path(web),
       server_temporary_accesses_path(web),
       *ServersController::TABS.map { |tab| server_path(web, tab: tab) },
-      vulnerabilities_path, packages_path, docker_path, docker_path(tab: "cves"), ports_path, scheduled_tasks_path,
+      vulnerabilities_path, packages_path, packages_path(view: "servers"), docker_path, docker_path(tab: "cves"), ports_path, scheduled_tasks_path,
       public_keys_path, new_public_key_path, public_key_path(public_keys(:alice)), activities_path, tasks_path,
       settings_path, settings_users_path, settings_notifications_path, settings_automations_path, settings_vulnerabilities_path,
       settings_docker_path, settings_firewall_path, settings_integrations_path, edit_settings_integration_path("coolify"),
       new_settings_integration_connection_path("coolify"), coolify_path, server_path(web, tab: "coolify"), account_path,
-      edit_settings_integration_path("manual_dns"), new_settings_integration_connection_path("manual_dns"), activities_path(q: "web") ]
+      edit_settings_integration_path("manual_dns"), new_settings_integration_connection_path("manual_dns"), activities_path(q: "web"),
+      activity_path(Activity.record!(:server_unreachable, server: web)) ]
   end
 
   [ 1024, 1280 ].each do |width|

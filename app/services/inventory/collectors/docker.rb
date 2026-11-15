@@ -7,7 +7,10 @@
 # of its containers) matched by Elio with the vulnerability feeds.
 #
 # Scans are kept per image ID (data["scans"]): Trivy / Grype at most once a
-# day per image, at most MAX_SCANS images per collection. The disk usage
+# day per image, Elio's own matching again only after an update of the feed;
+# at most MAX_SCANS images per collection. An image ID is the same on every
+# server that pulled it: a fresh scan of another server is copied, with its
+# rows, instead of scanning again ("shared_from"). The disk usage
 # (`docker system df`, slow on big hosts) is read every DF_EVERY.
 class Inventory::Collectors::Docker < Inventory::Collector
   MAX_SCANS = 10
@@ -270,9 +273,10 @@ class Inventory::Collectors::Docker < Inventory::Collector
   private
 
   # Scans the images that need it (never scanned, or a result older than
-  # SCAN_EVERY with Trivy / Grype; at every collection with Elio's own
-  # matching, which follows the feed updates), the oldest scans first, at most
-  # MAX_SCANS per collection. The others keep their previous scan and rows.
+  # SCAN_EVERY with Trivy / Grype; with Elio's own matching, after an update
+  # of the feed), the oldest scans first, at most MAX_SCANS per collection; an
+  # image freshly scanned on another server is copied from it instead. The
+  # others keep their previous scan and rows.
   def scan_images(data)
     previous_scans = previous&.dig("scans") || {}
     data["scans"] = {}
@@ -286,7 +290,16 @@ class Inventory::Collectors::Docker < Inventory::Collector
     candidates = data["images"].reject do |image|
       keep?(previous_scans[image["id"]], data["scanner"]) || (data["scanner"].nil? && containers.fetch(image["id"], []).empty?)
     end
-    candidates.sort_by { |image| previous_scans.dig(image["id"], "at").to_s }.first(MAX_SCANS).each do |image|
+    shared = fleet_scans(candidates.map { |image| image["id"] }, data["scanner"])
+    scanned = 0
+    candidates.sort_by { |image| previous_scans.dig(image["id"], "at").to_s }.each do |image|
+      if (copy = copy_scan(image, shared[image["id"]], data))
+        data["scans"][image["id"]] = copy
+        next
+      end
+      next if scanned >= MAX_SCANS
+
+      scanned += 1
       data["scans"][image["id"]] = scan(image, containers.fetch(image["id"], []), data)
       break if data["scans"][image["id"]]["session_lost"]
     end
@@ -310,10 +323,65 @@ class Inventory::Collectors::Docker < Inventory::Collector
     data.merge!(previous.to_h.slice("disk", "disk_at"))
   end
 
+  # A scan of Trivy / Grype is kept for SCAN_EVERY (even a failed one: not
+  # minutes of scanning at every collection); one of Elio's own matching
+  # while it succeeded and the feed of the image's system has not been
+  # updated since.
   def keep?(previous, scanner)
-    return false unless previous && previous["method"] == scanner && scanner && previous["at"]
+    return false unless previous && previous["at"] && previous["method"] == (scanner || "elio")
+    return Time.zone.parse(previous["at"]) > SCAN_EVERY.ago if scanner
 
-    Time.zone.parse(previous["at"]) > SCAN_EVERY.ago
+    previous["error"].blank? && feed_unchanged?(previous)
+  end
+
+  def feed_unchanged?(scan)
+    target = Vulnerabilities.target(scan["os"])
+    return false unless target
+
+    @feeds ||= {}
+    refreshed = @feeds.fetch(target.first) { @feeds[target.first] = VulnerabilityFeed.for(target.first).refreshed_at }
+    refreshed.present? && Time.zone.parse(scan["at"]) > refreshed
+  end
+
+  # The fresh, successful scans of these images on the other servers, by the
+  # same method: { image ID => [scan, server, reference] }, the most recent
+  # one of each image.
+  def fleet_scans(ids, scanner)
+    return {} if ids.empty?
+
+    found = {}
+    Inventory::Snapshot.where(category: "docker").where.not(server_id: ssh.server.id)
+                       .where("jsonb_exists_any(inventory_snapshots.data->'scans', ARRAY[:ids]::text[])", ids: ids).includes(:server).each do |snapshot|
+      references = Array(snapshot.data["images"]).to_h { |image| [ image["id"], image["reference"] ] }
+      snapshot.data["scans"].slice(*ids).each do |id, scan|
+        next unless references[id] && scan["count"] && scan["error"].blank? && keep?(scan, scanner)
+        next if found[id] && found[id].first["at"] >= scan["at"]
+
+        found[id] = [ scan, snapshot.server, references[id] ]
+      end
+    end
+    found
+  end
+
+  # Copies the scan of the same image on another server with its rows, or
+  # nil when its rows are not all there (scanned here instead).
+  def copy_scan(image, shared, data)
+    return unless shared
+
+    scan, server, reference = shared
+    rows = server.server_vulnerabilities.images.where(image: reference).to_a
+    return unless rows.size == scan["count"].to_i
+
+    image["os"] = scan["os"]
+    store(data, image, rows.map { |row| shared_row(row) }, rows.first&.source || "image")
+    scan.slice("method", "at", "count", "os").merge("shared_from" => server.name)
+  end
+
+  # A row of another server as the scanner found it (its severity is set
+  # again from the score when the scanner did not rate the CVE).
+  def shared_row(row)
+    { "cve" => row.cve, "source_package" => row.source_package, "packages" => row.packages, "installed_version" => row.installed_version,
+      "fixed_version" => row.fixed_version, "severity" => row.distro_severity || row.severity, "distro_status" => row.distro_status, "description" => row.description }
   end
 
   def scan(image, users, data)

@@ -116,8 +116,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110091) do
     t.datetime "updated_at", null: false
     t.string "active_job_id"
     t.string "localized_label"
+    t.text "localized_result"
     t.index ["automation_id"], name: "index_background_tasks_on_automation_id"
     t.index ["created_at"], name: "index_background_tasks_on_created_at"
+    t.index ["kind", "created_at"], name: "index_background_tasks_on_kind_and_created_at"
     t.index ["status", "created_at"], name: "index_background_tasks_on_status_and_created_at"
     t.index ["user_id"], name: "index_background_tasks_on_user_id"
   end

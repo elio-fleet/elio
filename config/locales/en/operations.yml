@@ -76,7 +76,31 @@ en:
       activity_yet: No activity yet.
       history: History of what happened
       history_on: History of what happened on “%{server_name}”
-      remove_kind_filter: Remove the filter
+      export_csv: Export as CSV
+      export_json: Export as JSON
+      all_severities: All severities
+      at_least_warning: Warning or worse
+      critical_only: Critical
+      minimum_severity: Minimum severity
+      all_kinds: All kinds
+      kind: Kind
+    activity:
+      repeated:
+        one: Happened once
+        other: Happened %{count} times in a row
+      earlier:
+        one: 1 earlier time
+        other: "%{count} earlier times"
+    show:
+      same_kind: Same events
+      details: Details
+      kind: Kind
+      category: Category
+      date: Date
+      author: Author
+      server: Server
+      account: Account
+      key: Key
   tasks:
     progress:
       progress: Progress
@@ -103,7 +127,21 @@ en:
       automation_turned: No automation turned on.
       none: No task
       none_in_category: No task in this category
+      kind: Kind
+      all_kinds: All kinds
     show:
+      kind: Type
+      partial: partial
+      rerun: Run again
+      rerun_failed: Run again on the failed servers
+      rerun_confirm: Start this run again on its servers?
+      rerun_failed_confirm:
+        one: Start this run again on the failed server?
+        other: Start this run again on the %{count} failed servers?
+      slow: slow
+      slow_title: More than twice the usual duration of this run
+      sort_by_duration: Slowest first
+      sort_by_name: By name
       manage: Manage
       not_started_yet: not started yet
       not_available: not available
@@ -161,6 +199,10 @@ en:
     forbidden: Your role (%{role_label}) does not allow opening the technical job monitoring.
   flash:
     already_running: 'Already running: here is the running task.'
+  task_reruns_controller:
+    started: "“%{label}” started."
+    not_rerunnable: This run cannot be started again.
+    servers_busy: Every server of this run is already being processed by another run.
   tasks_helper:
     statuses:
       queued: Queued
@@ -169,4 +211,6 @@ en:
       partial: Done with errors
       failed: Failed
   background_task:
+    rerun_label: "%{label} (run again)"
+    rerun_failed_label: "%{label} (failures run again, %{servers})"
     orphaned: 'Interrupted: the job no longer exists'

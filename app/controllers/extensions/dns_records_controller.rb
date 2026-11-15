@@ -2,7 +2,8 @@
 # OVHcloud, Technitium), with the server each record points to. Filters:
 # ?filter=outside (A / AAAA to an IP outside the fleet), unattached or
 # conflicts (a name whose records differ between sources),
-# ?source=, ?zone=, ?q= (name or value). 404 without any DNS source.
+# ?source=, ?zone=, ?q= (name or value; an IP gives every name that leads to
+# it, CNAMEs included). 404 without any DNS source.
 class DnsRecordsController < ApplicationController
   PER_PAGE = 100
   FILTERS = %w[outside unattached conflicts].freeze
@@ -23,7 +24,12 @@ class DnsRecordsController < ApplicationController
     scope = scope.where(name: @conflicts.to_a) if @filter == "conflicts"
     scope = scope.of_source(@source) if @source
     scope = scope.where(zone: @zone) if @zone
-    scope = scope.where("dns_records.name ILIKE :q OR dns_records.value ILIKE :q", q: "%#{DnsRecord.sanitize_sql_like(@q)}%") if @q.present?
+    @ip_names = DnsRecord.names_pointing_to(@q)
+    if @ip_names
+      scope = scope.where(name: @ip_names)
+    elsif @q.present?
+      scope = scope.where("dns_records.name ILIKE :q OR dns_records.value ILIKE :q", q: "%#{DnsRecord.sanitize_sql_like(@q)}%")
+    end
     @counts = { total: DnsRecord.count, outside: DnsRecord.outside_fleet.count, unattached: DnsRecord.unattached.count,
                 servers_without: Server.where.not(id: DnsRecord.attached.select(:server_id)).count, conflicts: @conflicts.size }
     @pager = paginate(scope, per_page: PER_PAGE)

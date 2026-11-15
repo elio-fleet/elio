@@ -116,8 +116,10 @@ Rails.application.routes.draw do
       end
     end
   end
-  resources :activities, only: :index, path: "journal"
+  # One event by its id only: /journal/runs stays the runs tab.
+  resources :activities, only: %i[index show], path: "journal", constraints: { id: /\d+/ }
   resources :tasks, only: %i[index show], path: "journal/runs"
+  post "journal/runs/:task_id/rerun", to: "task_reruns#create", as: :task_rerun
   resources :packages, only: :index, path: "updates"
   resources :ports, only: :index
   resources :scheduled_tasks, only: :index, path: "scheduled-tasks"
@@ -129,6 +131,7 @@ Rails.application.routes.draw do
     resource :link, only: %i[create destroy], controller: "monitor_links"
   end
   # OVHcloud extension.
+  resource :dns_link_batch, only: :create, path: "dns/links"
   resources :dns_records, only: :index, path: "dns" do
     resource :link, only: %i[create destroy], controller: "dns_links"
   end

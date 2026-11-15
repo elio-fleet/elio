@@ -183,7 +183,13 @@ class Automation < ApplicationRecord
       else send("run_#{kind}")
       end
     end
-    return self.class.already_running if result.equal?(AdvisoryLock::HELD)
+    if result.equal?(AdvisoryLock::HELD)
+      @task&.refresh!(result: LocalizedText.dump("automation.already_running"))
+      return self.class.already_running
+    end
+
+    # The task keeps the result as a LocalizedText: read in each reader's language.
+    @task&.refresh!(result: result)
 
     duration = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(1)
     update!(last_run_at: Time.current, last_result: result, run_durations: (run_durations + [ duration ]).last(DURATIONS_KEPT))

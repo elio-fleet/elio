@@ -76,7 +76,31 @@ fr:
       activity_yet: Aucune activité pour le moment.
       history: Historique de ce qui s'est passé
       history_on: Historique de ce qui s'est passé sur « %{server_name} »
-      remove_kind_filter: Retirer le filtre
+      export_csv: Exporter en CSV
+      export_json: Exporter en JSON
+      all_severities: Toutes gravités
+      at_least_warning: Avertissement ou plus
+      critical_only: Critique
+      minimum_severity: Gravité minimale
+      all_kinds: Tous les types
+      kind: Type
+    activity:
+      repeated:
+        one: Arrivé une fois
+        other: Arrivé %{count} fois de suite
+      earlier:
+        one: 1 fois avant
+        other: "%{count} fois avant"
+    show:
+      same_kind: Événements semblables
+      details: Détails
+      kind: Type
+      category: Catégorie
+      date: Date
+      author: Auteur
+      server: Serveur
+      account: Compte
+      key: Clé
   tasks:
     progress:
       progress: Progression
@@ -103,7 +127,21 @@ fr:
       automation_turned: Aucune automatisation activée.
       none: Aucune tâche
       none_in_category: Aucune tâche dans cette catégorie
+      kind: Type
+      all_kinds: Tous les types
     show:
+      kind: Type
+      partial: partiel
+      rerun: Relancer
+      rerun_failed: Relancer sur les serveurs en échec
+      rerun_confirm: Relancer cette exécution sur ses serveurs ?
+      rerun_failed_confirm:
+        one: Relancer cette exécution sur le serveur en échec ?
+        other: Relancer cette exécution sur les %{count} serveurs en échec ?
+      slow: lent
+      slow_title: Plus de deux fois la durée habituelle de cette exécution
+      sort_by_duration: Les plus lents d'abord
+      sort_by_name: Par nom
       manage: Gérer
       not_started_yet: pas encore commencée
       not_available: non disponible
@@ -161,6 +199,10 @@ fr:
     forbidden: Votre rôle (%{role_label}) ne permet pas d'ouvrir le suivi technique des jobs.
   flash:
     already_running: 'Déjà en cours : voici la tâche en cours.'
+  task_reruns_controller:
+    started: "« %{label} » lancée."
+    not_rerunnable: Cette exécution ne peut pas être relancée.
+    servers_busy: Tous les serveurs de cette exécution sont déjà traités par une autre exécution.
   tasks_helper:
     statuses:
       queued: À venir
@@ -169,4 +211,6 @@ fr:
       partial: Terminée avec erreurs
       failed: En échec
   background_task:
+    rerun_label: "%{label} (relance)"
+    rerun_failed_label: "%{label} (échecs relancés, %{servers})"
     orphaned: 'Interrompue : le job n''existe plus'

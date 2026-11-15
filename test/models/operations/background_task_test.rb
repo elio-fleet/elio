@@ -1,6 +1,8 @@
 require "test_helper"
 
 class BackgroundTaskTest < ActiveSupport::TestCase
+  include StubHelpers
+
   def enqueue(servers = [ servers(:web), servers(:db) ], **options, &block)
     BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: servers, user: users(:one), **options, &block)
   end
@@ -119,5 +121,121 @@ class BackgroundTaskTest < ActiveSupport::TestCase
     %w[development production].each do |environment|
       assert_equal "PurgeBackgroundTasksJob", recurring.dig(environment, "purge_background_tasks", "class")
     end
+  end
+
+  test "a result given as a LocalizedText is read in each reader's language" do
+    task = enqueue([])
+    task.start!
+    task.refresh!(result: LocalizedText.dump("automation.results.reachable", done: 1, count: 2))
+
+    assert_equal I18n.t("automation.results.reachable", done: 1, count: 2, locale: :en), I18n.with_locale(:en) { task.reload.result }
+    assert_equal I18n.t("automation.results.reachable", done: 1, count: 2, locale: :fr), task[:result], "plain text kept for the search"
+    task.refresh!
+    assert task.localized_result, "kept when no result is given"
+
+    task.fail!("boom")
+    assert_equal [ "boom", nil ], [ task.result, task.localized_result ]
+  end
+
+  test "rerun! starts the run again on its servers, or only on the failed ones" do
+    task = enqueue
+    db, web = task.items.to_a
+    db.finish!(:failed, "Délai dépassé")
+    web.finish!(:succeeded)
+    jobs = []
+
+    assert task.rerunnable?
+    assert task.failures_rerunnable?
+    assert_equal :operate, task.rerun_permission
+
+    again = stub_method(Inventory::CollectJob, :perform_later, ->(server, *args, **options) { jobs << [ server.name, args, options[:task_item].background_task_id ] }) do
+      task.rerun!(user: users(:operator))
+    end
+    assert_equal %w[Database Web], again.items.map(&:server_name)
+    assert_equal [ [ "Database", [], again.id ], [ "Web", [], again.id ] ], jobs
+    assert_equal [ "inventory", users(:operator) ], [ again.kind, again.user ]
+    assert_equal "Inventaire (relance)", again.label
+
+    again.items.each { |item| item.finish!(:succeeded) }
+    failures = stub_method(Inventory::CollectJob, :perform_later, nil) { task.rerun!(user: users(:operator), only_failed: true) }
+    assert_equal %w[Database], failures.items.map(&:server_name)
+    assert_equal "Inventaire (échecs relancés, 1 serveur)", failures.label
+    assert_equal "Inventaire (failures run again, 1 server)", I18n.with_locale(:en) { failures.label }
+
+    failures.items.each { |item| item.finish!(:failed) }
+    nested = stub_method(Inventory::CollectJob, :perform_later, nil) { failures.rerun!(user: users(:operator)) }
+    assert_equal "Inventaire (relance)", nested.label, "a run started again keeps the first label"
+  end
+
+  test "rerun! leaves out the servers already waiting for the same kind of run" do
+    task = enqueue
+    task.items.each { |item| item.finish!(:failed) }
+    enqueue([ servers(:web) ])
+
+    again = stub_method(Inventory::CollectJob, :perform_later, nil) { task.rerun!(user: users(:one)) }
+    assert_equal %w[Database], again.items.map(&:server_name)
+
+    assert_nil stub_method(Inventory::CollectJob, :perform_later, nil) { task.rerun!(user: users(:one)) }, "every server is busy"
+  end
+
+  test "what can be started again" do
+    unfinished = enqueue
+    assert_not unfinished.rerunnable?
+
+    succeeded = enqueue.tap { |task| task.items.each { |item| item.finish!(:succeeded) } }
+    assert succeeded.rerunnable?
+    assert_not succeeded.failures_rerunnable?
+
+    gone = enqueue([ servers(:backup) ]).tap { |task| task.items.each { |item| item.finish!(:failed) } }
+    servers(:backup).destroy!
+    assert_not gone.reload.rerunnable?, "no server left"
+
+    import = BackgroundTask.enqueue!(kind: "vulnerabilities", label: "Import", servers: []).tap { |task| task.start! && task.refresh! }
+    assert_not import.rerunnable?
+
+    check = BackgroundTask.enqueue!(kind: "key_rotation_check", label: "Simulation", servers: [ servers(:web) ])
+    assert_equal :administer, check.rerun_permission
+  end
+
+  test "an automation is started again in full, or as an inventory of its failed servers" do
+    automation = Automation.all_kinds.find { |candidate| candidate.kind == "inventory_packages" }
+    task = BackgroundTask.enqueue!(kind: "automation", label: LocalizedText.part("automation.kinds.inventory_packages.label"), servers: [ servers(:web), servers(:db) ], automation: automation)
+    task.items.find_by!(server_name: "Web").finish!(:failed)
+    task.items.find_by!(server_name: "Database").finish!(:succeeded)
+    assert_equal :administer, task.rerun_permission
+    assert task.failures_rerunnable?
+
+    categories = nil
+    failures = stub_method(Inventory::CollectJob, :perform_later, ->(_server, given, **) { categories = given }) { task.rerun!(user: users(:one), only_failed: true) }
+    assert_equal [ "inventory", %w[Web], %w[packages] ], [ failures.kind, failures.items.map(&:server_name), categories ]
+
+    again = task.rerun!(user: users(:one))
+    assert_equal [ "automation", automation, users(:one) ], [ again.kind, again.automation, again.user ]
+    assert_equal again, task.rerun!(user: users(:one)), "the run already waiting"
+
+    servers_ping = Automation.all_kinds.find { |candidate| candidate.kind == "vulnerabilities_update" }
+    feeds = BackgroundTask.enqueue!(kind: "automation", label: "Flux", servers: [], automation: servers_ping).tap { |run| run.start! && run.refresh! }
+    assert feeds.rerunnable?
+    assert_not feeds.failures_rerunnable?
+  end
+
+  test "slow servers: more than twice the median and at least 10 seconds" do
+    task = enqueue([ servers(:web), servers(:db), servers(:backup) ])
+    now = Time.current
+    durations = { "Web" => 4, "Database" => 5, "Backup" => 40 }
+    task.items.each { |item| item.update!(status: "succeeded", started_at: now - durations.fetch(item.server_name), finished_at: now) }
+
+    assert_equal [ task.items.find_by!(server_name: "Backup").id ], task.slow_item_ids
+    assert_equal [], task.slow_item_ids(task.items.first(2)), "too few servers to compare"
+
+    task.items.find_by!(server_name: "Backup").update!(started_at: now - 8)
+    assert_equal [], task.reload.slow_item_ids, "under 10 seconds is never slow"
+  end
+
+  test "of_kind" do
+    inventory = enqueue
+    check = BackgroundTask.enqueue!(kind: "key_rotation_check", label: "Simulation", servers: [])
+    assert_equal [ check ], BackgroundTask.of_kind("key_rotation_check").to_a
+    assert_equal [ inventory, check ].sort_by(&:id), BackgroundTask.of_kind("nope").order(:id).to_a
   end
 end

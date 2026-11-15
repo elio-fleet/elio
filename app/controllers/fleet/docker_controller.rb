@@ -3,7 +3,8 @@
 # the tags in use on each server, the new versions published by the
 # registries and the vulnerabilities (vulnerable images first). Filters: ?q=
 # (image), ?group=, ?updates=1, ?fixable=1 (images with fixable CVEs).
-# ?tab=cves: the vulnerabilities of the images, by image then by package.
+# ?tab=cves: the vulnerabilities of the images, by image then by package,
+# with the commands that update a fixable image on each server.
 class DockerController < ApplicationController
   PER_PAGE = 100
   IMAGES_PER_PAGE = 20
@@ -83,6 +84,9 @@ class DockerController < ApplicationController
     @pager = paginate(images.sort_by { |image| [ image.fixable_count.zero? ? 1 : 0, Vulnerability::SEVERITIES.keys.index(image.severity), -image.cve_count, image.image ] },
                       per_page: IMAGES_PER_PAGE)
     @images = @pager.records
+    fixers = Hash.new { |hash, server| hash[server] = Vulnerabilities::FixCommands.new(server, ServerVulnerability.none) }
+    @update_commands = @images.select { |image| image.fixable_count.positive? }
+                              .to_h { |image| [ image.image, image.servers.map { |server| [ server, fixers[server].image_update(image.image) ] } ] }
     @summary = { images: images.size, cves: rows.distinct.count(:cve), fixable: rows.fixable.distinct.count(:cve),
                  servers: images.flat_map(&:servers).uniq.size }
     render :cves

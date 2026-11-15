@@ -793,6 +793,13 @@ fr:
       synchronized_html: synchronisé %{time}
       last_sync_failed: "· dernière synchronisation en échec : %{error}"
       conflicts: Diffère selon la source
+      ip_names:
+        zero: "Aucun nom ne mène à %{ip}."
+        one: "1 nom mène à %{ip} :"
+        other: "%{count} noms mènent à %{ip} :"
+      select: Sélectionner %{name}
+      bulk_attach: Rattacher les noms cochés à
+      bulk_choose: "— choisir —"
     link:
       server: "— aucun serveur —"
       server_of: Serveur de %{name}
@@ -812,6 +819,17 @@ fr:
       manual: rattaché à la main
       address: par son IP %{address}
       cname: CNAME vers un de ses noms
+  dns_link_batches_controller:
+    none_selected: Cochez au moins un enregistrement et choisissez où le rattacher.
+    attached:
+      one: "1 nom est rattaché à « %{server_name} »."
+      other: "%{count} noms sont rattachés à « %{server_name} »."
+    detached:
+      one: 1 nom n'est rattaché à aucun serveur.
+      other: "%{count} noms ne sont rattachés à aucun serveur."
+    automatic:
+      one: 1 nom revient au rattachement automatique.
+      other: "%{count} noms reviennent au rattachement automatique."
   dns_links_controller:
     attached: "%{name} est rattaché à « %{server_name} »."
     detached: "%{name} n'est rattaché à aucun serveur."

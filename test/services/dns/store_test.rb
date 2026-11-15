@@ -25,6 +25,22 @@ class Dns::StoreTest < ActiveSupport::TestCase
     assert_equal "www.example.test", DnsRecord.find_by!(record_type: "A", source: "ovh").name
   end
 
+  test "only the difference is written: an unchanged record keeps its row, a changed one is updated, a gone one deleted" do
+    Dns::Store.replace("ovh", [ row("www.example.test", "A", "203.0.113.10"), row("old.example.test", "A", "203.0.113.11"),
+                                { zone: "example.test", name: "api.example.test", record_type: "A", value: "203.0.113.12", ttl: 300, source_id: "42" } ])
+    www, api = DnsRecord.find_by!(name: "www.example.test"), DnsRecord.find_by!(name: "api.example.test")
+    www.update_columns(updated_at: 1.day.ago)
+    api.update_columns(updated_at: 1.day.ago)
+
+    assert_equal 3, Dns::Store.replace("ovh", [ row("www.example.test", "A", "203.0.113.10"), row("new.example.test", "A", "203.0.113.13"),
+                                                { zone: "example.test", name: "api.example.test", record_type: "A", value: "203.0.113.14", ttl: "600", source_id: "42" } ])
+    assert_equal %w[api.example.test new.example.test www.example.test], names("ovh")
+    assert_equal www.updated_at, www.reload.updated_at, "unchanged: not written"
+    assert_equal [ api.id, "203.0.113.14", 600 ], api.reload.then { [ _1.id, _1.value, _1.ttl ] }, "changed in place"
+    assert api.updated_at > 1.minute.ago
+    assert_equal servers(:web), www.server, "still attached"
+  end
+
   test "attached by IP, and a CNAME of one source follows a name of the other" do
     Dns::Store.replace("ovh", [ row("www.example.test", "A", "203.0.113.10") ])
     Dns::Store.replace("technitium", [ row("intranet.lan.test", "CNAME", "www.example.test", zone: "lan.test"), row("db.lan.test", "A", "10.0.0.12", zone: "lan.test") ])
@@ -54,6 +70,17 @@ class Dns::StoreTest < ActiveSupport::TestCase
     Dns::Store.replace("technitium", [ row("www.example.test", "A", "10.8.0.100"), row("same.example.test", "A", "203.0.113.20") ])
     assert_equal [ "www.example.test" ], DnsRecord.conflicting_names
     assert_equal 2, DnsRecord.conflicting.count
+  end
+
+  test "every name that leads to an IP, through CNAMEs and whatever the source" do
+    Dns::Store.replace("ovh", [ row("www.example.test", "A", "203.0.113.10"), row("other.example.test", "A", "203.0.113.100"), row("v6.example.test", "AAAA", "2001:db8::1") ])
+    Dns::Store.replace("technitium", [ row("intranet.lan.test", "CNAME", "www.example.test", zone: "lan.test"), row("deep.lan.test", "CNAME", "intranet.lan.test", zone: "lan.test") ])
+    assert_equal %w[deep.lan.test intranet.lan.test www.example.test], DnsRecord.names_pointing_to(" 203.0.113.10 ")
+    assert_equal %w[v6.example.test], DnsRecord.names_pointing_to("2001:DB8:0:0:0:0:0:1")
+    assert_equal [], DnsRecord.names_pointing_to("198.51.100.1")
+    assert_nil DnsRecord.names_pointing_to("www")
+    assert_nil DnsRecord.names_pointing_to("203.0.113.0/24")
+    assert_nil DnsRecord.names_pointing_to("")
   end
 
   test "a server is found by one of its DNS names (fleet search, ⌘K)" do

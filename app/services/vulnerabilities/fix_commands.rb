@@ -12,6 +12,8 @@ require "shellwords"
 #   fix.system_plan # every package of the system to update, in one apt command
 #   fix.steps       # by severity: the system packages, each Compose project, each image used without Compose
 #
+# Or how to update one image on the server: `fix.image_update("nginx:1.27")`.
+#
 # `rows`: ServerVulnerability records already loaded, or a relation (read
 # aggregated in SQL by PackageVulnerabilities: a server can have thousands).
 #
@@ -33,6 +35,13 @@ class Vulnerabilities::FixCommands
   # again; its containers started without Compose are recreated by hand).
   Step = Data.define(:kind, :severity, :name, :directory, :commands, :packages, :images, :containers, :cves, :reboot)
 
+  # `apt-get install --only-upgrade` of these packages on this server, as
+  # root (also used by the Updates page).
+  def self.upgrade_command(server, packages) = as_root(server, "apt-get install --only-upgrade #{packages.shelljoin}")
+
+  # The command prefixed with sudo when Elio logs in with another account than root.
+  def self.as_root(server, command) = server.username == "root" ? command : "sudo #{command}"
+
   def initialize(server, rows)
     @server = server
     @rows = rows
@@ -44,6 +53,10 @@ class Vulnerabilities::FixCommands
 
   # The plan of the system packages (nil when the rows hold none).
   def system_plan = plans.find(&:host?)
+
+  # The commands that update an image on this server, whatever its rows:
+  # each Compose project using it pulled and recreated, `docker pull` else.
+  def image_update(image) = image_commands(image, containers_of(image))
 
   def steps
     @steps ||= (package_steps + compose_steps + image_steps).each_with_index
@@ -70,7 +83,7 @@ class Vulnerabilities::FixCommands
     packages = packages_of(to_install)
     commands = []
     commands << root("apt-get update") if pending.any?
-    commands << root("apt-get install --only-upgrade #{packages.shelljoin}") if packages.any?
+    commands << self.class.upgrade_command(@server, packages) if packages.any?
     state = :reboot if to_install.empty?
     state ||= pending.any? ? :pending : :available
     # The reboot is a note, not a command: pasting the whole block must not reboot the server.
@@ -120,7 +133,7 @@ class Vulnerabilities::FixCommands
       next if packages.empty?
 
       seen.concat(packages)
-      commands = [ root("apt-get install --only-upgrade #{packages.shelljoin}") ]
+      commands = [ self.class.upgrade_command(@server, packages) ]
       commands.unshift(root("apt-get update")) if refresh && seen.size == packages.size
       Step.new(kind: :packages, severity: severity, name: nil, directory: nil, commands: commands, packages: packages, images: [], containers: [],
                cves: list.flat_map(&:fixable).uniq.sort, reboot: list.any?(&:reboot?))
@@ -179,7 +192,5 @@ class Vulnerabilities::FixCommands
     @containers.select { |container| container["image"] == image }.sort_by { |container| container["name"].to_s }
   end
 
-  def root(command)
-    @server.username == "root" ? command : "sudo #{command}"
-  end
+  def root(command) = self.class.as_root(@server, command)
 end
