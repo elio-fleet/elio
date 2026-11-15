@@ -154,17 +154,19 @@ export default class extends Controller {
   visit(item) {
     if (!item) return
     this.close()
-    if (item.method === "post") return this.submit(item.url)
+    if (item.method === "post") return this.submit(item.url, item.confirm)
     if (!item.search) this.remember(item.url)
     window.Turbo.visit(item.url)
   }
 
-  // An action: a form with the CSRF token, sent through Turbo.
-  submit(url) {
+  // An action: a form with the CSRF token, sent through Turbo (which asks the
+  // `confirm` question first, in the app's confirm dialog).
+  submit(url, confirm) {
     const form = document.createElement("form")
     form.method = "post"
     form.action = url
     form.hidden = true
+    if (confirm) form.dataset.turboConfirm = confirm
     const param = document.querySelector("meta[name=csrf-param]")?.content
     const token = document.querySelector("meta[name=csrf-token]")?.content
     if (param && token) {

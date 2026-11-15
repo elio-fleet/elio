@@ -88,8 +88,14 @@ module ApplicationHelper
       { label: t("command_palette.jobs"), hint: "Mission Control", url: "/jobs" }
     ] if can?(:administer)
     pages = pages.map { |page| page.merge(group: t("command_palette.pages")) }
-    # Sent as a POST by the browser (`method`); each server's own one is built there.
-    actions = can?(:operate) ? [ { group: t("command_palette.actions"), label: t("command_palette.inventory_fleet"), hint: hint.(:background), url: server_inventories_path, method: "post" } ] : []
+    # Sent as a POST by the browser (`method`), after the `confirm` question;
+    # each server's own one is built there.
+    actions = if can?(:operate)
+      [ { group: t("command_palette.actions"), label: t("command_palette.inventory_fleet"), hint: hint.(:background), url: server_inventories_path, method: "post",
+          confirm: t("command_palette.inventory_fleet_confirm", count: Server.count) } ]
+    else
+      []
+    end
 
     groups = ServerGroup.order(:name).map { |group| { group: t("command_palette.groups"), label: group.name, hint: hint.(:group), url: servers_path(group: group.id) } }
     dns_names = DnsRecord.attached.distinct.pluck(:server_id, :name).group_by(&:first).transform_values { |pairs| pairs.map(&:last) }

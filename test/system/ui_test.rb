@@ -139,6 +139,27 @@ class UiTest < ApplicationSystemTestCase
     end
   end
 
+  test "quick search asks before inventorying the whole fleet" do
+    started = []
+    stub_method_until_teardown(Inventory::CollectJob, :perform_later, ->(server, **) { started << server.name })
+    visit root_path
+
+    run_fleet_inventory = lambda do
+      find("body").send_keys([ :control, "k" ])
+      within("#command-palette[open]") do
+        find("input[type=search]").fill_in(with: "inventorier tous")
+        find("input[type=search]").send_keys(:enter)
+      end
+      assert_selector "#confirm-dialog[open]", text: "Inventorier maintenant les 3 serveurs du parc ?"
+    end
+    dismiss_app_confirm { run_fleet_inventory.call }
+    assert_empty started
+
+    accept_app_confirm { run_fleet_inventory.call }
+    assert_selector "#flash .toast", text: "lancé"
+    assert_equal 3, started.size
+  end
+
   test "quick search offers no action to a viewer" do
     sign_in users(:viewer)
     visit root_path

@@ -49,6 +49,9 @@ en:
     jobs: Technical job monitoring
     actions: Actions
     inventory_fleet: Inventory every server
+    inventory_fleet_confirm:
+      one: "Inventory the %{count} server of the fleet now? It runs in the background."
+      other: "Inventory the %{count} servers of the fleet now? It runs in the background."
   command_searches_controller:
     groups:
       cves: CVEs

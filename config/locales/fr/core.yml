@@ -49,6 +49,9 @@ fr:
     jobs: Suivi technique des jobs
     actions: Actions
     inventory_fleet: Inventorier tous les serveurs
+    inventory_fleet_confirm:
+      one: "Inventorier maintenant le %{count} serveur du parc ? L'inventaire tourne en arrière-plan."
+      other: "Inventorier maintenant les %{count} serveurs du parc ? L'inventaire tourne en arrière-plan."
   command_searches_controller:
     groups:
       cves: CVE
