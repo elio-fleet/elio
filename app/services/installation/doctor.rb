@@ -62,6 +62,10 @@ class Installation::Doctor
     checks << address << mail
   end
 
+  # The checks that read only the environment (and the SMTP server, with
+  # network): secrets, address, emails. Shown in Settings → General.
+  def environment_checks = { secrets: secrets, address: address, mail: mail }
+
   # The language of the instance (Settings → General), else the default one.
   def locale
     Elio::Locales.find(AppSetting.first&.default_locale) || I18n.default_locale
