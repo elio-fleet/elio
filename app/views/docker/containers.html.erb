@@ -1,0 +1,58 @@
+<% content_for :title, t("title", page: t("nav.docker")) %>
+
+<%= page_header "Docker", subtitle: t(".intro") %>
+
+<%= stat_tiles do %>
+  <%= stat_tile t("docker.index.running_containers"), "#{@summary[:running]}/#{@summary[:containers]}", t("count.servers", count: @summary[:servers]), icon: :docker, id: "stat-containers",
+                href: docker_path(tab: "containers", group: @group&.id), active: @show.nil? %>
+  <%= stat_tile t(".trouble"), @summary[:trouble], t(".trouble_detail"), tone: (:crit if @summary[:trouble].positive?), icon: :x_mark, id: "stat-trouble",
+                href: docker_path(tab: "containers", show: "trouble", group: @group&.id), active: @show == "trouble" %>
+  <%= stat_tile t(".host_access"), @summary[:host_access], t(".host_access_detail"), tone: (:warn if @summary[:host_access].positive?), icon: :exclamation_triangle, id: "stat-host-access",
+                href: docker_path(tab: "containers", show: "host_access", group: @group&.id), active: @show == "host_access" %>
+  <%= stat_tile t(".public"), @summary[:public], t(".public_detail"), icon: :globe, id: "stat-public",
+                href: docker_path(tab: "containers", show: "public", group: @group&.id), active: @show == "public" %>
+<% end %>
+
+<%= render "docker/tabs" %>
+
+<%= form_with url: docker_path, method: :get, data: search_form_data, class: "docker-filters mt-3 flex flex-wrap items-center gap-2" do |f| %>
+  <%= hidden_field_tag :tab, "containers" %>
+  <% if @show %><%= hidden_field_tag :show, @show %><% end %>
+  <%= f.search_field :q, value: @q, placeholder: t(".search"), aria: { label: t(".search") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-64 py-1.5" %>
+  <%= f.select :group, [ [ t("docker.index.all_groups"), "" ], *@groups.map { |group| [ group.name, group.id ] } ], { selected: @group&.id },
+        aria: { label: t("docker.index.group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
+  <noscript><%= f.submit t("docker.index.filter"), class: "btn btn-secondary" %></noscript>
+<% end %>
+
+<%= search_results_frame do %>
+  <% if @containers.any? %>
+    <div class="card mt-3 overflow-x-auto">
+      <table id="docker-containers" class="table-dense">
+        <thead><tr><th class="pl-4"><%= t(".state") %></th><th><%= t("docker.index.servers") %></th><th><%= t("words.container") %></th><th>Image</th><th class="pr-4"><%= t(".since") %></th></tr></thead>
+        <tbody>
+          <% @containers.each do |server, container| %>
+            <tr class="fleet-container" data-server="<%= server.name %>" data-name="<%= container["name"] %>">
+              <td class="pl-4"><%= container_state_badge(container) %></td>
+              <td class="text-xs"><%= link_to server.name, server_path(server, tab: "docker"), class: "font-medium hover:text-accent hover:underline" %></td>
+              <td>
+                <span class="font-mono text-xs"><%= container["name"] %></span>
+                <%= container_risk_badges(container) %>
+                <% if container["project"] %><span class="compose-project block text-[11px] text-ink-3"><%= container["project"] %> · <%= container["service"] %></span><% end %>
+                <%= container_ports(container) %>
+              </td>
+              <td class="col-truncate font-mono text-xs text-ink-2" title="<%= container["image"] %>"><%= container["image"] %></td>
+              <td class="pr-4 text-xs whitespace-nowrap">
+                <% if container["state"] == "running" && container["started_at"] %><%= relative_time_tag Time.zone.parse(container["started_at"]) %>
+                <% elsif container["finished_at"] %><span class="<%= "text-warn-ink" if container["stopped_long"] %>"><%= t("docker.index.stopped_html", parse: relative_time_tag(Time.zone.parse(container["finished_at"]))) %></span>
+                <% else %>—<% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    </div>
+    <%= render "shared/pagination", pager: @pager, noun: t("nouns.containers") %>
+  <% else %>
+    <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @q.present? || @show ? t(".none_matches") : t(".none") %></p>
+  <% end %>
+<% end %>

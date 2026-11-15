@@ -252,6 +252,7 @@ fr:
     images: images
     packages: paquets
     keys: clés
+    containers: conteneurs
   words:
     source: Source
     none: aucun
