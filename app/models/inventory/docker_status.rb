@@ -1,12 +1,16 @@
 # State of Docker on a server, apart from the health of the server itself
-# (Inventory::HealthStatus): crit when containers are unhealthy or restart in
-# a loop, warn for serious fixable CVEs in the images or images to update, ok
+# (Inventory::HealthStatus): crit when containers are unhealthy, restart in
+# a loop, or are expected (Server#expected_containers) but not running, warn for serious fixable CVEs in the images or images to update, ok
 # otherwise; nil without a readable Docker. The alerts of Settings → Docker
 # choose which reasons count. Reasons are stored like the health ones (key +
 # parameters, Inventory::HealthStatus::Reason) and recomputed with them
-# (Server#refresh_health!, Inventory::HealthStatus::VERSION).
+# (Server#refresh_health!, Inventory::HealthStatus::VERSION). Just after the
+# host booted (Inventory::Collectors::Docker::BOOT_GRACE), containers are still
+# starting: none counts as unhealthy or missing yet.
 class Inventory::DockerStatus
   Result = Inventory::HealthStatus::Result
+  # Containers named in a reason about several; the others are "…".
+  NAMED = 5
 
   def self.evaluate(server, settings: AppSetting.current) = new(server, settings).evaluate
 
@@ -34,14 +38,32 @@ class Inventory::DockerStatus
   def containers = Array(@docker.data["containers"])
 
   def container_reasons
-    [ (grouped(containers.select { |container| container["looping"] }, :looping) if @settings.docker_alert_restarts),
-      (grouped(containers.select { |container| container["health"] == "unhealthy" }, :unhealthy) if @settings.docker_alert_unhealthy) ].compact
+    return [] if starting_up?
+
+    [ (grouped(containers.select { |container| container["looping"] }.pluck("name"), :looping) if @settings.docker_alert_restarts),
+      (grouped(containers.select { |container| container["health"] == "unhealthy" }.pluck("name"), :unhealthy) if @settings.docker_alert_unhealthy),
+      grouped(missing_containers, :missing) ].compact
   end
 
-  def grouped(list, state)
-    return if list.empty?
+  # Expected containers that do not run: absent, stopped or paused (one
+  # restarting is already a loop).
+  def missing_containers
+    present = containers.select { |container| container["state"].in?(%w[running restarting]) }.pluck("name")
+    @server.expected_container_names - present
+  end
 
-    list.one? ? reason("crit", :"container_#{state}", name: list.first["name"]) : reason("crit", :"containers_#{state}", count: list.size)
+  # One container by its name, several by their count and their first names
+  # (`containers`, a detail: the same problem when one more fails).
+  def grouped(names, state)
+    return if names.empty?
+    return reason("crit", :"container_#{state}", name: names.first) if names.one?
+
+    reason("crit", :"containers_#{state}", count: names.size, containers: names.first(NAMED) + (names.size > NAMED ? [ "…" ] : []))
+  end
+
+  def starting_up?
+    booted_at = Time.zone.parse(@docker.data["booted_at"].to_s)
+    Inventory::Collectors::Docker.starting_up?(booted_at, @docker.collected_at)
   end
 
   # Fixable CVEs of the images from the alert severity of the settings: fixed

@@ -492,8 +492,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110091) do
     t.integer "ping_failures", default: 0, null: false
     t.datetime "last_reachable_at"
     t.string "expected_ports"
+    t.string "expected_containers"
     t.index "lower((host)::text), port, username", name: "index_servers_on_lower_host_port_username", unique: true
     t.index "lower((name)::text)", name: "index_servers_on_lower_name", unique: true
+    t.index ["docker_status"], name: "index_servers_on_docker_status"
     t.index ["ip_addresses"], name: "index_servers_on_ip_addresses", using: :gin
   end
 
