@@ -10,6 +10,9 @@ class ApplicationController < ActionController::Base
   # Not in Devise controllers: during the sign in, current_user would
   # authenticate (and store) the user from the form before the 2FA step.
   before_action :set_current_user, unless: :devise_controller?
+  # A new password asked by an admin comes first, then a mandatory 2FA setup
+  # (each page skips its own redirect, so they never loop).
+  before_action :redirect_to_password_change, unless: :devise_controller?
   before_action :require_two_factor_setup, unless: :devise_controller?
   include Authorization
   include Throttled
@@ -47,6 +50,13 @@ class ApplicationController < ActionController::Base
     return unless current_user&.two_factor_required?
 
     redirect_to main_app.new_two_factor_path
+  end
+
+  # An admin asked for a new password: My account until it is chosen.
+  def redirect_to_password_change
+    return unless current_user&.password_change_required?
+
+    redirect_to main_app.account_path(anchor: "password")
   end
 
   # Until the first admin exists, every page leads to the setup page. Once

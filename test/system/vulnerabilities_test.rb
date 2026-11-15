@@ -71,7 +71,9 @@ class VulnerabilitiesSystemTest < ApplicationSystemTestCase
 
     within("section.image-vulnerabilities[data-image='nginx:1.27']") do
       assert_no_selector "li.vulnerability-package"
-      find("details > summary").click
+      find("details.image-update > summary").click
+      assert_selector ".image-update-server[data-server=Web] .fix-commands", text: "docker pull nginx:1.27"
+      find("details.image-packages > summary").click
       assert_selector "li.vulnerability-package[data-package='openssh@nginx:1.27']"
       click_on "CVE-2024-6387"
     end

@@ -66,6 +66,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server groups" => -> { get server_groups_path },
       "public_key page" => -> { get public_key_path(public_keys(:alice)) },
       "activities" => -> { get activities_path },
+      "export the journal" => -> { get activities_path(format: :csv) },
+      "one event" => -> { get activity_path(Activity.record!(:server_created, server: servers(:web))) },
       "tasks" => -> { get tasks_path },
       "ovh" => -> { Integration.create!(kind: "ovh", enabled: true, settings: { "application_key" => "a" }, secrets: { "application_secret" => "s", "consumer_key" => "c" }) && get(ovh_path) },
       "coolify" => -> { Integration.create!(kind: "coolify", enabled: true) && get(coolify_path) },
@@ -80,6 +82,11 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "attach a DNS name" => -> {
         Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
         post dns_record_link_path(DnsRecord.create!(source: "technitium", source_id: "x.a.test", zone: "a.test", name: "x.a.test", record_type: "A", value: "203.0.113.1")), params: { server_id: servers(:web).id }
+      },
+      "attach several DNS names" => -> {
+        Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
+        record = DnsRecord.create!(source: "technitium", source_id: "y.a.test", zone: "a.test", name: "y.a.test", record_type: "A", value: "203.0.113.2")
+        post dns_link_batch_path, params: { record_ids: [ record.id.to_s ], server_id: servers(:web).id }
       },
       "new server" => -> { get new_server_path },
       "create server" => -> { post servers_path, params: { server: { name: "New", host: "10.0.0.1", port: 22, username: "root" } } },
@@ -100,6 +107,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "scan keys" => -> { post server_scans_path },
       "inventory of a server" => -> { post server_inventory_path(servers(:web)) },
       "inventory of every server" => -> { post server_inventories_path },
+      "rerun an inventory" => -> { post task_rerun_path(BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: [ servers(:web) ]).tap { |task| task.items.each { |item| item.finish!(:failed) } }) },
       "authorize a public_key" => -> { post server_authorizations_path(servers(:web)), params: { public_key_id: public_keys(:alice).id } },
       "remove a key" => -> { delete server_authorized_key_path(servers(:web)), params: { key: "AAAA" } },
       "new public_key" => -> { get new_public_key_path },
@@ -164,12 +172,14 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "reactivate a user" => -> { post reactivate_settings_user_path(users(:viewer)) },
       "reset a user's 2FA" => -> { post reset_two_factor_settings_user_path(users(:viewer)) },
       "unlock a user" => -> { post unlock_settings_user_path(users(:viewer)) },
+      "ask a user for a new password" => -> { post require_password_change_settings_user_path(users(:viewer)) },
       "start a key rotation" => -> { post settings_key_rotations_path },
       "follow a key rotation" => -> { get settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "retry a key rotation" => -> { post retry_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "finalize a key rotation" => -> { post finalize_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "resume a key rotation" => -> { post resume_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "simulate a key rotation" => -> { post settings_key_rotation_check_path },
+      "rerun a key rotation check" => -> { post task_rerun_path(BackgroundTask.enqueue!(kind: "key_rotation_check", label: "Simulation", servers: [ servers(:web) ]).tap { |task| task.items.each { |item| item.finish!(:failed) } }) },
       "require 2FA for admins" => -> { patch settings_security_path, params: { app_setting: { require_admin_two_factor: "0" } } },
       "health thresholds" => -> { patch settings_health_thresholds_path, params: { app_setting: { health_disk_warn: 80 } } },
       "prompt instructions" => -> { patch settings_prompt_instructions_path, params: { prompt_instructions: { firewall: "x" } } },
