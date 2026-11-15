@@ -10,7 +10,7 @@ class VulnerabilitiesController < ApplicationController
   EPSS_THRESHOLDS = %w[1 10 50].freeze
   # The concentration line is shown when one package holds at least this share of the CVEs.
   CONCENTRATION = 0.5
-  Row = Data.define(:cve, :severity, :packages, :servers, :images, :fixable, :description, :source) do
+  Row = Data.define(:cve, :severity, :packages, :servers, :images, :fixable, :description, :source, :distro_status) do
     def rank = [ fixable ? 0 : 1, -Vulnerability.severity_rank(severity), -servers.size, cve ]
     def url = Vulnerability.url(cve, source)
   end
@@ -44,6 +44,8 @@ class VulnerabilitiesController < ApplicationController
       plans = Vulnerabilities::FixCommands.new(server, rows).plans
       [ server, plans ] if plans.any?
     end
+    # What matched it to the packages: a feed (Debian, Ubuntu) or an image scanner.
+    @match_sources = ServerVulnerability.by_match_source(@rows)
     render layout: !turbo_frame_request?
   end
 
@@ -130,12 +132,14 @@ class VulnerabilitiesController < ApplicationController
       :cve, PackageVulnerabilities::WORST_SEVERITY,
       Arel.sql("ARRAY_AGG(DISTINCT server_vulnerabilities.source_package)"), Arel.sql("ARRAY_AGG(DISTINCT server_vulnerabilities.server_id)"),
       Arel.sql("ARRAY_AGG(DISTINCT server_vulnerabilities.image) FILTER (WHERE server_vulnerabilities.image IS NOT NULL)"),
-      Arel.sql("BOOL_OR(server_vulnerabilities.fixed_version IS NOT NULL)"), Arel.sql("MAX(server_vulnerabilities.description)"), Arel.sql("MIN(server_vulnerabilities.source)")
+      Arel.sql("BOOL_OR(server_vulnerabilities.fixed_version IS NOT NULL)"), Arel.sql("MAX(server_vulnerabilities.description)"), Arel.sql("MIN(server_vulnerabilities.source)"),
+      Arel.sql("MAX(server_vulnerabilities.distro_status) FILTER (WHERE server_vulnerabilities.fixed_version IS NULL)")
     )
     servers = Server.where(id: values.flat_map { |row| row[3] }.uniq).index_by(&:id)
-    rows = values.map do |cve, severity, packages, server_ids, images, fixable, description, source|
+    rows = values.map do |cve, severity, packages, server_ids, images, fixable, description, source, distro_status|
       Row.new(cve: cve, severity: severity, packages: packages.sort, servers: server_ids.filter_map { |id| servers[id] }.sort_by(&:name),
-              images: Array(images).sort, fixable: fixable, description: description, source: source)
+              images: Array(images).sort, fixable: fixable, description: description, source: source,
+              distro_status: (distro_status unless fixable))
     end
     @summary = { cves: rows.size, fixable: rows.count(&:fixable), servers: servers.size,
                  serious: rows.count { |row| row.fixable && row.severity.in?(%w[critical high]) } }

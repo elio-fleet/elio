@@ -166,6 +166,14 @@ module InventoryHelper
     status_badge(SEVERITY_TONES.fetch(severity.to_s, :neutral), Vulnerability.severity_label(severity), class: "severity", data: { severity: severity })
   end
 
+  # Why Debian leaves a CVE without a fix (no_dsa, postponed, ignored), explained on hover; nil for any other.
+  def distro_status_badge(status)
+    return unless Vulnerability::DISTRO_STATUSES.key?(status.to_s)
+
+    status_badge(:neutral, Vulnerability.distro_status_label(status), title: Vulnerability.distro_status_label(status, :help), class: "distro-status font-sans",
+                                                                      data: { distro_status: status })
+  end
+
   # Badge of an inventory snapshot that is not plainly ok.
   def inventory_status_badge(snapshot)
     case snapshot&.status

@@ -4,6 +4,15 @@ class InventoryHelperTest < ActionView::TestCase
   include UiHelper
   include IconsHelper
 
+  test "why Debian leaves a CVE without a fix, explained on hover; nothing for another status" do
+    badge = Nokogiri::HTML.fragment(distro_status_badge("postponed")).at("span")
+    assert_equal "Reportée par Debian", badge.text.strip
+    assert_equal "postponed", badge["data-distro-status"]
+    assert_match "prochaine mise à jour", badge["title"]
+    assert_nil distro_status_badge(nil)
+    assert_nil distro_status_badge("unknown")
+  end
+
   test "labels" do
     assert_equal "Machine physique", virtualization_label("none")
     assert_equal "Conteneur LXC", virtualization_label("lxc")

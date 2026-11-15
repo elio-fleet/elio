@@ -70,6 +70,14 @@ fr:
       fixed: Corrigée
       servers_affected_html: Serveurs touchés (%{count})
       fixes_release: Correctifs par version
+      matched_by: Trouvée par
+      unknown_match: Scanner d'images
+      match_servers:
+        one: paquets de %{count} serveur
+        other: paquets de %{count} serveurs
+      match_images:
+        one: "%{count} image Docker"
+        other: "%{count} images Docker"
       derived: 'non évaluée par %{distribution} : déduite de la note'
       exploited_since: ", depuis le %{date}"
       how_to_fix: Pour corriger
@@ -497,6 +505,19 @@ fr:
       low: Faible
       unknown: Non évaluée
     at_least: "%{severity} ou plus"
+    distro_statuses:
+      no_dsa:
+        label: Mineure pour Debian
+        inline: mineure pour Debian, pas d'avis
+        help: Debian ne publiera pas d'avis de sécurité pour elle ; un correctif peut arriver avec une version intermédiaire de la distribution.
+      postponed:
+        label: Reportée par Debian
+        inline: reportée par Debian
+        help: Debian la corrigera dans une prochaine mise à jour, avec d'autres correctifs, pas par un avis de sécurité.
+      ignored:
+        label: Ignorée par Debian
+        inline: ignorée par Debian
+        help: Debian ne prévoit pas de la corriger dans cette version (problème mineur, ou correctif trop difficile à reporter).
   server_vulnerability:
     origins:
       host: Système

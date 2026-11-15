@@ -12,7 +12,8 @@ class Vulnerabilities::FeedsTest < ActiveSupport::TestCase
 
     assert_equal [ %w[glibc CVE-2025-0395], %w[nginx CVE-2023-44487], %w[openssh CVE-2023-51767], %w[openssh CVE-2024-6387],
                    %w[openssl CVE-2024-5535], %w[openssl CVE-2024-9143] ], rows.keys.sort
-    assert_equal({ release: "bookworm", package: "openssh", cve: "CVE-2024-6387", fixed_version: "1:9.2p1-2+deb12u3", severity: "high", primary: true },
+    assert_equal({ release: "bookworm", package: "openssh", cve: "CVE-2024-6387", fixed_version: "1:9.2p1-2+deb12u3", severity: "high", distro_status: nil,
+                   primary: true },
                  rows[%w[openssh CVE-2024-6387]].except(:description))
     assert_match "« regreSSHion »", rows[%w[openssh CVE-2024-6387]][:description]
     assert_equal [ nil, "low" ], rows[%w[openssh CVE-2023-51767]].values_at(:fixed_version, :severity), "open: no fix yet"
@@ -20,6 +21,23 @@ class Vulnerabilities::FeedsTest < ActiveSupport::TestCase
     assert_equal "low", rows[%w[openssl CVE-2024-5535]][:severity], "not yet assigned, but no advisory planned (nodsa)"
     assert_equal [ "bookworm", "trixie" ], debian_rows(%w[bookworm trixie]).map { |row| row[:release] }.uniq.sort
     assert_empty debian_rows(%w[bullseye]), "fixed in version 0 = not affected"
+  end
+
+  test "Debian: an open issue without a security advisory keeps why (no-dsa, postponed, ignored), not a fixed one" do
+    open = { "status" => "open", "urgency" => "not yet assigned" }
+    json = { "curl" => {
+      "CVE-2025-0001" => { "releases" => { "bookworm" => open.merge("nodsa" => "Minor issue", "nodsa_reason" => "") } },
+      "CVE-2025-0002" => { "releases" => { "bookworm" => open.merge("nodsa" => "Revisit when fixed upstream", "nodsa_reason" => "postponed") } },
+      "CVE-2025-0003" => { "releases" => { "bookworm" => open.merge("nodsa" => "Intrusive to backport", "nodsa_reason" => "ignored") } },
+      "CVE-2025-0004" => { "releases" => { "bookworm" => open } },
+      "CVE-2025-0005" => { "releases" => { "bookworm" => { "status" => "resolved", "fixed_version" => "7.88.1-10+deb12u9", "urgency" => "low",
+                                                              "nodsa" => "Minor issue", "nodsa_reason" => "" } } }
+    } }.to_json
+    rows = []
+    Vulnerabilities::DebianTracker.each_row(StringIO.new(json), releases: %w[bookworm]) { |row| rows << row }
+
+    assert_equal({ "CVE-2025-0001" => "no_dsa", "CVE-2025-0002" => "postponed", "CVE-2025-0003" => "ignored", "CVE-2025-0004" => nil, "CVE-2025-0005" => nil },
+                 rows.to_h { |row| [ row[:cve], row[:distro_status] ] })
   end
 
   test "Debian: another file is refused" do

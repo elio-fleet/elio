@@ -148,4 +148,21 @@ class Vulnerabilities::UpdateTest < ActiveSupport::TestCase
     assert_equal [ "matched before" ], rows.where(source_package: "openssl").distinct.pluck(:description), "openssl did not change"
     assert_not rows.where(source_package: "openssh").exists?(description: "matched before")
   end
+
+  test "a CVE Debian starts to ignore is matched again and keeps that status on the server" do
+    record_os(servers(:web))
+    record_packages(servers(:web), [ dpkg("openssh-server", "1:9.2p1-2+deb12u3", source: "openssh") ])
+    load_debian_feed
+    assert_nil servers(:web).server_vulnerabilities.find_by(cve: "CVE-2023-51767").distro_status
+
+    feed = JSON.parse(File.read(debian_tracker_path))
+    feed["openssh"]["CVE-2023-51767"]["releases"]["bookworm"].merge!("nodsa" => "Minor issue", "nodsa_reason" => "ignored")
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "tracker.json"), feed.to_json)
+      Vulnerabilities::Update.call("debian", path: File.join(dir, "tracker.json"))
+    end
+
+    assert_equal "ignored", Vulnerability.find_by(cve: "CVE-2023-51767").distro_status
+    assert_equal "ignored", servers(:web).server_vulnerabilities.find_by(cve: "CVE-2023-51767").distro_status, "only the status changed: still matched again"
+  end
 end

@@ -72,7 +72,7 @@
                 <td class="font-mono text-xs"><%= row.source_package %><% if row.image %><span class="block font-sans text-[11px] text-ink-3">image <%= row.image %></span><% end %></td>
                 <td class="font-mono text-xs"><%= row.packages.join(", ") %></td>
                 <td class="font-mono text-xs"><%= row.installed_version %></td>
-                <td class="font-mono text-xs"><%= row.fixed_version ? tag.span(row.fixed_version, class: "text-good-ink") : tag.span(t("words.no_fix"), class: "font-sans text-ink-3") %></td>
+                <td class="font-mono text-xs"><%= row.fixed_version ? tag.span(row.fixed_version, class: "text-good-ink") : distro_status_badge(row.distro_status) || tag.span(t("words.no_fix"), class: "font-sans text-ink-3") %></td>
               </tr>
             <% end %>
           </tbody>
@@ -99,17 +99,32 @@
           <li class="flex flex-wrap items-baseline gap-x-2">
             <%= link_to server.name, server_path(server, tab: "vulnerabilities"), data: { turbo_frame: "_top" }, class: "font-medium hover:text-accent hover:underline" %>
             <span class="text-xs text-ink-3"><%= rows.map { |row| [ row.image ? "image #{row.image}" : t(".system"), row.installed_version ].join(" ") }.uniq.join(" · ") %></span>
-            <% if rows.any?(&:fixable?) %><%= status_badge :good, t("words.fixable") %><% end %>
+            <% if rows.any?(&:fixable?) %><%= status_badge :good, t("words.fixable") %><% else %><%= distro_status_badge(rows.filter_map(&:distro_status).first) %><% end %>
           </li>
         <% end %>
       </ul>
     </section>
 
+    <% if @match_sources.any? %>
+      <section class="detail-match">
+        <h3 class="text-xs font-semibold tracking-wide text-ink-3 uppercase"><%= t(".matched_by") %></h3>
+        <ul class="mt-1 space-y-0.5 text-xs text-ink-2">
+          <% @match_sources.each do |source, rows| %>
+            <li class="match-source" data-source="<%= source || "unknown" %>">
+              <strong class="font-medium text-ink"><%= Vulnerability.match_source_label(source) || t(".unknown_match") %></strong> ·
+              <%= safe_join([ (t(".match_servers", count: rows.reject(&:image).map(&:server_id).uniq.size) if rows.any? { |row| !row.image }),
+                              (t(".match_images", count: rows.filter_map(&:image).uniq.size) if rows.any?(&:image)) ].compact, ", ") %>
+            </li>
+          <% end %>
+        </ul>
+      </section>
+    <% end %>
+
     <% if @feed_entries.any? %>
       <section>
         <h3 class="text-xs font-semibold tracking-wide text-ink-3 uppercase"><%= t(".fixes_release") %></h3>
         <p class="mt-1 text-xs text-ink-2">
-          <%= safe_join(@feed_entries.map { |entry| "#{t("words.label_value", label: "#{entry.source == "ubuntu" ? "Ubuntu" : "Debian"} #{entry.release}", value: entry.fixed_version || t("words.no_fix"))} (#{Vulnerability.severity_label(entry.severity).downcase})" }, " · ") %>
+          <%= safe_join(@feed_entries.map { |entry| "#{t("words.label_value", label: "#{entry.source == "ubuntu" ? "Ubuntu" : "Debian"} #{entry.release}", value: entry.fixed_version || t("words.no_fix"))} (#{[ Vulnerability.severity_label(entry.severity).downcase, (Vulnerability.distro_status_label(entry.distro_status, :inline) if !entry.fixed_version && entry.distro_status) ].compact.join(", ")})" }, " · ") %>
         </p>
       </section>
     <% end %>
