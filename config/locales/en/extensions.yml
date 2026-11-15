@@ -309,8 +309,11 @@ en:
           failed: last one failed
           late: late
           none: no scheduled backup
+          unknown: backups not readable
         none_hint: If it keeps useful data, schedule a backup in Coolify (Backups tab of the database).
-        services_note: The databases of Coolify services (n8n…) are not followed yet.
+        in_service: database of the service
+        public: "reachable from the Internet (port %{port})"
+        service_hint: Coolify's API does not give the backups of a database inside a service; check them in Coolify (the service's Backups tab).
       server_tab:
         instance: Instance
         team: Team
@@ -464,6 +467,14 @@ en:
       empty: No Coolify resource
       empty_text: The connections see no application, service or database yet.
       not_synchronized: Coolify has not been synchronized yet.
+      unconnected: Teams not connected
+      unconnected_meta:
+        one: "%{count} server"
+        other: "%{count} servers"
+      unconnected_text:
+        one: "Coolify manages this server (coolify-proxy container), but no connection attaches it: its team or instance is not connected, or its address in Coolify is not the one Elio knows."
+        other: "Coolify manages these servers (coolify-proxy container), but no connection attaches them: their team or instance is not connected, or their address in Coolify is not the one Elio knows."
+      add_connection: Add a connection
   coolify_helper:
     states:
       healthy: Running · healthy
