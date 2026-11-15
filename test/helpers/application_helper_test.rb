@@ -42,8 +42,9 @@ class ApplicationHelperTest < ActionView::TestCase
   test "command_palette_items lists pages, servers and public_keys" do
     items = command_palette_items
 
-    assert_equal [ "Pages", "Groupes", "Serveurs", "Clés SSH" ], items.map { |item| item[:group] }.uniq
+    assert_equal [ "Pages", "Actions", "Groupes", "Serveurs", "Clés SSH" ], items.map { |item| item[:group] }.uniq
     assert_includes items, { group: "Pages", label: "Serveurs", hint: "serveurs", url: servers_path }
+    assert_includes items, { group: "Actions", label: "Inventorier tous les serveurs", hint: "en arrière-plan", url: server_inventories_path, method: "post" }
     assert_includes items, { group: "Groupes", label: "Production", hint: "serveurs du groupe", url: servers_path(group: server_groups(:production).id) }
     assert_includes items, { group: "Serveurs", label: "Web", hint: "deploy@192.168.1.10 · Production", url: server_path(servers(:web)), keywords: "192.168.1.10", server: true }
     assert_includes items, { group: "Serveurs", label: "Backup", hint: "root@10.0.0.5", url: server_path(servers(:backup)), keywords: "10.0.0.5", server: true }
@@ -89,11 +90,13 @@ class ApplicationHelperTest < ActionView::TestCase
     assert_includes labels, "Exécutions"
     assert_not_includes labels, "Suivi technique des jobs"
     assert_not_includes labels, "Ajouter un serveur"
+    assert_not_includes labels, "Inventorier tous les serveurs"
     assert_not_includes labels, "Paramètres"
 
     @user = users(:operator)
     labels = command_palette_items.map { |item| item[:label] }
     assert_includes labels, "Ajouter un serveur"
+    assert_includes labels, "Inventorier tous les serveurs"
     assert_not_includes labels, "Automatisations"
 
     @user = users(:one)

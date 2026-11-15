@@ -25,3 +25,7 @@ fr:
       port: Qui expose le port %{port} ?
       package: Chercher le paquet « %{package} » sur le parc
       dns_name: Qui a le nom DNS « %{name} » ?
+      journal: Chercher « %{text} » dans le journal
+      actions: Actions
+      inventory: Inventorier %{server}
+      recent: Récents

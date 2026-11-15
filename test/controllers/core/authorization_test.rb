@@ -51,6 +51,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server packages" => -> { get server_packages_path(servers(:web)) },
       "server commands" => -> { get server_commands_path(servers(:web)) },
       "fleet packages" => -> { get packages_path(q: "ssl") },
+      "quick search of CVEs, packages and notes" => -> { get command_search_path(q: "ssl") },
       "fleet ports" => -> { get ports_path },
       "fleet scheduled tasks" => -> { get scheduled_tasks_path },
       "fleet vulnerabilities" => -> { get vulnerabilities_path },
