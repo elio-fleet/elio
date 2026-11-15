@@ -67,6 +67,18 @@ class Inventory::PortAnalysisTest < ActiveSupport::TestCase
     assert_equal [ "2 ports inattendus (6432/tcp, 9100/tcp)" ], @server.health_reason_texts
   end
 
+  test "the server's own expected ports add to those of its groups, and count alone too" do
+    server_groups(:production).update!(expected_ports: "22, 80, 443/tcp")
+    @server.update!(expected_ports: "9100/tcp")
+    collect_ports
+
+    assert_equal %w[6432/tcp], analysis.unexpected_ports.map(&:key)
+    assert_equal "22, 80, 443/tcp · 9100/tcp", analysis.expected_ports_text
+
+    server_groups(:production).update!(expected_ports: nil)
+    assert_equal %w[22/tcp 6432/tcp], analysis.unexpected_ports.map(&:key)
+  end
+
   test "no expected ports, no check" do
     collect_ports
     assert_empty analysis.unexpected_ports

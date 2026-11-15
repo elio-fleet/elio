@@ -6,6 +6,8 @@ class AuthorizedKeyRemovalSystemTest < ApplicationSystemTestCase
 
   setup do
     sign_in users(:one)
+    # The removals run on the stubbed services below, without a connection.
+    stub_method_until_teardown(Keys::WriteSession, :open, ->(*, ssh: nil, **, &block) { block.call(ssh) })
   end
 
   # Simulates the server's authorized_keys file in memory.

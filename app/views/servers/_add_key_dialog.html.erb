@@ -1,5 +1,6 @@
 <%# "Ajouter une clé" on the server's keys tab (operators): a key of the keyring, or a new key saved
-    to the keyring and added in one go. Replaced over Turbo Stream after a submission (errors, or closed). %>
+    to the keyring and added in one go, on one or more accounts, with optional restrictions (KeyOptions).
+    Replaced over Turbo Stream after a submission (errors, or closed). %>
 <% public_key ||= PublicKey.new(kind: "person") %>
 <% source ||= "keyring" %>
 <% open ||= false %>
@@ -82,21 +83,47 @@
         </div>
       </div>
 
-      <div class="add-key-account" data-controller="kind-fields">
-        <%= label_tag :account, t(".account"), for: "#{dom_id(server, :add_key)}_account", class: "label" %>
-        <%= select_tag :account,
-              options_for_select([ [ t(".login_account", user: server.username), server.username ],
-                                   *other_accounts.map { |user| [ user, user, { disabled: root_missing } ] },
-                                   [ t(".other_account"), "other", { disabled: root_missing } ] ], server.username),
-              id: "#{dom_id(server, :add_key)}_account", class: "input mt-1 w-full sm:w-60",
-              data: { kind_fields_target: "kind", action: "kind-fields#update" } %>
-        <div data-kind-fields-target="field" data-kinds="other" class="mt-2">
-          <%= label_tag :other_account, t(".other_account_name"), for: "#{dom_id(server, :add_key)}_other_account", class: "sr-only" %>
-          <%= text_field_tag :other_account, nil, id: "#{dom_id(server, :add_key)}_other_account", required: true, placeholder: "deploy",
-                pattern: AuthorizedKeysAccount::NAME_PATTERN, autocomplete: "off", spellcheck: false, class: "input w-full font-mono text-sm sm:w-60" %>
+      <fieldset class="add-key-account">
+        <legend class="label"><%= t(".accounts") %></legend>
+        <%= hidden_field_tag "accounts[]", "", id: nil %>
+        <div class="mt-1.5 flex flex-wrap gap-x-4 gap-y-1.5">
+          <% [ [ server.username, t(".login_account", user: server.username) ], *other_accounts.map { |user| [ user, user ] } ].each_with_index do |(user, label), index| %>
+            <label class="flex cursor-pointer items-center gap-2 text-sm text-ink-2 has-[:disabled]:cursor-not-allowed has-[:disabled]:opacity-60">
+              <%= check_box_tag "accounts[]", user, index.zero?, id: "#{dom_id(server, :add_key)}_account_#{index}",
+                    disabled: index.positive? && root_missing, class: "h-4 w-4 rounded border-line text-accent" %>
+              <span class="font-mono"><%= label %></span>
+            </label>
+          <% end %>
+        </div>
+        <div class="mt-2">
+          <%= label_tag :other_account, t(".other_account_name"), for: "#{dom_id(server, :add_key)}_other_account", class: "text-xs text-ink-3" %>
+          <%= text_field_tag :other_account, nil, id: "#{dom_id(server, :add_key)}_other_account", placeholder: "deploy", disabled: root_missing,
+                pattern: AuthorizedKeysAccount::NAME_PATTERN, autocomplete: "off", spellcheck: false, class: "input mt-1 w-full font-mono text-sm sm:w-60" %>
         </div>
         <p class="mt-1 text-xs text-ink-3"><%= root_missing ? t(".other_accounts_need_root") : t(".account_hint") %></p>
-      </div>
+      </fieldset>
+
+      <details class="add-key-options">
+        <summary class="cursor-pointer text-sm font-medium text-ink-2"><%= t(".restrictions") %> <span class="font-normal text-ink-3"><%= t(".restrictions_optional") %></span></summary>
+        <div class="mt-3 space-y-3">
+          <div>
+            <%= label_tag "key_options[from]", t(".from"), for: "#{dom_id(server, :add_key)}_from", class: "label" %>
+            <%= text_field_tag "key_options[from]", nil, id: "#{dom_id(server, :add_key)}_from", placeholder: "203.0.113.0/24,2001:db8::/32",
+                  maxlength: KeyOptions::MAX_FROM_LENGTH, autocomplete: "off", spellcheck: false, class: "input mt-1 w-full font-mono text-sm" %>
+            <p class="mt-1 text-xs text-ink-3"><%= t(".from_hint") %></p>
+          </div>
+          <div>
+            <%= label_tag "key_options[command]", t(".command"), for: "#{dom_id(server, :add_key)}_command", class: "label" %>
+            <%= text_field_tag "key_options[command]", nil, id: "#{dom_id(server, :add_key)}_command", placeholder: "/usr/bin/rrsync -ro /srv/backup",
+                  maxlength: KeyOptions::MAX_COMMAND_LENGTH, autocomplete: "off", spellcheck: false, class: "input mt-1 w-full font-mono text-sm" %>
+            <p class="mt-1 text-xs text-ink-3"><%= t(".command_hint") %></p>
+          </div>
+          <label class="flex cursor-pointer items-center gap-2 text-sm text-ink-2">
+            <%= check_box_tag "key_options[no_port_forwarding]", "1", false, id: "#{dom_id(server, :add_key)}_no_port_forwarding", class: "h-4 w-4 rounded border-line text-accent" %>
+            <%= t(".no_port_forwarding") %>
+          </label>
+        </div>
+      </details>
 
       <div>
         <%= label_tag :duration, t(".duration"), for: "#{dom_id(server, :add_key)}_duration", class: "label" %>

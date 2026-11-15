@@ -13,6 +13,15 @@ class InventoryHelperTest < ActionView::TestCase
     assert_nil distro_status_badge("unknown")
   end
 
+  test "listen_address says what a wildcard or a loopback address means" do
+    assert_equal "0.0.0.0 toutes les interfaces IPv4", Nokogiri::HTML.fragment(listen_address("0.0.0.0")).text
+    assert_match "toutes les interfaces (IPv6", listen_address("::")
+    assert_equal "* toutes les interfaces", Nokogiri::HTML.fragment(listen_address("*")).text
+    assert_match "cette machine seulement", listen_address("127.0.0.53")
+    assert_match "cette machine seulement", listen_address("::1")
+    assert_equal "10.0.0.5", Nokogiri::HTML.fragment(listen_address("10.0.0.5")).text
+  end
+
   test "labels" do
     assert_equal "Machine physique", virtualization_label("none")
     assert_equal "Conteneur LXC", virtualization_label("lxc")
