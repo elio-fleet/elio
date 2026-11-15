@@ -78,6 +78,10 @@ en:
       token: First start token
       token_hint_html: The value of the server's %{variable} variable.
       submit: Create the account
+      language: Language of the installation
+      failures: 'Elio is not fully installed: fix this, then restart it.'
+      address_missing_html: 'The %{variable} variable is not set: the links of the emails and notifications will not lead back to Elio. Set it to the address of this page, %{address}.'
+      address_mismatch_html: '%{variable} is %{configured} but this page is open at %{address}: the links of the emails and notifications will lead to %{configured}. Change the variable if this address is the right one.'
   two_factor_challenges:
     new:
       title: Two-factor authentication

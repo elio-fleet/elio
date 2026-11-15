@@ -21,6 +21,13 @@ fr:
     theme:
       light: Thème clair
       dark: Thème sombre
+    password_strength:
+      too_short:
+        one: 'Trop court : au moins %{count} caractère.'
+        other: 'Trop court : au moins %{count} caractères.'
+      weak: 'Faible : plus long, ou mêlant lettres, chiffres et symboles, il serait plus difficile à deviner.'
+      fair: 'Moyen : quelques caractères de plus le rendraient robuste.'
+      strong: Mot de passe robuste.
     confirm:
       accept: Confirmer
     command_palette:
