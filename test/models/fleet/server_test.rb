@@ -141,8 +141,12 @@ class ServerTest < ActiveSupport::TestCase
     assert_equal [ "ssh_access_lost" ], Activity.pluck(:kind)
   end
 
-  test "going down and coming back is logged" do
+  test "going down is logged at the second failure in a row, and coming back once" do
     server = servers(:web) # reachable in the fixtures
+
+    server.record_reachability!(false)
+    assert_empty Activity.all, "one failure is not enough"
+    assert_equal false, server.reload.reachable, "the badge shows the last result"
 
     server.record_reachability!(false)
     server.record_reachability!(false)
@@ -150,7 +154,46 @@ class ServerTest < ActiveSupport::TestCase
     server.record_reachability!(true)
 
     assert_equal %w[server_unreachable server_back_online], Activity.order(:id).pluck(:kind)
-    assert server.reload.reachable
+    server.reload
+    assert server.reachable
+    assert_equal 0, server.ping_failures
+    assert_in_delta Time.current, server.last_reachable_at, 5.seconds
+  end
+
+  test "a single failure between two successes logs nothing" do
+    server = servers(:web)
+
+    server.record_reachability!(false)
+    server.record_reachability!(true)
+    server.record_reachability!(false)
+
+    assert_empty Activity.all
+    assert_equal 1, server.reload.ping_failures
+  end
+
+  test "a server never seen answering is never declared down nor back" do
+    server = Server.create!(name: "New", host: "10.0.0.99", port: 2299, username: "root")
+
+    3.times { server.record_reachability!(false) }
+    server.update!(port: 22)
+    server.record_reachability!(true)
+
+    assert_empty Activity.all
+  end
+
+  test "a new address starts the reachability over" do
+    server = servers(:db) # declared down in the fixtures
+    server.update!(port: 22)
+
+    assert_equal 0, server.ping_failures
+    assert_nil server.last_reachable_at
+    server.record_reachability!(true)
+    assert_empty Activity.all
+  end
+
+  test "a server declared down comes back" do
+    servers(:db).record_reachability!(true)
+    assert_equal [ "server_back_online" ], Activity.pluck(:kind)
   end
 
   test "a port or SSH result is fresh for a few minutes, an SSH failure never" do
@@ -168,8 +211,12 @@ class ServerTest < ActiveSupport::TestCase
     assert_not server.ssh_fresh?
   end
 
-  test "a first check that finds the server down is logged" do
-    servers(:backup).record_reachability!(false)
+  test "a server that answered before is logged down even without a check since" do
+    server = servers(:backup)
+    server.update_columns(last_reachable_at: 1.day.ago)
+
+    2.times { server.record_reachability!(false) }
+
     assert_equal [ "server_unreachable" ], Activity.pluck(:kind)
   end
 

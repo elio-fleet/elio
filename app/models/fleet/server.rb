@@ -74,17 +74,29 @@ class Server < ApplicationRecord
     Activity.record!(:host_key_mismatch, server: self, new_fingerprint: new_fingerprint, key_type: key_type, new_algorithm: new_algorithm)
   end
 
+  # Failed pings in a row before a server is declared down: one lost
+  # connection (network blip, sshd restarting) is not an event.
+  UNREACHABLE_AFTER = 2
+
   # Remembers a ping result (see Servers::Ping) and logs when the server goes
-  # down (server_unreachable) or comes back (server_back_online).
+  # down (server_unreachable, after UNREACHABLE_AFTER failures in a row) or
+  # comes back (server_back_online). A server never seen answering (just
+  # added with a wrong port, address changed) cannot go down: no event.
   def record_reachability!(reachable)
-    previous = self.reachable
-    update_columns(reachable: reachable, last_checked_at: Time.current)
-    if !reachable && previous != false
-      Activity.record!(:server_unreachable, server: self)
-    elsif reachable && previous == false
-      Activity.record!(:server_back_online, server: self)
+    now = Time.current
+    if reachable
+      back = unreachable_declared?
+      update_columns(reachable: true, last_checked_at: now, last_reachable_at: now, ping_failures: 0)
+      Activity.record!(:server_back_online, server: self) if back
+    else
+      update_columns(reachable: false, last_checked_at: now, ping_failures: ping_failures + 1)
+      Activity.record!(:server_unreachable, server: self) if ping_failures == UNREACHABLE_AFTER && last_reachable_at
     end
   end
+
+  # The server was seen answering, then failed enough pings in a row to be
+  # declared down (server_unreachable logged).
+  def unreachable_declared? = ping_failures >= UNREACHABLE_AFTER && last_reachable_at.present?
 
   # How long the server page trusts a port or SSH result instead of checking
   # again on display (one SSH login per visit otherwise).
@@ -201,6 +213,8 @@ class Server < ApplicationRecord
   def reset_reachability
     self.reachable = nil
     self.last_checked_at = nil
+    self.ping_failures = 0
+    self.last_reachable_at = nil
     self.ssh_ok = nil
     self.ssh_checked_at = nil
   end

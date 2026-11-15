@@ -5,6 +5,7 @@ web:
   username: deploy
   reachable: true
   last_checked_at: <%= 5.minutes.ago %>
+  last_reachable_at: <%= 5.minutes.ago %>
 
 db:
   name: Database
@@ -13,6 +14,8 @@ db:
   username: admin
   reachable: false
   last_checked_at: <%= 5.minutes.ago %>
+  last_reachable_at: <%= 1.hour.ago %>
+  ping_failures: 2
 
 backup:
   name: Backup

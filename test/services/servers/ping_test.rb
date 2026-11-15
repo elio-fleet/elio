@@ -72,13 +72,14 @@ class Servers::PingTest < ActiveSupport::TestCase
     assert_equal({}, Servers::Ping.check_all!(Server.none))
   end
 
-  test "check! logs a server going down" do
+  test "check! logs a server going down at the second failure in a row" do
     server = servers(:web)
-    server.update!(host: "127.0.0.1", port: closed_port)
-    server.update_columns(reachable: true)
+    server.update_columns(host: "127.0.0.1", port: closed_port)
 
     Servers::Ping.check!(server, timeout: 1)
+    assert_empty Activity.all
 
+    Servers::Ping.check!(server, timeout: 1)
     assert_equal [ "server_unreachable" ], Activity.pluck(:kind)
   end
 end

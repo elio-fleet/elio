@@ -33,7 +33,7 @@ fr:
         description: Un administrateur a accepté la nouvelle empreinte d'un serveur (réinstallation…).
       server_unreachable:
         label: Serveur injoignable
-        description: Un serveur ne répond plus sur son port SSH.
+        description: Un serveur qui répondait ne répond plus sur son port SSH, deux vérifications de suite.
       server_back_online:
         label: Serveur de nouveau joignable
         description: Un serveur injoignable répond à nouveau.
