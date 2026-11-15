@@ -1,4 +1,5 @@
-# Services of a server: systemd units (state, enabled at boot) and Docker
+# Services of a server: systemd units (state, type, enabled at boot, when they
+# last started and stopped) and Docker
 # containers with their Compose project, read from the labels Docker Compose
 # sets (no need to parse the compose files). Docker needs the docker group or
 # root: without them the collection is partial.
@@ -10,7 +11,7 @@ class Inventory::Collectors::Services < Inventory::Collector
     raise Error, I18n.t("inventory.collectors.services.failed", exit_status: (result.stderr.strip.presence || "code #{result.exit_status}")) if result.stdout.blank?
 
     sections = self.class.sections(result.stdout)
-    units = self.class.parse_units(sections["units"].to_s, self.class.parse_unit_files(sections["unit-files"].to_s))
+    units = self.class.parse_units(sections["units"].to_s, self.class.parse_unit_details(sections["unit-details"].to_s))
     docker_present = sections["docker"].to_s.strip == "present"
     return unsupported(I18n.t("inventory.collectors.services.unsupported")) if units.nil? && !docker_present
 
@@ -24,22 +25,36 @@ class Inventory::Collectors::Services < Inventory::Collector
     ok(data)
   end
 
-  # "ssh.service loaded active running OpenBSD Secure Shell server"; nil without systemd.
-  def self.parse_units(text, enabled)
+  # "ssh.service loaded active running OpenBSD Secure Shell server", with the
+  # details of each unit (parse_unit_details); nil without systemd.
+  def self.parse_units(text, details)
     return if text.strip == "unsupported"
 
     text.lines.filter_map do |line|
       name, load, active, sub, *description = line.split
       next unless name&.end_with?(".service") && sub
 
-      { "name" => name, "load" => load, "active" => active, "sub" => sub, "description" => description.join(" ").presence,
-        "enabled" => enabled[name] }.compact
+      { "name" => name, "load" => load, "active" => active, "sub" => sub, "description" => description.join(" ").presence }.merge(details.fetch(name, {})).compact
     end
   end
 
-  # "ssh.service enabled enabled"
-  def self.parse_unit_files(text)
-    text.lines.filter_map { |line| line.split.first(2).then { |name, state| [ name, state ] if name&.end_with?(".service") && state } }.to_h
+  # `systemctl show -p Id -p Type -p UnitFileState -p ActiveEnterTimestamp
+  # -p InactiveEnterTimestamp` of the loaded units, one block per unit:
+  # { name => { "type", "enabled", "started_at", "stopped_at" } }. A unit never
+  # started has an empty (or "n/a") timestamp.
+  def self.parse_unit_details(text)
+    text.split(/\n\s*\n/).filter_map { |block|
+      values = block.lines.to_h { |line| line.chomp.split("=", 2) }.compact_blank
+      next unless values["Id"]
+
+      [ values["Id"], { "type" => values["Type"], "enabled" => values["UnitFileState"],
+                        "started_at" => unit_time(values["ActiveEnterTimestamp"]), "stopped_at" => unit_time(values["InactiveEnterTimestamp"]) }.compact ]
+    }.to_h
+  end
+
+  def self.unit_time(value)
+    time = Inventory::Collectors::Health.unit_time(value)
+    time.iso8601 if time && time.to_i.positive?
   end
 
   def self.parse_containers(text)

@@ -5,13 +5,55 @@ postgresql@15-main.service loaded active running PostgreSQL Cluster 15-main
 ssh.service loaded active running OpenBSD Secure Shell server
 systemd-journald.service loaded active running Journal Service
 apt-daily.service loaded inactive dead Daily apt download activities
+nginx.service loaded inactive dead A high performance web server and a reverse proxy server
 unattended-upgrades.service loaded inactive dead Unattended Upgrades Shutdown
-@@elio unit-files
-cron.service enabled enabled
-fail2ban.service enabled enabled
-postgresql@.service indirect enabled
-ssh.service enabled enabled
-apt-daily.service static -
-unattended-upgrades.service disabled enabled
+@@elio unit-details
+Id=cron.service
+Type=simple
+UnitFileState=enabled
+ActiveEnterTimestamp=@1762000000
+InactiveEnterTimestamp=
+
+Id=fail2ban.service
+Type=simple
+UnitFileState=enabled
+ActiveEnterTimestamp=@1762000010
+InactiveEnterTimestamp=@1762100000
+
+Id=postgresql@15-main.service
+Type=forking
+UnitFileState=
+ActiveEnterTimestamp=@1762000020
+InactiveEnterTimestamp=
+
+Id=ssh.service
+Type=notify
+UnitFileState=enabled
+ActiveEnterTimestamp=@1762000030
+InactiveEnterTimestamp=
+
+Id=systemd-journald.service
+Type=notify
+UnitFileState=static
+ActiveEnterTimestamp=@1762000000
+InactiveEnterTimestamp=
+
+Id=apt-daily.service
+Type=oneshot
+UnitFileState=static
+ActiveEnterTimestamp=
+InactiveEnterTimestamp=@1762090000
+
+Id=nginx.service
+Type=forking
+UnitFileState=enabled
+ActiveEnterTimestamp=@1762000040
+InactiveEnterTimestamp=@1762080000
+
+Id=unattended-upgrades.service
+Type=simple
+UnitFileState=disabled
+ActiveEnterTimestamp=
+InactiveEnterTimestamp=
 @@elio docker
 present

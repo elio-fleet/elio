@@ -20,10 +20,13 @@ class Inventory::Collectors::ServicesTest < ActiveSupport::TestCase
 
     assert_equal "ok", outcome.status
     units = outcome.data["units"]
-    assert_equal 7, units.size
-    assert_equal({ "name" => "fail2ban.service", "load" => "loaded", "active" => "failed", "sub" => "failed",
-                   "description" => "Fail2Ban Service", "enabled" => "enabled" }, units.find { |unit| unit["name"] == "fail2ban.service" })
-    assert_equal "disabled", units.find { |unit| unit["name"] == "unattended-upgrades.service" }["enabled"]
+    assert_equal 8, units.size
+    assert_equal({ "name" => "fail2ban.service", "load" => "loaded", "active" => "failed", "sub" => "failed", "description" => "Fail2Ban Service",
+                   "type" => "simple", "enabled" => "enabled", "started_at" => Time.at(1_762_000_010).utc.iso8601, "stopped_at" => Time.at(1_762_100_000).utc.iso8601 },
+                 units.find { |unit| unit["name"] == "fail2ban.service" })
+    assert_equal({ "name" => "unattended-upgrades.service", "load" => "loaded", "active" => "inactive", "sub" => "dead",
+                   "description" => "Unattended Upgrades Shutdown", "type" => "simple", "enabled" => "disabled" },
+                 units.find { |unit| unit["name"] == "unattended-upgrades.service" }, "never started: no times")
     assert_not units.find { |unit| unit["name"] == "postgresql@15-main.service" }.key?("enabled")
 
     containers = outcome.data["containers"]
@@ -33,6 +36,32 @@ class Inventory::Collectors::ServicesTest < ActiveSupport::TestCase
     assert_equal({ "id" => "aaaabbbbcccc", "name" => "backup-once", "image" => "alpine:3.20", "state" => "exited", "status" => "Exited (0) 2 days ago" }, containers.last)
     assert_equal "ok", outcome.data["docker"]
     assert_includes commands, "sudo -n #{Ssh::Commands.render("inventory.docker_containers")}"
+  end
+
+  test "the command reads the details of the loaded units only, not every unit file on disk" do
+    command = Ssh::Commands.fetch("inventory.services").template
+
+    assert_not_includes command, "list-unit-files"
+    assert_includes command, "systemctl show --timestamp=unix -p Id -p Type -p UnitFileState -p ActiveEnterTimestamp -p InactiveEnterTimestamp $units"
+  end
+
+  test "unit details from systemd before 247, whose timestamps are dates" do
+    details = Collector.parse_unit_details(<<~TEXT)
+      Id=nginx.service
+      Type=forking
+      UnitFileState=enabled
+      ActiveEnterTimestamp=Fri 2026-11-13 17:32:36 UTC
+      InactiveEnterTimestamp=n/a
+
+      Id=apt-daily.service
+      Type=oneshot
+      UnitFileState=static
+      ActiveEnterTimestamp=
+      InactiveEnterTimestamp=@0
+    TEXT
+
+    assert_equal({ "nginx.service" => { "type" => "forking", "enabled" => "enabled", "started_at" => "2026-11-13T17:32:36Z" },
+                   "apt-daily.service" => { "type" => "oneshot", "enabled" => "static" } }, details)
   end
 
   test "the container state comes from the status, which every Docker version prints" do
@@ -50,7 +79,7 @@ class Inventory::Collectors::ServicesTest < ActiveSupport::TestCase
   test "unreadable containers make the collection partial" do
     outcome, = collect(:debian12, sudo: false, docker: FakeSsh::Response.new("", "permission denied while trying to connect to the Docker daemon socket", 1))
 
-    assert_equal [ "partial", "unreadable", 7 ], [ outcome.status, outcome.data["docker"], outcome.data["units"].size ]
+    assert_equal [ "partial", "unreadable", 8 ], [ outcome.status, outcome.data["docker"], outcome.data["units"].size ]
     assert_match "Conteneurs Docker illisibles", outcome.message
   end
 

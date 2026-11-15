@@ -132,7 +132,25 @@ fr:
       elio_needs_root_password_html: "%{message} Elio a besoin de root (sudo sans mot de passe) ou du groupe docker."
       container: Aucun conteneur.
       services_inventory_yet: Pas encore d'inventaire des services.
+      all: Tous
+      states:
+        active: Actifs
+        failed: En échec
+        inactive: Inactifs
+      search: Rechercher dans les services
+      search_placeholder: Nom ou description
+      stopped_title:
+        one: Lancé au démarrage mais arrêté (%{count})
+        other: Lancés au démarrage mais arrêtés (%{count})
+      stopped_hint: Activés au démarrage mais pas en marche (hors tâches ponctuelles), arrêtés à la main ou terminés.
+      no_match: Aucun service ne correspond à ces filtres.
+      clear_filters: Effacer les filtres
     systemd_unit:
+      running: actif
+      inactive: inactif
+      stopped: arrêté
+      started_html: démarré %{time}
+      stopped_since_html: arrêté %{time}
       failed: en échec
       boot: au démarrage
       failed_since_html: a échoué %{time}
