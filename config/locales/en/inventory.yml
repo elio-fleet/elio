@@ -95,7 +95,6 @@ en:
       health: Health
       read_html: read %{collected_at}
       load: Load
-      do: To do
       nothing_report: Nothing to report
       updates: Updates
       security_html: "%{security} security"
@@ -119,8 +118,6 @@ en:
         one: "%{count} container:"
         other: "%{count} containers:"
       see_docker_tab: see the Docker tab
-      without_compose_project: Without Compose project
-      stopped: stopped
       read_html: read %{collected_at}
       active_services: active services
       failed_html: "%{count} failed"
@@ -128,9 +125,6 @@ en:
       containers_running_html: "/%{count} containers running"
       show_inactive_services_html: Show the %{count} inactive services
       systemd_system: No systemd on this system.
-      docker_not_installed: Docker is not installed.
-      elio_needs_root_password_html: "%{message} Elio needs root (password-less sudo) or the docker group."
-      container: No container.
       services_inventory_yet: No services inventory yet.
       all: All
       states:
@@ -196,8 +190,6 @@ en:
       ssh_open: SSH open to everyone in the suggested rules.
       ssh_sources_settings: Sources
     ports_card:
-      firewall_tab_hint: The server's firewall, the OVH one and the rules to copy are in the Firewall tab.
-      see_firewall_tab: Firewall tab →
       private: private
       ports: Ports
       read_html: read %{collected_at}

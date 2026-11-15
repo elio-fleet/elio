@@ -448,6 +448,7 @@ en:
   notification_digest:
     title: Elio digest of %{date}
     nothing: Nothing to report.
+    highlight: '- %{label}: %{summary}'
     fleet: 'Fleet: %{online}/%{total} online, %{to_watch} to watch, %{critical} critical, %{updates}.'
     security_updates:
       one: "%{count} pending security update"

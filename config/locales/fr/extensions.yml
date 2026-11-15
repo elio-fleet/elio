@@ -90,7 +90,6 @@ fr:
       alert_maintenance: Sonde en maintenance depuis longtemps
       maintenance_days: Seuil de maintenance (jours)
       http_warning: ". ⚠ Adresse en http : la clé API circule en clair sur le réseau, préférez https"
-      monitors: Sondes
       not_metrics: La réponse ne ressemble pas à la page /metrics d'Uptime Kuma
       found:
         one: "%{count} sonde trouvée"
@@ -113,7 +112,6 @@ fr:
         all_monitors: Toutes les sondes
         uptime_kuma_not_synchronized: " (Uptime Kuma n'a pas encore été synchronisé)"
         attach_existing_monitor: Rattacher une sonde existante
-        uptime_kuma_monitors: Sondes Uptime Kuma
         synchronized_html: synchronisées %{last_synced_at}
         state: État
         response: Réponse
@@ -177,29 +175,13 @@ fr:
         attach: Rattacher
         back_automatic_attachment: Revenir au rattachement automatique
       server_tab:
-        not_synchronized_yet: " (pas encore synchronisé)"
-        see_resources_not_attached: Voir les ressources non rattachées
         region: Région
         datacenter: Datacenter
         text: activé
         'off': désactivé
-        ovhcloud_resource_attached_server: Aucune ressource OVHcloud n'est rattachée à ce serveur
-        attached_html: rattaché %{ovh_match_label}
-        state: État
-        ovh_service: Service OVH
-        ovh_ips_reverse: IP OVH et reverse
         reverse: Reverse de
         ovh_network_firewall_not: Firewall réseau OVH non configuré.
-        firewalls:
-          one: "Firewall réseau : %{count} IP, %{enabled} actif."
-          other: "Firewall réseau : %{count} IP, %{enabled} actifs."
-        see_firewall_tab: Onglet Firewall →
         anti_ddos: Anti-DDoS de
-        dns_records_server: Enregistrements DNS vers ce serveur
-        dns_record_zones_read: Aucun enregistrement DNS des zones lues ne pointe vers ce serveur.
-        dns_names:
-          one: "%{count} nom DNS → onglet DNS"
-          other: "%{count} noms DNS → onglet DNS"
         mitigation_permanent: permanente
         mitigation_automatic: automatique
       client:
@@ -299,7 +281,6 @@ fr:
         count:
           one: "%{count} base"
           other: "%{count} bases"
-        schedule: "%{frequency}%{s3}"
         to_s3: " · vers S3"
         last_success_html: dernière réussie %{at}
         never: aucune réussie
@@ -561,16 +542,12 @@ fr:
       not_attached: Non rattachés
       services_outside_fleet: services hors du parc
       expiring_soon: Expirent bientôt
-      dns_outside_fleet: DNS hors du parc
       ip_addresses: Adresses IP
-      dns: DNS
       name_ip_target: Nom, IP, cible…
       search: Rechercher
-      outside_fleet_only: Hors du parc seulement
       not_attached_only: Non rattachés seulement
       text: activé
       'off': désactivé
-      outside_fleet: hors du parc
       not_attached_2: non rattaché
       resource_matches: Aucune ressource ne correspond.
       not_synchronized_ovhcloud_yet: Pas encore synchronisé avec OVHcloud.
