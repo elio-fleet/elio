@@ -66,13 +66,12 @@ class Inventory::DockerStatus
     Inventory::Collectors::Docker.starting_up?(booted_at, @docker.collected_at)
   end
 
-  # Fixable CVEs of the images from the alert severity of the settings: fixed
-  # by updating the image, not the server.
+  # Fixable CVEs of the images from the alert severity of the server, or
+  # exploited (VulnerabilityAlert): fixed by updating the image, not the server.
   def vulnerability_reasons
-    minimum = @settings.vulnerability_alert_severity
-    return [] if minimum == "none" || !@settings.docker_alert_vulnerabilities
+    return [] unless @settings.docker_alert_vulnerabilities
 
-    serious = @server.server_vulnerabilities.images.fixable.at_least(minimum)
+    serious = @server.server_vulnerabilities.images.alerting(VulnerabilityAlert.severity_for(@server, @settings))
     count = serious.distinct.count(:cve)
     count.positive? ? [ reason("warn", :image_vulnerabilities, count: count, images: serious.distinct.count(:image)) ] : []
   end

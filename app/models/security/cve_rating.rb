@@ -19,7 +19,8 @@ class CveRating < ApplicationRecord
 
   # Recomputes the ratings of `cves` (all those of the fleet by default) from
   # the scores of the enabled providers, then the severity in use of the
-  # unrated rows, logging (and alerting on) those that became serious.
+  # unrated rows, logging (and alerting on) those that became serious (a
+  # higher severity, or newly listed as exploited).
   # Under a database lock: providers running side by side refresh their
   # CVEs as they go, a transition must be logged once.
   def self.refresh!(cves = ServerVulnerability.distinct.pluck(:cve))
@@ -32,6 +33,7 @@ class CveRating < ApplicationRecord
   LOCK = 4_242_001
 
   def self.compute!(cves)
+    before = serious_by_server
     providers = ScoreProvider.all_providers.select(&:enabled?)
     cvss = providers.select(&:cvss?).map(&:key)
     scores = CveScore.where(cve: cves, provider_key: providers.map(&:key)).pluck(:cve, :provider_key, :score, :data).group_by(&:first)
@@ -45,14 +47,14 @@ class CveRating < ApplicationRecord
         exploited_since: kev&.dig(3, "date_added"), updated_at: now }
     end
     rows.each_slice(5000) { |slice| upsert_all(slice, unique_by: :cve) }
-    apply_severities(cves)
+    apply_severities(cves, before)
   end
 
-  # Severity in use of the rows the distribution did not rate.
-  def self.apply_severities(cves)
+  # Severity in use of the rows the distribution did not rate. `before`: the
+  # CVEs that alerted before the new ratings.
+  def self.apply_severities(cves, before)
     ratings = where(cve: cves).pluck(:cve, :score).to_h
     affected = ServerVulnerability.where(cve: cves, distro_severity: [ "unknown", nil ])
-    before = serious_by_server
     affected.pluck(:id, :cve, :severity).group_by { |_, cve, _| severity_for(ratings[cve]) }.each do |severity, list|
       ids = list.reject { |_, _, current| current == severity }.map(&:first)
       ServerVulnerability.where(id: ids).update_all(severity: severity) if ids.any?
@@ -64,12 +66,9 @@ class CveRating < ApplicationRecord
     end
   end
 
-  # { server_id => Set of the fixable CVEs at the alert severity }.
+  # { server_id => Set of the CVEs that alert (VulnerabilityAlert) }.
   def self.serious_by_server
-    minimum = AppSetting.current.vulnerability_alert_severity
-    return {} if minimum == "none"
-
-    ServerVulnerability.fixable.at_least(minimum).distinct.pluck(:server_id, :cve).group_by(&:first).transform_values { |pairs| pairs.map(&:last).to_set }
+    VulnerabilityAlert.rows.distinct.pluck(:server_id, :cve).group_by(&:first).transform_values { |pairs| pairs.map(&:last).to_set }
   end
   private_class_method :serious_by_server
 end

@@ -13,6 +13,7 @@ module Settings
       @usage = Vulnerabilities.usage
       @automation = Automation.all_kinds.find { |automation| automation.kind == "vulnerabilities_update" }
       @setting = AppSetting.current
+      @alert_preview = VulnerabilityAlert.preview
       @providers = ScoreProvider.all_providers
       @coverage = CveScore.scored.group(:provider_key).count
       @fleet_cves = Vulnerabilities::Scores.fleet_cves.size

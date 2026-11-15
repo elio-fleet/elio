@@ -41,6 +41,16 @@ class CveRatingTest < ActiveSupport::TestCase
     assert_equal 1, Activity.of_kind(:vulnerability_found).count, "already serious"
   end
 
+  test "a CVE newly listed as exploited alerts whatever its severity" do
+    CveRating.refresh!
+    assert_not_includes servers(:web).reload.health_reason_texts.join, "CVE-2024-0002"
+
+    CveScore.store("kev", [ { cve: "CVE-2024-0002", score: 1, data: { "date_added" => "2026-11-15" } } ])
+    CveRating.refresh!
+    assert_equal [ "CVE-2024-0002" ], Activity.of_kind(:vulnerability_found).order(:id).last.data["cves"], "low, but exploited"
+    assert_includes servers(:web).reload.health_reason_texts, "2 vulnérabilités graves corrigeables"
+  end
+
   test "new rows take the severity of the known score" do
     CveRating.refresh!
     Vulnerabilities::Matcher.replace(servers(:db), [ { server_id: servers(:db).id, origin: "host", source: "debian", image: nil, cve: "CVE-2024-6387", source_package: "openssh",

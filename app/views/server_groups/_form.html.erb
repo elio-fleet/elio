@@ -34,6 +34,13 @@
     <div class="mt-2"><%= render "shared/health_threshold_fields", f: f %></div>
   </fieldset>
 
+  <div class="max-w-xs">
+    <%= f.label :vulnerability_alert_severity, class: label_class do %><%= t(".vulnerability_alert_severity") %> <span class="font-normal text-ink-3"><%= t(".optional") %></span><% end %>
+    <%= f.select :vulnerability_alert_severity, AppSetting.vulnerability_alert_options,
+          { include_blank: t(".settings_severity", label: AppSetting.vulnerability_alert_options.to_h.key(app_settings.vulnerability_alert_severity)) }, class: input_class %>
+    <p class="mt-1 text-xs text-ink-3"><%= t(".vulnerability_alert_severity_hint") %></p>
+  </div>
+
   <% ssh_sources = SshSource.ordered.to_a %>
   <% if ssh_sources.any? %>
     <fieldset class="group-ssh-sources">

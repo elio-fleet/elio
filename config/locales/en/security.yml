@@ -435,7 +435,7 @@ en:
         zip: "(zip)"
         debian_rates_only_small: 'Debian rates only a small part of its vulnerabilities (most stay “unrated”): to be told of all those an update fixes, choose “All the fixable ones”. Ubuntu gives a priority to almost all.'
         scores_intro_html: 'The score shown is the <strong>average</strong> of the CVSS scores of the active providers; it gives the severity of the vulnerabilities that Debian or Ubuntu do not rate. EPSS and KEV tell whether a vulnerability is exploited. %{fleet_cves} CVEs on the fleet. Automation “%{label}”:'
-        alert_html: A <strong>fixable</strong> vulnerability (a version that fixes it exists) from this severity makes the server critical and records the “Fixable vulnerability” activity (can be notified).
+        alert_html: A <strong>fixable</strong> vulnerability (a version that fixes it exists) from this severity, or listed as exploited (KEV) whatever its severity, makes the server critical and records the “Fixable vulnerability” activity (can be notified). A group of servers can have a severity of its own. In brackets, the servers each choice would make critical.
     score_providers:
       form:
         name: Name
@@ -489,6 +489,9 @@ en:
       medium: Medium or more
       any: All the fixable ones
       none: Never
+    vulnerability_alert_preview:
+      one: "%{label} (%{count} server)"
+      other: "%{label} (%{count} servers)"
     score_colors:
       green: Green
       orange: Orange

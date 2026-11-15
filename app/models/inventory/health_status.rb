@@ -97,7 +97,8 @@ class Inventory::HealthStatus
   # 8: Docker reasons name their containers, expected containers not running
   #    (containers_missing), nothing about containers just after a boot.
   # 9: thresholds of the server and its groups, inodes and swap thresholds of their own (health.swap).
-  VERSION = 9
+  # 10: alert severity of the server's groups, exploited CVEs (KEV) alert whatever their severity.
+  VERSION = 10
 
   def self.refresh_outdated!
     setting = AppSetting.current
@@ -202,13 +203,10 @@ class Inventory::HealthStatus
     end
   end
 
-  # Fixable CVEs of the server's own packages from the alert severity of the
-  # settings (those of its Docker images: Inventory::DockerStatus).
+  # Fixable CVEs of the server's own packages from its alert severity, or
+  # exploited (VulnerabilityAlert; those of its Docker images: Inventory::DockerStatus).
   def vulnerability_reasons
-    minimum = @settings.vulnerability_alert_severity
-    return [] if minimum == "none"
-
-    cves = @server.server_vulnerabilities.host.fixable.at_least(minimum).distinct.pluck(:cve)
+    cves = @server.server_vulnerabilities.host.alerting(VulnerabilityAlert.severity_for(@server, @settings)).distinct.pluck(:cve)
     return [] if cves.empty?
 
     [ cves.one? ? self.class.reason("crit", :vulnerability, cve: cves.first) : self.class.reason("crit", :vulnerabilities, count: cves.size) ]

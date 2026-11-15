@@ -16,7 +16,13 @@ class AppSetting < ApplicationRecord
   # Debian rates few issues (most are "not yet assigned"): "any" alerts on every fixable one.
   VULNERABILITY_ALERTS = %w[critical high medium any none].freeze
 
-  def self.vulnerability_alert_options = VULNERABILITY_ALERTS.map { |key| [ I18n.t("app_setting.vulnerability_alerts.#{key}"), key ] }
+  # `servers`: { severity => servers it would make critical } (VulnerabilityAlert.preview), shown after each label.
+  def self.vulnerability_alert_options(servers = {})
+    VULNERABILITY_ALERTS.map do |key|
+      label = I18n.t("app_setting.vulnerability_alerts.#{key}")
+      [ servers.key?(key) ? I18n.t("app_setting.vulnerability_alert_preview", label: label, count: servers[key]) : label, key ]
+    end
+  end
   validates :vulnerability_alert_severity, inclusion: { in: VULNERABILITY_ALERTS }
   # Colours of the CVSS scores: three bands, each from a score (0 to 10, increasing).
   SCORE_COLORS = %w[green orange red violet blue gray].freeze

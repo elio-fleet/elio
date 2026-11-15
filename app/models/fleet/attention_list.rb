@@ -130,7 +130,7 @@ class AttentionList
              I18n.t("attention_list.see_packages"), @routes.packages_path, servers.map { |server| server_ref(server) })
   end
 
-  # Fixable CVEs at the alert severity of the settings, on the whole fleet:
+  # Fixable CVEs at the alert severity of each server (VulnerabilityAlert), on the whole fleet:
   # the servers' own packages (critical), their Docker images (a warning, in
   # the Docker group, when the Docker alerts ask for it).
   def vulnerabilities_item
@@ -144,7 +144,7 @@ class AttentionList
   def find_vulnerabilities_item
     serious_vulnerabilities_item("crit", :host, :vulnerabilities, :shield_exclamation, I18n.t("attention_list.see_vulnerabilities")) do |minimum, servers|
       if servers.one?
-        [ I18n.t("attention_list.actions.fixes"), @routes.server_path(servers.first, tab: "vulnerabilities", view: "packages", fixable: 1, severity: minimum) ]
+        [ I18n.t("attention_list.actions.fixes"), @routes.server_path(servers.first, tab: "vulnerabilities", view: "packages", fixable: 1, severity: VulnerabilityAlert.severity_for(servers.first)) ]
       else
         @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: "host")
       end
@@ -165,11 +165,12 @@ class AttentionList
     end
   end
 
+  # The links filter on the least serious severity that alerts somewhere.
   def serious_vulnerabilities_item(tone, origin_scope, key, icon, action)
-    minimum = AppSetting.current.vulnerability_alert_severity
-    return if minimum == "none"
+    minimum = VulnerabilityAlert.widest
+    return if minimum.nil?
 
-    scope = ServerVulnerability.public_send(origin_scope).fixable.at_least(minimum)
+    scope = VulnerabilityAlert.rows(ServerVulnerability.public_send(origin_scope))
     cves = scope.distinct.count(:cve)
     return if cves.zero?
 

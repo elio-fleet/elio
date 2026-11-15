@@ -10,12 +10,9 @@ class SidebarCounts
 
   def servers = Count.new(Server.count, nil)
 
-  # Fixable CVEs of the servers' own packages from the alert severity (what makes a server critical).
+  # Fixable CVEs of the servers' own packages that alert (what makes a server critical).
   def vulnerabilities
-    minimum = @settings.vulnerability_alert_severity
-    return if minimum == "none"
-
-    count = VulnerabilityCount.fixable_now(minimum)
+    count = VulnerabilityCount.fixable_now(@settings.vulnerability_alert_severity)
     Count.new(count, :crit) if count.positive?
   end
 

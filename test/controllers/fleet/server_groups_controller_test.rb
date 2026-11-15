@@ -117,6 +117,24 @@ class ServerGroupsControllerTest < ActionDispatch::IntegrationTest
     assert_equal "ok", server.reload.health_status, "its servers lose its thresholds"
   end
 
+  test "a group alerts on vulnerabilities from a severity of its own" do
+    servers(:web).server_vulnerabilities.create!(origin: "host", source: "debian", cve: "CVE-2026-0001", source_package: "openssl", installed_version: "1", fixed_version: "2", severity: "medium")
+    servers(:web).refresh_health!
+    assert_not_includes servers(:web).health_reason_texts, "Vulnérabilité CVE-2026-0001 corrigeable"
+    sign_in users(:one)
+
+    get edit_server_group_path(server_groups(:production))
+    assert_select "select[name='server_group[vulnerability_alert_severity]'] option[value='']", "Comme dans les réglages (Haute ou critique)"
+
+    patch server_group_path(server_groups(:production)), params: { server_group: { name: "Production", vulnerability_alert_severity: "medium" } }
+    assert_equal "medium", server_groups(:production).reload.vulnerability_alert_severity
+    assert_includes servers(:web).reload.health_reason_texts, "Vulnérabilité CVE-2026-0001 corrigeable"
+
+    patch server_group_path(server_groups(:production)), params: { server_group: { name: "Production", vulnerability_alert_severity: "" } }
+    assert_nil server_groups(:production).reload.vulnerability_alert_severity
+    assert_not_includes servers(:web).reload.health_reason_texts, "Vulnérabilité CVE-2026-0001 corrigeable"
+  end
+
   test "deletes a group but keeps its servers" do
     sign_in users(:one)
 
