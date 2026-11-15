@@ -142,7 +142,7 @@ Pris en charge : **Debian et Ubuntu** (les autres systèmes : santé et système
 
 ## Ce qu'Elio exécute sur vos serveurs
 
-**Toutes les commandes sont dans [`config/ssh_commands.yml`](config/ssh_commands.yml)**, rangées par rôle puis par distribution. C'est le seul endroit où elles sont écrites : l'application les lit de là, et un test échoue si une commande est envoyée d'ailleurs. Les valeurs insérées sont toujours échappées.
+**Toutes les commandes sont dans [`config/ssh_commands.yml`](config/ssh_commands.yml)**, rangées par rôle puis par distribution. C'est le seul endroit où elles sont écrites : l'application les lit de là, et un test échoue si une commande est envoyée d'ailleurs. Les valeurs insérées sont toujours échappées. La page d'un serveur les montre aussi (menu ⋯ → **Commandes lancées par Elio**), dans la variante de sa distribution.
 
 | Pour | Commandes (lecture seule) |
 |---|---|

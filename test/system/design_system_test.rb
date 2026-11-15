@@ -21,7 +21,7 @@ class DesignSystemTest < ApplicationSystemTestCase
 
   def pages
     web = servers(:web)
-    [ root_path, servers_path, servers_path(view: "grid"), new_server_path, edit_server_path(web), server_groups_path, new_server_import_path, host_key_batch_path,
+    [ root_path, servers_path, servers_path(view: "grid"), new_server_path, edit_server_path(web), server_groups_path, new_server_import_path, host_key_batch_path, server_commands_path(web),
       *ServersController::TABS.map { |tab| server_path(web, tab: tab) },
       vulnerabilities_path, packages_path, docker_path, docker_path(tab: "cves"), ports_path, scheduled_tasks_path,
       public_keys_path, new_public_key_path, public_key_path(public_keys(:alice)), activities_path, tasks_path,

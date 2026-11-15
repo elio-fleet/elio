@@ -42,6 +42,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server SSH check" => -> { get server_ssh_check_path(servers(:web)) },
       "server keys" => -> { get server_authorized_keys_path(servers(:web)) },
       "server packages" => -> { get server_packages_path(servers(:web)) },
+      "server commands" => -> { get server_commands_path(servers(:web)) },
       "fleet packages" => -> { get packages_path(q: "ssl") },
       "fleet ports" => -> { get ports_path },
       "fleet scheduled tasks" => -> { get scheduled_tasks_path },

@@ -91,6 +91,7 @@ fr:
       scan_keys_whole_fleet: Scanner les clés de tout le parc
       import_servers: Importer des serveurs
     show:
+      commands: Commandes lancées par Elio
       duplicate: Dupliquer
       add_note: Ajouter une note
       see_keys: Clés SSH du serveur
@@ -454,3 +455,25 @@ fr:
     add_failed: "Clé non ajoutée : %{error_title} — %{error_details}"
     removed: "« %{name} » retirée du compte %{account}."
     remove_failed: "Clé non retirée : %{error_title} — %{error_details}"
+  server_commands:
+    index:
+      title: Commandes lancées par Elio
+      distribution: "Variantes pour la distribution de ce serveur : %{distros}."
+      distribution_unknown: Distribution encore inconnue (pas d'inventaire) ; les variantes par défaut sont affichées, Elio choisit la bonne à la connexion.
+      intro_html: Toutes les commandes qu'Elio peut lancer sur ce serveur, telles qu'écrites dans <code class="font-mono">config/ssh_commands.yml</code>, le seul endroit où des commandes sont écrites. Elles ne font que lire, sauf celles des clés SSH, lancées seulement quand vous ajoutez ou retirez une clé. Les valeurs notées <code class="font-mono">@{nom}</code> sont remplies au lancement, toujours échappées pour le shell.
+      count:
+        one: 1 commande
+        other: "%{count} commandes"
+      writes: Peut écrire
+      root: Root
+      variant: "Variante : %{variant}"
+      any_system: Tout système
+      shell: Envoyée comme script (sh -c)
+      sudo: Précédée de sudo -n
+      timeout:
+        one: Arrêtée après 1 seconde
+        other: Arrêtée après %{count} secondes
+      roles:
+        connection: Connexion
+        inventory: Inventaire
+        keys: Clés SSH

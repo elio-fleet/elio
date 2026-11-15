@@ -42,6 +42,10 @@ class Ssh::CommandsTest < ActiveSupport::TestCase
     default = health.template(%w[rocky rhel centos fedora])
     assert_no_match "apt-get", default
     assert_equal default, health.template
+    assert_equal "debian", health.variant(%w[ubuntu debian])
+    assert_equal "default", health.variant(%w[rocky rhel])
+    assert_equal "default", health.variant
+    assert_equal "inventory", health.role
     assert Ssh::Commands.fetch("inventory.health").distro_specific?
     assert_not Ssh::Commands.fetch("inventory.os").distro_specific?
   end
