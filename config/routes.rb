@@ -119,6 +119,8 @@ Rails.application.routes.draw do
     end
   end
   # One event by its id only: /journal/runs stays the runs tab.
+  # Quick search (⌘K): CVEs, packages and notes matching the typed text (JSON).
+  get "search", to: "command_searches#index", as: :command_search
   resources :activities, only: %i[index show], path: "journal", constraints: { id: /\d+/ }
   resources :tasks, only: %i[index show], path: "journal/runs"
   post "journal/runs/:task_id/rerun", to: "task_reruns#create", as: :task_rerun

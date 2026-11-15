@@ -29,3 +29,7 @@ en:
       port: Who exposes port %{port}?
       package: Find the package “%{package}” on the fleet
       dns_name: Who has the DNS name “%{name}”?
+      journal: Search “%{text}” in the journal
+      actions: Actions
+      inventory: Inventory %{server}
+      recent: Recent

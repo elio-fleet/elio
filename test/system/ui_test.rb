@@ -3,6 +3,7 @@ require "application_system_test_case"
 class UiTest < ApplicationSystemTestCase
   include Devise::Test::IntegrationHelpers
   include StubHelpers
+  include PackageHelpers
   include ActionView::RecordIdentifier
 
   setup do
@@ -86,6 +87,89 @@ class UiTest < ApplicationSystemTestCase
     end
     assert_field "q", with: "3306"
     assert_current_path ports_path(q: "3306")
+  end
+
+  test "quick search finds a CVE, a package and a note asked to the server" do
+    stub_method_until_teardown(Vulnerabilities::Scores::OnDemand, :request, false)
+    servers(:db).server_vulnerabilities.create!(origin: "host", source: "debian", cve: "CVE-2024-9143", source_package: "openssl",
+                                                installed_version: "1", fixed_version: "2", severity: "high")
+    record_packages(servers(:web), [ { manager: "dpkg", name: "openssl", version: "3.0" } ])
+    servers(:db).notes.create!(body: "Restore procedure: see the wiki", user: users(:one))
+    visit root_path
+    find("body").send_keys([ :control, "k" ])
+
+    within("#command-palette[open]") do
+      find("input[type=search]").fill_in(with: "procedure")
+      assert_selector ".command-palette-item", text: /Database\s+Restore procedure/
+      assert_selector ".command-palette-item", text: "Chercher « procedure » dans le journal"
+
+      find("input[type=search]").fill_in(with: "openssl")
+      assert_selector ".command-palette-item", text: /\Aopenssl\s+1 serveur/
+
+      find("input[type=search]").fill_in(with: "cve-2024-91")
+      assert_selector ".command-palette-item[aria-selected=true]", text: /CVE-2024-9143\s+1 serveur/
+      find("input[type=search]").send_keys(:enter)
+    end
+    assert_current_path vulnerability_path("CVE-2024-9143")
+    assert_selector "h2", text: "CVE-2024-9143"
+  end
+
+  test "quick search runs a server's inventory and lists the entries opened lately first" do
+    stub_method_until_teardown(Inventory::CollectJob, :perform_later, nil)
+    visit root_path
+    find("body").send_keys([ :control, "k" ])
+    within("#command-palette[open]") do
+      find("input[type=search]").fill_in(with: "inventorier web")
+      assert_selector ".command-palette-item[aria-selected=true]", text: "Inventorier Web"
+      find("input[type=search]").send_keys(:enter)
+    end
+    assert_selector "#flash .toast", text: "Inventaire de « Web » lancé."
+
+    find("body").send_keys([ :control, "k" ])
+    within("#command-palette[open]") do
+      find("input[type=search]").fill_in(with: "backup")
+      find("input[type=search]").send_keys(:enter)
+    end
+    assert_selector "h1", text: "Backup"
+
+    find("body").send_keys([ :control, "k" ])
+    within("#command-palette[open]") do
+      assert_selector "li[role=presentation]:first-child", text: "RÉCENTS"
+      assert_selector ".command-palette-item[aria-selected=true]", text: "Backup"
+    end
+  end
+
+  test "quick search asks before inventorying the whole fleet" do
+    started = []
+    stub_method_until_teardown(Inventory::CollectJob, :perform_later, ->(server, **) { started << server.name })
+    visit root_path
+
+    run_fleet_inventory = lambda do
+      find("body").send_keys([ :control, "k" ])
+      within("#command-palette[open]") do
+        find("input[type=search]").fill_in(with: "inventorier tous")
+        find("input[type=search]").send_keys(:enter)
+      end
+      assert_selector "#confirm-dialog[open]", text: "Inventorier maintenant les 3 serveurs du parc ?"
+    end
+    dismiss_app_confirm { run_fleet_inventory.call }
+    assert_empty started
+
+    accept_app_confirm { run_fleet_inventory.call }
+    assert_selector "#flash .toast", text: "lancé"
+    assert_equal 3, started.size
+  end
+
+  test "quick search offers no action to a viewer" do
+    sign_in users(:viewer)
+    visit root_path
+    find("body").send_keys([ :control, "k" ])
+
+    within("#command-palette[open]") do
+      find("input[type=search]").fill_in(with: "inventorier")
+      assert_text "Aucun résultat."
+      assert_no_selector ".command-palette-item", text: /\AInventorier/
+    end
   end
 
   test "authorizing a public_key on several servers at once" do
