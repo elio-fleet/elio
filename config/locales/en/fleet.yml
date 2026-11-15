@@ -226,6 +226,10 @@ en:
         other: "fixable · %{count} fewer than a week ago"
       fixable_same: "fixable · as many as a week ago"
       most_serious_first: most serious first
+      attention_all:
+        one: "See all (%{count} more) →"
+        other: "See all (%{count} more) →"
+      attention_fewer: See only the most serious
       group_crit:
         one: "Critical · %{count}"
         other: "Critical · %{count}"

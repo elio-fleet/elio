@@ -147,13 +147,15 @@ module ComponentsHelper
     end
   end
 
-  # A line of "To handle": gravity icon, text, servers as chips, a named action.
-  def attention_item(tone, text, action: nil, servers: [], icon: nil, **options)
+  # A line of "To handle": gravity icon, text, servers as chips, since when
+  # (optional: a relative time, the date as tooltip), a named action.
+  def attention_item(tone, text, action: nil, servers: [], icon: nil, since: nil, **options)
     tag.li(class: "attention-item grid grid-cols-[1rem_minmax(0,1fr)_auto] items-center gap-3 border-t border-line px-4 py-2 first:border-t-0", data: { tone: tone }, **options) do
       safe_join([
         icon(icon || UiHelper::TONES.fetch(tone)[:icon] || :information_circle, class: "h-4 w-4 #{TONE_TEXT.fetch(tone, "text-ink-3")}"),
         tag.div(class: "min-w-0") do
-          safe_join([ tag.span(text), *Array(servers).map { |name, path| server_chip(name, path) } ], " ")
+          safe_join([ tag.span(text), *Array(servers).map { |name, path| server_chip(name, path) },
+                      (relative_time_tag(since, prefix: t("ui.since_prefix"), class: "attention-since text-xs whitespace-nowrap text-ink-3") if since) ].compact, " ")
         end,
         (link_to(safe_join([ action[0], " →" ]), action[1], class: "attention-action text-sm whitespace-nowrap text-accent hover:underline", data: action[2]) if action)
       ].compact)

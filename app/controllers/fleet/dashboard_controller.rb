@@ -2,6 +2,8 @@ class DashboardController < ApplicationController
   # Failed (or partly failed) runs shown on the overview: the last day's.
   FAILED_TASKS_SINCE = 24.hours
   FAILED_TASKS_SHOWN = 3
+  # Items of "To handle" shown before "See all" (?attention=all).
+  ATTENTION_SHOWN = 8
 
   # Overview: setup checklist (alone while the fleet is empty), fleet
   # figures, what needs attention by gravity, recent activity, the failed
@@ -12,6 +14,7 @@ class DashboardController < ApplicationController
     @summary = FleetSummary.new(@servers)
     @insights = KeyInsights.new
     @attention = AttentionList.new(@servers, insights: @insights, summary: @summary)
+    @attention_all = params[:attention] == "all"
     @temporary_accesses = TemporaryAccess.active.includes(:server, :public_key).order(:expires_at)
     @vulnerabilities = SidebarCounts.new.vulnerabilities
     @vulnerability_change = vulnerability_change
