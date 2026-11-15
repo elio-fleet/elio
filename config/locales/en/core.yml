@@ -121,6 +121,7 @@ en:
       one: "%{count} unsaved change"
       other: "%{count} unsaved changes"
     clear_filters: Clear the filters
+    sort_by: Sort by %{column}
   count:
     servers:
       one: "%{count} server"

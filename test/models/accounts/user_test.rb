@@ -2,6 +2,19 @@ require "test_helper"
 
 class UserTest < ActiveSupport::TestCase
   include ActionMailer::TestHelper
+  test "the fleet columns hidden by the user: known columns only, kept in the preferences" do
+    user = users(:viewer)
+    assert user.fleet_column?(:load)
+
+    user.hide_fleet_columns!([ "load", :notes, "password" ])
+
+    assert_equal %w[load notes], user.reload.hidden_fleet_columns
+    assert_not user.fleet_column?(:load)
+    assert user.fleet_column?("disk")
+    user.update_column(:preferences, { "hidden_fleet_columns" => "load" })
+    assert_equal %w[load], user.reload.hidden_fleet_columns, "a damaged value does not break the list"
+  end
+
   test "is valid with an email and a password" do
     user = User.new(email: "valid@example.com", password: "password1234")
     assert user.valid?
