@@ -83,4 +83,49 @@ class KeyRotationsControllerTest < ActionDispatch::IntegrationTest
     post retry_settings_key_rotation_path(rotation)
     assert_equal "Rien à relancer.", flash[:alert]
   end
+
+  test "a rotation that stopped moving can be resumed, one that moves cannot" do
+    rotation = KeyRotation.start!(by: users(:one))
+    sign_in users(:one)
+
+    get settings_key_rotation_path(rotation)
+    assert_select "#rotation-stalled", 0
+    post resume_settings_key_rotation_path(rotation)
+    assert_equal "Cette rotation n'est pas interrompue.", flash[:alert]
+    assert_no_enqueued_jobs only: RotateSshKeyJob
+
+    rotation.update_column(:updated_at, 20.minutes.ago)
+    get settings_key_rotation_path(rotation)
+    assert_select "#rotation-stalled", text: /Aucun progrès depuis 15 minutes/
+    assert_select "#rotation-stalled form[action=?]", resume_settings_key_rotation_path(rotation)
+
+    post resume_settings_key_rotation_path(rotation)
+    assert_enqueued_with(job: RotateSshKeyJob, args: [ rotation ])
+    assert_not rotation.reload.stalled?
+  end
+
+  test "a dry run checks every server as a task, without starting a rotation" do
+    sign_in users(:one)
+    get settings_path
+    assert_select "#ssh-key-actions form[action=?] button", settings_key_rotation_check_path, text: "Simuler une rotation"
+
+    post settings_key_rotation_check_path
+
+    task = BackgroundTask.sole
+    assert_redirected_to task_path(task)
+    assert_equal [ "key_rotation_check", "Simulation de rotation de la clé (3 serveurs)" ], [ task.kind, task.label ]
+    assert_enqueued_jobs 3, only: CheckKeyRotationJob
+    assert_equal 0, KeyRotation.count
+  end
+
+  test "the settings remind to rotate a key older than a year" do
+    sign_in users(:one)
+    get settings_path
+    assert_select "#key-rotation-reminder", 0
+
+    ssh_keys(:main).update_column(:created_at, 13.months.ago)
+    get settings_path
+    assert_select "#key-rotation-reminder", text: /Cette clé a été générée il y a environ un an/
+    assert_select "#key-rotation-reminder form[action=?]", settings_key_rotation_check_path
+  end
 end

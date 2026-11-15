@@ -229,6 +229,23 @@ keys:
       file="$HOME/.ssh/authorized_keys"
       if [ -f "$file" ]; then cat "$file"; fi
 
+  read_can_append:
+    description: "Tells, without writing anything, whether the login account could add a key to its ~/.ssh/authorized_keys (rotation dry run). Prints writable, or file_read_only / directory_read_only / home_read_only."
+    shell: true
+    timeout: 10
+    default: |
+      dir="$HOME/.ssh"
+      file="$dir/authorized_keys"
+      if [ -e "$file" ]; then
+        if [ -w "$file" ]; then echo writable; else echo file_read_only; fi
+      elif [ -e "$dir" ]; then
+        if [ -d "$dir" ] && [ -w "$dir" ]; then echo writable; else echo directory_read_only; fi
+      elif [ -w "$HOME" ]; then
+        echo writable
+      else
+        echo home_read_only
+      fi
+
   append:
     description: "Adds a key line unless its key is already there (creates ~/.ssh in 700 and the file in 600). Prints present or added."
     writes: true

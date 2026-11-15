@@ -418,6 +418,7 @@ fr:
     kinds:
       inventory: Inventaire
       keys_scan: Scan des clés
+      key_rotation_check: Simulation de rotation de la clé
       automation: Automatisation
       integration: Extension
       vulnerabilities: Vulnérabilités

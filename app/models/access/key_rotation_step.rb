@@ -3,7 +3,7 @@
 class KeyRotationStep < ApplicationRecord
   PHASES = %w[install verify cleanup].freeze
 
-  belongs_to :key_rotation
+  belongs_to :key_rotation, touch: true
   belongs_to :server, optional: true
 
   enum :status, { rotated: "rotated", failed: "failed" }, validate: true

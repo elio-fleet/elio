@@ -19,6 +19,12 @@
         <p class="rotation-status flex items-center gap-2 text-sm font-medium text-accent">
           <%= icon :arrow_path, class: "h-4 w-4 animate-spin" %> <%= t(".in_progress", done: @rotation.servers_done, count: @rotation.servers_count) %>
         </p>
+        <% if @rotation.stalled? %>
+          <div id="rotation-stalled" class="mt-4 rounded-md border border-warn/40 bg-warn-soft/50 px-3 py-2 text-sm text-warn-ink">
+            <p><%= t(".stalled", minutes: KeyRotation::STALLED_AFTER.in_minutes.to_i) %></p>
+            <%= button_to t(".resume"), resume_settings_key_rotation_path(@rotation), data: { turbo_frame: "_top" }, class: "btn btn-primary mt-3" %>
+          </div>
+        <% end %>
       <% elsif @rotation.status == :activated %>
         <p class="rotation-status flex items-center gap-2 text-sm font-medium text-good-ink">
           <%= icon :check, class: "h-4 w-4" %> <%= t(".done_new_key_active") %>
