@@ -14,11 +14,14 @@ en:
         port: Port
         username: User
         expected_ports: The expected ports
+        expected_containers: The expected containers
         extra_addresses_text: The extra addresses
+        health_thresholds: The health thresholds
       server_group:
         name: Name
         color: Color
         expected_ports: The expected ports
+        health_thresholds: The health thresholds
       public_key:
         name: Name
         kind: Type
@@ -42,6 +45,9 @@ en:
         password: Password
         password_confirmation: Password confirmation
     errors:
+      messages:
+        health_threshold_range: must be between 1 and 100 % (the load between 0.1 and 50)
+        health_threshold_order: must have each warning below its critical
       models:
         automation:
           attributes:
@@ -53,6 +59,8 @@ en:
               address_taken: is already used by another server with the same port and user
             expected_ports:
               invalid_ports: 'contain invalid values: %{ports} (for example: “22, 80, 443/tcp, 51820/udp”)'
+            expected_containers:
+              invalid_names: 'contain values that are not container names: %{names} (for example: “nginx, shop-db-1”)'
             extra_addresses_text:
               invalid_ips: 'contain values that are not IP addresses: %{addresses}'
         notification_channel:

@@ -132,4 +132,60 @@ class PublicKeyTest < ActiveSupport::TestCase
     assert_equal [ public_keys(:ci) ], PublicKey.of_kind("server").to_a
     assert_equal [ public_keys(:alice) ], PublicKey.of_kind("person").to_a
   end
+
+  test "a weak key is flagged, through its parsed key" do
+    rsa = OpenSSL::PKey::RSA.generate(2048)
+    weak = build_public_key(content: "ssh-rsa #{[ rsa.to_blob ].pack("m0")} old@laptop")
+
+    assert_equal [ :rsa_short, 2048 ], [ weak.weakness, weak.rsa_bits ]
+    assert_not build_public_key.weak?
+    assert_nil build_public_key(content: "garbage").weakness
+  end
+
+  test "expired and expiring soon follow the expiry date" do
+    assert_not build_public_key.expired?
+    assert_not build_public_key.expiring_soon?
+    assert build_public_key(expires_on: Date.current).expired?
+    assert build_public_key(expires_on: 10.days.from_now.to_date).expiring_soon?
+    assert_not build_public_key(expires_on: 30.days.from_now.to_date).expiring_soon?
+  end
+
+  test "due_for_expiry_reminder: a date within 14 days or past, not reminded yet" do
+    public_keys(:alice).update!(expires_on: 13.days.from_now.to_date)
+    public_keys(:ci).update!(expires_on: 20.days.from_now.to_date)
+
+    assert_equal [ public_keys(:alice) ], PublicKey.due_for_expiry_reminder.to_a
+
+    public_keys(:alice).remind_expiry!
+    assert_empty PublicKey.due_for_expiry_reminder
+  end
+
+  test "remind_expiry! records one public_key_expiring activity, again after a new date" do
+    public_key = public_keys(:alice)
+    public_key.update!(expires_on: Date.new(2026, 12, 1))
+
+    2.times { public_key.reload.remind_expiry! }
+
+    activity = Activity.of_kind(:public_key_expiring).sole
+    assert_equal [ public_key, nil, "2026-12-01" ], [ activity.public_key, activity.user, activity.data["expires_on"] ]
+    assert_equal :warning, activity.severity
+
+    public_key.reload.update!(expires_on: Date.new(2027, 12, 1))
+    assert_nil public_key.expiry_reminded_at
+    public_key.remind_expiry!
+    assert_equal 2, Activity.of_kind(:public_key_expiring).count
+  end
+
+  test "the reminder summary says whether the key has expired" do
+    travel_to Time.zone.local(2026, 11, 20, 10) do
+      public_key = public_keys(:alice)
+      public_key.update!(expires_on: Date.new(2026, 12, 1))
+      public_key.remind_expiry!
+      assert_equal "La clé « Alice » du trousseau expire le 1 décembre 2026, à renouveler", Activity.of_kind(:public_key_expiring).reorder(:id).last.summary
+
+      public_key.update!(expires_on: Date.new(2026, 11, 1))
+      public_key.remind_expiry!
+      assert_equal "La clé « Alice » du trousseau a expiré le 1 novembre 2026, à renouveler", Activity.of_kind(:public_key_expiring).reorder(:id).last.summary
+    end
+  end
 end

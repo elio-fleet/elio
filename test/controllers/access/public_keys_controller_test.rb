@@ -245,4 +245,43 @@ class PublicKeysControllerTest < ActionDispatch::IntegrationTest
     assert_select ".key-kind", "Serveur"
     assert_select ".key-description", "Serveur de sauvegarde"
   end
+
+  test "create and update save the expiry date" do
+    sign_in users(:one)
+    get new_public_key_path
+    assert_select "input[type=date][name='public_key[expires_on]']"
+
+    post public_keys_path, params: { public_key: { name: "Bob", content: @key.public_key, expires_on: "2027-06-30" } }
+    public_key = PublicKey.find_by!(name: "Bob")
+    assert_equal Date.new(2027, 6, 30), public_key.expires_on
+
+    patch public_key_path(public_key), params: { public_key: { expires_on: "" } }
+    assert_nil public_key.reload.expires_on
+  end
+
+  test "the keyring and the key page show an expired date and a weak key" do
+    sign_in users(:one)
+    rsa = OpenSSL::PKey::RSA.generate(2048)
+    weak = PublicKey.create!(name: "Old laptop", content: "ssh-rsa #{[ rsa.to_blob ].pack("m0")} old@laptop", expires_on: 1.day.ago.to_date)
+
+    get public_keys_path
+    assert_select "##{ActionView::RecordIdentifier.dom_id(weak)} .key-weak", text: "Clé faible"
+    assert_select "##{ActionView::RecordIdentifier.dom_id(weak)} .key-expiry-date", text: "Expirée"
+    assert_select "##{ActionView::RecordIdentifier.dom_id(public_keys(:alice))} .key-weak", count: 0
+    assert_select "##{ActionView::RecordIdentifier.dom_id(public_keys(:alice))} .key-expiry-date", count: 0
+
+    get public_key_path(weak)
+    assert_select ".key-weak-warning", text: /Clé RSA de 2048 bits/
+    assert_select "#keyring-expiry .key-expiry-date", text: "Expirée"
+    assert_select "dd", text: "ssh-rsa (2048 bits)"
+  end
+
+  test "a key expiring soon shows its date" do
+    sign_in users(:one)
+    public_keys(:alice).update!(expires_on: Date.current + 5)
+
+    get public_keys_path
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(public_keys(:alice))} .key-expiry-date", text: /Expire le/
+  end
 end

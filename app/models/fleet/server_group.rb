@@ -1,6 +1,8 @@
 # A named set of servers (e.g. "Production", "Clients"), used to filter the
 # server list and to select several servers at once.
 class ServerGroup < ApplicationRecord
+  include HealthThresholdOverrides
+
   # Badge classes are written out in full so Tailwind generates them.
   COLORS = {
     "slate" => [ "bg-slate-100 text-slate-700 ring-slate-500/20 dark:bg-slate-800/60 dark:text-slate-300 dark:ring-slate-400/30", "bg-slate-400" ],

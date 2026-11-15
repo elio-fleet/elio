@@ -21,6 +21,7 @@
               <span class="key-name font-medium <%= key.named? ? "text-ink" : "italic text-ink-3" %>"><%= key.named? ? key.name : t("server_authorized_keys.index.unnamed") %></span>
               <% (entry.names - [ key.name ]).each do |other| %><span class="key-comment text-xs text-ink-3"><%= other %></span><% end %>
               <span class="font-mono text-xs text-ink-3"><%= key.type %></span>
+              <%= weak_key_badge(key) %>
             </p>
             <p class="key-fingerprint mt-0.5 break-all font-mono text-[11px] text-ink-3"><%= key.fingerprint %></p>
             <p class="key-places mt-1 text-xs text-ink-2">

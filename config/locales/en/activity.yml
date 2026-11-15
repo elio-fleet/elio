@@ -172,6 +172,9 @@ en:
       public_key_owner_changed:
         label: Owner of a key
         description: A keyring key was given to a user ("my key"), or no longer is.
+      public_key_expiring:
+        label: Keyring key to rotate
+        description: A keyring key reaches its expiry date in 14 days or less (sent once per date).
       public_key_deleted:
         label: Key removed from the keyring
         description: A key has been removed from the keyring (it stays on the servers).
@@ -348,6 +351,8 @@ en:
       public_key_created: Key “%{name}” added to the keyring
       public_key_owner_set: Key “%{name}” given to %{owner}
       public_key_owner_removed: Key “%{name}” given to nobody
+      public_key_expiring: Key “%{name}” of the keyring expires on %{date}, rotate it
+      public_key_expired: Key “%{name}” of the keyring expired on %{date}, rotate it
       public_key_deleted: Key “%{name}” removed from the keyring
       ssh_key_generated: Elio key generated
       ssh_key_regenerated: Elio key regenerated

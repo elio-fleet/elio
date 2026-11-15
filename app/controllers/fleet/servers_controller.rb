@@ -122,10 +122,13 @@ class ServersController < ApplicationController
   end
 
   def update
+    group_ids = @server.server_group_ids
     if @server.update(server_params)
-      changed = @server.saved_changes.keys & %w[name host port username expected_ports]
+      changed = @server.saved_changes.keys & %w[name host port username expected_ports expected_containers health_thresholds]
       Activity.record!(:server_updated, server: @server, changed: changed) if changed.any?
-      @server.refresh_health! if changed.include?("expected_ports") && @server.health_status.present?
+      # Expected ports and thresholds come from the server and its groups.
+      health_inputs = changed.intersect?(%w[expected_ports expected_containers health_thresholds]) || group_ids.sort != @server.server_group_ids.sort
+      @server.refresh_health! if health_inputs && @server.health_status.present?
       redirect_to server_path(@server), notice: t("servers_controller.updated", server_name: @server.name)
     else
       render :edit, status: :unprocessable_entity
@@ -255,6 +258,7 @@ class ServersController < ApplicationController
   end
 
   def server_params
-    params.expect(server: [ :name, :host, :port, :username, :extra_addresses_text, :expected_ports, server_group_ids: [] ])
+    params.expect(server: [ :name, :host, :port, :username, :extra_addresses_text, :expected_ports, :expected_containers, server_group_ids: [],
+                            health_thresholds: Inventory::HealthThresholds::KEYS ])
   end
 end
