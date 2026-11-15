@@ -179,6 +179,7 @@ class DockerTest < ActionDispatch::IntegrationTest
     end
     assert_select ".tabs-bar a[data-tab=docker] span[data-tone=crit]", "2"
     assert_select "#server-health-details", text: /Conteneur/, count: 0
+    assert_equal "Docker, 2 problèmes :\n• Conteneur worker redémarre en boucle\n• Conteneur db en mauvaise santé", css_select("h1 ~ a.docker-pill").first["title"]
   end
 
   test "Docker fine: a grey whale with a check; no pill nor Docker row without Docker" do

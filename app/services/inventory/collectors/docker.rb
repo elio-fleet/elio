@@ -20,6 +20,10 @@ class Inventory::Collectors::Docker < Inventory::Collector
   # not looping.
   LOOP_RESTARTS = 3
   LOOP_UPTIME = 2.minutes
+  # Just after the host booted, containers are still starting (restarting
+  # while their database is not up, health check not passed yet): no loop
+  # and no unhealthy container during this time (Inventory::DockerStatus).
+  BOOT_GRACE = 10.minutes
   STOPPED_LONG = 7.days
   DF_EVERY = 6.hours
   # Host addresses of a published port meaning every interface.
@@ -50,11 +54,22 @@ class Inventory::Collectors::Docker < Inventory::Collector
   def self.parse(sections, now: Time.current, previous: nil)
     stats = parse_stats(sections["stats"])
     restarts = Array(previous&.dig("containers")).to_h { |container| [ container["id"], container["restarts"].to_i ] }
-    containers = parse_containers(sections["containers"], now: now, previous_restarts: restarts).map { |container| container.merge(stats.fetch(container["id"], {})) }
+    booted_at = booted_at(sections["uptime"], now)
+    containers = parse_containers(sections["containers"], now: now, previous_restarts: restarts, starting_up: starting_up?(booted_at, now))
+      .map { |container| container.merge(stats.fetch(container["id"], {})) }
     used = containers.map { |container| container["image_id"] }.to_set
     images = parse_images(sections["images"]).map { |image| image.merge("used" => used.include?(image["id"])) }
-    { "containers" => containers, "images" => images, "scanner" => sections["scanners"].split.first }
+    { "containers" => containers, "images" => images, "scanner" => sections["scanners"].split.first, "booted_at" => booted_at&.utc&.iso8601 }.compact
   end
+
+  # "12345.67 23456.78" (/proc/uptime) → the boot time, nil when unread.
+  def self.booted_at(text, now)
+    seconds = text.to_s.split.first
+    now - seconds.to_f.round if seconds&.match?(/\A\d+(\.\d+)?\z/)
+  end
+
+  # Whether the host booted less than BOOT_GRACE before `at`.
+  def self.starting_up?(booted_at, at) = booted_at.present? && booted_at > at - BOOT_GRACE
 
   # The vulnerability rows are not kept in the snapshot (ServerVulnerability).
   def self.snapshot_data(data) = data.except("image_vulnerabilities")
@@ -65,7 +80,8 @@ class Inventory::Collectors::Docker < Inventory::Collector
 
   # "<id>\t/<name>\t<image>\t<image id>\t<state>\t<restarts>\t<health>\t<started>\t<finished>\t<exit>\t<policy>\t<created>\t<project>\t<service>
   #  \t<privileged>\t<mounts JSON>\t<networks>\t<ports JSON>" (the last four are missing from older snapshots' outputs)
-  def self.parse_containers(text, now:, previous_restarts: {})
+  # (`starting_up`: the host just booted, no container is looping yet).
+  def self.parse_containers(text, now:, previous_restarts: {}, starting_up: false)
     text.to_s.lines.filter_map do |line|
       id, name, image, image_id, state, restarts, health, started, finished, exit_code, policy, created, project, service,
         privileged, mounts, networks, ports = line.chomp.split("\t", -1)
@@ -78,7 +94,7 @@ class Inventory::Collectors::Docker < Inventory::Collector
                     "project" => label(project), "service" => label(service) }.compact
       container.merge!(host_access(privileged, mounts, networks, ports))
       new_restarts = container["restarts"] - previous_restarts.fetch(container["id"], 0)
-      container["looping"] = true if state == "restarting" || (new_restarts >= LOOP_RESTARTS && started_at && started_at > now - LOOP_UPTIME)
+      container["looping"] = true if !starting_up && (state == "restarting" || (new_restarts >= LOOP_RESTARTS && started_at && started_at > now - LOOP_UPTIME))
       container["stopped_long"] = true if state == "exited" && finished_at && finished_at < now - STOPPED_LONG
       container
     end

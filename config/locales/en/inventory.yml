@@ -31,12 +31,16 @@ en:
       other: "%{count} scheduled tasks late"
     container_unhealthy: Container %{name} unhealthy
     containers_unhealthy:
-      one: "%{count} container unhealthy"
-      other: "%{count} containers unhealthy"
+      one: "%{count} container unhealthy: %{containers}"
+      other: "%{count} containers unhealthy: %{containers}"
     container_looping: Container %{name} restarts in a loop
     containers_looping:
-      one: "%{count} container restarts in a loop"
-      other: "%{count} containers restart in a loop"
+      one: "%{count} container restarts in a loop: %{containers}"
+      other: "%{count} containers restart in a loop: %{containers}"
+    container_missing: Expected container %{name} not running
+    containers_missing:
+      one: "%{count} expected container not running: %{containers}"
+      other: "%{count} expected containers not running: %{containers}"
     images_to_update:
       one: "%{count} Docker image to update"
       other: "%{count} Docker images to update"

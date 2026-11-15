@@ -55,6 +55,17 @@ test "a loop is restarts piling up on a container that never stays up, not resta
   assert_nil looping.(12, NOW - 20.seconds, "abc123def456" => 11), "one restart since: an old count, not a loop (docker restart)"
 end
 
+  test "just after the host booted, no container is looping yet: they are still starting" do
+    uptime = ->(seconds) { Collector.parse(Collector.sections("#{output(:debian13)}@@elio uptime\n#{seconds} 1234.56\n"), now: NOW) }
+    starting, later = uptime.("180.25"), uptime.("3600.00")
+
+    assert_equal [ (NOW - 180).utc.iso8601, (NOW - 3600).utc.iso8601 ], [ starting["booted_at"], later["booted_at"] ]
+    assert_empty starting["containers"].select { |container| container["looping"] }, "worker restarting at boot"
+    assert_equal %w[worker], later["containers"].select { |container| container["looping"] }.pluck("name")
+    assert_nil Collector.parse(Collector.sections(output(:debian13)), now: NOW)["booted_at"], "uptime unread"
+    assert_includes Ssh::Commands.render("inventory.docker"), "/proc/uptime"
+  end
+
   test "reads the images (used or not, dangling ones without tag) and the disk usage" do
     data = Collector.parse(Collector.sections(output(:debian13)), now: NOW)
     disk = Collector.parse_df(output(:df))

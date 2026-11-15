@@ -133,7 +133,7 @@ inventory:
     default: "docker ps -a --no-trunc --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Label \"com.docker.compose.project\"}}\t{{.Label \"com.docker.compose.project.working_dir\"}}\t{{.Label \"com.docker.compose.project.config_files\"}}\t{{.Label \"com.docker.compose.service\"}}'"
 
   docker:
-    description: "Docker: containers (state, health check, restarts, Compose project, privileged or not, mounts, networks, published ports; never their environment), their CPU / memory, images (tags, digests, age, size), scanners installed (Trivy, Grype). Needs the docker group or root."
+    description: "Docker: containers (state, health check, restarts, Compose project, privileged or not, mounts, networks, published ports; never their environment), their CPU / memory, images (tags, digests, age, size), scanners installed (Trivy, Grype), time since boot (containers still starting are not a problem yet). Needs the docker group or root."
     run_as: root
     shell: true
     timeout: 120
@@ -148,6 +148,7 @@ inventory:
       echo "@@elio images"; images=$(docker image ls -q --no-trunc 2>/dev/null | sort -u)
       if [ -n "$images" ]; then docker image inspect --format '{{.Id}}	{{json .RepoTags}}	{{json .RepoDigests}}	{{.Created}}	{{.Size}}	{{.Os}}/{{.Architecture}}' $images 2>/dev/null; fi
       echo "@@elio scanners"; for tool in trivy grype; do if command -v $tool >/dev/null 2>&1; then echo $tool; fi; done
+      echo "@@elio uptime"; cat /proc/uptime 2>/dev/null
 
   docker_df:
     description: "Docker disk usage (docker system df). Slow on big hosts: read every few hours, not at every collection. Needs the docker group or root."

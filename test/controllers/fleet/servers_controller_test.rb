@@ -237,6 +237,24 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     assert_equal %w[expected_ports], Activity.of_kind(:server_updated).order(:id).last.data["changed"]
   end
 
+  test "expected containers: edited with the server, its Docker state computed again" do
+    sign_in users(:one)
+    server = servers(:web)
+    server.inventory_snapshots.create!(category: "docker", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                       data: { "docker" => "ok", "images" => [], "containers" => [ { "name" => "web", "state" => "running" } ] })
+    server.update_columns(health_status: "ok", docker_status: "ok", docker_reasons: [])
+
+    get edit_server_path(server)
+    assert_select "input[name='server[expected_containers]'][placeholder=?]", "nginx, shop-db-1"
+    patch server_path(server), params: { server: { expected_containers: "web, db" } }
+    assert_equal [ "crit", [ "Conteneur attendu db arrêté ou absent" ] ], [ server.reload.docker_status, server.docker_reason_texts ]
+    assert_equal %w[expected_containers], Activity.of_kind(:server_updated).sole.data["changed"]
+
+    patch server_path(server), params: { server: { expected_containers: "web, /db" } }
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation", text: %r{/db}
+  end
+
   test "the server page shows its history" do
     Activity.record!(:key_added, server: servers(:web), public_key: public_keys(:alice), unix_user: "deploy")
     Activity.record!(:key_added, server: servers(:db), public_key: public_keys(:alice), unix_user: "admin")
