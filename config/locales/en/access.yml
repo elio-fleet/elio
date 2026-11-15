@@ -185,6 +185,12 @@ en:
       connection_ok: Connection OK
       checked_html: checked %{current}
   keys:
+    rotation_check:
+      ready: 'Ready: Elio logs in and can add the new key.'
+      file_read_only: 'The ~/.ssh/authorized_keys file of %{user} is read-only: the new key could not be added.'
+      directory_read_only: 'The ~/.ssh directory of %{user} is read-only: the new key could not be added.'
+      home_read_only: 'The home directory of %{user} is read-only and has no ~/.ssh: the new key could not be added.'
+      unexpected: 'Unexpected answer while checking the ~/.ssh/authorized_keys file of %{user}.'
     access_extension:
       expired_title: Access already ended
       expired_details: This temporary access has reached its end (or has been removed); grant the key again instead.
@@ -287,6 +293,11 @@ en:
     retrying: Retrying the failed servers.
     cannot_finalize: This rotation cannot be finalized.
     activated: New key activated, the old one is deleted.
+    nothing_to_resume: This rotation is not interrupted.
+    resuming: Rotation resumed with the servers not done yet.
+  key_rotation_checks_controller:
+    label: Key rotation dry run (%{t})
+    started: 'Dry run started: nothing is changed on the servers.'
   public_key:
     kinds:
       person: Person
@@ -300,6 +311,9 @@ en:
     show:
       follow_rotation: Follow the rotation
       rotate_key: Rotate the key
+      simulate_rotation: Simulate a rotation
+      simulation_hint: A dry run first tells which servers would fail (unreachable, key refused, file read-only), without changing anything.
+      rotation_reminder: 'This key was generated %{age} ago: rotating it once a year limits the damage of a leak nobody noticed.'
       start_rotation: Start the rotation
       regenerate_key: Regenerate the key
       old_key_will_deleted: The old key will be deleted for good and Elio will not be able to log in to the servers until the new public key has been added to them.
@@ -380,6 +394,8 @@ en:
         ssh_key_application: "← SSH key of the application"
         deleted_user: a deleted user
         retry_failures: Retry the failures
+        stalled: 'No progress for %{minutes} minutes: the rotation was probably interrupted (Elio restarted). Both keys still work; resuming goes on with the servers not done yet.'
+        resume: Resume the rotation
         finalize_despite_failures: Finalize despite the failures
         old_key_will_deleted: 'The old key will be deleted: Elio will lose access to the failed servers until the new key is installed on them.'
         finalize: Finalize

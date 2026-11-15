@@ -72,4 +72,13 @@ class SshKeyTest < ActiveSupport::TestCase
   test "blob is the base64 part of the public key" do
     assert_equal ssh_keys(:main).public_key.split(" ")[1], ssh_keys(:main).blob
   end
+
+  test "a rotation is due once the key is a year old" do
+    key = ssh_keys(:main)
+    key.update_column(:created_at, 11.months.ago)
+    assert_not key.rotation_due?
+
+    key.update_column(:created_at, 13.months.ago)
+    assert key.rotation_due?
+  end
 end

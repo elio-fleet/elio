@@ -185,6 +185,12 @@ fr:
       connection_ok: Connexion OK
       checked_html: vérifié %{current}
   keys:
+    rotation_check:
+      ready: 'Prêt : Elio se connecte et peut ajouter la nouvelle clé.'
+      file_read_only: 'Le fichier ~/.ssh/authorized_keys de %{user} est en lecture seule : la nouvelle clé ne pourrait pas être ajoutée.'
+      directory_read_only: 'Le dossier ~/.ssh de %{user} est en lecture seule : la nouvelle clé ne pourrait pas être ajoutée.'
+      home_read_only: 'Le dossier personnel de %{user} est en lecture seule et n''a pas de ~/.ssh : la nouvelle clé ne pourrait pas être ajoutée.'
+      unexpected: 'Réponse inattendue en vérifiant le fichier ~/.ssh/authorized_keys de %{user}.'
     access_extension:
       expired_title: Accès déjà terminé
       expired_details: Cet accès temporaire est arrivé à son terme (ou a été retiré) ; accordez de nouveau la clé.
@@ -287,6 +293,11 @@ fr:
     retrying: Relance des serveurs en échec.
     cannot_finalize: Cette rotation ne peut pas être finalisée.
     activated: Nouvelle clé activée, l'ancienne est supprimée.
+    nothing_to_resume: Cette rotation n'est pas interrompue.
+    resuming: Rotation reprise avec les serveurs restants.
+  key_rotation_checks_controller:
+    label: Simulation de rotation de la clé (%{t})
+    started: 'Simulation lancée : rien n''est modifié sur les serveurs.'
   public_key:
     kinds:
       person: Personne
@@ -300,6 +311,9 @@ fr:
     show:
       follow_rotation: Suivre la rotation
       rotate_key: Faire tourner la clé
+      simulate_rotation: Simuler une rotation
+      simulation_hint: Une simulation indique d'abord les serveurs qui échoueraient (injoignables, clé refusée, fichier en lecture seule), sans rien modifier.
+      rotation_reminder: 'Cette clé a été générée il y a %{age} : la faire tourner une fois par an limite les dégâts d''une fuite passée inaperçue.'
       start_rotation: Lancer la rotation
       regenerate_key: Régénérer la clé
       old_key_will_deleted: L'ancienne clé sera définitivement supprimée et Elio ne pourra plus se connecter aux serveurs tant que la nouvelle clé publique n'y aura pas été ajoutée.
@@ -380,6 +394,8 @@ fr:
         ssh_key_application: "← Clé SSH de l'application"
         deleted_user: un utilisateur supprimé
         retry_failures: Relancer les échecs
+        stalled: 'Aucun progrès depuis %{minutes} minutes : la rotation a sans doute été interrompue (redémarrage d''Elio). Les deux clés fonctionnent toujours ; reprendre continue avec les serveurs restants.'
+        resume: Reprendre la rotation
         finalize_despite_failures: Finaliser malgré les échecs
         old_key_will_deleted: 'L''ancienne clé sera supprimée : Elio perdra l''accès aux serveurs en échec tant que la nouvelle clé n''y sera pas installée.'
         finalize: Finaliser

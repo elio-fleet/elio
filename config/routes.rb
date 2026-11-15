@@ -88,9 +88,11 @@ Rails.application.routes.draw do
       post :import
       post :scores
     end
+    resource :key_rotation_check, only: :create
     resources :key_rotations, only: %i[create show] do
       member do
         post :retry
+        post :resume
         post :finalize
       end
     end
