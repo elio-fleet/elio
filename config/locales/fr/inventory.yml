@@ -438,6 +438,19 @@ fr:
       running: en cours
       stopped: arrêté
       stopped_code: arrêté (code %{code})
+      privileged: privilégié
+      privileged_hint: "Conteneur privilégié : il peut tout faire sur l'hôte, en root."
+      docker_socket: socket Docker
+      docker_socket_hint: "Le socket Docker est monté dans ce conteneur : il peut lancer n'importe quel conteneur sur l'hôte, il est donc root sur l'hôte."
+      networks: "réseaux : %{list}"
+      mounts: "montages : %{list}"
+      exposure:
+        all: public
+        all_hint: "Publié sur toutes les interfaces : joignable depuis le réseau sauf si un pare-feu le bloque (les règles de Docker contournent en général ufw)."
+        loopback: local
+        loopback_hint: "Publié sur l'adresse locale seulement, joignable depuis ce serveur uniquement."
+        address: une adresse
+        address_hint: Publié sur cette adresse seulement.
     image_update:
       available: nouvelle version
       newer: "%{version} disponible"

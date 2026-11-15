@@ -45,4 +45,18 @@ class InventoryHelperTest < ActionView::TestCase
     assert_equal "Ubuntu 24.04.1 LTS", short_os_name("Ubuntu 24.04.1 LTS")
     assert_equal "", short_os_name(nil)
   end
+
+  test "what a container reaches of the host: risks, ports with their exposure, networks and mounts" do
+    container = { "privileged" => true, "networks" => %w[host], "mounts" => [ { "type" => "tmpfs", "destination" => "/run" } ],
+                  "ports" => [ { "address" => "::1", "port" => 9000, "target" => "9000/tcp", "exposure" => "loopback" },
+                               { "address" => "192.0.2.10", "port" => 53, "target" => "53/udp", "exposure" => "address" } ] }
+
+    assert_includes container_risk_badges(container), "privilégié"
+    assert_not_includes container_risk_badges(container), "socket Docker"
+    assert_equal "[::1]:9000→9000/tcp local, 192.0.2.10:53→53/udp une adresse", strip_tags(container_ports(container))
+    assert_equal "réseaux : host · montages : tmpfs:/run", strip_tags(container_attachments(container))
+    assert_nil container_ports({})
+    assert_nil container_attachments({})
+    assert_equal "", container_risk_badges({})
+  end
 end

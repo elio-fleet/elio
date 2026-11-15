@@ -51,6 +51,41 @@ module InventoryHelper
     end
   end
 
+  # Privileged container or Docker socket mounted: whoever controls the
+  # container is root on the host.
+  def container_risk_badges(container)
+    badges = %w[privileged docker_socket].select { |key| container[key] }.map do |key|
+      status_badge(:warn, t("inventory_helper.container.#{key}"), class: "container-risk ml-1", title: t("inventory_helper.container.#{key}_hint"))
+    end
+    safe_join(badges)
+  end
+
+  # Published ports with their exposure: every interface, the machine only,
+  # or one address.
+  def container_ports(container)
+    ports = Array(container["ports"])
+    return if ports.empty?
+
+    items = ports.map do |port|
+      address = port["address"].include?(":") ? "[#{port["address"]}]" : port["address"]
+      tag.span(title: t("inventory_helper.container.exposure.#{port["exposure"]}_hint")) do
+        safe_join([ "#{address}:#{port["port"]}→#{port["target"]} ", tag.span(t("inventory_helper.container.exposure.#{port["exposure"]}"), class: ("text-ink-2" if port["exposure"] == "all")) ])
+      end
+    end
+    tag.span(safe_join(items, ", "), class: "container-ports block max-w-xs truncate font-mono text-[11px] text-ink-3")
+  end
+
+  # Networks and mounts (volume or host path → path in the container).
+  def container_attachments(container)
+    mounts = Array(container["mounts"]).map { |mount| "#{mount["source"] || mount["type"]}:#{mount["destination"]}#{":ro" if mount["read_only"]}" }
+    parts = [ (t("inventory_helper.container.networks", list: container["networks"].join(", ")) if container["networks"].present?),
+              (t("inventory_helper.container.mounts", list: mounts.join(", ")) if mounts.any?) ].compact
+    return if parts.empty?
+
+    text = parts.join(" · ")
+    tag.span(text, class: "container-attachments block max-w-xs truncate text-[11px] text-ink-3", title: text)
+  end
+
   # `update` (ImageUpdate): names the newer fix of a pinned version, and the last version of its major below.
   def image_update_badge(state, update = nil)
     major = (tag.span(t("inventory_helper.image_update.in_major", major: update.latest_in_major[/\d+/], version: update.latest_in_major), class: "image-update-major block text-[11px] text-ink-3") if update&.latest_in_major.present?)

@@ -221,6 +221,13 @@ en:
       read_html: read %{collected_at}
       containers_running_html: "/%{count} containers running"
       trouble_html: "%{problems} in trouble"
+      host_access:
+        one: "%{count} with root on the host"
+        other: "%{count} with root on the host"
+      host_access_hint: Privileged containers or containers with the Docker socket mounted.
+      public_ports:
+        one: "%{count} port published on every interface"
+        other: "%{count} ports published on every interface"
       images_unused_html: images (%{used} unused)
       images_reclaimable_html: "· %{human_bytes} of images, %{human_bytes2} reclaimable"
       analysis: "· analysis:"

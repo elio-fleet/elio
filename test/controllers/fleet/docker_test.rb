@@ -9,6 +9,7 @@ class DockerTest < ActionDispatch::IntegrationTest
 
   def docker(server)
     data = Inventory::Collectors::Docker.parse(Inventory::Collectors::Docker.sections(file_fixture("inventory/docker/debian13.txt").read), now: NOW)
+    data["disk"] = Inventory::Collectors::Docker.parse_df(file_fixture("inventory/docker/df.txt").read)
     data["images"].each { |image| image["reference"] = image["tags"].first || image["id"] }
     data["scans"] = { "sha256:#{"a" * 64}" => { "method" => "elio", "at" => NOW.iso8601, "count" => 2 },
                       "sha256:#{"c" * 64}" => { "method" => "elio", "at" => NOW.iso8601, "error" => "Base Debian Security Tracker pas encore téléchargée" } }
@@ -34,11 +35,17 @@ class DockerTest < ActionDispatch::IntegrationTest
 
     assert_select "nav.server-tabs a[data-tab=docker][aria-current=page]", text: /Docker\s*4/
     assert_select "#server-docker" do
-      assert_select ".docker-summary", text: %r{2/4 conteneurs en cours\s+· 2 en difficulté\s+· 6 images \(2 inutilisées\)\s+· 1,14 Go d'images, 217 Mo récupérables\s+· analyse : Elio}
+      assert_select ".docker-summary", text: %r{2/4 conteneurs en cours\s+· 2 en difficulté\s+· 1 root sur l'hôte\s+· 1 port publié sur toutes les interfaces\s+· 6 images \(2 inutilisées\)\s+· 1,14 Go d'images, 217 Mo récupérables\s+· analyse : Elio}
       assert_select "tr.docker-container-row:first-child[data-name=db] .container-state", text: "mauvaise santé"
       assert_select "tr.docker-container-row[data-name=worker] .container-state", text: "redémarre en boucle"
       assert_select "tr.docker-container-row[data-name=backup-once]", text: /arrêté\s+backup-once.*arrêté il y a 31 jours/m
       assert_select "tr.docker-container-row[data-name=web]", text: /12,5 Mo/
+      assert_select "tr.docker-container-row[data-name=worker] .container-risk", 2, "privileged and Docker socket"
+      assert_select "tr.docker-container-row[data-name=web] .container-risk", 0
+      assert_select "tr.docker-container-row[data-name=web] .container-ports", text: "0.0.0.0:8080→80/tcp public"
+      assert_select "tr.docker-container-row[data-name=db] .container-ports", text: "127.0.0.1:5432→5432/tcp local"
+      assert_select "tr.docker-container-row[data-name=db] .container-attachments", text: "réseaux : shop_default, shop_backend · montages : shop_pgdata:/var/lib/postgresql/data"
+      assert_select "tr.docker-container-row[data-name=web] .container-attachments", text: /nginx.conf:ro/
       assert_select "nav.docker-sections a[data-section=containers][aria-current=page]", text: /Conteneurs\s*4/
       assert_select "nav.docker-sections a[data-section=vulnerabilities]", text: /Vulnérabilités\s*2/
       assert_select "tr.docker-image", 0, "the images are in their section"
