@@ -5,7 +5,8 @@ require "zlib"
 # YEAR_REFRESH, plus the feed of the last days' changes at each run. Only the
 # CVEs of the fleet are kept; a year with few of them (< bulk_from) is asked
 # through the NVD API instead (5 requests per 30 s without a key). The score is the NVD's own (Primary) one, else a
-# Secondary one, the most recent CVSS version first. `test` asks the NVD API.
+# Secondary one, the most recent CVSS version first, with the advisories and
+# fixes among its references. `test` asks the NVD API.
 class Vulnerabilities::Scores::Nvd < Vulnerabilities::Scores::Base
   FEED = ENV.fetch("ELIO_NVD_FEED_URL", "https://nvd.nist.gov/feeds/json/cve/2.0/nvdcve-2.0-%{name}.json.gz")
   API = "https://services.nvd.nist.gov/rest/json/cves/2.0?cveId={cve}"
@@ -76,7 +77,8 @@ class Vulnerabilities::Scores::Nvd < Vulnerabilities::Scores::Base
       next unless (score = cvss(data["baseScore"]))
 
       return Score.new(score: score, version: version, vector: data["vectorString"], severity: (data["baseSeverity"] || metric["baseSeverity"])&.downcase,
-                       data: { "source" => metric["source"], "description" => description&.truncate(600) }.compact)
+                       data: { "source" => metric["source"], "description" => description&.truncate(600),
+                               "references" => Vulnerabilities::References.pick(record["references"]).presence }.compact)
     end
     nil
   end

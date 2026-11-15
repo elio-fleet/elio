@@ -49,7 +49,7 @@ Elio suit un parc de serveurs Debian et Ubuntu depuis un seul endroit : lesquels
 | | |
 |:---:|:---:|
 | ![Vulnérabilités par paquet](docs/screenshots/fr/vulnerabilities-by-package.png) | ![Une CVE en détail](docs/screenshots/fr/vulnerability-detail.png) |
-| **Vulnérabilités par paquet**, avec la mise à jour à faire | **Une CVE en détail** : notes par fournisseur, vecteur CVSS en clair |
+| **Vulnérabilités par paquet**, avec la mise à jour à faire | **Une CVE en détail** : notes par fournisseur (demandées tout de suite si elles manquent), vecteur CVSS en clair, avis Debian / Ubuntu et correctifs |
 | ![Un serveur](docs/screenshots/fr/server.png) | ![Docker](docs/screenshots/fr/docker.png) |
 | **Un serveur** : santé, courbes sur 24 h, système | **Docker** : conteneurs, images, mises à jour, CVE |
 | ![Vue d'ensemble](docs/screenshots/fr/overview.png) | ![Thème sombre](docs/screenshots/fr/fleet-dark.png) |

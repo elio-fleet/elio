@@ -63,6 +63,7 @@ fr:
       turned_off: "(désactivé)"
       score_provider_asked_again_html: pas de note chez ce fournisseur (redemandé %{_})
       not_asked_yet_next: pas encore demandé (prochain passage des notes)
+      asking_now: demande en cours…
       text_html: Sur %{server_name}
       source_package: Paquet source
       installed_packages: Paquets installés
@@ -74,6 +75,10 @@ fr:
       exploited_since: ", depuis le %{date}"
       how_to_fix: Pour corriger
       fix_never_run: 'Commandes à lancer vous-même : Elio ne fait que lire les serveurs.'
+      references: Avis et correctifs
+      reference_kinds:
+        advisory: Avis
+        fix: Correctifs
     debian_tracker:
       not_tracker: Ce fichier n'est pas celui du Debian Security Tracker
       unreadable: 'Fichier du Debian Security Tracker illisible : %{truncate}'
