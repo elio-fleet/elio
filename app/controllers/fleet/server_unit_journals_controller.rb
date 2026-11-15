@@ -1,7 +1,9 @@
 # The last lines of the journal of a failed unit (lazy frame of the Services
 # tab, loaded when the user opens it). Only a unit the last readings list as
 # failed, with a valid systemd name: nothing else is ever sent to the server.
+# Operators and admins only: journal lines carry addresses, users, keys.
 class ServerUnitJournalsController < ApplicationController
+  require_permission :operate
   def show
     @server = Server.find(params[:server_id])
     @unit = params[:unit].to_s

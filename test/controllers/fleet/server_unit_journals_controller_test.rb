@@ -7,7 +7,15 @@ class ServerUnitJournalsControllerTest < ActionDispatch::IntegrationTest
   setup do
     servers(:web).inventory_snapshots.create!(category: "health", status: "ok", collected_at: Time.current, checked_at: Time.current,
                                               data: { "failed_units" => %w[nginx.service] })
+    sign_in users(:operator)
+  end
+
+  test "a viewer cannot read a journal: its lines carry addresses, users, keys" do
     sign_in users(:viewer)
+    stub_method(Inventory::UnitJournal, :call, ->(*) { flunk "no SSH" }) do
+      get server_unit_journal_path(servers(:web), unit: "nginx.service")
+    end
+    assert_response :forbidden
   end
 
   test "shows the last lines of the journal of a failed unit in its frame" do

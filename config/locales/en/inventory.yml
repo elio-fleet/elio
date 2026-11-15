@@ -123,6 +123,7 @@ en:
       failed_since_html: failed %{time}
       failed_at_boot_html: failed at server startup (%{time})
       journal: Journal and restart command
+      restart: Restart command
       restart_hint: 'To restart it yourself on the server (Elio never runs it):'
       seen_by_health_html: seen by the health reading %{time}
       seen_by_health_hint: Not a service (mount, socket…), or failed after the last services inventory; the health reading, more frequent, saw it.

@@ -48,7 +48,6 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server temporary accesses" => -> { get server_temporary_accesses_path(servers(:web)) },
       "server packages" => -> { get server_packages_path(servers(:web)) },
       "server commands" => -> { get server_commands_path(servers(:web)) },
-      "journal of a failed unit" => -> { get server_unit_journal_path(servers(:web), unit: "nginx.service") },
       "fleet packages" => -> { get packages_path(q: "ssl") },
       "fleet ports" => -> { get ports_path },
       "fleet scheduled tasks" => -> { get scheduled_tasks_path },
@@ -77,6 +76,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "set up 2FA" => -> { get new_two_factor_path }
     },
     operate: {
+      "journal of a failed unit" => -> { get server_unit_journal_path(servers(:web), unit: "nginx.service") },
       "attach a DNS name" => -> {
         Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
         post dns_record_link_path(DnsRecord.create!(source: "technitium", source_id: "x.a.test", zone: "a.test", name: "x.a.test", record_type: "A", value: "203.0.113.1")), params: { server_id: servers(:web).id }

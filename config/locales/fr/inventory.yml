@@ -123,6 +123,7 @@ fr:
       failed_since_html: a échoué %{time}
       failed_at_boot_html: a échoué au démarrage du serveur (%{time})
       journal: Journal et commande de relance
+      restart: Commande de relance
       restart_hint: 'Pour le relancer vous-même sur le serveur (Elio ne la lance jamais) :'
       seen_by_health_html: vu au relevé de santé %{time}
       seen_by_health_hint: Pas un service (montage, socket…), ou en échec depuis le dernier inventaire des services ; le relevé de santé, plus fréquent, l'a vu.

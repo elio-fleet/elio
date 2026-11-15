@@ -1,4 +1,4 @@
-<%# A systemd unit in the Services section of the server page. Locals: unit (Inventory::FailedUnits or services inventory), server. A failed unit opens on the last lines of its journal (read when opened) and the command to restart it. %>
+<%# A systemd unit in the Services section of the server page. Locals: unit (Inventory::FailedUnits or services inventory), server. A failed unit opens on the command to restart it and, for operators and admins, the last lines of its journal (read when opened). %>
 <% tone, label = case unit["active"]
                  when "active" then [ :good, unit["sub"] == "running" ? "actif" : unit["sub"] ]
                  when "failed" then [ :crit, t(".failed") ]
@@ -16,14 +16,15 @@
   <span class="ml-auto truncate text-xs text-ink-3"><%= unit["description"] %></span>
   <% if unit["active"] == "failed" && Inventory::UnitJournal.valid_name?(unit["name"]) %>
     <details class="unit-journal basis-full">
-      <summary class="cursor-pointer py-1 text-xs font-medium text-accent hover:underline"><%= t(".journal") %></summary>
+      <summary class="cursor-pointer py-1 text-xs font-medium text-accent hover:underline"><%= can?(:operate) ? t(".journal") : t(".restart") %></summary>
       <div class="space-y-2 pb-1">
         <div class="unit-restart flex flex-wrap items-center gap-2" data-controller="clipboard">
           <span class="text-xs text-ink-3"><%= t(".restart_hint") %></span>
           <code data-clipboard-target="source" class="rounded bg-subtle px-2 py-1 font-mono text-xs"><%= Inventory::UnitJournal.restart_command(server, unit["name"]) %></code>
           <%= render "settings/copy_button" %>
         </div>
-        <%= render "server_unit_journals/frame", server: server, unit: unit["name"], journal: nil %>
+        <%# The journal shows addresses, users, keys: operators and admins only. %>
+        <% if can?(:operate) %><%= render "server_unit_journals/frame", server: server, unit: unit["name"], journal: nil %><% end %>
       </div>
     </details>
   <% end %>
