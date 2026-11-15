@@ -235,6 +235,12 @@ en:
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
+      integration_credential_expiring:
+        label: Extension key expiring
+        description: The API key of an extension expires within two weeks (reported once per key).
+      integration_data_deleted:
+        label: Extension data deleted
+        description: An administrator has deleted what a turned off extension had read from its service.
       coolify_deployed:
         label: Coolify deployment
         description: Coolify finished deploying an application on a server.
@@ -394,6 +400,10 @@ en:
       integration_enabled: Extension %{integration} turned on
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
+      integration_credential_expiring:
+        one: "%{integration} API key expires in %{count} day (%{date})"
+        other: "%{integration} API key expires in %{count} days (%{date})"
+      integration_data_deleted: Data of the %{integration} extension deleted
       notification_channel_disabled: "Notification channel “%{channel}” turned off after failing for a day: %{error}"
       coolify_deployed: "Coolify: %{application} deployed%{commit}"
       coolify_deploy_failed: "Coolify: deployment of %{application} failed%{commit}"

@@ -61,6 +61,13 @@ class Integrations::Coolify < Integrations::Base
       Integrations::Coolify::Sync.new(connection, result).call
     end
 
+    # The resources each connection read, and what it remembers of its team;
+    # the connections themselves (URL, token) stay.
+    def purge(integration)
+      CoolifyResource.where(integration_connection_id: integration.connections.select(:id)).delete_all
+      integration.connections.update_all(state: {}, last_synced_at: nil, last_error: nil, updated_at: Time.current)
+    end
+
     def connection_label(connection) = connection.state["team"]
 
     # The SSH keys of every connection (the ones Coolify connects with; not its git deploy keys).

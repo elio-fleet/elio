@@ -18,11 +18,12 @@
           <% if integration.last_error %>
             <span class="integration-error text-crit-ink"><%= integration.last_error %></span>
           <% elsif integration.last_synced_at %>
-            <%= t(".synchronized_html", last_synced_at: (relative_time_tag integration.last_synced_at)) %>
+            <%= t(".synchronized_html", last_synced_at: (relative_time_tag integration.last_synced_at)) %><% if integration.last_sync_duration_ms %><span class="integration-duration tabular-nums"><%= t(".took", duration: short_duration(integration.last_sync_duration_ms)) %></span><% end %>
           <% else %>
             <%= t(".not_synchronized_yet") %>
           <% end %>
         </p>
+        <%= render "settings/integrations/credential", integration: integration %>
       <% end %>
       <div class="mt-4">
         <%= link_to (integration.enabled? ? t(".configure") : t(".configure_turn")), edit_settings_integration_path(integration.kind), class: "btn btn-secondary" %>

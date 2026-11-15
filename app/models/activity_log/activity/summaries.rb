@@ -134,6 +134,8 @@ module Activity::Summaries
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },
     integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) },
+    integration_credential_expiring: proc { Activity::Summaries.t(:integration_credential_expiring, integration: data["integration_label"], count: data["days"].to_i, date: I18n.l(Date.parse(data["expires_on"].to_s), format: :long)) },
+    integration_data_deleted: proc { Activity::Summaries.t(:integration_data_deleted, integration: data["integration_label"]) },
     notification_channel_disabled: proc { Activity::Summaries.t(:notification_channel_disabled, channel: data["channel_name"], error: data["error"]) },
     coolify_deployed: proc { Activity::Summaries.t(:coolify_deployed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
     coolify_deploy_failed: proc { Activity::Summaries.t(:coolify_deploy_failed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },

@@ -79,6 +79,7 @@ class RoleBasedUiTest < ActionDispatch::IntegrationTest
   # viewer or an operator to a page that answers "forbidden".
   test "no link shown to a viewer or an operator leads to a forbidden page" do
     stub_method_until_teardown(Ssh::Check, :call, Ssh::Check::Result.new(success: true, message: "ok", details: "ok"))
+    stub_method_until_teardown(Ssh::Diagnosis, :call, Ssh::Diagnosis::Result.new(steps: []))
     stub_method_until_teardown(Servers::Ping, :reachable?, true)
     %w[uptime_kuma ovh coolify technitium].each { |kind| Integration.create!(kind: kind).update_column(:enabled, true) }
 

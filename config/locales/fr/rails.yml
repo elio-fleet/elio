@@ -16,10 +16,12 @@ fr:
         expected_ports: Les ports attendus
         expected_containers: Les conteneurs attendus
         extra_addresses_text: Les adresses supplémentaires
+        health_thresholds: Les seuils de santé
       server_group:
         name: Nom
         color: Couleur
         expected_ports: Les ports attendus
+        health_thresholds: Les seuils de santé
       public_key:
         name: Nom
         kind: Type
@@ -46,6 +48,9 @@ fr:
         password: Mot de passe
         password_confirmation: Confirmation du mot de passe
     errors:
+      messages:
+        health_threshold_range: doivent être entre 1 et 100 % (la charge entre 0,1 et 50)
+        health_threshold_order: doivent avoir chaque seuil d'attention sous son seuil critique
       models:
         automation:
           attributes:

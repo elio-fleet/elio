@@ -1,7 +1,11 @@
-<%# A systemd unit in the Services section of the server page. Locals: unit (Inventory::FailedUnits or services inventory), server. A failed unit opens on the command to restart it and, for operators and admins, the last lines of its journal (read when opened). %>
+<%# A systemd unit in the Services section of the server page. Locals: unit (Inventory::FailedUnits or services inventory), server. Says since when
+    it runs, or since when it is stopped when it should start at boot. A failed unit opens on the command to restart it and, for operators and
+    admins, the last lines of its journal (read when opened). %>
+<% stopped = Inventory::ServiceUnits.stopped?(unit) %>
 <% tone, label = case unit["active"]
-                 when "active" then [ :good, unit["sub"] == "running" ? "actif" : unit["sub"] ]
+                 when "active" then [ :good, unit["sub"] == "running" ? t(".running") : unit["sub"] ]
                  when "failed" then [ :crit, t(".failed") ]
+                 when "inactive" then [ :neutral, stopped ? t(".stopped") : t(".inactive") ]
                  else [ :neutral, unit["active"] ]
                  end %>
 <li class="systemd-unit flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2" data-state="<%= unit["active"] %>">
@@ -11,6 +15,11 @@
   <% if unit["since"] %>
     <% time = relative_time_tag(Time.zone.parse(unit["since"])) %>
     <span class="unit-failed-since text-xs text-crit-ink"><%= unit["at_boot"] ? t(".failed_at_boot_html", time: time) : t(".failed_since_html", time: time) %></span>
+  <% end %>
+  <% if unit["active"] == "active" && unit["started_at"] %>
+    <span class="unit-started text-xs text-ink-3"><%= t(".started_html", time: relative_time_tag(Time.zone.parse(unit["started_at"]))) %></span>
+  <% elsif stopped && unit["stopped_at"] %>
+    <span class="unit-stopped text-xs text-ink-3"><%= t(".stopped_since_html", time: relative_time_tag(Time.zone.parse(unit["stopped_at"]))) %></span>
   <% end %>
   <% if unit["seen_at"] %><span class="unit-seen-by-health text-xs text-ink-3" title="<%= t(".seen_by_health_hint") %>"><%= t(".seen_by_health_html", time: relative_time_tag(unit["seen_at"])) %></span><% end %>
   <span class="ml-auto truncate text-xs text-ink-3"><%= unit["description"] %></span>
