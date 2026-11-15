@@ -250,6 +250,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_125317) do
     t.text "last_error"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "last_sync_duration_ms"
+    t.datetime "credential_expires_at"
+    t.boolean "credential_expiry_logged", default: false, null: false
     t.index ["kind"], name: "index_integrations_on_kind", unique: true
   end
 

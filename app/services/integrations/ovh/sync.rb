@@ -29,7 +29,7 @@ class Integrations::Ovh::Sync
     end
 
     log_alerts
-    servers.each(&:refresh_health!)
+    Server.refresh_extension_health!(servers)
 
     counts = OvhResource.group(:kind).count.merge("dns_record" => DnsRecord.of_source("ovh").count.nonzero?).compact
     parts = %w[instance dedicated vps ip dns_record].filter_map { |kind| I18n.t("integrations.ovh.sync.counts.#{kind}", count: counts[kind]) if counts[kind] }

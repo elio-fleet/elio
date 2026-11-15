@@ -29,7 +29,7 @@ class Integrations::Coolify::Sync
 
     log_failed_backups(previous)
     log_deployments(previous)
-    Server.where(id: touched + CoolifyResource.where(integration_connection_id: @connection.id).where.not(server_id: nil).pluck(:server_id)).find_each(&:refresh_health!)
+    Server.refresh_extension_health!(Server.where(id: touched + CoolifyResource.where(integration_connection_id: @connection.id).where.not(server_id: nil).pluck(:server_id)).to_a)
 
     resources = @result.records.count { |record| record.kind != "server" }
     @connection.update!(state: @connection.state.merge("team" => @result.team["name"], "team_id" => @result.team["id"], "version" => @result.version,

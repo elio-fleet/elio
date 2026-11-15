@@ -140,6 +140,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "delete channel" => -> { delete settings_notification_channel_path(create_channel) },
       "automations" => -> { get settings_automations_path },
       "extensions" => -> { get settings_integrations_path },
+      "delete the data of an extension" => -> { delete data_settings_integration_path("ovh") },
       "new extension connection" => -> { with_demo_multi { get new_settings_integration_connection_path("demo_multi") } },
       "add an extension connection" => -> { with_demo_multi { post settings_integration_connections_path("demo_multi"), params: { connection: { values: { url: "https://a.example", token: "t" } } } } },
       "test an extension connection" => -> { with_demo_multi { post test_settings_integration_connections_path("demo_multi"), params: { connection: { values: { url: "https://a.example" } } } } },

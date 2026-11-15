@@ -109,6 +109,7 @@ Rails.application.routes.draw do
       member do
         match :test, via: %i[post patch] # (the button shares the settings form, sent as PATCH)
         post :sync
+        delete :data, action: :purge
       end
       resources :connections, controller: "integration_connections", only: %i[new create edit update destroy] do
         post :test, on: :collection # (an unsaved connection)

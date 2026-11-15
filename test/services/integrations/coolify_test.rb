@@ -97,6 +97,18 @@ class Integrations::CoolifyTest < ActiveSupport::TestCase
     assert_equal 8, CoolifyResource.count
   end
 
+  test "deleting the data: the resources and what each connection remembers; the connections stay" do
+    integration = enable_coolify
+    integration.sync!
+    assert CoolifyResource.any?
+    integration.update!(enabled: false)
+    assert integration.purge_data!(user: users(:one))
+    assert_empty CoolifyResource.all
+    connection = integration.connections.sole
+    assert_equal [ {}, nil, "tok-tools" ], [ connection.state, connection.last_synced_at, connection.value(:token) ]
+    assert_not integration.reload.stored_data?
+  end
+
   test "a server deleted from the fleet leaves its Coolify resources unattached" do
     enable_coolify.connections.first.sync!
     servers(:web).destroy!

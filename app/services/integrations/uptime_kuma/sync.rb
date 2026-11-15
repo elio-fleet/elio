@@ -32,7 +32,7 @@ class Integrations::UptimeKuma::Sync
     end
 
     log_alerts(previous, servers) if @integration.last_synced_at
-    servers.each(&:refresh_health!)
+    Server.refresh_extension_health!(servers)
 
     attached = UptimeKumaMonitor.attached.count
     without = servers.count { |server| UptimeKumaMonitor.where(server: server).none? }

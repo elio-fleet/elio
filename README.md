@@ -164,7 +164,7 @@ The **suggested ufw rules** can open SSH only to the sources you list in *Settin
 
 ## Extensions
 
-Elio can read what your other tools know and show it next to each server. Enable them in *Settings → Extensions* (administrators). They **only read**: Elio never creates, changes or deletes anything on these services, and a disabled extension leaves no trace in the interface. Every alert they raise is optional, with its own threshold.
+Elio can read what your other tools know and show it next to each server. Enable them in *Settings → Extensions* (administrators). They **only read**: Elio never creates, changes or deletes anything on these services, and a disabled extension leaves no trace in the interface. Every alert they raise is optional, with its own threshold. Each extension shows when it last synchronized and how long it took; a turned off extension keeps what it read until an administrator deletes it (*Delete the data*, logged).
 
 ### Uptime Kuma
 
@@ -175,7 +175,7 @@ Elio can read what your other tools know and show it next to each server. Enable
 
 ### OVHcloud
 
-- **Setup**: the API endpoint (EU, CA, US), an Application Key, an Application Secret and a Consumer Key **limited to GET requests**. *Rights to give to the API key* lists the exact rights for the products you check and opens OVH's token page already filled in. *Test the connection* reports missing rights, and **warns if the key could write** — make a new one then.
+- **Setup**: the API endpoint (EU, CA, US), an Application Key, an Application Secret and a Consumer Key **limited to GET requests**. *Rights to give to the API key* lists the exact rights for the products you check and opens OVH's token page already filled in. *Test the connection* reports missing rights, and **warns if the key could write** — make a new one then. A key created for a limited time shows its end date in the settings and is announced in the activity (and the notifications that follow it) two weeks before it expires.
 - Each product is a checkbox: IPs and reverse DNS, network firewall, anti-DDoS, DNS zones (all or some), dedicated servers, VPS, Public Cloud instances (all projects or some).
 - A **Hosting** card on the overview of each server: the OVH service (offer, datacenter, expiration), its IPs and reverse; the network firewall rules, **whether they let each public port through** and the anti-DDoS are in the [Firewall tab](#the-firewall-tab). A **Hosting** page: services, IPs, resources attached to no server. Its DNS records go to the [DNS of the fleet](#dns-of-the-fleet).
 - Optional alerts: service about to expire (automatic renewal taken into account), network firewall disabled (IPv4 blocks: OVHcloud has no network firewall for IPv6), reverse DNS that does not match, OVH service not followed by Elio.
