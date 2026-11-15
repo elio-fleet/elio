@@ -80,9 +80,10 @@ class SettingsUsersTest < ActionDispatch::IntegrationTest
     assert_equal "Au plus 20 adresses à la fois.", flash[:alert]
   end
 
-  test "expired invitations are listed and resent in one click, with the same link" do
+  test "expired invitations are listed and resent in one click, with a new link" do
     invitation = Invitation.create!(email: "dave@example.com", role: :operator, invited_by: users(:operator))
     invitation.update_columns(expires_at: 2.days.ago)
+    old_token = invitation.token
     sign_in users(:one)
 
     get settings_users_path
@@ -103,6 +104,12 @@ class SettingsUsersTest < ActionDispatch::IntegrationTest
     assert_equal "dave@example.com invité (Opérateur)", Activity.of_kind(:user_invited).sole.summary
     get settings_users_path
     assert_select "li.pending-invitation input.invitation-link[value=?]", invitation_acceptance_url(invitation.token)
+    assert_not_equal old_token, invitation.token
+    sign_out users(:one)
+    get invitation_acceptance_path(old_token)
+    assert_select "h2", text: "Invitation invalide"
+    get invitation_acceptance_path(invitation.token)
+    assert_select "h2", text: "Rejoindre Elio"
   end
 
   test "an expired invitation is not resent once the address was invited again" do

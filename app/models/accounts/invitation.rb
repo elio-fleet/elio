@@ -72,15 +72,16 @@ class Invitation < ApplicationRecord
     end
   end
 
-  # Gives an expired invitation a new validity period, with the same link,
-  # sent again by `by`. Refused if the person has joined or been invited since.
+  # Gives an expired invitation a new validity period and a new link (the old
+  # one may have been forwarded meanwhile: it stays invalid), sent again by
+  # `by`. Refused if the person has joined or been invited since.
   def renew!(by:)
     raise ActiveRecord::RecordInvalid, self unless status == :expired
 
     email_must_be_free
     raise ActiveRecord::RecordInvalid, self if errors.any?
 
-    update!(invited_by: by, expires_at: VALIDITY.from_now)
+    update!(invited_by: by, token: SecureRandom.urlsafe_base64(32), expires_at: VALIDITY.from_now)
   end
 
   def revoke!

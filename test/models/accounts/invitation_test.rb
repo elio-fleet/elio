@@ -68,7 +68,7 @@ class InvitationTest < ActiveSupport::TestCase
     assert_empty Invitation.split_emails(nil)
   end
 
-  test "renew! makes an expired invitation valid again, with the same link, sent by someone else" do
+  test "renew! makes an expired invitation valid again, with a new link, sent by someone else" do
     invitation = invite.tap { |i| i.update_columns(expires_at: 2.days.ago) }
     token = invitation.token
 
@@ -76,7 +76,10 @@ class InvitationTest < ActiveSupport::TestCase
       invitation.renew!(by: users(:operator))
 
       assert invitation.reload.pending?
-      assert_equal [ token, 7.days.from_now, users(:operator) ], [ invitation.token, invitation.expires_at, invitation.invited_by ]
+      assert_equal [ 7.days.from_now, users(:operator) ], [ invitation.expires_at, invitation.invited_by ]
+      assert_not_equal token, invitation.token
+      assert_nil Invitation.find_pending_by_token(token)
+      assert_equal invitation, Invitation.find_pending_by_token(invitation.token)
     end
   end
 
