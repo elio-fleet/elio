@@ -7,7 +7,7 @@ class ServerFormTest < ApplicationSystemTestCase
   setup { sign_in users(:one) }
 
   test "testing the connection answers in the form and keeps what was typed" do
-    stub_method_until_teardown(Ssh::Check, :call, Ssh::Check::Result.new(success: true, message: "ok", details: "deploy@10.0.0.9 a répondu"))
+    stub_method_until_teardown(Ssh::Check, :call, Ssh::Check::Result.new(success: true, message: "ok", details: "deploy@10.0.0.9 a répondu", privilege: "none"))
     visit new_server_path
     execute_script("window.noFullReload = true")
 
@@ -17,6 +17,7 @@ class ServerFormTest < ApplicationSystemTestCase
     click_on "Tester la connexion"
 
     assert_selector ".connection-test-result", text: "Elio peut se connecter à ce serveur."
+    assert_selector ".connection-test-privilege", text: "Accès root : aucun (inventaire partiel)."
     assert_field "Nom", with: "Nouveau"
     assert evaluate_script("window.noFullReload")
     assert_not Server.exists?(host: "10.0.0.9")

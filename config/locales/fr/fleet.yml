@@ -170,6 +170,8 @@ fr:
       title: Modifier %{name}
     connection_test:
       succeeded: Elio peut se connecter à ce serveur.
+      root_access: 'Accès root : %{access}.'
+      partial: Ports, firewall, Docker, crontabs des utilisateurs et clés des autres comptes ne seront lus qu'en partie. Connectez-vous en root, ou donnez à ce compte sudo sans mot de passe (ou le groupe docker, pour Docker seul).
     delete_button:
       warning: "« %{server_name} » sera retiré d'Elio, avec son historique de clés lues. Les clés installées sur la machine, dont celle d'Elio, n'en seront pas retirées."
       delete_server: Supprimer le serveur

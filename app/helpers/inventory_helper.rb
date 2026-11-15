@@ -187,14 +187,23 @@ module InventoryHelper
                                                                       data: { distro_status: status })
   end
 
-  # Badge of an inventory snapshot that is not plainly ok.
+  # Badge of an inventory snapshot that is not plainly ok. "Partial" links to
+  # the overview's explanation of what is missing and why (servers/partial_collection).
   def inventory_status_badge(snapshot)
     case snapshot&.status
     when "error" then status_badge(:crit, t("inventory_helper.snapshot.error"), title: snapshot.message, class: "inventory-status")
-    when "partial" then status_badge(:warn, t("inventory_helper.snapshot.partial"), title: snapshot.message, class: "inventory-status")
+    when "partial"
+      link_to(server_path(snapshot.server_id, anchor: "partial-collection"), class: "partial-collection-link", title: snapshot.message, data: { turbo_frame: "_top" }) do
+        status_badge(:warn, t("inventory_helper.snapshot.partial"), class: "inventory-status hover:underline")
+      end
     when "unsupported" then status_badge(:neutral, t("inventory_helper.snapshot.unsupported"), title: snapshot.message, class: "inventory-status")
     end
   end
+
+  # Tab of the server page that shows an inventory category.
+  INVENTORY_TABS = { "packages" => "packages", "services" => "services", "docker" => "docker", "ports" => "firewall", "scheduled_tasks" => "schedules" }.freeze
+
+  def inventory_category_tab(category) = INVENTORY_TABS.fetch(category.to_s, "overview")
 
   def network_kind_label(kind) = t("inventory.network_kinds.#{kind}", default: kind.to_s.capitalize)
 
