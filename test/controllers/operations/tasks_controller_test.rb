@@ -162,4 +162,106 @@ class TasksControllerTest < ActionDispatch::IntegrationTest
     get tasks_path(q: "inventaire", status: "failed")
     assert_select ".task-filters a[href=?]", tasks_path(q: "inventaire")
   end
+
+  test "filters by kind, keeping the status and the search" do
+    enqueue("Inventaire du parc").fail!("x")
+    BackgroundTask.enqueue!(kind: "key_rotation_check", label: "Simulation", servers: []).fail!("x")
+
+    sign_in users(:viewer)
+    get tasks_path(kind: "key_rotation_check", status: "failed")
+
+    assert_select "tr.background-task", 1
+    assert_select "tr.background-task", text: /Simulation/
+    assert_select "nav.task-kinds a[aria-current=true][data-kind=key_rotation_check]"
+    assert_select "nav.task-kinds a[data-kind=inventory][href=?]", tasks_path(status: "failed", kind: "inventory")
+    assert_select "nav.task-filters a[data-filter=failed]", text: /En échec\s+1/
+    assert_select "nav.task-filters a[data-filter=all][href=?]", tasks_path(kind: "key_rotation_check")
+    assert_select "form.journal-search input[type=hidden][name=kind][value=key_rotation_check]"
+
+    get tasks_path(kind: "nope")
+    assert_select "tr.background-task", 2
+  end
+
+  test "no kind filter while every run is of the same kind" do
+    enqueue
+    sign_in users(:viewer)
+    get tasks_path
+    assert_select "nav.task-kinds", 0
+  end
+
+  test "a finished run offers to start it again, or only its failures, to those allowed" do
+    task = enqueue
+    task.items.find_by!(server_name: "Web").finish!(:failed, "Délai dépassé")
+    task.items.find_by!(server_name: "Database").finish!(:succeeded)
+
+    sign_in users(:operator)
+    get task_path(task)
+    assert_select "form[action=?] button.task-rerun", task_rerun_path(task), text: /Relancer/
+    assert_select "form[action=?][data-turbo-confirm*='le serveur en échec'] button.task-rerun-failed", task_rerun_path(task)
+    assert_select "input[name=only_failed][value='1']"
+
+    sign_out users(:operator)
+    sign_in users(:viewer)
+    get task_path(task)
+    assert_select "button.task-rerun", 0
+    assert_select "button.task-rerun-failed", 0
+  end
+
+  test "starting a run again creates a new run with the failed servers" do
+    task = enqueue
+    task.items.find_by!(server_name: "Web").finish!(:failed, "Délai dépassé")
+    task.items.find_by!(server_name: "Database").finish!(:succeeded)
+    sign_in users(:operator)
+
+    assert_difference -> { BackgroundTask.count } do
+      stub_method(Inventory::CollectJob, :perform_later, nil) { post task_rerun_path(task), params: { only_failed: "1" } }
+    end
+    rerun = BackgroundTask.recent.first
+    assert_redirected_to task_path(rerun)
+    assert_equal [ %w[Web], users(:operator) ], [ rerun.items.map(&:server_name), rerun.user ]
+    assert_equal "« Inventaire du parc (échecs relancés, 1 serveur) » lancée.", flash[:notice]
+
+    post task_rerun_path(task), params: { only_failed: "1" }
+    assert_redirected_to task_path(task)
+    assert_match "déjà traités", flash[:alert]
+  end
+
+  test "an unfinished run or one reserved to admins is not started again" do
+    task = enqueue
+    sign_in users(:operator)
+    assert_no_difference -> { BackgroundTask.count } do
+      post task_rerun_path(task)
+    end
+    assert_match "ne peut pas être relancée", flash[:alert]
+
+    check = BackgroundTask.enqueue!(kind: "key_rotation_check", label: "Simulation", servers: [ servers(:web) ])
+    check.items.each { |item| item.finish!(:failed) }
+    post task_rerun_path(check)
+    assert_response :forbidden
+
+    get task_path(check)
+    assert_select "button.task-rerun", 0
+  end
+
+  test "slow servers are flagged and can come first" do
+    task = enqueue("Inventaire", servers: [ servers(:web), servers(:db), servers(:backup) ])
+    now = Time.current
+    { "Web" => 3, "Database" => 4, "Backup" => 75 }.each do |name, seconds|
+      task.items.find_by!(server_name: name).update!(status: "succeeded", started_at: now - seconds, finished_at: now)
+    end
+    task.refresh!
+    backup = task.items.find_by!(server_name: "Backup")
+
+    sign_in users(:viewer)
+    get task_path(task)
+    assert_select "##{ActionView::RecordIdentifier.dom_id(backup)} .task-slow", text: /lent/
+    assert_select ".task-slow", 1
+    assert_select "#task-items tr.task-item:first-child", text: /Backup/ # by name
+    assert_select "a.task-sort[href=?]", task_path(task, sort: "duration"), text: "Les plus lents d'abord"
+
+    get task_path(task, sort: "duration")
+    assert_select "#task-items tr.task-item:first-child", text: /Backup.*1 min 15 s/m
+    assert_select "#task-items tr.task-item:last-child", text: /Web/
+    assert_select "a.task-sort[href=?]", task_path(task), text: "Par nom"
+  end
 end

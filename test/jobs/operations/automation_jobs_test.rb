@@ -25,6 +25,8 @@ class AutomationJobsTest < ActiveJob::TestCase
     task.reload
     assert_equal "partial", task.status
     assert_match "serveurs scannés", task.result
+    assert_match "servers scanned", I18n.with_locale(:en) { task.result }, "written in the reader's language"
+    assert_match "serveurs scannés", task[:result], "plain text kept for the search"
     assert_equal Server.count, task.items.count
     failed = task.items.find_by!(server_name: "Database")
     assert_equal [ "failed", "Clé refusée" ], [ failed.status, failed.message ]

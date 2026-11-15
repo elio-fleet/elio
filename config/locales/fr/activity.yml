@@ -154,6 +154,9 @@ fr:
       user_unlocked:
         label: Compte déverrouillé
         description: Un administrateur a déverrouillé un compte avant la fin de son verrouillage.
+      password_change_required:
+        label: Nouveau mot de passe demandé
+        description: Un administrateur a demandé à un utilisateur de choisir un nouveau mot de passe.
       two_factor_enabled:
         label: 2FA activée
         description: Un utilisateur a activé la double authentification.
@@ -335,6 +338,7 @@ fr:
       user_deactivated: "%{email} désactivé"
       user_reactivated: "%{email} réactivé"
       user_unlocked: "%{email} déverrouillé"
+      password_change_required: "%{email} doit choisir un nouveau mot de passe (demandé par %{asked_by})"
       user_locked:
         one: "%{email} verrouillé après %{count} essai raté"
         other: "%{email} verrouillé après %{count} essais ratés"

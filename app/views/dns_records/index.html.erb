@@ -45,14 +45,24 @@
 </div>
 
 <%= search_results_frame do %>
+  <% if @ip_names %>
+    <p class="dns-ip-names mb-3 text-sm text-ink-2">
+      <%= t("dns_records.index.ip_names", count: @ip_names.size, ip: @q) %><% if @ip_names.any? %> <span class="font-mono text-xs"><%= @ip_names.join(", ") %></span><% end %>
+    </p>
+  <% end %>
   <% if @records.any? %>
-    <div class="card overflow-x-auto">
+    <% bulk = can?(:operate) %>
+    <div class="card overflow-x-auto" <%= tag.attributes(data: { controller: "check-all" }) if bulk %>>
       <table id="dns-records" class="table-dense">
-        <thead><tr><th class="pl-4"><%= t("dns_records.index.name") %></th><th>Type</th><th><%= t("dns_records.index.value") %></th><th><%= t("dns_records.index.source") %></th><th><%= t("dns_records.index.server") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t("dns_records.index.attach") %></th><% end %></tr></thead>
+        <thead><tr><% if bulk %><th class="pl-4 w-8"><button type="button" data-action="check-all#toggle" class="cursor-pointer text-xs font-medium text-accent"><%= t("dns_records.index.all") %></button></th><% end %><th class="<%= "pl-4" unless bulk %>"><%= t("dns_records.index.name") %></th><th>Type</th><th><%= t("dns_records.index.value") %></th><th><%= t("dns_records.index.source") %></th><th><%= t("dns_records.index.server") %></th><% if can?(:operate) %><th class="pr-4 text-right"><%= t("dns_records.index.attach") %></th><% end %></tr></thead>
         <tbody>
           <% @records.each do |record| %>
             <tr class="dns-record" data-name="<%= record.name %>" data-type="<%= record.record_type %>" data-source="<%= record.source %>">
-              <td class="pl-4 font-mono text-xs"><%= record.name %><% if record.disabled %> <span class="badge bg-subtle text-ink-3"><%= t("dns_records.index.disabled") %></span><% end %>
+              <% if bulk %>
+                <td class="pl-4"><%= check_box_tag "record_ids[]", record.id, false, id: dom_id(record, :select), form: "dns-link-batch", class: "rounded border-line",
+                                       data: { check_all_target: "checkbox" }, aria: { label: t("dns_records.index.select", name: record.name) } %></td>
+              <% end %>
+              <td class="<%= "pl-4" unless bulk %> font-mono text-xs"><%= record.name %><% if record.disabled %> <span class="badge bg-subtle text-ink-3"><%= t("dns_records.index.disabled") %></span><% end %>
                 <span class="block font-sans text-[11px] text-ink-3"><%= record.zone %></span></td>
               <td class="font-mono text-xs"><%= record.record_type %></td>
               <td class="font-mono text-xs"><%= record.value %></td>
@@ -73,6 +83,15 @@
         </tbody>
       </table>
     </div>
+    <% if bulk %>
+      <%= form_with url: dns_link_batch_path, id: "dns-link-batch", data: { turbo_frame: "_top" }, class: "mt-3 flex flex-wrap items-center gap-2 text-sm" do |f| %>
+        <%= label_tag "dns_link_batch_server", t("dns_records.index.bulk_attach"), class: "text-ink-2" %>
+        <%= f.select :server_id, [ [ t("dns_records.index.bulk_choose"), "" ], [ t("dns_records.link.server"), DnsLinkBatchesController::NONE ],
+                                   [ t("dns_records.link.automatic"), DnsLinkBatchesController::AUTOMATIC ], *server_options ],
+              {}, id: "dns_link_batch_server", required: true, class: "input w-auto max-w-56 py-1.5" %>
+        <%= f.submit t("dns_records.link.attach"), class: "btn btn-secondary" %>
+      <% end %>
+    <% end %>
     <%= render "shared/pagination", pager: @pager, noun: t("dns_records.index.records").downcase %>
   <% else %>
     <p class="card px-4 py-6 text-sm text-ink-3"><%= DnsRecord.exists? ? t("dns_records.index.none") : t("dns_records.index.no_record_yet") %></p>
