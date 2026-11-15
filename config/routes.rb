@@ -117,6 +117,7 @@ Rails.application.routes.draw do
   end
   resources :activities, only: :index, path: "journal"
   resources :tasks, only: %i[index show], path: "journal/runs"
+  post "journal/runs/:task_id/rerun", to: "task_reruns#create", as: :task_rerun
   resources :packages, only: :index, path: "updates"
   resources :ports, only: :index
   resources :scheduled_tasks, only: :index, path: "scheduled-tasks"

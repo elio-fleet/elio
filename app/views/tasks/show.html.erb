@@ -3,10 +3,20 @@
 <turbo-frame id="<%= dom_id(@task) %>" target="_top">
   <% if @task.unfinished? %><div data-controller="auto-refresh" hidden></div><% end %>
 
-  <%= page_header @task.label, crumbs: [ [ t("nav.journal"), activities_path ], [ t("nav.tasks"), tasks_path ], @task.label ], badges: task_status_badge(@task.status, id: "task-status") %>
+  <%= page_header @task.label, crumbs: [ [ t("nav.journal"), activities_path ], [ t("nav.tasks"), tasks_path ], @task.label ], badges: task_status_badge(@task.status, id: "task-status") do %>
+    <% if can?(@task.rerun_permission) %>
+      <% if @task.failures_rerunnable? %>
+        <% failed = @items.count { |item| item.server_id && %w[failed partial].include?(item.status) } %>
+        <%= button_to task_rerun_path(@task), params: { only_failed: 1 }, class: "btn btn-primary task-rerun-failed", form: { data: { turbo_confirm: t(".rerun_failed_confirm", count: failed) } } do %><%= icon :arrow_path %> <%= t(".rerun_failed") %><% end %>
+      <% end %>
+      <% if @task.rerunnable? %>
+        <%= button_to task_rerun_path(@task), class: "btn btn-secondary task-rerun", form: { data: { turbo_confirm: t(".rerun_confirm") } } do %><%= icon :arrow_path %> <%= t(".rerun") %><% end %>
+      <% end %>
+    <% end %>
+  <% end %>
 
   <dl class="task-facts card grid px-4 py-3 grid-cols-2 gap-x-6 gap-y-2 text-sm sm:grid-cols-4">
-    <div><dt class="text-xs text-ink-3">Type</dt><dd><%= @task.kind_label %><% if @task.automation && can?(:administer) %> · <%= link_to t(".manage"), settings_automations_path, class: "text-accent" %><% end %></dd></div>
+    <div><dt class="text-xs text-ink-3"><%= t(".kind") %></dt><dd><%= @task.kind_label %><% if @task.automation && can?(:administer) %> · <%= link_to t(".manage"), settings_automations_path, class: "text-accent" %><% end %></dd></div>
     <div><dt class="text-xs text-ink-3"><%= t(".started") %></dt><dd><%= @task.author_name %></dd></div>
     <div><dt class="text-xs text-ink-3"><%= t(".started_2") %></dt><dd><%= relative_time_tag(@task.created_at) %></dd></div>
     <div><dt class="text-xs text-ink-3"><%= t(".duration") %></dt><dd class="tabular-nums"><%= @task.started_at ? task_duration(@task.duration) : t(".not_started_yet") %></dd></div>
@@ -21,7 +31,12 @@
   <section class="card mt-4 overflow-x-auto">
     <div class="card-header">
       <h2 class="text-sm font-semibold"><%= t(".servers") %></h2>
-      <%= render "tasks/progress", task: @task %>
+      <div class="flex flex-wrap items-center gap-3">
+        <% if @slow_ids.any? || @sort %>
+          <%= link_to (@sort ? t(".sort_by_name") : t(".sort_by_duration")), task_path(@task, sort: (@sort ? nil : "duration")), class: "task-sort text-xs font-medium text-accent hover:underline" %>
+        <% end %>
+        <%= render "tasks/progress", task: @task %>
+      </div>
     </div>
     <% if @items.any? %>
       <table id="task-items" class="table-dense w-full">
@@ -43,7 +58,7 @@
                     <% item.details.each do |category, detail| %>
                       <li class="task-category" data-category="<%= category %>" title="<%= detail["message"] %>">
                         <%= Inventory::Collector.label_for(category) %> :
-                        <%= { "ok" => "✓", "partial" => "partiel", "unsupported" => t(".not_available"), "error" => t(".failed") }.fetch(detail["status"], detail["status"]) %>
+                        <%= { "ok" => "✓", "partial" => t(".partial"), "unsupported" => t(".not_available"), "error" => t(".failed") }.fetch(detail["status"], detail["status"]) %>
                       </li>
                     <% end %>
                   </ul>
@@ -51,7 +66,10 @@
                 <% if item.message.present? %><p class="task-item-message mt-1 <%= item.status == "failed" ? "text-crit-ink" : "text-warn-ink" %>"><%= item.message %></p><% end %>
                 <% if item.status == "running" && item.started_at %><p class="text-ink-3"><%= relative_time_tag(item.started_at, prefix: t(".started_prefix")) %></p><% end %>
               </td>
-              <td class="whitespace-nowrap text-ink-2 tabular-nums"><%= task_duration(item.duration) %></td>
+              <td class="whitespace-nowrap text-ink-2 tabular-nums">
+                <%= task_duration(item.duration) %>
+                <% if @slow_ids.include?(item.id) %><%= status_badge(:warn, t(".slow"), icon: :clock, class: "task-slow ml-1", title: t(".slow_title")) %><% end %>
+              </td>
             </tr>
           <% end %>
         </tbody>

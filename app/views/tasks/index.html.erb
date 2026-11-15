@@ -17,10 +17,18 @@
   <%= filter_bar do %>
   <nav class="task-filters flex flex-wrap gap-2" aria-label="<%= t(".status") %>">
     <% [ [ t(".all"), nil ], [ t(".queued"), "queued" ], [ t(".running"), "running" ], [ t(".done"), "succeeded" ], [ t(".failed"), "failed" ] ].each do |label, filter| %>
-      <%= filter_chip label, tasks_path(status: filter, **@search.to_params), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
+      <%= filter_chip label, tasks_path(status: filter, kind: @kind, **@search.to_params), active: @filter == filter, count: (task_filter_count(filter) if filter), data: { filter: filter || "all" } %>
     <% end %>
   </nav>
-  <%= render "activities/journal_search", search: @search, url: tasks_path, hidden: { status: @filter } %>
+  <% if @kinds.size > 1 || @kind %>
+    <nav class="task-kinds flex flex-wrap gap-2" aria-label="<%= t(".kind") %>">
+      <%= filter_chip t(".all_kinds"), tasks_path(status: @filter, **@search.to_params), active: @kind.nil?, data: { kind: "all" } %>
+      <% (@kinds | [ @kind ].compact).each do |kind| %>
+        <%= filter_chip t("background_task.kinds.#{kind}"), tasks_path(status: @filter, kind: kind, **@search.to_params), active: @kind == kind, data: { kind: kind } %>
+      <% end %>
+    </nav>
+  <% end %>
+  <%= render "activities/journal_search", search: @search, url: tasks_path, hidden: { status: @filter, kind: @kind } %>
   <% end %>
 
   <%= search_results_frame do %>
