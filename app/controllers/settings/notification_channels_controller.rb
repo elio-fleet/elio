@@ -55,7 +55,7 @@ module Settings
     end
 
     def channel_params
-      params.expect(notification_channel: [ :name, :kind, :locale, :webhook_url, :allow_http, :recipients, :mention_channel, :daily_digest, :group_minutes, :enabled, activity_kinds: [] ])
+      params.expect(notification_channel: [ :name, :kind, :locale, :webhook_url, :allow_http, :recipients, :mention_channel, :daily_digest, :group_minutes, :group_by_server, :enabled, activity_kinds: [] ])
     end
   end
 end

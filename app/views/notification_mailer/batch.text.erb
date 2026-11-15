@@ -1,4 +1,7 @@
 <%= @group.title %>
+<% if @group.summary %>
+<%= @group.summary %>
+<% end %>
 
 <% @group.lines.each do |line| %>
 - <%= line %>

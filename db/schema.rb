@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_110091) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -344,7 +344,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110091) do
     t.datetime "failed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["notification_channel_id", "kind"], name: "index_notification_batches_open", unique: true, where: "(closed_at IS NULL)"
+    t.bigint "server_id"
+    t.index "notification_channel_id, kind, COALESCE(server_id, (0)::bigint)", name: "index_notification_batches_open", unique: true, where: "(closed_at IS NULL)"
     t.index ["send_at"], name: "index_notification_batches_undelivered", where: "((delivered_at IS NULL) AND (failed_at IS NULL))"
   end
 
@@ -369,6 +370,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110091) do
     t.integer "failure_count", default: 0, null: false
     t.datetime "failing_since"
     t.datetime "retry_at"
+    t.boolean "group_by_server", default: false, null: false
     t.index ["name"], name: "index_notification_channels_on_name", unique: true
   end
 
