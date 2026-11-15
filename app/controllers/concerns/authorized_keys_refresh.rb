@@ -23,6 +23,7 @@ module AuthorizedKeysRefresh
     @app_key = SshKey.app_keys
     @public_keys_by_fingerprint = PublicKey.where(fingerprint: read.keys.map(&:fingerprint)).index_by(&:fingerprint)
     @integration_keys = Integration.known_keys
+    @tolerated_keys = ToleratedKey.where(fingerprint: read.keys.map(&:fingerprint)).index_by(&:fingerprint)
     @temporary_accesses = TemporaryAccess.active.where(server: server).index_by { |access| [ access.unix_user, access.fingerprint ] }
   end
 

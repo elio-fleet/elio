@@ -252,13 +252,13 @@ class Automation < ApplicationRecord
 
   def run_keys_scan
     servers = self.servers.to_a
-    detected_before = Activity.of_kind(:unknown_key_detected).count
+    detected_before = Activity.where(kind: %w[unknown_key_detected unknown_root_key_detected]).count
     scanned = each_tracked(servers) do |server, item|
       scan = Keys::ServerScan.call(server)
       item&.finish!(scan.success? ? :succeeded : :failed, scan.error_title)
       scan.success?
     end.count(true)
-    detected = Activity.of_kind(:unknown_key_detected).count - detected_before
+    detected = Activity.where(kind: %w[unknown_key_detected unknown_root_key_detected]).count - detected_before
 
     LocalizedText.dump("automation.results.scanned", done: scanned, count: servers.size, keys: LocalizedText.part("automation.results.new_unknown_keys", count: detected))
   end

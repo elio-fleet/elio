@@ -117,6 +117,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "delete public_key" => -> { delete public_key_path(public_keys(:alice)) },
       "grant a public_key on servers" => -> { post public_key_accesses_path(public_keys(:alice)), params: { server_ids: [ servers(:web).id ] } },
       "revoke a public_key access" => -> { delete public_key_access_path(public_keys(:alice)), params: { server_id: servers(:web).id } },
+      "tolerate a key" => -> { post tolerated_keys_path, params: { tolerated_key: { fingerprint: "SHA256:x", reason: "Vendor" } } },
+      "stop tolerating a key" => -> { delete tolerated_key_path(0) },
       "claim a keyring key as mine" => -> { post account_keys_path, params: { public_key_id: public_keys(:alice).id } },
       "release one of my keys" => -> { delete account_key_path(public_keys(:alice)) },
       "add my key to a server" => -> { post server_my_key_accesses_path(servers(:web)) },

@@ -73,13 +73,57 @@ class PublicKeysIndexTest < ActionDispatch::IntegrationTest
       assert_select ".key-name", "bob@laptop"
       assert_select ".key-places a", 3
       assert_select ".key-places a[href=?]", server_path(servers(:web), tab: "keys"), text: "Web (root)"
+      assert_select ".key-root", text: "root"
+      assert_select "form[action=?] button.add-to-keyring", public_keys_path
+      assert_select "form[action=?] input[name='public_key[name]'][value=?]", public_keys_path, "bob"
+      assert_select "form[action=?] input[name=return_to][value=?]", public_keys_path, public_keys_path(kind: "outside")
+      assert_select "details.tolerate-key form[action=?] input[name='tolerated_key[reason]'][required]", tolerated_keys_path
+    end
+    assert_select "li.outside-key:last-child" do
+      assert_select ".key-name", "Sans nom"
+      assert_select ".key-root", 0
       assert_select "a.add-to-keyring[href*='return_to=%2Fssh-keys%3Fkind%3Doutside']"
     end
-    assert_select "li.outside-key:last-child .key-name", "Sans nom"
+    assert_select "#tolerated-keys", 0
 
     sign_in users(:viewer)
     get public_keys_path(kind: "outside")
-    assert_select "a.add-to-keyring", 0
+    assert_select ".add-to-keyring", 0
+    assert_select "details.tolerate-key", 0
+  end
+
+  test "outside the keyring: added in one click under the name of its comment" do
+    bob = Ssh::KeyGenerator.generate(comment: "bob@laptop").public_key
+    AccountSnapshot.create!(server: servers(:web), unix_user: "deploy", content: bob, read_at: Time.current)
+    sign_in users(:operator)
+
+    post public_keys_path, params: { public_key: { name: "bob", content: bob, kind: "person" }, return_to: public_keys_path(kind: "outside") }
+
+    assert_redirected_to public_keys_path(kind: "outside")
+    assert_equal "bob", PublicKey.find_by!(fingerprint: AuthorizedKey.parse(bob).sole.fingerprint).name
+    follow_redirect!
+    assert_select "li.outside-key", 0
+  end
+
+  test "outside the keyring: when a key was first reported, and the tolerated keys" do
+    bob = Ssh::KeyGenerator.generate(comment: "bob@laptop").public_key
+    vendor = Ssh::KeyGenerator.generate(comment: "support@vendor")
+    travel_to(3.days.ago) { AccountSnapshot.record!(servers(:web), AuthorizedKeysAccount.login(servers(:web)), AuthorizedKey.parse(bob)) }
+    AccountSnapshot.record!(servers(:db), AuthorizedKeysAccount.login(servers(:db)), AuthorizedKey.parse(vendor.public_key))
+    ToleratedKey.create!(fingerprint: vendor.fingerprint, name: "support@vendor", reason: "Vendor support contract", user: users(:operator))
+    sign_in users(:operator)
+
+    get public_keys_path(kind: "outside")
+
+    assert_select "li.outside-key", 1
+    assert_select "li.outside-key .key-first-seen", /Signalée il y a 3 jours/
+    assert_select "#tolerated-keys li.tolerated-key" do
+      assert_select ".key-name", "support@vendor"
+      assert_select ".key-reason", "Vendor support contract"
+      assert_select "p", /Tolérée par operator@example.com/
+      assert_select ".key-places a[href=?]", server_path(servers(:db), tab: "keys")
+      assert_select "form[action=?] button.untolerate", tolerated_key_path(ToleratedKey.sole)
+    end
   end
 
   test "outside the keyring, empty or never scanned" do

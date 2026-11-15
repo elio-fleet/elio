@@ -78,6 +78,17 @@ en:
       'on': 'On:'
       none: Every key found on the servers is in the keyring.
       not_scanned: 'No key read yet: scan the keys of the fleet (Fleet → Actions).'
+      first_seen: 'Reported '
+      root_hint: On a root account
+      add_named: Add to the keyring as “%{name}”
+      tolerate: Tolerate…
+      reason: Reason
+      reason_placeholder: Why this key may stay
+      tolerate_submit: Tolerate
+      tolerated_title: Tolerated keys
+      tolerated_by: Tolerated by %{author}
+      nowhere: On no server any more.
+      untolerate: No longer tolerate
   server_authorized_keys:
     frame:
       reading_authorized_keys: Reading the authorized keys…
@@ -111,6 +122,7 @@ en:
         other: "%{count} accounts"
       root_needed: 'Only the keys of %{login} are shown: Elio needs root (or sudo without a password) to read the other accounts.'
     account:
+      tolerated: Tolerated
       login: Elio's login
       temporary_access_hint: Temporary access, see and extend it
       unreadable: Its authorized_keys file could not be read, even as root.
@@ -254,6 +266,10 @@ en:
     created: The key “%{public_key_name}” has been added to the keyring.
     updated: The key “%{public_key_name}” has been updated.
     deleted: The key “%{public_key_name}” has been removed from the keyring.
+  tolerated_keys_controller:
+    created: The key “%{name}” is tolerated and no longer reported as unknown.
+    deleted: The key “%{name}” is no longer tolerated.
+    not_saved: "The key could not be tolerated: %{errors}"
   server_authorizations_controller:
     invalid_account: 'Invalid account name: lowercase letters, digits, "_", "-" or ".", 32 characters at most.'
     no_account: Choose at least one account.

@@ -26,6 +26,9 @@ fr:
         content: Clé SSH publique
         description: Description
         fingerprint: Cette clé
+      tolerated_key:
+        reason: La raison
+        fingerprint: Cette clé
       notification_channel:
         name: Nom
         webhook_url: L'URL du webhook

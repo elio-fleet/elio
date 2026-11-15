@@ -24,16 +24,40 @@
               <%= weak_key_badge(key) %>
             </p>
             <p class="key-fingerprint mt-0.5 break-all font-mono text-[11px] text-ink-3"><%= key.fingerprint %></p>
+            <% if (seen = @first_seen[entry.fingerprint]) %>
+              <p class="key-first-seen mt-0.5 text-xs text-ink-3"><%= relative_time_tag seen, prefix: t("public_keys.outside.first_seen") %></p>
+            <% end %>
             <p class="key-places mt-1 text-xs text-ink-2">
+              <% if entry.root? %><%= status_badge :crit, "root", icon: :exclamation_triangle, class: "key-root mr-1", title: t("public_keys.outside.root_hint") %><% end %>
               <%= t("public_keys.outside.on") %>
               <%= safe_join(entry.places.map { |server, unix_user, _| link_to("#{server.name} (#{unix_user})", server_path(server, tab: "keys"), class: "font-medium hover:text-accent hover:underline") }, ", ") %>
             </p>
           </div>
           <% if can?(:operate) %>
-            <%= link_to new_public_key_path(content: [ key.type, key.key, key.comment ].compact.join(" "), name: suggested_public_key_name(key), return_to: public_keys_path(kind: "outside")),
-                  class: "add-to-keyring inline-flex shrink-0 items-center gap-1.5 rounded-md border border-accent/40 bg-surface px-2.5 py-1 text-xs font-medium text-accent shadow-sm hover:bg-accent-soft" do %>
-              <%= icon :user_plus, class: "h-4 w-4" %> <%= t("server_authorized_keys.index.add_keyring") %>
-            <% end %>
+            <div class="flex shrink-0 flex-col items-end gap-1.5">
+              <% content = [ key.type, key.key, key.comment ].compact.join(" ") %>
+              <% add_class = "add-to-keyring inline-flex items-center gap-1.5 rounded-md border border-accent/40 bg-surface px-2.5 py-1 text-xs font-medium text-accent shadow-sm hover:bg-accent-soft" %>
+              <%# Named after its comment: added in one click (the form opens if the name is taken); unnamed: the form asks for a name. %>
+              <% if (name = suggested_public_key_name(key)) %>
+                <%= button_to public_keys_path, params: { public_key: { name: name, content: content, kind: "person" }, return_to: public_keys_path(kind: "outside") },
+                      class: add_class, title: t("public_keys.outside.add_named", name: name) do %>
+                  <%= icon :user_plus, class: "h-4 w-4" %> <%= t("server_authorized_keys.index.add_keyring") %>
+                <% end %>
+              <% else %>
+                <%= link_to new_public_key_path(content: content, return_to: public_keys_path(kind: "outside")), class: add_class do %>
+                  <%= icon :user_plus, class: "h-4 w-4" %> <%= t("server_authorized_keys.index.add_keyring") %>
+                <% end %>
+              <% end %>
+              <details class="tolerate-key text-right">
+                <summary class="cursor-pointer text-xs text-ink-3 hover:text-ink"><%= t("public_keys.outside.tolerate") %></summary>
+                <%= form_with model: ToleratedKey.new, url: tolerated_keys_path, class: "mt-2 flex w-72 max-w-full items-center gap-2" do |form| %>
+                  <%= form.hidden_field :fingerprint, value: entry.fingerprint %>
+                  <%= form.hidden_field :name, value: key.name %>
+                  <%= form.text_field :reason, required: true, maxlength: 500, class: "input min-w-0 flex-1 py-1 text-xs", placeholder: t("public_keys.outside.reason_placeholder"), aria: { label: t("public_keys.outside.reason") } %>
+                  <%= form.submit t("public_keys.outside.tolerate_submit"), class: "btn btn-secondary py-1 text-xs" %>
+                <% end %>
+              </details>
+            </div>
           <% end %>
         </li>
       <% end %>
@@ -41,5 +65,36 @@
     <%= render "shared/pagination", pager: @pager, noun: t("nouns.keys") %>
   <% else %>
     <div class="outside-none card"><%= empty_state(@insights.scanned? ? t("public_keys.outside.none") : t("public_keys.outside.not_scanned"), icon: :key) %></div>
+  <% end %>
+
+  <% if @tolerated_keys.any? %>
+    <%= panel t("public_keys.outside.tolerated_title"), meta: t("count.keys", count: @tolerated_keys.size), icon: :check_circle, id: "tolerated-keys", class: "mt-6" do %>
+      <ul class="divide-y divide-line">
+        <% @tolerated_keys.each do |entry| %>
+          <% record = entry.record %>
+          <li class="tolerated-key flex flex-wrap items-start gap-x-4 gap-y-2 px-4 py-3" data-fingerprint="<%= record.fingerprint %>">
+            <div class="min-w-0 flex-1">
+              <p class="text-sm">
+                <span class="key-name font-medium <%= record.name ? "text-ink" : "italic text-ink-3" %>"><%= record.name || t("server_authorized_keys.index.unnamed") %></span>
+                <span class="key-fingerprint ml-2 break-all font-mono text-[11px] text-ink-3"><%= record.fingerprint %></span>
+              </p>
+              <p class="key-reason mt-0.5 text-sm text-ink-2"><%= record.reason %></p>
+              <p class="mt-0.5 text-xs text-ink-3"><%= t("public_keys.outside.tolerated_by", author: record.author_name) %> <%= relative_time_tag record.created_at %></p>
+              <p class="key-places mt-1 text-xs text-ink-2">
+                <% if entry.places.any? %>
+                  <%= t("public_keys.outside.on") %>
+                  <%= safe_join(entry.places.map { |server, unix_user| link_to("#{server.name} (#{unix_user})", server_path(server, tab: "keys"), class: "font-medium hover:text-accent hover:underline") }, ", ") %>
+                <% else %>
+                  <%= t("public_keys.outside.nowhere") %>
+                <% end %>
+              </p>
+            </div>
+            <% if can?(:operate) %>
+              <%= button_to t("public_keys.outside.untolerate"), tolerated_key_path(record), method: :delete, class: "untolerate btn btn-ghost shrink-0 py-1 text-xs" %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% end %>
   <% end %>
 </section>
