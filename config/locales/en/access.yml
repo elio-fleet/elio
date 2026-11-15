@@ -48,6 +48,17 @@ en:
     index:
       subtitle: The public keys Elio knows and the servers where they give access
       scan_keys: Scan the keys of the fleet
+      last_scan: Last scan
+      scan_never: never
+      scan_running: "running (%{done}/%{count})"
+      scan_read:
+        one: "%{done}/%{count} server read"
+        other: "%{done}/%{count} servers read"
+      scan_failed:
+        one: "%{count} failed"
+        other: "%{count} failed"
+      outside_keyring: Outside the keyring
+      see_task: See the task
       keyring_empty_hint: Add the keys of the people and services to know who has access to what, and to spot unknown keys on the servers.
       all: All
       people: People
