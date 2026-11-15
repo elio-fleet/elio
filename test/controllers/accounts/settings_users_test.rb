@@ -56,6 +56,77 @@ class SettingsUsersTest < ActionDispatch::IntegrationTest
     assert_equal "dave@example.com invité (Opérateur)", Activity.of_kind(:user_invited).sole.summary
   end
 
+  test "an admin invites several addresses at once; the invalid ones are explained" do
+    sign_in users(:one)
+
+    assert_enqueued_emails 2 do
+      post settings_invitations_path, params: { invitation: { email: "dave@example.com, Erin@example.com,operator@example.com, nope", role: "operator", locale: "en" } }
+    end
+
+    assert_equal [ [ "dave@example.com", "operator", "en" ], [ "erin@example.com", "operator", "en" ] ],
+                 Invitation.order(:email).pluck(:email, :role, :locale)
+    assert_equal "2 invitations envoyées par email : dave@example.com et erin@example.com. Les liens restent copiables ci-dessous.", flash[:notice]
+    assert_match "operator@example.com (L'email correspond déjà à un utilisateur", flash[:alert]
+    assert_match "nope (L'email n'est pas valide)", flash[:alert]
+    assert_equal 2, Activity.of_kind(:user_invited).count
+  end
+
+  test "at most 20 addresses at once" do
+    sign_in users(:one)
+
+    post settings_invitations_path, params: { invitation: { email: (1..21).map { |n| "user#{n}@example.com" }.join(","), role: "viewer" } }
+
+    assert_equal 0, Invitation.count
+    assert_equal "Au plus 20 adresses à la fois.", flash[:alert]
+  end
+
+  test "expired invitations are listed and resent in one click, with the same link" do
+    invitation = Invitation.create!(email: "dave@example.com", role: :operator, invited_by: users(:operator))
+    invitation.update_columns(expires_at: 2.days.ago)
+    sign_in users(:one)
+
+    get settings_users_path
+    assert_select "li.pending-invitation", 0
+    assert_select "li.expired-invitation", 1 do
+      assert_select "p", text: /Par operator@example.com · expirée il y a 2 jours/
+      assert_select "form[action=?] button", resend_settings_invitation_path(invitation), text: "Renvoyer"
+    end
+
+    assert_enqueued_email_with InvitationMailer, :invite, args: [ invitation ] do
+      post resend_settings_invitation_path(invitation)
+    end
+
+    assert_redirected_to settings_users_path
+    assert invitation.reload.pending?
+    assert_equal users(:one), invitation.invited_by
+    assert_equal "Invitation envoyée par email à dave@example.com. Le lien reste copiable ci-dessous.", flash[:notice]
+    assert_equal "dave@example.com invité (Opérateur)", Activity.of_kind(:user_invited).sole.summary
+    get settings_users_path
+    assert_select "li.pending-invitation input.invitation-link[value=?]", invitation_acceptance_url(invitation.token)
+  end
+
+  test "an expired invitation is not resent once the address was invited again" do
+    invitation = Invitation.create!(email: "dave@example.com", invited_by: users(:one)).tap { |i| i.update_columns(expires_at: 1.day.ago) }
+    Invitation.create!(email: "dave@example.com", invited_by: users(:one))
+    sign_in users(:one)
+
+    assert_no_enqueued_emails { post resend_settings_invitation_path(invitation) }
+
+    assert invitation.reload.expired?
+    assert_match "dave@example.com (L'email", flash[:alert]
+  end
+
+  test "a pending or revoked invitation cannot be resent" do
+    pending = Invitation.create!(email: "dave@example.com", invited_by: users(:one))
+    revoked = Invitation.create!(email: "erin@example.com", invited_by: users(:one)).tap(&:revoke!)
+
+    [ pending, revoked ].each do |invitation|
+      sign_in users(:one)
+      post resend_settings_invitation_path(invitation)
+      assert_response :not_found
+    end
+  end
+
   test "an invalid invitation is explained" do
     sign_in users(:one)
 

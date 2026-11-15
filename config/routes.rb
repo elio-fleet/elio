@@ -58,7 +58,9 @@ Rails.application.routes.draw do
         post :unlock
       end
     end
-    resources :invitations, only: %i[create destroy]
+    resources :invitations, only: %i[create destroy] do
+      post :resend, on: :member
+    end
     resource :security, only: :update
     resource :health_thresholds, only: :update
     resource :prompt_instructions, only: :update
