@@ -1,19 +1,34 @@
-<%# The server presents another host key than the pinned one: show both, let an admin trust the new one. %>
+<%# The server presents another host key than the pinned one: the old and new fingerprints side by side, how to check
+    them on the server, and (admins) trusting the new one. Locals: server, host_key (Ssh::Check::Result#host_key). %>
 <div class="host-key-changed mt-3 rounded-md border border-warn/40 bg-warn-soft p-4 text-sm text-warn-ink">
   <p>
-    <%= t(".warning_html", reinstalled: tag.strong(t(".reinstalled")), command: tag.code("ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub", class: "font-mono text-xs")) %> 
+    <% if host_key[:new_algorithm] %>
+      <%= t(".new_algorithm_html", type: tag.code(host_key[:new_type], class: "font-mono text-xs"), known: tag.code(host_key[:known].map(&:type).uniq.join(", "), class: "font-mono text-xs")) %>
+    <% else %>
+      <%= t(".warning_html", reinstalled: tag.strong(t(".reinstalled"))) %>
+    <% end %>
   </p>
   <dl class="mt-3 grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 font-mono text-xs">
     <dt class="font-sans text-warn-ink"><%= t("words.known") %></dt>
-    <dd class="host-key-known break-all"><%= host_key[:known].presence&.join(", ") || "—" %></dd>
+    <dd class="host-key-known break-all">
+      <% if host_key[:known].any? %>
+        <% host_key[:known].each do |entry| %><span class="block"><%= entry.type %> <%= entry.fingerprint %></span><% end %>
+      <% else %>
+        —
+      <% end %>
+    </dd>
     <dt class="font-sans text-warn-ink"><%= t(".presented") %></dt>
-    <dd class="host-key-new break-all"><%= host_key[:new] %></dd>
+    <dd class="host-key-new break-all"><%= [ host_key[:new_type], host_key[:new] ].compact.join(" ") %></dd>
   </dl>
+  <p class="host-key-verify mt-3"><%= t(".verify_html", command: tag.code(Ssh::HostKeyTrust.verify_command(host_key[:new_type]), class: "select-all rounded bg-surface px-1.5 py-0.5 font-mono text-xs")) %></p>
   <% if can?(:administer) %>
-    <%= button_to t(".trust_new_fingerprint"), server_host_key_path(server), params: { fingerprint: host_key[:new] },
-          form: { class: "mt-3", data: { turbo_frame: "_top", turbo_confirm: t(".new_fingerprint_will_replace", new: (host_key[:new]), server_name: server.name),
-                                         confirm_label: t(".trust"), confirm_variant: "danger" } },
-          class: "cursor-pointer rounded-md border border-warn/40 bg-surface px-3 py-1.5 text-sm font-medium text-warn-ink shadow-sm hover:bg-warn-soft" %>
+    <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <%= button_to t(".trust_new_fingerprint"), server_host_key_path(server), params: { fingerprint: host_key[:new] },
+            form: { data: { turbo_frame: "_top", turbo_confirm: t(".new_fingerprint_will_replace", new: (host_key[:new]), server_name: server.name),
+                            confirm_label: t(".trust"), confirm_variant: "danger" } },
+            class: "cursor-pointer rounded-md border border-warn/40 bg-surface px-3 py-1.5 text-sm font-medium text-warn-ink shadow-sm hover:bg-warn-soft" %>
+      <%= link_to t(".review_all"), host_key_batch_path, data: { turbo_frame: "_top" }, class: "text-sm font-medium underline hover:no-underline" %>
+    </div>
   <% else %>
     <p class="mt-3 text-warn-ink"><%= t(".ask_administrator_check_accept") %></p>
   <% end %>

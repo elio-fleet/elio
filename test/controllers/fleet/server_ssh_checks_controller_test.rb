@@ -64,46 +64,65 @@ class ServerSshChecksControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "shows both fingerprints and lets an admin trust the new one" do
-    changed = Ssh::Check::Result.new(success: false, message: "L'empreinte du serveur a changé", details: "x", reason: :host_key_changed,
-                                   host_key: { new: "SHA256:new", known: [ "SHA256:old" ] })
+  def host_key_changed(new_type: "ssh-ed25519", known: [ Ssh::KnownHosts::Entry.new(type: "ssh-ed25519", fingerprint: "SHA256:old") ])
+    Ssh::Check::Result.new(success: false, message: "L'empreinte du serveur a changé", details: "x", reason: :host_key_changed,
+                           host_key: { new: "SHA256:new", new_type: new_type, known: known,
+                                       new_algorithm: Ssh::HostKeyTrust.new_algorithm?(new_type, known.map(&:type)) })
+  end
+
+  test "shows both fingerprints side by side, how to check them, and lets an admin trust the new one" do
     sign_in users(:one)
 
-    stub_method(Ssh::Check, :call, changed) { get server_ssh_check_path(servers(:web)) }
+    stub_method(Ssh::Check, :call, host_key_changed) { get server_ssh_check_path(servers(:web)) }
 
     assert_select "turbo-frame##{frame_id} .host-key-changed" do
-      assert_select ".host-key-known", "SHA256:old"
-      assert_select ".host-key-new", "SHA256:new"
+      assert_select "p", text: /vient d'être réinstallé/
+      assert_select ".host-key-known", "ssh-ed25519 SHA256:old"
+      assert_select ".host-key-new", "ssh-ed25519 SHA256:new"
+      assert_select ".host-key-verify code", "ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub"
       assert_select "form[action=?][data-turbo-frame=_top][data-confirm-variant=danger]", server_host_key_path(servers(:web)) do
         assert_select "input[name=fingerprint][value=?]", "SHA256:new"
       end
+      assert_select "a[href=?]", host_key_batch_path
     end
     assert_select ".ssh-setup-hint", 0
   end
 
+  test "tells a key of a new type apart from a changed key" do
+    sign_in users(:one)
+
+    stub_method(Ssh::Check, :call, host_key_changed(new_type: "ecdsa-sha2-nistp256")) { get server_ssh_check_path(servers(:web)) }
+
+    assert_select ".host-key-changed" do
+      assert_select "p", text: /clé d'un autre type \(ecdsa-sha2-nistp256\) que celle qu'Elio connaît \(ssh-ed25519\)/
+      assert_select ".host-key-verify code", "ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub"
+    end
+    activity = Activity.where(kind: "host_key_mismatch").last
+    assert_equal({ "key_type" => "ecdsa-sha2-nistp256", "new_algorithm" => true }, activity.data.slice("key_type", "new_algorithm"))
+  end
+
 test "a changed host key is logged once as such, never as a refused key" do
   servers(:web).update_columns(ssh_ok: true)
-  changed = Ssh::Check::Result.new(success: false, message: "x", details: "x", reason: :host_key_changed, host_key: { new: "SHA256:new", known: [ "SHA256:old" ] })
   sign_in users(:one)
 
   assert_difference -> { Activity.where(kind: "host_key_mismatch").count }, 1 do
-    2.times { stub_method(Ssh::Check, :call, changed) { get server_ssh_check_path(servers(:web)) } }
+    2.times { stub_method(Ssh::Check, :call, host_key_changed) { get server_ssh_check_path(servers(:web)) } }
   end
   assert_equal 0, Activity.where(kind: "ssh_access_lost").count
   assert servers(:web).reload.ssh_ok, "the key was not refused"
-  assert_equal "SHA256:new", Activity.where(kind: "host_key_mismatch").last.data["new_fingerprint"]
+  assert_equal({ "new_fingerprint" => "SHA256:new", "key_type" => "ssh-ed25519", "new_algorithm" => false },
+               Activity.where(kind: "host_key_mismatch").last.data.slice("new_fingerprint", "key_type", "new_algorithm"))
 end
 
 test "only admins get the button to trust a new host key" do
-    changed = Ssh::Check::Result.new(success: false, message: "L'empreinte du serveur a changé", details: "x", reason: :host_key_changed,
-                                   host_key: { new: "SHA256:new", known: [] })
     sign_in users(:operator)
 
-    stub_method(Ssh::Check, :call, changed) { get server_ssh_check_path(servers(:web)) }
+    stub_method(Ssh::Check, :call, host_key_changed(known: [])) { get server_ssh_check_path(servers(:web)) }
 
     assert_select ".host-key-changed" do
       assert_select ".host-key-known", "—"
       assert_select "form", 0
+      assert_select "a[href=?]", host_key_batch_path, 0
       assert_select "p", text: /Demandez à un administrateur/
     end
   end

@@ -48,6 +48,8 @@ en:
               same_as_start: must end at another hour than they start
         server:
           attributes:
+            host:
+              address_taken: is already used by another server with the same port and user
             extra_addresses_text:
               invalid_ips: 'contain values that are not IP addresses: %{addresses}'
         notification_channel:

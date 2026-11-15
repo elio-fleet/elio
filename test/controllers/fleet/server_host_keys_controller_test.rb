@@ -14,9 +14,14 @@ class ServerHostKeysControllerTest < ActionDispatch::IntegrationTest
 
   teardown { Ssh::KnownHosts.file.delete if Ssh::KnownHosts.file.exist? }
 
-  # Mimics net-ssh pinning whatever key the server presents (accept_new).
+  # Mimics net-ssh pinning whatever key the server presents (accept_new) in
+  # the known_hosts file it is given (a temporary one, never the real pins).
   def presenting(key)
-    ->(server, **) { Ssh::KnownHosts.file.write(Ssh::KnownHosts.file.read + "#{entry(key)}\n"); Ssh::Check::Result.new(success: true, message: "ok", details: "ok") }
+    lambda do |server, known_hosts_file:, **|
+      assert_not_equal Ssh::KnownHosts.file, Pathname(known_hosts_file)
+      Pathname(known_hosts_file).write("#{entry(key)}\n")
+      Ssh::Check::Result.new(success: true, message: "ok", details: "ok")
+    end
   end
 
   def entry(key)
@@ -45,8 +50,21 @@ class ServerHostKeysControllerTest < ActionDispatch::IntegrationTest
     assert_equal "host_key_changed", activity.kind
     assert_equal users(:one), activity.user
     assert_equal @server, activity.server
-    assert_equal({ "new_fingerprint" => @new.fingerprint, "previous_fingerprints" => [ @old.fingerprint ] },
-                 activity.data.slice("new_fingerprint", "previous_fingerprints"))
+    assert_equal({ "new_fingerprint" => @new.fingerprint, "previous_fingerprints" => [ @old.fingerprint ], "key_type" => "ssh-ed25519", "new_algorithm" => false },
+                 activity.data.slice("new_fingerprint", "previous_fingerprints", "key_type", "new_algorithm"))
+  end
+
+  test "keeps the old pin when the server cannot be contacted" do
+    sign_in users(:one)
+
+    assert_no_difference "Activity.count" do
+      stub_method(Ssh::Check, :call, ->(*, **) { Ssh::Check::Result.new(success: false, message: "x", details: "x") }) do
+        post server_host_key_path(@server), params: { fingerprint: @new.fingerprint }
+      end
+    end
+
+    assert_match "Impossible de contacter le serveur", flash[:alert]
+    assert_equal [ @old.fingerprint ], Ssh::KnownHosts.fingerprints(@server.host, @server.port)
   end
 
   test "pins nothing when the server presents yet another key" do
@@ -61,7 +79,7 @@ class ServerHostKeysControllerTest < ActionDispatch::IntegrationTest
 
     assert_redirected_to server_path(@server)
     assert_match "ne présente plus l'empreinte affichée", flash[:alert]
-    assert_equal [], Ssh::KnownHosts.fingerprints(@server.host, @server.port)
+    assert_equal [ @old.fingerprint ], Ssh::KnownHosts.fingerprints(@server.host, @server.port), "the old pin stays: the server stays blocked"
   end
 
   test "is forbidden to non admins and changes nothing" do

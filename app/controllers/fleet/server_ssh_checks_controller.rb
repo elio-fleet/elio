@@ -9,7 +9,7 @@ class ServerSshChecksController < ApplicationController
     if @result.success? || @result.reason == :key_refused
       @server.record_ssh_status!(@result.success?)
     elsif @result.reason == :host_key_changed
-      @server.record_host_key_mismatch!(@result.host_key[:new])
+      @server.record_host_key_mismatch!(@result.host_key[:new], key_type: @result.host_key[:new_type], new_algorithm: @result.host_key[:new_algorithm])
     end
   end
 end

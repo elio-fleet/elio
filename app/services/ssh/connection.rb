@@ -29,16 +29,25 @@ class Ssh::Connection
     def reason = :key_refused
   end
 
-  # Carries the fingerprint the server presents and the pinned ones, so an
-  # admin can decide to trust the new one (ServerHostKeysController).
+  # Carries the key the server presents (fingerprint and type) and the pinned
+  # ones (Ssh::KnownHosts::Entry), so an admin can decide to trust the new
+  # one (ServerHostKeysController).
   class HostKeyMismatchError < Error
-    attr_reader :new_fingerprint, :known_fingerprints
+    attr_reader :new_fingerprint, :new_type, :known
 
-    def initialize(message = nil, new_fingerprint: nil, known_fingerprints: [])
+    def initialize(message = nil, new_fingerprint: nil, new_type: nil, known: [])
       @new_fingerprint = new_fingerprint
-      @known_fingerprints = known_fingerprints
+      @new_type = new_type
+      @known = known
       super(message)
     end
+
+    def known_fingerprints = known.map(&:fingerprint)
+
+    # The server presents a key of a type Elio had not pinned (it no longer
+    # offers the pinned one): a key added or swapped for another algorithm,
+    # rather than the same kind of key replaced. Still refused until accepted.
+    def new_algorithm? = Ssh::HostKeyTrust.new_algorithm?(new_type, known.map(&:type))
 
     def title = I18n.t("ssh.connection.host_key_mismatch")
     def reason = :host_key_changed
@@ -113,8 +122,8 @@ class Ssh::Connection
     raise AuthenticationError, I18n.t("ssh.connection.authentication_details", username: server.username, host: server.host, message: e.message)
   rescue Net::SSH::HostKeyMismatch => e
     raise HostKeyMismatchError.new(I18n.t("ssh.connection.host_key_details", host: server.host, fingerprint: e.fingerprint),
-                                   new_fingerprint: e.fingerprint,
-                                   known_fingerprints: Ssh::KnownHosts.fingerprints(server.host, server.port, file: @known_hosts_file))
+                                   new_fingerprint: e.fingerprint, new_type: e.key&.ssh_type,
+                                   known: Ssh::KnownHosts.entries(server.host, server.port, file: @known_hosts_file))
   rescue Net::SSH::ConnectionTimeout, Net::SSH::Disconnect, Net::SSH::Exception, SocketError, SystemCallError, IOError, Timeout::Error => e
     raise ConnectionError, I18n.t("ssh.connection.connection_details", host: server.host, port: server.port, class: e.class, message: e.message)
   end

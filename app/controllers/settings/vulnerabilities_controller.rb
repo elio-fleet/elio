@@ -10,7 +10,7 @@ module Settings
 
     def show
       @feeds = Vulnerability::SOURCES.keys.map { |source| VulnerabilityFeed.for(source) }
-      @releases = Vulnerabilities.releases
+      @usage = Vulnerabilities.usage
       @automation = Automation.all_kinds.find { |automation| automation.kind == "vulnerabilities_update" }
       @setting = AppSetting.current
       @providers = ScoreProvider.all_providers

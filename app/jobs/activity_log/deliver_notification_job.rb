@@ -1,18 +1,20 @@
+# Sends one activity to one channel right away. If the channel is failing (or
+# fails now), the activity waits in the channel's batch of its kind until the
+# next attempt: a broken webhook is not hit once per notification.
 class DeliverNotificationJob < ApplicationJob
-  queue_as :default
+  queue_as :notifications
+  queue_with_priority NOTIFICATIONS_PRIORITY
 
-  retry_on Notifications::DeliveryError, wait: :polynomially_longer, attempts: 5 do |job, error|
-    job.arguments.first.record_delivery!(error: error.message)
-  end
   discard_on ActiveJob::DeserializationError
 
   def perform(channel, activity)
     return unless channel.enabled? && channel.subscribed_to?(activity.kind)
+    return NotificationBatch.add!(channel, activity) unless channel.claim_attempt!
 
     channel.in_language { channel.notifier.deliver(channel, activity) }
     channel.record_delivery!
   rescue Notifications::DeliveryError => e
     channel.record_delivery!(error: e.message)
-    raise
+    NotificationBatch.add!(channel, activity) if channel.enabled?
   end
 end

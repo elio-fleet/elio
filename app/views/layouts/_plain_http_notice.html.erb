@@ -1,0 +1,7 @@
+<%# Informative notice to administrators when Elio is reached over plain HTTP in production (SecurityHelper#plain_http_notice?); hidden for a year by its button. %>
+<div data-controller="dismiss" data-dismiss-cookie-value="<%= SecurityHelper::PLAIN_HTTP_DISMISSED %>" role="note"
+     class="plain-http-notice mb-6 flex items-start gap-3 rounded-lg border border-line bg-subtle px-4 py-3 text-sm text-ink-2">
+  <%= icon :information_circle, class: "mt-0.5 h-4 w-4 shrink-0 text-ink-3" %>
+  <p class="min-w-0 flex-1"><%= t(".text") %></p>
+  <button type="button" data-action="dismiss#dismiss" class="btn btn-ghost shrink-0 text-xs"><%= t(".hide") %></button>
+</div>

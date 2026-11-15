@@ -25,6 +25,23 @@ class ServerTest < ActiveSupport::TestCase
     assert server.errors.of_kind?(:name, :taken)
   end
 
+  test "the same user on the same host and port is refused once, the host case aside" do
+    db = servers(:db)
+    server = build_server(host: db.host.upcase, port: db.port, username: db.username)
+    assert_not server.valid?
+    assert server.errors.of_kind?(:host, :taken)
+    assert_includes server.errors.full_messages, "Hôte est déjà utilisé par un autre serveur avec le même port et le même utilisateur"
+
+    assert build_server(host: db.host, port: db.port, username: "other").valid?
+    assert build_server(host: db.host, port: 2200, username: db.username).valid?
+  end
+
+  test "the database refuses a duplicate address too" do
+    db = servers(:db)
+    duplicate = build_server(host: db.host.upcase, port: db.port, username: db.username)
+    assert_raises(ActiveRecord::RecordNotUnique) { duplicate.save!(validate: false) }
+  end
+
   test "port defaults to 22" do
     assert_equal 22, Server.new.port
   end
@@ -39,7 +56,7 @@ class ServerTest < ActiveSupport::TestCase
   end
 
   test "host accepts IPv4, IPv6 and hostnames" do
-    [ "192.168.1.10", "::1", "2001:db8::1", "example.com", "srv-01.internal.example.com", "localhost" ].each do |host|
+    [ "192.168.1.11", "::1", "2001:db8::1", "example.com", "srv-01.internal.example.com", "localhost" ].each do |host|
       assert build_server(host: host).valid?, "#{host} should be valid"
     end
   end
@@ -120,6 +137,21 @@ class ServerTest < ActiveSupport::TestCase
 
     assert_equal %w[server_unreachable server_back_online], Activity.order(:id).pluck(:kind)
     assert server.reload.reachable
+  end
+
+  test "a port or SSH result is fresh for a few minutes, an SSH failure never" do
+    server = servers(:web)
+    server.assign_attributes(reachable: false, last_checked_at: 4.minutes.ago, ssh_ok: true, ssh_checked_at: 4.minutes.ago)
+    assert server.reachability_fresh?
+    assert server.ssh_fresh?
+
+    server.assign_attributes(last_checked_at: 6.minutes.ago, ssh_checked_at: 6.minutes.ago)
+    assert_not server.reachability_fresh?
+    assert_not server.ssh_fresh?
+
+    server.assign_attributes(reachable: nil, last_checked_at: Time.current, ssh_ok: false, ssh_checked_at: Time.current)
+    assert_not server.reachability_fresh?
+    assert_not server.ssh_fresh?
   end
 
   test "a first check that finds the server down is logged" do

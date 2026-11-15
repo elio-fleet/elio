@@ -93,4 +93,59 @@ class Vulnerabilities::UpdateTest < ActiveSupport::TestCase
     assert_equal %w[jessie], VulnerabilityFeed.for("debian").unavailable_releases
     assert_equal [ [ db, %w[docker] ] ], rescanned
   end
+
+  test "the releases are explained: servers on them and Docker images built on them" do
+    record_os(servers(:web))
+    record_os(servers(:db), codename: "trixie", version_id: "13")
+    servers(:db).inventory_snapshots.create!(category: "docker", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                             data: { "images" => [ { "id" => "sha256:1", "os" => { "id" => "debian", "codename" => "bookworm" } },
+                                                                   { "id" => "sha256:2", "os" => { "id" => "alpine", "version_id" => "3.20" } } ] })
+
+    assert_equal({ "debian" => { "bookworm" => { servers: 1, images: 1 }, "trixie" => { servers: 1, images: 0 } }, "ubuntu" => {} }, Vulnerabilities.usage)
+    assert_equal({ "debian" => %w[bookworm trixie], "ubuntu" => [] }, Vulnerabilities.releases)
+  end
+
+  test "an unchanged file is not downloaded again; an import by hand or a new release asks for the whole file" do
+    record_os(servers(:web))
+    sent = []
+    answer = ->(url, validators: nil, **, &block) { sent << validators; block.call(debian_tracker_path, { "etag" => %("v1") }) }
+    stub_method(Vulnerabilities::Download, :open, answer) { Vulnerabilities::Update.call("debian") }
+    assert_equal({ Vulnerabilities::DebianTracker::URL => { "etag" => %("v1") } }, VulnerabilityFeed.for("debian").download_validators)
+
+    VulnerabilityFeed.for("debian").update!(refreshed_at: 2.days.ago)
+    stub_method(Vulnerabilities::Download, :open, ->(_url, validators: nil, **) { sent << validators; :not_modified }) do
+      stub_method(Vulnerabilities::Matcher, :call, ->(*, **) { flunk "nothing changed: no server to match again" }) do
+        assert_equal "Debian Security Tracker : 6 vulnérabilités (bookworm)", Vulnerabilities::Update.call("debian")
+      end
+    end
+    feed = VulnerabilityFeed.for("debian")
+    assert_in_delta Time.current, feed.refreshed_at, 5
+    assert_equal [ { "etag" => %("v1") }, 6 ], [ feed.download_validators.values.first, Vulnerability.count ], "the entries and validators stay"
+
+    record_os(servers(:db), codename: "trixie", version_id: "13")
+    stub_method(Vulnerabilities::Download, :open, answer) { Vulnerabilities::Update.call("debian") }
+    load_debian_feed
+    assert_equal({}, VulnerabilityFeed.for("debian").download_validators)
+    stub_method(Vulnerabilities::Download, :open, answer) { Vulnerabilities::Update.call("debian") }
+    assert_equal [ nil, { "etag" => %("v1") }, nil, nil ], sent, "conditional only when the feed already holds the releases from a download"
+  end
+
+  test "only the packages whose entries changed are matched again" do
+    record_os(servers(:web))
+    record_packages(servers(:web), [ dpkg("openssh-server", "1:9.2p1-2+deb12u2", source: "openssh"), dpkg("libssl3", "3.0.14-1~deb12u1", source: "openssl") ])
+    load_debian_feed
+    rows = servers(:web).server_vulnerabilities
+    rows.update_all(description: "matched before")
+
+    feed = JSON.parse(File.read(debian_tracker_path))
+    feed["openssh"]["CVE-2024-6387"]["releases"]["bookworm"]["fixed_version"] = "1:9.2p1-2+deb12u4"
+    Dir.mktmpdir do |dir|
+      File.write(File.join(dir, "tracker.json"), feed.to_json)
+      Vulnerabilities::Update.call("debian", path: File.join(dir, "tracker.json"))
+    end
+
+    assert_equal "1:9.2p1-2+deb12u4", rows.find_by(cve: "CVE-2024-6387").fixed_version
+    assert_equal [ "matched before" ], rows.where(source_package: "openssl").distinct.pluck(:description), "openssl did not change"
+    assert_not rows.where(source_package: "openssh").exists?(description: "matched before")
+  end
 end

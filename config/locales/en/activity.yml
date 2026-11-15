@@ -39,10 +39,10 @@ en:
         description: A server has rebooted since the last inventory.
       health_warning:
         label: Server to watch
-        description: The health of a server degrades (disk, memory, load, reboot required…).
+        description: The health of a server degrades (disk, memory, load, reboot required…), or a server already to watch has a new problem.
       health_critical:
         label: Server in critical state
-        description: A critical threshold is exceeded on a server (disk or memory almost full…).
+        description: A critical threshold is exceeded on a server (disk or memory almost full…), or a critical server has a new problem.
       health_recovered:
         label: Server healthy again
         description: A server to watch or critical is back to normal.
@@ -81,7 +81,7 @@ en:
         description: A serious, fixable vulnerability (CVE) affects a server or one of its Docker images (severity chosen in the settings).
       vulnerability_feed_failed:
         label: Vulnerability feed not updated
-        description: The download or import of a vulnerability feed has failed (reported once, until it works again).
+        description: The download or import of a vulnerability feed has failed, or a feed the fleet needs has not been updated for 3 days (reported once, until it works again).
       container_unhealthy:
         label: Unhealthy container
         description: The healthcheck of a Docker container fails (alert chosen in Settings → Docker).
@@ -208,6 +208,9 @@ en:
       integration_disabled:
         label: Extension turned off
         description: An administrator has turned off an extension.
+      notification_channel_disabled:
+        label: Notification channel turned off
+        description: "A notification channel failed for a day without a single delivery: Elio turned it off."
       integration_sync_failed:
         label: Extension sync failed
         description: An extension can no longer read its service (reported once, until it works again).
@@ -253,15 +256,21 @@ en:
       ssh_access_lost: "“%{server}” refuses Elio's key"
       host_key_mismatch: '“%{server}” presents another fingerprint: %{fingerprint}. Elio no longer connects to it until an administrator accepts it.'
       host_key_changed: 'New fingerprint accepted for “%{server}”: %{fingerprint}'
+      host_key_mismatch_new_type: '“%{server}” presents a key of a new type (%{type}): %{fingerprint}. Elio no longer connects to it until an administrator accepts it.'
+      host_key_added: 'New key type (%{type}) accepted for “%{server}”: %{fingerprint}'
       server_unreachable: "“%{server}” no longer answers"
       server_back_online: "“%{server}” answers again"
       os_upgraded: "“%{server}” went from %{from} to %{to}"
       server_rebooted: "“%{server}” has rebooted"
       health_warning: "“%{server}” is to watch: %{reasons}"
+      health_warning_new: "New problem on “%{server}”, still to watch: %{reasons}"
       health_critical: "“%{server}” is in a critical state: %{reasons}"
+      health_critical_new: "New problem on “%{server}”, still critical: %{reasons}"
       health_recovered: "“%{server}” is healthy again"
       docker_warning: "Docker on “%{server}” is to watch: %{reasons}"
+      docker_warning_new: "New problem with Docker on “%{server}”, still to watch: %{reasons}"
       docker_critical: "Docker on “%{server}” is in a critical state: %{reasons}"
+      docker_critical_new: "New problem with Docker on “%{server}”, still critical: %{reasons}"
       docker_recovered: "Docker on “%{server}” is healthy again"
       packages_changed: 'Packages of “%{server}”: %{counts}'
       packages:
@@ -285,6 +294,9 @@ en:
         one: "%{count} fixable vulnerability on %{where}: %{cves}"
         other: "%{count} fixable vulnerabilities on %{where}: %{cves}"
       vulnerability_feed_failed: 'Vulnerability feed %{feed} not updated: %{error}'
+      vulnerability_feed_stale:
+        one: Vulnerability feed %{feed} not updated for %{count} day
+        other: Vulnerability feed %{feed} not updated for %{count} days
       container_unhealthy: The container %{container} is unhealthy on “%{server}”
       container_restarting: The container %{container} restarts in a loop on “%{server}”
       image_update_available: New version of the image %{image} for “%{server}”
@@ -353,6 +365,7 @@ en:
       integration_enabled: Extension %{integration} turned on
       integration_disabled: Extension %{integration} turned off
       integration_sync_failed: "%{integration} sync failed: %{error}"
+      notification_channel_disabled: "Notification channel “%{channel}” turned off after failing for a day: %{error}"
       coolify_deployed: "Coolify: %{application} deployed%{commit}"
       coolify_deploy_failed: "Coolify: deployment of %{application} failed%{commit}"
       quoted: "“%{text}”"
@@ -471,6 +484,11 @@ en:
         signing_secret: Signing secret
         last_delivery_failed_html: 'Last delivery failed: %{last_error}'
         last_delivery_html: Last delivery %{last_delivered_at}.
+        verification_example: 'Checking a message (Python):'
+        given_up_html: 'Turned off by Elio: no delivery succeeded since %{failing_since}. Fix the destination, then turn the channel back on.'
+        backing_off_html:
+          one: 'Failed once, next attempt %{retry_at}: the notifications wait until then.'
+          other: 'Failed %{count} times in a row, next attempt %{retry_at}: the notifications wait until then.'
         notification_channel_yet: No notification channel yet.
         secret_html: Signing secret (HMAC SHA-256 of “%{body}”, headers %{timestamp} and %{signature}; reject messages that are too old)
     notification_channels:

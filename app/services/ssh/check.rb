@@ -16,7 +16,9 @@ class Ssh::Check
       Result.new(success: false, message: I18n.t("ssh.check.unexpected"), details: I18n.t("ssh.check.unexpected_details", token: token, truncate: (output.truncate(200))))
     end
   rescue Ssh::Connection::Error => e
-    host_key = { new: e.new_fingerprint, known: e.known_fingerprints } if e.is_a?(Ssh::Connection::HostKeyMismatchError)
+    if e.is_a?(Ssh::Connection::HostKeyMismatchError)
+      host_key = { new: e.new_fingerprint, new_type: e.new_type, known: e.known, new_algorithm: e.new_algorithm? }
+    end
     Result.new(success: false, message: e.title, details: e.message, reason: e.reason, host_key: host_key)
   end
 end
