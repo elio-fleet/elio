@@ -1,6 +1,8 @@
 require "resolv"
 
 class Server < ApplicationRecord
+  include HealthThresholdOverrides
+
   # Activities logged when the health of the server or the state of its Docker changes.
   HEALTH_KINDS = { "ok" => :health_recovered, "warn" => :health_warning, "crit" => :health_critical }.freeze
   DOCKER_KINDS = { "ok" => :docker_recovered, "warn" => :docker_warning, "crit" => :docker_critical }.freeze

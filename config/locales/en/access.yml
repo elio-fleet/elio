@@ -320,6 +320,13 @@ en:
       generate_ssh_key: Generate an SSH key
       disk_warning: 'Disk: warning (%)'
       disk_critical: 'Disk: critical (%)'
+      inodes_warning: 'Inodes: warning (%)'
+      inodes_critical: 'Inodes: critical (%)'
+      swap_warning: 'Swap: warning (%)'
+      swap_critical: 'Swap: critical (%)'
+      not_watched: Not watched
+      sustained_minutes: Load and memory beyond for (minutes)
+      thresholds_help: "A group or a server can have stricter or looser thresholds of its own (in its edit form). Load and memory count only once beyond their threshold for the given minutes (0: at once), so that a short peak raises nothing."
       memory_warning: 'Memory: warning (%)'
       memory_critical: 'Memory: critical (%)'
       load_warning_processors: 'Load: warning (× processors)'

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_125317) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -68,6 +68,11 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
     t.boolean "ovh_ipv6_health", default: false, null: false
     t.integer "health_version", default: 0, null: false
     t.boolean "docker_alert_vulnerabilities", default: true, null: false
+    t.integer "health_inodes_warn", default: 80, null: false
+    t.integer "health_inodes_crit", default: 90, null: false
+    t.integer "health_swap_warn"
+    t.integer "health_swap_crit"
+    t.integer "health_sustained_minutes", default: 0, null: false
   end
 
   create_table "automations", force: :cascade do |t|
@@ -432,6 +437,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
     t.datetime "updated_at", null: false
     t.string "expected_ports"
     t.jsonb "ssh_source_ids", default: [], null: false
+    t.jsonb "health_thresholds", default: {}, null: false
     t.index "lower((name)::text)", name: "index_server_groups_on_lower_name", unique: true
   end
 
@@ -490,6 +496,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
     t.integer "ping_failures", default: 0, null: false
     t.datetime "last_reachable_at"
     t.string "expected_ports"
+    t.jsonb "health_thresholds", default: {}, null: false
     t.index "lower((host)::text), port, username", name: "index_servers_on_lower_host_port_username", unique: true
     t.index "lower((name)::text)", name: "index_servers_on_lower_name", unique: true
     t.index ["ip_addresses"], name: "index_servers_on_ip_addresses", using: :gin

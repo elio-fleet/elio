@@ -44,6 +44,10 @@
   </div>
   <% end %>
 
+  <%= form_section t(".health_thresholds"), t(".optional") do %>
+    <%= render "shared/health_threshold_fields", f: f %>
+  <% end %>
+
   <% if ServerGroup.exists? %>
     <%= form_section t(".groups"), t(".groups_help") do %>
     <fieldset>

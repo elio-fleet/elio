@@ -320,6 +320,13 @@ fr:
       generate_ssh_key: Générer une clé SSH
       disk_warning: 'Disque : attention (%)'
       disk_critical: 'Disque : critique (%)'
+      inodes_warning: 'Inodes : attention (%)'
+      inodes_critical: 'Inodes : critique (%)'
+      swap_warning: 'Swap : attention (%)'
+      swap_critical: 'Swap : critique (%)'
+      not_watched: Non surveillé
+      sustained_minutes: Charge et mémoire au-delà depuis (minutes)
+      thresholds_help: "Un groupe ou un serveur peut avoir ses propres seuils, plus stricts ou plus souples (dans sa modification). La charge et la mémoire ne comptent qu'une fois au-delà de leur seuil depuis le nombre de minutes indiqué (0 : tout de suite), pour qu'un pic bref ne déclenche rien."
       memory_warning: 'Mémoire : attention (%)'
       memory_critical: 'Mémoire : critique (%)'
       load_warning_processors: 'Charge : attention (× processeurs)'

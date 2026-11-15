@@ -32,6 +32,18 @@ class HealthThresholdsControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "warn", [ "Disque / à 75\u00A0%" ] ], [ servers(:web).reload.health_status, servers(:web).health_reason_texts ]
   end
 
+  test "saves the inodes and swap thresholds and the sustained minutes; a blank swap is not watched" do
+    AppSetting.current.update!(health_swap_warn: 50, health_swap_crit: 80)
+    sign_in users(:one)
+
+    patch settings_health_thresholds_path, params: params(health_inodes_warn: 85, health_inodes_crit: 95, health_swap_warn: "", health_swap_crit: "", health_sustained_minutes: 10)
+
+    assert_equal "Seuils de santé enregistrés.", flash[:notice]
+    assert_equal [ 85, 95, nil, nil, 10 ], AppSetting.current.attributes.values_at("health_inodes_warn", "health_inodes_crit", "health_swap_warn", "health_swap_crit", "health_sustained_minutes")
+    get settings_path
+    assert_select "input[name='app_setting[health_swap_warn]'][placeholder='Non surveillé']:not([required])"
+  end
+
   test "refuses inconsistent thresholds" do
     sign_in users(:one)
 

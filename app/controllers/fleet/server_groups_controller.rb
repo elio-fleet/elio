@@ -17,6 +17,7 @@ class ServerGroupsController < ApplicationController
     @group = ServerGroup.new(group_params)
 
     if @group.save
+      refresh_health(@group.server_ids) if @group.expected_ports || @group.health_thresholds.any?
       Activity.record!(:server_group_created, group_name: @group.name, servers: @group.servers.size)
       redirect_to servers_path(group: @group.id), notice: t("server_groups_controller.created", group_name: @group.name)
     else
@@ -28,7 +29,12 @@ class ServerGroupsController < ApplicationController
   end
 
   def update
+    server_ids = @group.server_ids
     if @group.update(group_params)
+      # Its expected ports and thresholds apply to its servers, old and new.
+      if @group.saved_changes.keys.intersect?(%w[expected_ports health_thresholds]) || server_ids.sort != @group.server_ids.sort
+        refresh_health(server_ids | @group.server_ids)
+      end
       redirect_to servers_path(group: @group.id), notice: t("server_groups_controller.updated", group_name: @group.name)
     else
       render :edit, status: :unprocessable_entity
@@ -36,7 +42,9 @@ class ServerGroupsController < ApplicationController
   end
 
   def destroy
+    server_ids = @group.server_ids
     @group.destroy!
+    refresh_health(server_ids)
     Activity.record!(:server_group_deleted, group_name: @group.name)
     redirect_to server_groups_path, notice: t("server_groups_controller.deleted", group_name: @group.name), status: :see_other
   end
@@ -48,6 +56,10 @@ class ServerGroupsController < ApplicationController
   end
 
   def group_params
-    params.expect(server_group: [ :name, :color, :expected_ports, server_ids: [], ssh_source_ids: [] ])
+    params.expect(server_group: [ :name, :color, :expected_ports, server_ids: [], ssh_source_ids: [], health_thresholds: Inventory::HealthThresholds::KEYS ])
+  end
+
+  def refresh_health(server_ids)
+    Server.where(id: server_ids).where.not(health_status: nil).includes(:server_groups).find_each(&:refresh_health!)
   end
 end

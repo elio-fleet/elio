@@ -15,10 +15,12 @@ en:
         username: User
         expected_ports: The expected ports
         extra_addresses_text: The extra addresses
+        health_thresholds: The health thresholds
       server_group:
         name: Name
         color: Color
         expected_ports: The expected ports
+        health_thresholds: The health thresholds
       public_key:
         name: Name
         kind: Type
@@ -42,6 +44,9 @@ en:
         password: Password
         password_confirmation: Password confirmation
     errors:
+      messages:
+        health_threshold_range: must be between 1 and 100 % (the load between 0.1 and 50)
+        health_threshold_order: must have each warning below its critical
       models:
         automation:
           attributes:

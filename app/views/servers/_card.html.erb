@@ -1,5 +1,6 @@
 <%# One server of the fleet as a card (grid view of servers/index): state, system, gauges, what to look at. %>
 <% health = server.inventory("health")&.data || {} %>
+<% thresholds = Inventory::HealthThresholds.new(server, app_settings) %>
 <% state = server.health_state %>
 <% tone = { "crit" => "crit", "off" => "crit", "warn" => "warn" }[state] %>
 <% reason = server.health_reason_texts.first %>
@@ -27,8 +28,8 @@
   <% elsif health.any? %>
     <div class="server-card-gauges mt-4 space-y-2">
       <%= meter health["load_percent"], warn: 80, crit: 100, width: "flex-1", label: t(".cpu") %>
-      <%= meter health.dig("memory", "used_percent"), warn: app_settings.health_memory_warn, crit: app_settings.health_memory_crit, width: "flex-1", label: t(".ram") %>
-      <%= meter health["disk_max_percent"], warn: app_settings.health_disk_warn, crit: app_settings.health_disk_crit, width: "flex-1", label: t(".disk") %>
+      <%= meter health.dig("memory", "used_percent"), warn: thresholds.memory_warn, crit: thresholds.memory_crit, width: "flex-1", label: t(".ram") %>
+      <%= meter health["disk_max_percent"], warn: thresholds.disk_warn, crit: thresholds.disk_crit, width: "flex-1", label: t(".disk") %>
     </div>
   <% else %>
     <p class="mt-4 flex-1 rounded-lg bg-subtle px-3 py-4 text-center text-xs text-ink-3"><%= t(".inventory_yet") %></p>
