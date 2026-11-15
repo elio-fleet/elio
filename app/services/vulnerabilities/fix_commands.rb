@@ -12,6 +12,8 @@ require "shellwords"
 #   fix.system_plan # every package of the system to update, in one apt command
 #   fix.steps       # by severity: the system packages, each Compose project, each image used without Compose
 #
+# Or how to update one image on the server: `fix.image_update("nginx:1.27")`.
+#
 # `rows`: ServerVulnerability records already loaded, or a relation (read
 # aggregated in SQL by PackageVulnerabilities: a server can have thousands).
 #
@@ -44,6 +46,10 @@ class Vulnerabilities::FixCommands
 
   # The plan of the system packages (nil when the rows hold none).
   def system_plan = plans.find(&:host?)
+
+  # The commands that update an image on this server, whatever its rows:
+  # each Compose project using it pulled and recreated, `docker pull` else.
+  def image_update(image) = image_commands(image, containers_of(image))
 
   def steps
     @steps ||= (package_steps + compose_steps + image_steps).each_with_index
