@@ -140,7 +140,7 @@ module Vulnerabilities::Matcher
   end
 
   # Logs vulnerability_found for these CVEs of a server (the fixable ones at
-  # the alert severity that were not there before).
+  # its alert severity, or exploited, that were not there before).
   def self.log_serious(server, cves, origin: nil, image: nil)
     return if cves.empty?
 
@@ -157,10 +157,14 @@ module Vulnerabilities::Matcher
   end
 
   def self.log_new(server, rows, known)
-    minimum = AppSetting.current.vulnerability_alert_severity
+    minimum = VulnerabilityAlert.severity_for(server)
     return if minimum == "none"
 
-    serious = rows.select { |row| row[:fixed_version] && row[:severity].in?(Vulnerability.severities_from(minimum)) && !known.include?(row[:cve]) }
+    fresh = rows.select { |row| row[:fixed_version] && !known.include?(row[:cve]) }
+    return if fresh.empty?
+
+    exploited = CveRating.where(cve: fresh.map { |row| row[:cve] }, exploited: true).pluck(:cve).to_set
+    serious = fresh.select { |row| row[:severity].in?(Vulnerability.severities_from(minimum)) || exploited.include?(row[:cve]) }
     return if serious.empty?
 
     log_serious(server, serious.map { |row| row[:cve] }.to_set, origin: serious.first[:origin], image: serious.first[:image])

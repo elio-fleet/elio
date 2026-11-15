@@ -316,6 +316,9 @@ fr:
       health_thresholds: Seuils de santé
       optional: "(facultatif)"
       ports_servers_group_may: 'Ports que les serveurs du groupe peuvent exposer publiquement. Tout autre port public est signalé comme inattendu. Vide : pas de vérification.'
+      vulnerability_alert_severity: Alertes de vulnérabilités
+      settings_severity: Comme dans les réglages (%{label})
+      vulnerability_alert_severity_hint: À partir de quelle gravité une vulnérabilité corrigeable rend ses serveurs critiques et est notifiée. Un serveur dans plusieurs groupes suit le plus strict.
       ssh_sources: Sources autorisées pour le SSH
       ssh_sources_hint: 'Les règles de firewall proposées pour ses serveurs n''ouvrent le SSH qu''à ces sources. Aucune cochée : pas de restriction venant de ce groupe.'
       servers: Serveurs

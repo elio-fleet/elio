@@ -435,7 +435,7 @@ fr:
         zip: "(zip)"
         debian_rates_only_small: 'Debian n''évalue qu''une petite partie de ses vulnérabilités (la plupart restent « non évaluées ») : pour être prévenu de toutes celles qu''une mise à jour corrige, choisissez « Toutes les corrigeables ». Ubuntu donne une priorité à presque toutes.'
         scores_intro_html: 'La note affichée est la <strong>moyenne</strong> des notes CVSS des fournisseurs actifs ; elle donne la gravité des vulnérabilités que Debian ou Ubuntu n''évaluent pas. EPSS et KEV disent si une vulnérabilité est exploitée. %{fleet_cves} CVE sur le parc. Automatisation « %{label} » :'
-        alert_html: Une vulnérabilité <strong>corrigeable</strong> (une version qui la corrige existe) à partir de cette gravité rend le serveur critique et enregistre l'activité « Vulnérabilité corrigeable » (notifiable).
+        alert_html: Une vulnérabilité <strong>corrigeable</strong> (une version qui la corrige existe) à partir de cette gravité, ou connue comme exploitée (KEV) quelle que soit sa gravité, rend le serveur critique et enregistre l'activité « Vulnérabilité corrigeable » (notifiable). Un groupe de serveurs peut avoir sa propre gravité. Entre parenthèses, les serveurs que chaque choix rendrait critiques.
     score_providers:
       form:
         name: Nom
@@ -489,6 +489,9 @@ fr:
       medium: Moyenne ou plus
       any: Toutes les corrigeables
       none: Jamais
+    vulnerability_alert_preview:
+      one: "%{label} (%{count} serveur)"
+      other: "%{label} (%{count} serveurs)"
     score_colors:
       green: Vert
       orange: Orange

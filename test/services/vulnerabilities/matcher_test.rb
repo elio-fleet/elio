@@ -61,6 +61,19 @@ class Vulnerabilities::MatcherTest < ActiveSupport::TestCase
     assert_includes Inventory::HealthStatus.evaluate(servers(:web).reload).reasons.map(&:text), "2 vulnérabilités graves corrigeables", "even the unrated ones; nginx has no fix"
   end
 
+  test "the severity of the server's groups, and an exploited CVE whatever its severity" do
+    packages(dpkg("openssl", "3.0.14-1~deb12u1"))
+    AppSetting.current.update!(vulnerability_alert_severity: "medium")
+    server_groups(:production).update!(vulnerability_alert_severity: "critical")
+    packages(dpkg("libc6", "2.36-9+deb12u9", source: "glibc"))
+    assert_empty Activity.of_kind(:vulnerability_found), "medium: below the group's severity"
+
+    packages(dpkg("openssl", "3.0.14-1~deb12u1"))
+    CveRating.create!(cve: "CVE-2025-0395", exploited: true)
+    packages(dpkg("libc6", "2.36-9+deb12u9", source: "glibc"))
+    assert_equal [ "CVE-2025-0395" ], Activity.of_kind(:vulnerability_found).sole.data["cves"], "exploited, although medium"
+  end
+
   test "nothing without a feed or for another distribution" do
     record_os(servers(:db), id: "alpine", version_id: "3.20")
     record_packages(servers(:db), [ dpkg("openssl", "1.0") ])

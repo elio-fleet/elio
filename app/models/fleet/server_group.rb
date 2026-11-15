@@ -24,6 +24,9 @@ class ServerGroup < ApplicationRecord
   validates :name, presence: true, uniqueness: { case_sensitive: false }, length: { maximum: 50 }
   validates :color, inclusion: { in: COLORS.keys }
   validate :expected_ports_must_be_valid
+  # Blank: the alert severity of the settings (VulnerabilityAlert).
+  validates :vulnerability_alert_severity, inclusion: { in: AppSetting::VULNERABILITY_ALERTS }, allow_nil: true
+  normalizes :vulnerability_alert_severity, with: ->(value) { value.presence }
 
   # The SSH sources chosen for the group (none = the whole list, SshSource).
   def ssh_sources = SshSource.where(id: ssh_source_ids).ordered
