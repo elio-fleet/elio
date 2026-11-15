@@ -31,6 +31,26 @@ class DnsRecord < ApplicationRecord
 
   scope :conflicting, -> { where(name: conflicting_names) }
 
+  # Every name that leads to an IP: its A / AAAA records, then the CNAMEs to
+  # one of these names (a few levels, as Dns::Matcher), sorted. nil when
+  # the text is not an IP. IPv6 compared in its short form.
+  def self.names_pointing_to(text)
+    return if text.to_s.include?("/") || text.blank?
+
+    ip = IPAddr.new(text.to_s.strip)
+    values = [ text.to_s.strip.downcase, ip.to_s ].uniq
+    names = addresses.where(value: values).distinct.pluck(:name)
+    Dns::Matcher::CNAME_PASSES.times do
+      found = where(record_type: "CNAME", value: names).where.not(name: names).distinct.pluck(:name)
+      break if found.empty?
+
+      names += found
+    end
+    names.sort
+  rescue IPAddr::InvalidAddressError, IPAddr::AddressFamilyError
+    nil
+  end
+
   def self.source_label(source)
     return Integrations::ManualDns.source_label(source) if manual_source?(source)
 

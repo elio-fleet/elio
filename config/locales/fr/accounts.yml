@@ -41,6 +41,7 @@ fr:
       password: Mot de passe
       current_password: Mot de passe actuel
       change_password: Changer le mot de passe
+      password_change_required: Un administrateur vous demande de choisir un nouveau mot de passe, différent de l'actuel, avant de continuer dans Elio.
   users:
     roles:
       admin: Admin
@@ -176,6 +177,7 @@ fr:
       reactivated: "%{email} peut de nouveau se connecter."
       two_factor_reset: La double authentification de %{email} est réinitialisée.
       unlocked: "%{email} peut de nouveau se connecter."
+      password_change_required: "%{email} devra choisir un nouveau mot de passe avant de continuer."
     security:
       mandatory_admins: Double authentification obligatoire pour les administrateurs.
       mandatory_operators: Double authentification obligatoire pour les opérateurs.

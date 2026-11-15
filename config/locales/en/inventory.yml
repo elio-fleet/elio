@@ -276,6 +276,14 @@ en:
       servers_concerned: Servers concerned
       pending_security_update: No pending security update.
       origin: Repository
+      export_csv: Export the security updates (CSV)
+      by_package: By package
+      by_server: By server
+      group_by: Group by
+      reboot: reboot
+    security_by_server:
+      command_hint: Installs every pending security update of this server, to paste on it (Elio never runs it).
+      reboot_hint: The new kernel or microcode only applies after a reboot.
   ports:
     index:
       all_groups: All groups

@@ -81,6 +81,8 @@ fr:
               taken: est déjà dans le trousseau
         user:
           attributes:
+            password:
+              same_as_before: doit être différent du précédent
             base:
               last_admin: Il doit toujours rester au moins un administrateur actif.
         invitation:

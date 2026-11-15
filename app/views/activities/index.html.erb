@@ -1,24 +1,36 @@
 <% content_for :title, t("title", page: t("nav.journal")) %>
+<%# Every link keeps the other filters and the search: they combine in the URL. %>
+<% journal_path = ->(**changes) { activities_path(@filters.merge(@search.to_params, changes)) } %>
 
 <% subtitle = safe_join([ (@server ? t(".history_on", server_name: @server.name) : t(".history")), ".",
-                          (safe_join([ " ", link_to(t(".see_all"), activities_path(category: @category), class: "font-medium text-accent hover:underline") ]) if @server) ].compact) %>
-<%= page_header t("nav.journal"), subtitle: subtitle %>
+                          (safe_join([ " ", link_to(t(".see_all"), journal_path.(server_id: nil), class: "font-medium text-accent hover:underline") ]) if @server) ].compact) %>
+<%= page_header t("nav.journal"), subtitle: subtitle do %>
+  <%= actions_menu do %>
+    <%# The export follows the filters and the search of the page (not its page): every event behind them. %>
+    <%= menu_item t(".export_csv"), journal_path.(format: :csv), icon: :arrow_down_tray, class: "export-csv", data: { turbo: false, controller: "current-query", action: "click->current-query#follow" } %>
+    <%= menu_item t(".export_json"), journal_path.(format: :json), icon: :arrow_down_tray, class: "export-json", data: { turbo: false, controller: "current-query", action: "click->current-query#follow" } %>
+  <% end %>
+<% end %>
 
 <%= render "activities/journal_tabs", current: "events" %>
 
 <%= filter_bar do %>
 <nav class="activity-filters flex flex-wrap items-center gap-2" aria-label="<%= t(".categories") %>">
   <% [ [ t(".all"), nil ], *Activity::CATEGORIES.map { |key| [ Activity.category_label(key), key.to_s ] } ].each do |label, category| %>
-    <%= filter_chip label, activities_path(category: category, server_id: @server&.id, **@search.to_params), active: @category == category %>
-  <% end %>
-  <% if @kind %>
-    <span class="activity-kind-filter inline-flex items-center gap-1 rounded-full border border-ink bg-ink px-3 py-1 text-sm text-surface">
-      <%= Activity::KINDS.fetch(@kind.to_sym).label %>
-      <%= link_to activities_path(category: @category, server_id: @server&.id, **@search.to_params), aria: { label: t(".remove_kind_filter") }, class: "opacity-70 hover:opacity-100" do %><%= icon :x_mark, class: "h-3.5 w-3.5" %><% end %>
-    </span>
+    <%# A kind of another category would leave nothing: dropped. %>
+    <% kind = @kind if @kind && (category.nil? || Activity::KINDS.fetch(@kind.to_sym).category.to_s == category) %>
+    <%= filter_chip label, journal_path.(category: category, kind: kind), active: @category == category %>
   <% end %>
 </nav>
-<%= render "activities/journal_search", search: @search, url: activities_path, hidden: { category: @category, server_id: @server&.id, kind: @kind } %>
+<% kinds = Activity::KINDS.values.select { |kind| @category.nil? || kind.category.to_s == @category }.sort_by { |kind| I18n.transliterate(kind.label).downcase } %>
+<% selects = capture do %>
+  <%= select_tag :severity, options_for_select([ [ t(".all_severities"), "" ], [ t(".at_least_warning"), "warning" ], [ t(".critical_only"), "critical" ] ], @severity),
+        id: "journal-severity", aria: { label: t(".minimum_severity") }, data: { action: "change->auto-submit#submitPage" }, class: "input w-auto py-1.5" %>
+  <%= select_tag :kind, options_for_select([ [ t(".all_kinds"), "" ], *kinds.map { |kind| [ kind.label, kind.key ] } ], @kind),
+        id: "journal-kind", aria: { label: t(".kind") }, data: { action: "change->auto-submit#submitPage" }, class: "input w-auto max-w-56 py-1.5" %>
+<% end %>
+<%= render "activities/journal_search", search: @search, url: activities_path, hidden: { category: @category, server_id: @server&.id }, selects: selects,
+           clear_url: activities_path(@filters) %>
 <% end %>
 
 <%= search_results_frame do %>
@@ -26,10 +38,13 @@
 <section class="card px-4">
   <% if @activities.any? %>
     <ul id="activities" class="divide-y divide-line">
-      <%= render partial: "activities/activity", collection: @activities %>
+      <%# The same event repeated in a row (same kind, server, author and text) shows once, with the times of the others. %>
+      <% @activities.chunk_while { |a, b| [ a.kind, a.server_id, a.user_id, a.summary ] == [ b.kind, b.server_id, b.user_id, b.summary ] }.each do |group| %>
+        <%= render "activities/activity", activity: group.first, repeats: group.drop(1) %>
+      <% end %>
     </ul>
   <% else %>
-    <p class="py-10 text-center text-sm text-ink-3"><%= @search.any? ? t("activities.journal_search.nothing") : t(".activity_yet") %></p>
+    <p class="py-10 text-center text-sm text-ink-3"><%= @search.any? || @filters.except(:server_id).any? ? t("activities.journal_search.nothing") : t(".activity_yet") %></p>
   <% end %>
 </section>
 

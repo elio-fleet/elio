@@ -4,11 +4,13 @@ module Settings
 
     require_permission :administer
 
-    before_action :set_user, only: %i[update deactivate reactivate reset_two_factor unlock]
+    before_action :set_user, only: %i[update deactivate reactivate reset_two_factor unlock require_password_change]
 
     def index
       @pager = paginate(User.order(:email), per_page: PER_PAGE)
       @users = @pager.records
+      # When each one last did something in Elio (their last journal entry).
+      @last_actions = Activity.where(user: @users).group(:user_id).maximum(:created_at)
       @invitations = Invitation.pending.includes(:invited_by).order(created_at: :desc)
       @expired_invitations = Invitation.expired_unanswered.includes(:invited_by).order(expires_at: :desc)
       @invitation = Invitation.new
@@ -57,6 +59,17 @@ module Settings
       @user.unlock_access!
       Activity.record!(:user_unlocked, email: @user.email)
       redirect_to settings_users_path, notice: t("flash.users.unlocked", email: @user.email)
+    end
+
+    # An account that may have been exposed: a new password before going on
+    # (ApplicationController#redirect_to_password_change). One's own password is
+    # changed in My account.
+    def require_password_change
+      return redirect_to(account_path(anchor: "password")) if @user == current_user
+
+      @user.require_password_change!
+      Activity.record!(:password_change_required, email: @user.email, asked_by: current_user.email)
+      redirect_to settings_users_path, notice: t("flash.users.password_change_required", email: @user.email)
     end
 
     private

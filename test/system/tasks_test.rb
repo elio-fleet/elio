@@ -28,4 +28,17 @@ class TasksTest < ApplicationSystemTestCase
     assert_selector "nav.task-filters a[aria-current=true]", text: "En échec"
     assert_selector "tr.background-task", count: 1
   end
+
+  test "a run is started again on its failed servers only" do
+    task = BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire du parc", servers: [ servers(:web), servers(:db) ], user: users(:one))
+    task.items.find_by!(server_name: "Web").finish!(:failed, "Délai dépassé")
+    task.items.find_by!(server_name: "Database").finish!(:succeeded)
+
+    visit task_path(task)
+    accept_app_confirm { click_on "Relancer sur les serveurs en échec" }
+
+    assert_selector "h1", text: "Inventaire du parc (échecs relancés, 1 serveur)"
+    assert_selector "tr.task-item", count: 1
+    assert_selector "tr.task-item", text: "Web"
+  end
 end
