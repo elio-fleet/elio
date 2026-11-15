@@ -12,6 +12,14 @@ class Inventory::PackageTest < ActiveSupport::TestCase
     assert_equal "Docker/bookworm", Inventory::Package.new(origin: "Docker/bookworm").origin_label
   end
 
+  test "the updates that only apply after a reboot: kernel and microcode" do
+    reboot = %w[linux-image-6.1.0-28-amd64 linux-image-amd64 intel-microcode amd64-microcode].map { |name| Inventory::Package.new(name: name, available_version: "2") }
+    others = %w[linux-libc-dev openssl intel-microcode-tools].map { |name| Inventory::Package.new(name: name, available_version: "2") }
+    assert reboot.all?(&:reboot?)
+    assert_not others.any?(&:reboot?)
+    assert_not Inventory::Package.new(name: "linux-image-amd64").reboot?, "no update, no reboot"
+  end
+
   test "outside the distribution: backports, third-party and local packages, the SQL twin of origin_kind" do
     origins = [ "Debian/bookworm", "Ubuntu/noble-updates", "Debian Backports/bookworm-backports", "Docker/bookworm", "local", nil ]
     record_packages(servers(:web), origins.each_with_index.map { |origin, index| { manager: "dpkg", name: "p#{index}", version: "1", origin: origin } })

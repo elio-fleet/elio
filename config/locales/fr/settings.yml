@@ -71,6 +71,12 @@ fr:
         reset: Réinitialiser
         reactivate: Réactiver
         deactivate: Désactiver
+        last_action: dernière action
+        journal: Ses actions dans le journal
+        must_change_password: Doit changer son mot de passe
+        require_password_change: Demander un nouveau mot de passe
+        require_password_change_confirm: "%{email} devra choisir un nouveau mot de passe, différent de l'actuel, avant de continuer dans Elio."
+        require: Demander
         deactivate_confirm: "%{email} ne pourra plus se connecter et sera déconnecté immédiatement."
         users: utilisateurs
         roles: Rôles

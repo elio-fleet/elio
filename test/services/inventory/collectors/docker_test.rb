@@ -9,7 +9,7 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
   def output(name) = file_fixture("inventory/docker/#{name}.txt").read
 
   # Runs the collector against a fake server: the main command, then the scans.
-  def collect(name, previous: nil, sudo: true, trivy: nil, packages: output(:image_packages), command_timeout: nil, df: nil)
+  def collect(name, previous: nil, sudo: true, trivy: nil, packages: output(:image_packages), command_timeout: nil, df: nil, server: servers(:web))
     known_hosts = Rails.root.join("tmp", "test", "docker-#{SecureRandom.hex(4)}", "known_hosts")
     handler = lambda do |command|
       if command.end_with?(Ssh::Commands.render("inventory.docker")) then FakeSsh::Response.new(output(name), "", 0)
@@ -20,7 +20,7 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
     end
     fake = FakeSsh.new(responses: { "sudo -n true" => FakeSsh::Response.new("", "", sudo ? 0 : 1) }, handler: handler)
     travel_to(NOW) do
-      [ Ssh::Connection.open(servers(:web), transport: fake, known_hosts_file: known_hosts, command_timeout: command_timeout) { |ssh| Collector.new(ssh, previous: previous).collect }, fake.commands ]
+      [ Ssh::Connection.open(server, transport: fake, known_hosts_file: known_hosts, command_timeout: command_timeout) { |ssh| Collector.new(ssh, previous: previous).collect }, fake.commands ]
     end
   ensure
     FileUtils.rm_rf(known_hosts.dirname)
@@ -122,6 +122,41 @@ end
     again, commands = collect(:with_trivy, previous: outcome.data)
     assert_equal 0, commands.count { |command| command.include?("trivy image") }
     assert again.data["scans"]["sha256:#{"b" * 64}"]["kept"]
+  end
+
+  test "without a scanner, an image is matched again only after an update of its feed" do
+    record_os(servers(:web))
+    load_debian_feed
+    VulnerabilityFeed.for("debian").update!(refreshed_at: NOW - 1.hour)
+    outcome, = collect(:debian13)
+
+    again, commands = collect(:debian13, previous: Collector.snapshot_data(outcome.data.as_json))
+    assert_equal 0, commands.count { |command| command.include?("docker\\ cp") }, "same images, same feed"
+    assert again.data["scans"]["sha256:#{"a" * 64}"]["kept"]
+
+    VulnerabilityFeed.for("debian").update!(refreshed_at: NOW + 1.minute)
+    _, commands = collect(:debian13, previous: Collector.snapshot_data(again.data.as_json))
+    assert_equal 4, commands.count { |command| command.include?("docker\\ cp") }
+  end
+
+  test "an image scanned on another server today is copied with its rows, not scanned again" do
+    outcome, = collect(:with_trivy)
+    Collector.record(servers(:web), outcome.data.as_json, NOW)
+    servers(:web).inventory_snapshots.create!(category: "docker", status: "ok", data: Collector.snapshot_data(outcome.data.as_json), collected_at: NOW, checked_at: NOW)
+    nginx = servers(:web).server_vulnerabilities.images.where(image: "nginx:1.27")
+    nginx.where(cve: "CVE-2024-9143").update_all(severity: "high", distro_severity: "unknown")
+
+    shared, commands = collect(:with_trivy, server: servers(:db))
+    assert_equal 0, commands.count { |command| command.include?("trivy image") }
+    scan = shared.data["scans"]["sha256:#{"b" * 64}"]
+    assert_equal [ "trivy", 3, "Web", { "id" => "alpine", "version_id" => "3.20.3" } ], scan.values_at("method", "count", "shared_from", "os")
+    Collector.record(servers(:db), shared.data.as_json, NOW)
+    assert_equal nginx.order(:cve).pluck(:cve, :source_package, :fixed_version), servers(:db).server_vulnerabilities.images.where(image: "nginx:1.27").order(:cve).pluck(:cve, :source_package, :fixed_version)
+    assert_equal "unknown", servers(:db).server_vulnerabilities.find_by(image: "nginx:1.27", cve: "CVE-2024-9143").distro_severity, "rated again from the score"
+
+    nginx.where(cve: "CVE-2024-6119").delete_all
+    _, commands = collect(:with_trivy, server: servers(:db))
+    assert_equal 1, commands.count { |command| command.include?("trivy image") }, "rows missing on the other server: scanned here"
   end
 
   test "a failed or too long scan is noted on the image" do

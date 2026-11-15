@@ -26,6 +26,14 @@ export default class extends Controller {
     this.element.requestSubmit()
   }
 
+  // A filter the rest of the page depends on (its links, its menus): the
+  // whole page follows, not only the results frame.
+  submitPage() {
+    clearTimeout(this.timeout)
+    this.element.dataset.turboFrame = "_top"
+    this.element.requestSubmit()
+  }
+
   submitLater() {
     clearTimeout(this.timeout)
     this.timeout = setTimeout(() => this.element.requestSubmit(), 300)

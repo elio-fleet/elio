@@ -79,6 +79,8 @@ en:
               taken: is already in the keyring
         user:
           attributes:
+            password:
+              same_as_before: must differ from the previous one
             base:
               last_admin: There must always be at least one active administrator.
         invitation:

@@ -10,6 +10,8 @@ class Inventory::Package < ApplicationRecord
   DISTRIBUTION_ORIGINS = /\A(Debian|Ubuntu|Raspbian)/
   BACKPORTS = /-backports\z/
   ORIGIN_KINDS = %w[distribution backports third_party local].freeze
+  # Updates that only apply after a reboot: the kernel and the CPU microcode.
+  REBOOT = /\A(linux-image-|intel-microcode\z|amd64-microcode\z)/
 
   belongs_to :server
 
@@ -27,6 +29,9 @@ class Inventory::Package < ApplicationRecord
   def self.manager_label(manager) = I18n.t("inventory.package.managers.#{manager}", default: manager.to_s)
 
   def upgradable? = available_version.present?
+
+  # Its update only applies once the server is rebooted.
+  def reboot? = upgradable? && name.match?(REBOOT)
 
   def self.origin_kind(origin)
     if origin.blank? then nil

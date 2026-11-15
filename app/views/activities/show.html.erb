@@ -1,0 +1,21 @@
+<% content_for :title, t("title", page: @activity.label) %>
+<%# One event of the Journal on its own page (its permanent link): what, when, who, where, and the way to the same events. %>
+<% tone = { info: nil, warning: :warn, critical: :crit }.fetch(@activity.severity) %>
+<% severity = { info: t("activities.severity.information"), warning: t("activities.severity.warning"), critical: t("activities.severity.critical") }.fetch(@activity.severity) %>
+
+<%= page_header @activity.summary, crumbs: [ [ t("nav.journal"), activities_path ], @activity.label ],
+                badges: status_badge(tone || :neutral, severity, class: "activity-severity") do %>
+  <%= link_to t(".same_kind"), activities_path(kind: @activity.kind, server_id: @activity.server_id), class: "same-kind btn btn-secondary" %>
+<% end %>
+
+<%= panel t(".details"), id: "activity-details" do %>
+  <%= fact_list [
+        [ t(".kind"), safe_join([ tag.span(@activity.label, class: "font-medium"), tag.span(@activity.definition.description, class: "block text-xs text-ink-3") ]) ],
+        [ t(".category"), Activity.category_label(@activity.category) ],
+        [ t(".date"), safe_join([ l(@activity.created_at, format: :long), " (", relative_time_tag(@activity.created_at), ")" ]) ],
+        [ t(".author"), @activity.author_name ],
+        [ t(".server"), (@activity.server ? link_to(@activity.server.name, server_path(@activity.server), class: "font-mono text-accent hover:underline") : (tag.span(@activity.server_name, class: "font-mono") if @activity.server_name)) ],
+        [ t(".account"), (tag.span(@activity.unix_user, class: "font-mono") if @activity.unix_user.present?) ],
+        [ t(".key"), (@activity.public_key ? link_to(@activity.public_key.name, public_key_path(@activity.public_key), class: "text-accent hover:underline") : @activity.data["public_key_name"]) ]
+      ] %>
+<% end %>

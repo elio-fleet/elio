@@ -279,6 +279,14 @@ fr:
       servers_concerned: Serveurs concernés
       pending_security_update: Aucune mise à jour de sécurité en attente.
       origin: Dépôt
+      export_csv: Exporter les mises à jour de sécurité (CSV)
+      by_package: Par paquet
+      by_server: Par serveur
+      group_by: Grouper par
+      reboot: redémarrage
+    security_by_server:
+      command_hint: Installe toutes les mises à jour de sécurité en attente de ce serveur, à coller sur celui-ci (Elio ne la lance jamais).
+      reboot_hint: Le nouveau noyau ou microcode ne s'applique qu'après un redémarrage.
   ports:
     index:
       all_groups: Tous les groupes

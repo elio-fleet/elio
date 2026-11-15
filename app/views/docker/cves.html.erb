@@ -48,7 +48,25 @@
               <%= image.fixable_count.positive? ? t("docker.cves.advice_update") : t("docker.cves.advice_none") %>
             </p>
           </div>
-          <details class="border-t border-line">
+          <% if (updates = @update_commands[image.image]) %>
+            <details class="image-update border-t border-line">
+              <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-accent hover:underline">
+                <%= t("docker.cves.update_commands", count: updates.size) %> <span class="font-normal text-ink-3"><%= t("servers.fix_plan.never_run") %></span>
+              </summary>
+              <div class="space-y-3 px-4 pb-3">
+                <% updates.each do |server, commands| %>
+                  <div class="image-update-server" data-server="<%= server.name %>" data-controller="clipboard">
+                    <p class="text-xs font-medium text-ink-2"><%= server.name %></p>
+                    <div class="mt-1 flex items-start gap-2">
+                      <pre data-clipboard-target="source" class="fix-commands min-w-0 flex-1 overflow-x-auto rounded-md bg-neutral-950 px-3 py-2 font-mono text-xs text-neutral-100"><%= commands.join("\n") %></pre>
+                      <%= render "settings/copy_button" %>
+                    </div>
+                  </div>
+                <% end %>
+              </div>
+            </details>
+          <% end %>
+          <details class="image-packages border-t border-line">
             <summary class="cursor-pointer px-4 py-2 text-xs font-medium text-accent hover:underline"><%= t("docker.cves.by_package", count: image.package_count) %></summary>
             <%= turbo_frame_tag image.frame_id, src: docker_image_cves_path(image: image.image, group: @group&.id), loading: :lazy, target: "_top" do %>
               <p class="px-4 py-3 text-xs text-ink-3"><%= t("docker.cves.loading") %></p>
