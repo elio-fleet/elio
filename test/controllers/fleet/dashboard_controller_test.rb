@@ -224,6 +224,25 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "#attention li.attention-item a.attention-action[href=?]", server_path(servers(:web), tab: "keys"), text: /Voir les clés/
   end
 
+  test "the most serious items first, the others behind See all, each with since when" do
+    Server.update_all(reachable: false, ssh_ok: true, inventoried_at: Time.current)
+    7.times { |index| Server.create!(name: "node-#{index}", host: "10.0.0.#{index + 10}", username: "elio").update_columns(reachable: true, ssh_ok: true, inventoried_at: Time.current, health_status: "warn", health_reasons: [ { "tone" => "warn", "text" => "Redémarrage requis" } ]) }
+    Activity.create!(kind: "server_unreachable", server: servers(:db), created_at: 3.days.ago)
+    sign_in users(:one)
+
+    get root_path
+
+    assert_select "#attention li.attention-item", 8
+    assert_equal [ "Critique · 3", "À surveiller · 7" ], css_select("#attention .attention-group").map { |group| group.text.strip }
+    assert_select "#attention li.attention-item", text: /Database.*apparu il y a 3 jours/m
+    assert_select "#attention .attention-more a[href=?]", root_path(attention: "all", anchor: "attention"), text: /Tout voir \(2 de plus\)/
+
+    get root_path(attention: "all")
+
+    assert_select "#attention li.attention-item", 10
+    assert_select "#attention .attention-more a[href=?]", root_path(anchor: "attention"), text: "Voir seulement les plus graves"
+  end
+
   test "nothing to report" do
     Server.update_all(reachable: true, ssh_ok: true, inventoried_at: Time.current, health_status: "ok")
     sign_in users(:one)

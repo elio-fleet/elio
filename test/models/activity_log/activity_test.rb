@@ -73,6 +73,8 @@ test "summaries" do
       [ :key_removed, { unix_user: "deploy", key_name: "bob" } ] => "Clé « bob » supprimée de « Web »",
       [ :key_removed, { unix_user: "root", key_name: "bob" } ] => "Clé « bob » supprimée de « Web » (compte root)",
       [ :key_expired, { public_key: public_keys(:ci), unix_user: "deploy" } ] => "Accès temporaire de « CI » retiré de « Web »",
+      [ :key_access_extended, { public_key: public_keys(:ci), unix_user: "root", duration_seconds: 3600, expires_at: "2026-11-15T15:40:00+01:00" } ] =>
+        "Accès temporaire de « CI » sur « Web » (compte root) prolongé de 1 heure, jusqu'à 15 nov. 15:40",
       [ :unknown_key_detected, { unix_user: "root" } ] => "Clé inconnue « sans nom » trouvée sur « Web » (compte root)",
       [ :key_disappeared, { unix_user: "root", key_name: "bob" } ] => "Clé « bob » disparue de « Web » (compte root)",
       [ :ssh_access_lost, {} ] => "« Web » refuse la clé d'Elio",

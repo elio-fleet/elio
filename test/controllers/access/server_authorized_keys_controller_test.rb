@@ -150,8 +150,9 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
     assert_response :bad_request
   end
 
-  test "destroy removes the key and reloads the list over Turbo Stream" do
+  test "destroy removes the key and shows the list read on the same connection" do
     sign_in users(:one)
+    stub_key_write_session(public_keys(:alice).content)
     removed = Keys::AuthorizedKeyRemoval::Result.new(status: :removed, error_title: nil, error_details: nil)
 
     stub_method(Keys::AuthorizedKeyRemoval, :call, removed) do
@@ -160,7 +161,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
 
     assert_response :success
     assert_turbo_stream action: :replace, target: frame_id do
-      assert_select "turbo-frame[loading=eager][src=?]", server_authorized_keys_path(servers(:web))
+      assert_select "turbo-frame:not([src]) li.authorized-key", 1
     end
     assert_turbo_stream action: :update, target: "flash" do
       assert_select "div", text: "La clé « alice@laptop » a été supprimée de « Web »."
@@ -169,6 +170,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy reports a key that was already gone, unnamed" do
     sign_in users(:one)
+    stub_key_write_session
     absent = Keys::AuthorizedKeyRemoval::Result.new(status: :absent, error_title: nil, error_details: nil)
 
     stub_method(Keys::AuthorizedKeyRemoval, :call, absent) do
@@ -180,18 +182,24 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "destroy refuses the Elio key" do
+  test "destroy refuses the Elio key without connecting" do
     sign_in users(:one)
 
-    delete server_authorized_key_path(servers(:web)), params: { key: ssh_keys(:main).public_key.split(" ")[1], name: "elio" }, as: :turbo_stream
+    stub_method(Keys::WriteSession, :open, ->(*) { flunk "no connection" }) do
+      delete server_authorized_key_path(servers(:web)), params: { key: ssh_keys(:main).public_key.split(" ")[1], name: "elio" }, as: :turbo_stream
+    end
 
     assert_turbo_stream action: :update, target: "flash" do
       assert_select "div.toast-alert", text: /Suppression interdite/
+    end
+    assert_turbo_stream action: :replace, target: frame_id do
+      assert_select "turbo-frame[loading=eager][src=?]", server_authorized_keys_path(servers(:web))
     end
   end
 
   test "destroy HTML fallback redirects to the server page" do
     sign_in users(:one)
+    stub_key_write_session
     removed = Keys::AuthorizedKeyRemoval::Result.new(status: :removed, error_title: nil, error_details: nil)
 
     stub_method(Keys::AuthorizedKeyRemoval, :call, removed) do
@@ -245,6 +253,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy ends the temporary access of the removed key" do
     sign_in users(:one)
+    stub_key_write_session
     access = create_temporary_access
     other = create_temporary_access(server: servers(:db), unix_user: "admin")
     removed = Keys::AuthorizedKeyRemoval::Result.new(status: :removed, error_title: nil, error_details: nil)
@@ -259,6 +268,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy keeps the temporary access when the removal fails" do
     sign_in users(:one)
+    stub_key_write_session
     access = create_temporary_access
     failed = Keys::AuthorizedKeyRemoval::Result.new(status: :error, error_title: "Connexion impossible", error_details: "")
 
@@ -343,6 +353,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "destroy logs the removed key" do
     sign_in users(:one)
+    stub_key_write_session
     removed = Keys::AuthorizedKeyRemoval::Result.new(status: :removed, error_title: nil, error_details: nil)
 
     stub_method(Keys::AuthorizedKeyRemoval, :call, removed) do
@@ -433,6 +444,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
 
   test "removing a key from another account" do
     sign_in users(:one)
+    stub_key_write_session
     calls = []
     removal = lambda do |server, blob, account:, **|
       calls << [ server, blob, account.unix_user ]

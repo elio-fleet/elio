@@ -195,7 +195,7 @@ inventory:
       else echo unsupported; fi
 
   ports:
-    description: "Ports: listening sockets with their process and systemd unit, firewall state (ufw, else nftables, else iptables). Read-only: Elio never changes the firewall."
+    description: "Ports: listening sockets with their process and systemd unit, firewall state (ufw, else firewalld, else nftables, else iptables), the IPv6 INPUT chain, and the DOCKER-USER chain (Docker's published ports bypass ufw / firewalld; rules there filter them). Read-only: Elio never changes the firewall."
     run_as: root
     shell: true
     default: |
@@ -204,6 +204,17 @@ inventory:
       echo "@@elio ufw"; if command -v ufw >/dev/null 2>&1; then ufw status verbose 2>&1; else echo absent; fi
       echo "@@elio nft"; if command -v nft >/dev/null 2>&1; then nft list ruleset 2>&1 | head -c 200000; else echo absent; fi
       echo "@@elio iptables"; if command -v iptables >/dev/null 2>&1; then iptables -S INPUT 2>&1; else echo absent; fi
+      echo "@@elio ip6tables"; if command -v ip6tables >/dev/null 2>&1; then ip6tables -S INPUT 2>&1; else echo absent; fi
+      echo "@@elio docker_user"; if command -v iptables >/dev/null 2>&1; then iptables -S DOCKER-USER 2>&1; else echo absent; fi
+      echo "@@elio firewalld"
+      if ! command -v firewall-cmd >/dev/null 2>&1; then echo absent
+      elif ! firewall-cmd --state >/dev/null 2>&1; then echo "not running"
+      else
+        zones=$({ firewall-cmd --get-default-zone; firewall-cmd --get-active-zones | grep -v '^[[:space:]]' | cut -d' ' -f1; } 2>/dev/null | sort -u)
+        for zone in $zones; do firewall-cmd --list-all --zone="$zone" 2>&1; done
+        echo "@@elio firewalld_services"
+        for service in $(for zone in $zones; do firewall-cmd --list-services --zone="$zone" 2>/dev/null; done | tr ' ' '\n' | sort -u); do firewall-cmd --info-service="$service" 2>&1; done
+      fi
 
 # The only commands that change something: the authorized_keys file of the
 # account Elio logs in as (~/.ssh/authorized_keys), or of another account
@@ -253,6 +264,22 @@ keys:
       if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
       printf '%s\n' @{line} >> "$file"
       echo added
+
+  extend:
+    description: "Extends a temporary access: changes only the expiry-time option of the lines of a key (its other options, comment and the other lines are kept byte for byte). Prints absent (no expiring line for the key) or extended."
+    writes: true
+    shell: true
+    default: |
+      set -e
+      file="$HOME/.ssh/authorized_keys"
+      if [ ! -f "$file" ]; then echo absent; exit 0; fi
+      matches=$(awk -v blob=@{blob} '/expiry-time="/ { for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
+      if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
+      tmp=$(mktemp "$HOME/.ssh/authorized_keys.XXXXXX")
+      trap 'rm -f "$tmp"' EXIT
+      awk -v blob=@{blob} -v expiry=@{expiry} '{ for (i = 1; i <= NF; i++) if ($i == blob) { sub(/expiry-time="[0-9]+Z?"/, "expiry-time=\"" expiry "\""); break } print }' "$file" > "$tmp"
+      cat "$tmp" > "$file"
+      echo extended
 
   remove:
     description: "Removes every line whose key is the given one. Prints absent or removed."
@@ -345,6 +372,33 @@ keys:
         if [ -s "$file" ] && [ -n "$(tail -c 1 "$file")" ]; then echo >> "$file"; fi
         printf '%s\n' "$line" >> "$file"
         echo added
+        ELIO
+
+  extend_in_account:
+    description: "Extends a temporary access on another account: changes only the expiry-time option of the lines of a key in its authorized_keys. Same as remove_from_account: root only finds the account, the file is read and written as the account. Prints absent or extended."
+    writes: true
+    run_as: root
+    shell: true
+    default: |
+        set -e
+        home=$(getent passwd @{user} | cut -d: -f6)
+        if [ -z "$home" ]; then echo "unknown user" >&2; exit 3; fi
+        if [ ! -f "$home/.ssh/authorized_keys" ]; then echo absent; exit 0; fi
+        runuser -u @{user} -- sh -s -- "$home" @{user} @{blob} @{expiry} <<'ELIO'
+        set -e
+        home=$1 user=$2
+        refuse() { echo "not owned by the account" >&2; exit 4; }
+        if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ]; then refuse; fi
+        blob=$3 expiry=$4
+        file="$home/.ssh/authorized_keys"
+        if [ "$(ls -ld "$file" | awk '{ print $3 }')" != "$user" ]; then refuse; fi
+        matches=$(awk -v blob="$blob" '/expiry-time="/ { for (i = 1; i <= NF; i++) if ($i == blob) { n++; break } } END { print n + 0 }' "$file")
+        if [ "$matches" -eq 0 ]; then echo absent; exit 0; fi
+        tmp=$(mktemp "$home/.ssh/authorized_keys.XXXXXX")
+        trap 'rm -f "$tmp"' EXIT
+        awk -v blob="$blob" -v expiry="$expiry" '{ for (i = 1; i <= NF; i++) if ($i == blob) { sub(/expiry-time="[0-9]+Z?"/, "expiry-time=\"" expiry "\""); break } print }' "$file" > "$tmp"
+        cat "$tmp" > "$file"
+        echo extended
         ELIO
 
   remove_from_account:

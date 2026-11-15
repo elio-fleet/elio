@@ -1,0 +1,56 @@
+@@elio ss
+tcp LISTEN 0 128 0.0.0.0:22 0.0.0.0:* users:(("sshd",pid=1,fd=3))
+@@elio cgroups
+@@elio ufw
+absent
+@@elio nft
+table inet firewalld {
+	chain filter_INPUT {
+		type filter hook input priority filter + 10; policy accept;
+	}
+}
+@@elio iptables
+-P INPUT ACCEPT
+@@elio ip6tables
+-P INPUT ACCEPT
+@@elio docker_user
+iptables: No chain/target/match by that name.
+@@elio firewalld
+public (default, active)
+  target: default
+  icmp-block-inversion: no
+  interfaces: eth0
+  sources: 
+  services: dhcpv6-client http ssh
+  ports: 8080/tcp 9000-9100/udp
+  protocols: 
+  forward: yes
+  masquerade: no
+  forward-ports: 
+  source-ports: 
+  icmp-blocks: 
+  rich rules: 
+	rule family="ipv4" source address="10.0.0.0/8" port port="5432" protocol="tcp" accept
+	rule family="ipv6" source address="2001:db8::/32" service name="ssh" accept
+	rule family="ipv4" source address="192.0.2.1" drop
+internal (active)
+  target: default
+  icmp-block-inversion: no
+  interfaces: 
+  sources: 192.168.10.0/24
+  services: ssh
+  ports: 
+  rich rules: 
+@@elio firewalld_services
+dhcpv6-client
+  ports: 546/udp
+  protocols: 
+  source-ports: 
+  modules: 
+  destination: ipv6:fe80::/64
+http
+  ports: 80/tcp
+  protocols: 
+ssh
+  ports: 22/tcp
+  protocols: 

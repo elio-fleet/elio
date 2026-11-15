@@ -3,8 +3,11 @@
 # one, or another one through root (its ~/.ssh created if needed), unless the
 # key is already there. The line's comment is the key name in the keyring, so it shows
 # up as "known". With `expires_at`, the line gets an OpenSSH `expiry-time`
-# option (OpenSSH >= 8.2) so sshd refuses the key afterwards. With `replace`,
-# existing lines for the key are removed first (to change or drop an expiry).
+# option (OpenSSH >= 8.2) so sshd refuses the key afterwards; `options` (see
+# KeyOptions) restrict where it may come from and what it may do. With
+# `replace`, existing lines for the key are removed first (to change or drop an
+# expiry). Runs under the server's key lock (Keys::WriteSession), on `ssh`
+# when given.
 class Keys::PublicKeyAuthorization
   Result = Data.define(:status, :error_title, :error_details) do
     def success? = status != :error
@@ -15,11 +18,11 @@ class Keys::PublicKeyAuthorization
   # Exit statuses of keys.append_to_account / keys.replace_in_account.
   ACCOUNT_REFUSALS = { 3 => :unknown_account, 4 => :not_owned }.freeze
 
-  def self.call(server, public_key, account: nil, expires_at: nil, replace: false, **connection_options)
+  def self.call(server, public_key, account: nil, expires_at: nil, options: nil, replace: false, ssh: nil, **connection_options)
     account ||= AuthorizedKeysAccount.login(server)
     key = public_key.authorized_key
-    line = line_for(public_key, expires_at)
-    output = Ssh::Connection.open(server, **connection_options) do |ssh|
+    line = line_for(public_key, expires_at, options)
+    output = Keys::WriteSession.open(server, ssh: ssh, **connection_options) do |ssh|
       if account.login?
         ssh.run_command!(replace ? "keys.replace" : "keys.append", line: line, blob: key.key).stdout
       elsif ssh.privileged?
@@ -44,10 +47,10 @@ class Keys::PublicKeyAuthorization
     Result.new(status: :error, error_title: title, error_details: details)
   end
 
-  def self.line_for(public_key, expires_at = nil)
+  def self.line_for(public_key, expires_at = nil, key_options = nil)
     key = public_key.authorized_key
-    options = %(expiry-time="#{expires_at.utc.strftime("%Y%m%d%H%M%S")}Z" ) if expires_at
-    "#{options}#{key.type} #{key.key} #{public_key.name}"
+    options = [ *key_options&.to_a, (%(expiry-time="#{expires_at.utc.strftime("%Y%m%d%H%M%S")}Z") if expires_at) ].compact
+    [ (options.join(",") if options.any?), key.type, key.key, public_key.name ].compact.join(" ")
   end
 
   # The command sent (config/ssh_commands.yml: keys.append / keys.replace),

@@ -38,7 +38,8 @@ class Vulnerabilities::Scores::ProvidersTest < ActiveSupport::TestCase
   test "CVE.org: the score of the CNA" do
     with_score_answers("cveawg.mitre.org/api/cve/CVE-2024-6387" => "cveorg-CVE-2024-6387.json") do
       score = lookup("cveorg")
-      assert_equal [ 8.1, "3.1", "high", { "from" => "CNA" } ], [ score.score, score.version, score.severity, score.data ]
+      assert_equal [ 8.1, "3.1", "high", "CNA" ], [ score.score, score.version, score.severity, score.data["from"] ]
+      assert_equal [], score.data.fetch("references", []).reject { |reference| reference["kind"] == "fix" }, "Red Hat errata are not Debian or Ubuntu advisories"
     end
   end
 
@@ -47,6 +48,11 @@ class Vulnerabilities::Scores::ProvidersTest < ActiveSupport::TestCase
       score = lookup("nvd")
       assert_equal [ 8.1, "3.1" ], [ score.score, score.version ]
       assert_match "regression", score.data["description"]
+      references = score.data["references"].to_h { |reference| [ reference["url"], reference["kind"] ] }
+      assert_equal "advisory", references["https://ubuntu.com/security/notices/USN-6859-1"]
+      assert_equal "fix", references["https://github.com/openela-main/openssh/commit/e1f438970e5a337a17070a637c1b9e19697cad09"]
+      assert_nil references["https://access.redhat.com/errata/RHSA-2024:4312"]
+      assert_equal "advisory", score.data["references"].first["kind"], "advisories first"
     end
   end
 

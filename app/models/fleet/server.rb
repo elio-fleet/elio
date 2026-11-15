@@ -34,6 +34,7 @@ class Server < ApplicationRecord
   HOSTNAME_REGEXP = /\A(?=.{1,253}\z)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*\z/i
 
   normalizes :name, :host, :username, with: ->(value) { value.strip }
+  normalizes :expected_ports, with: ->(value) { value.squish.presence }
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :host, presence: true
@@ -45,6 +46,7 @@ class Server < ApplicationRecord
   validates :username, presence: true, format: { with: USERNAME_FORMAT, allow_blank: true }
   validate :host_must_be_an_ip_or_hostname
   validate :extra_addresses_must_be_ips
+  validate :expected_ports_must_be_valid
 
   # Matching with external resources (probes, provider IPs): every address
   # by which the server is known.
@@ -151,6 +153,18 @@ class Server < ApplicationRecord
     self.extra_addresses = text.to_s.split(/[\s,;]+/).map(&:strip).compact_blank.uniq
   end
 
+  # Ports this server may expose publicly, on top of those of its groups
+  # (Inventory::PortAnalysis); nil = nothing of its own.
+  def expected_port_list = expected_ports.present? ? Inventory::PortList.new(expected_ports) : nil
+
+  # "Ignore" an unexpected port: adds "8081/tcp" to its own expected ports.
+  # False when the port was already there.
+  def add_expected_port!(port, proto)
+    return false if expected_port_list&.include?(port, proto)
+
+    update!(expected_ports: [ expected_ports, "#{port.to_i}/#{proto}" ].compact_blank.join(", "))
+  end
+
   # Health shown in the interface: "off" when the last ping failed, otherwise
   # the state computed from the inventory (ok, warn, crit, unknown).
   def health_state = reachable == false ? "off" : (health_status || "unknown")
@@ -208,6 +222,11 @@ class Server < ApplicationRecord
   def extra_addresses_must_be_ips
     invalid = extra_addresses.reject { |address| Inventory::IpScope.ip?(address) }
     errors.add(:extra_addresses_text, :invalid_ips, addresses: invalid.join(", ")) if invalid.any?
+  end
+
+  def expected_ports_must_be_valid
+    invalid = Inventory::PortList.new(expected_ports).invalid
+    errors.add(:expected_ports, :invalid_ports, ports: invalid.join(", ")) if invalid.any?
   end
 
   def host_must_be_an_ip_or_hostname

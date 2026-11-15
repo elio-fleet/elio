@@ -21,6 +21,19 @@ module InventoryHelper
     end
   end
 
+  # A listen address of ss, with what it means when it is not a plain IP:
+  # "0.0.0.0 every IPv4 interface", "127.0.0.1 this machine only".
+  def listen_address(address)
+    meaning = case address.to_s
+    when "0.0.0.0" then "all_ipv4"
+    when "::" then "all_ipv6"
+    when "*", "" then "all"
+    else "loopback" if Inventory::IpScope.of(address) == "local"
+    end
+    hint = tag.span(t("inventory_helper.listen_address.#{meaning}"), class: "font-sans text-ink-3") if meaning
+    tag.span(safe_join([ tag.span(address.presence || "*", class: "font-mono"), hint ].compact, " "), class: "listen-address block")
+  end
+
   def period_label(period) = t("inventory_helper.periods.#{period}", default: period.to_s)
 
   # Readable schedules of a timer ("OnCalendar=*-*-* 06:00:00" → "every day at 6:00").

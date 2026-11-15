@@ -1,6 +1,7 @@
 <%# Firewall tab of a server (FirewallOverview): its own firewall, the OVHcloud
     network firewall of its OVH IPs, the public ports against both, and the
-    rules to copy with the prompt for an AI. Elio never changes a firewall. %>
+    rules to copy with the prompt for an AI. Its own rules are shown by family
+    (IPv4 / IPv6) with Docker's DOCKER-USER chain. Elio never changes a firewall. %>
 <% overview = FirewallOverview.new(server) %>
 <% analysis = overview.analysis %>
 <% snapshot = analysis.snapshot %>
@@ -35,7 +36,7 @@
               <% analysis.public_ports.sort_by { |port| [ port.unexpected ? 0 : 1, port.port ] }.each do |port| %>
                 <tr class="firewall-port" data-port="<%= port.key %>">
                   <td class="pl-4 font-mono font-medium"><%= port.port %><span class="text-ink-3">/<%= port.proto %></span>
-                    <% if port.unexpected %><%= status_badge :warn, t("words.unexpected"), class: "port-unexpected ml-1" %><% end %></td>
+                    <%= render "servers/unexpected_port", server: server, port: port %></td>
                   <td class="text-xs text-ink-2"><%= coolify_port_owner(port, server) || (port.container ? t("words.container_name", name: port.container) : port.unit&.delete_suffix(".service") || port.process || "—") %></td>
                   <td class="text-xs"><%= render "servers/port_firewall", port: port %></td>
                   <% ovh_firewalls.each do |firewall| %>
@@ -94,17 +95,42 @@
       <% if firewall["active"].nil? %>
         <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".needs_root") %></p>
       <% elsif Array(firewall["allowed"]).any? %>
-        <ul class="local-firewall-rules divide-y divide-line border-t border-line">
-          <% firewall["allowed"].each do |rule| %>
-            <li class="local-firewall-rule flex flex-wrap items-center gap-2 px-4 py-2 text-xs">
-              <%= status_badge :good, t(".allow"), class: "shrink-0" %>
-              <span class="font-mono text-ink"><%= rule["rule"] %></span>
-              <span class="text-ink-3"><%= rule["from"] ? t(".from", source: rule["from"]) : t(".from_anywhere") %></span>
-            </li>
+        <% families = analysis.rules_by_family %>
+        <% families.each do |family, rules| %>
+          <% if families.keys != [ nil ] %>
+            <h3 class="local-firewall-family border-t border-line bg-subtle px-4 py-1.5 text-xs font-semibold text-ink-2" data-family="<%= family || "both" %>"><%= t(".family.#{family || "both"}") %></h3>
           <% end %>
-        </ul>
+          <ul class="local-firewall-rules divide-y divide-line border-t border-line" data-family="<%= family || "both" %>">
+            <% rules.each do |rule| %>
+              <li class="local-firewall-rule flex flex-wrap items-center gap-2 px-4 py-2 text-xs">
+                <%= status_badge :good, t(".allow"), class: "shrink-0" %>
+                <span class="font-mono text-ink"><%= rule["rule"] %></span>
+                <span class="text-ink-3"><%= rule["from"] ? t(".from", source: rule["from"]) : t(".from_anywhere") %></span>
+              </li>
+            <% end %>
+          </ul>
+        <% end %>
       <% elsif analysis.firewall_active? %>
         <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t(".no_allow_rule") %></p>
+      <% end %>
+      <% if analysis.ipv6_open? && (open_ipv6 = overview.ipv6_ports).any? %>
+        <p class="ipv6-open flex gap-2 border-t border-line bg-warn-soft px-4 py-2 text-xs text-warn-ink">
+          <%= icon :exclamation_triangle, class: "h-4 w-4 shrink-0" %>
+          <%= t(".ipv6_open", tool: firewall["tool"], ports: open_ipv6.map(&:key).join(", "), addresses: overview.public_ipv6.join(", ")) %>
+        </p>
+      <% end %>
+      <% unless (docker_rules = analysis.docker_user_rules).nil? %>
+        <div class="docker-user border-t border-line px-4 py-2.5 text-xs">
+          <p class="font-semibold text-ink-2"><%= t(".docker_user") %></p>
+          <% if docker_rules.any? %>
+            <p class="mt-0.5 text-ink-3"><%= t(".docker_user_rules") %></p>
+            <ul class="mt-1.5 space-y-0.5 font-mono text-[11px] text-ink-2">
+              <% docker_rules.each do |rule| %><li class="docker-user-rule"><%= rule %></li><% end %>
+            </ul>
+          <% else %>
+            <p class="mt-0.5 text-ink-3"><%= t(".docker_user_empty") %></p>
+          <% end %>
+        </div>
       <% end %>
     <% elsif snapshot&.failed? %>
       <p class="inventory-error px-4 py-4 text-sm text-crit-ink"><%= snapshot.message %></p>

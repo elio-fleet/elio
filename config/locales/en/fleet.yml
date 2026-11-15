@@ -106,6 +106,10 @@ en:
       server_sections: Server sections
       authorized_ssh_keys: Authorized SSH keys
       public_keys_can_log: Public keys that can log in to this server, on every account Elio can read. Keys are added to Elio's login account, or to another account when Elio has root.
+      temporary_accesses:
+        zero: Temporary accesses and their history
+        one: Temporary accesses (%{count} in progress) and their history
+        other: Temporary accesses (%{count} in progress) and their history
       activity_server_yet: No activity on this server yet.
     row:
       load_over_24_h: Load over 24 h (in % of the processors)
@@ -144,6 +148,8 @@ en:
       extra_addresses: Extra addresses
       optional: "(optional)"
       ip_addresses_through_which: IP addresses through which this server is reached but that it does not see itself (NAT, failover IP…). The addresses of its interfaces are read by the inventory.
+      expected_ports: Expected ports
+      expected_ports_help: Public ports this server may expose, on top of those of its groups. Any other public port is flagged as unexpected.
       groups: Groups
     new:
       copy_subtitle: 'Copy of “%{name}”: same port, user and groups. Fill in the name and the host.'
@@ -231,6 +237,10 @@ en:
         other: "fixable · %{count} fewer than a week ago"
       fixable_same: "fixable · as many as a week ago"
       most_serious_first: most serious first
+      attention_all:
+        one: "See all (%{count} more) →"
+        other: "See all (%{count} more) →"
+      attention_fewer: See only the most serious
       group_crit:
         one: "Critical · %{count}"
         other: "Critical · %{count}"
@@ -459,3 +469,6 @@ en:
     add_failed: "Key not added: %{error_title} — %{error_details}"
     removed: "“%{name}” removed from the account %{account}."
     remove_failed: "Key not removed: %{error_title} — %{error_details}"
+  server_expected_ports_controller:
+    added: "%{port} is now expected on “%{server_name}”: it is no longer flagged."
+    invalid: Invalid port.

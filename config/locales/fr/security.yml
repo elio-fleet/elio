@@ -63,6 +63,7 @@ fr:
       turned_off: "(désactivé)"
       score_provider_asked_again_html: pas de note chez ce fournisseur (redemandé %{_})
       not_asked_yet_next: pas encore demandé (prochain passage des notes)
+      asking_now: demande en cours…
       text_html: Sur %{server_name}
       source_package: Paquet source
       installed_packages: Paquets installés
@@ -74,6 +75,10 @@ fr:
       exploited_since: ", depuis le %{date}"
       how_to_fix: Pour corriger
       fix_never_run: 'Commandes à lancer vous-même : Elio ne fait que lire les serveurs.'
+      references: Avis et correctifs
+      reference_kinds:
+        advisory: Avis
+        fix: Correctifs
     debian_tracker:
       not_tracker: Ce fichier n'est pas celui du Debian Security Tracker
       unreadable: 'Fichier du Debian Security Tracker illisible : %{truncate}'
@@ -125,6 +130,28 @@ fr:
       none_host: 'Pas de correctif pour l''instant : la distribution n''a pas publié de version corrigée.'
       none_image: 'Pas de correctif dans la distribution de l''image pour l''instant : un tag plus récent de l''image repose peut-être sur une version corrigée.'
   servers:
+    fix_plan:
+      summary_html: "Plan de correction : %{steps} pour %{cves}"
+      steps:
+        one: "%{count} étape"
+        other: "%{count} étapes"
+      never_run: commandes à copier, Elio ne les lance jamais
+      all_system:
+        one: Le paquet du système, en une commande
+        other: Les %{count} paquets du système, en une commande
+      ordered: Étape par étape, le plus grave d'abord
+      packages:
+        one: "%{count} paquet du système"
+        other: "%{count} paquets du système"
+      compose_html: Projet Compose %{name}
+      image_html: Image %{image}
+      images_containers: 'Images : %{images} · conteneurs : %{containers}'
+      recreate: Les conteneurs lancés sans Compose doivent ensuite être recréés avec leurs options.
+      after: Après les mises à jour
+      restart_html: Les services qui utilisent une bibliothèque mise à jour gardent l'ancien code jusqu'à leur redémarrage. %{command} les liste (paquet needrestart, installé d'office sur Ubuntu).
+      reboot: Redémarrez le serveur pour charger le nouveau noyau.
+      reboot_waiting: Le serveur attend déjà un redémarrage (reboot-required).
+      check: Elio voit les correctifs au prochain inventaire du serveur.
     vulnerabilities_card:
       whole_fleet: Tout le parc
       distribution_not_covered_elio: 'Distribution non couverte : Elio connaît les vulnérabilités de Debian et d''Ubuntu.'

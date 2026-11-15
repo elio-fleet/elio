@@ -5,6 +5,20 @@ class ServerTest < ActiveSupport::TestCase
     Server.new({ name: "New", host: "10.0.0.1", username: "deploy" }.merge(attributes))
   end
 
+  test "expected ports: checked, squished, and a port added once" do
+    server = servers(:web)
+    assert_not server.update(expected_ports: "8081, http")
+    assert_includes server.errors[:expected_ports].sole, "http"
+
+    assert server.update(expected_ports: "  ")
+    assert_nil server.expected_ports
+    assert server.add_expected_port!(8081, "tcp")
+    assert server.add_expected_port!(51_820, "udp")
+    assert_equal "8081/tcp, 51820/udp", server.reload.expected_ports
+    assert_not server.add_expected_port!(8081, "tcp")
+    assert server.expected_port_list.include?(51_820, "udp")
+  end
+
   test "fixtures are valid" do
     assert servers(:web).valid?
     assert servers(:db).valid?

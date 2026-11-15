@@ -32,25 +32,32 @@ class Keys::AuthorizedKeysReader
     def success? = error_title.nil?
     def keys = accounts.flat_map(&:keys)
     def login = accounts.first
+    def for(account) = accounts.find { |entry| entry.account == account }
   end
 
-  def self.call_all(server, **connection_options)
+  # `ssh`: an open connection to read on (after a change, see Keys::ServerKeysChange).
+  def self.call_all(server, ssh: nil, **connection_options)
     login = AuthorizedKeysAccount.login(server)
-    accounts, privileged = Ssh::Connection.open(server, **connection_options) do |ssh|
-      own = AccountKeys.new(account: login, keys: AuthorizedKey.parse(ssh.run_command!("keys.read").stdout))
-      next [ [ own ], false ] unless ssh.privileged?
-
-      others = parse_accounts(ssh.run_command("keys.read_accounts").stdout).except(server.username).map do |user, (content, unreadable)|
-        AccountKeys.new(account: AuthorizedKeysAccount.new(server, user), keys: AuthorizedKey.parse(content), unreadable: unreadable)
-      end
-      [ [ own, *others.sort_by { |entry| [ entry.account.unix_user == "root" ? 0 : 1, entry.account.unix_user ] } ], true ]
-    end
+    accounts, privileged = ssh ? read_all(ssh, login) : Ssh::Connection.open(server, **connection_options) { |connection| read_all(connection, login) }
 
     All.new(accounts: accounts, privileged: privileged)
   rescue Ssh::Connection::Error => e
     title, details = login.error_for(e)
     All.new(accounts: [], privileged: false, error_title: title, error_details: details, reason: e.reason)
   end
+
+  # [accounts, privileged] read on the connection `ssh`.
+  def self.read_all(ssh, login)
+    server = login.server
+    own = AccountKeys.new(account: login, keys: AuthorizedKey.parse(ssh.run_command!("keys.read").stdout))
+    return [ [ own ], false ] unless ssh.privileged?
+
+    others = parse_accounts(ssh.run_command("keys.read_accounts").stdout).except(server.username).map do |user, (content, unreadable)|
+      AccountKeys.new(account: AuthorizedKeysAccount.new(server, user), keys: AuthorizedKey.parse(content), unreadable: unreadable)
+    end
+    [ [ own, *others.sort_by { |entry| [ entry.account.unix_user == "root" ? 0 : 1, entry.account.unix_user ] } ], true ]
+  end
+  private_class_method :read_all
 
   # "@@elio account root\n<lines>\n@@elio account bob\n@@elio unreadable\n" →
   # { "root" => ["<lines>", false], "bob" => ["", true] }

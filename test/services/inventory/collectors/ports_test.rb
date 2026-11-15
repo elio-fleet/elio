@@ -28,9 +28,10 @@ class Inventory::Collectors::PortsTest < ActiveSupport::TestCase
     assert_equal [ "127.0.0.1", "6379" ], Collector.split_address("[::ffff:127.0.0.1]:6379")
   end
 
-  test "reads an active ufw: default policy, rules, application profiles and sources" do
+  test "reads an active ufw: default policy, rules, application profiles, sources and the family of each rule" do
     assert_equal({ "tool" => "ufw", "active" => true, "default_incoming" => "deny",
-                   "allowed" => [ { "rule" => "22/tcp" }, { "rule" => "80/tcp" }, { "rule" => "443/tcp" }, { "rule" => "5432", "from" => "10.0.0.0/16" } ] },
+                   "allowed" => [ { "rule" => "22/tcp", "family" => "ipv4" }, { "rule" => "80/tcp", "family" => "ipv4" }, { "rule" => "443/tcp", "family" => "ipv4" },
+                                  { "rule" => "5432", "from" => "10.0.0.0/16", "family" => "ipv4" }, { "rule" => "22/tcp", "family" => "ipv6" } ] },
                  parse(:debian12)["firewall"])
   end
 
@@ -38,7 +39,40 @@ class Inventory::Collectors::PortsTest < ActiveSupport::TestCase
     assert_equal({ "tool" => "nftables", "active" => true, "default_incoming" => "deny",
                    "allowed" => [ { "rule" => "22/tcp" }, { "rule" => "80/tcp" }, { "rule" => "443/tcp" }, { "rule" => "51820/udp" } ] }, parse(:nft)["firewall"])
     assert_equal({ "tool" => "iptables", "active" => true, "default_incoming" => "deny",
-                   "allowed" => [ { "rule" => "22/tcp" }, { "rule" => "80,443/tcp", "from" => "10.0.0.0/8" } ] }, parse(:iptables)["firewall"])
+                   "allowed" => [ { "rule" => "22/tcp", "family" => "ipv4" }, { "rule" => "80,443/tcp", "from" => "10.0.0.0/8", "family" => "ipv4" } ] }, parse(:iptables)["firewall"])
+  end
+
+  test "reads firewalld: services as their ports, port ranges, zones limited to sources, rich rules with their family" do
+    assert_equal({ "tool" => "firewalld", "active" => true, "default_incoming" => "deny",
+                   "allowed" => [ { "rule" => "546/udp" }, { "rule" => "80/tcp" }, { "rule" => "22/tcp" }, { "rule" => "8080/tcp" }, { "rule" => "9000:9100/udp" },
+                                  { "rule" => "5432/tcp", "from" => "10.0.0.0/8", "family" => "ipv4" }, { "rule" => "22/tcp", "from" => "2001:db8::/32", "family" => "ipv6" },
+                                  { "rule" => "22/tcp", "from" => "192.168.10.0/24" } ] },
+                 parse(:firewalld)["firewall"])
+
+    accept = "trusted (active)\n  target: ACCEPT\n  sources: \n  services: \n  ports: \n"
+    assert_equal "allow", Collector.parse_firewalld(accept, "")["default_incoming"]
+    assert_equal({ "tool" => "unknown", "active" => nil }, Collector.parse_firewall("ufw" => "absent", "firewalld" => "Authorization failed.", "nft" => "absent", "iptables" => "absent"))
+    assert_equal "none", Collector.parse_firewall("ufw" => "absent", "firewalld" => "not running", "nft" => "absent", "iptables" => "absent")["tool"]
+  end
+
+  test "flags an IPv6 left open while IPv4 is filtered" do
+    assert parse(:ufw_docker)["firewall"]["ipv6_open"], "ufw with IPV6=no: ip6tables accepts everything"
+    assert_nil Collector.parse_iptables("-P INPUT DROP\n", "-P INPUT DROP\n-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT\n")["ipv6_open"]
+    assert_equal [ { "rule" => "22/tcp", "family" => "ipv6" } ], Collector.parse_iptables("-P INPUT DROP\n", "-P INPUT DROP\n-A INPUT -p tcp -m tcp --dport 22 -j ACCEPT\n")["allowed"]
+
+    ip_only = "table ip filter {\n\tchain input {\n\t\ttype filter hook input priority filter; policy drop;\n\t\ttcp dport 22 accept\n\t}\n}\n"
+    assert_equal({ "tool" => "nftables", "active" => true, "default_incoming" => "deny", "allowed" => [ { "rule" => "22/tcp", "family" => "ipv4" } ], "ipv6_open" => true },
+                 Collector.parse_nft(ip_only))
+    both = ip_only + "table ip6 filter {\n\tchain input {\n\t\ttype filter hook input priority filter; policy drop;\n\t}\n}\n"
+    assert_nil Collector.parse_nft(both)["ipv6_open"]
+    assert_nil parse(:nft)["firewall"]["ipv6_open"], "an inet table filters both families"
+  end
+
+  test "reads the DOCKER-USER chain of Docker" do
+    assert_equal [ "-j ufw-user-forward", "-s 10.0.0.0/8 -j RETURN", "-p tcp -m tcp --dport 8080 -j DROP" ], parse(:ufw_docker)["firewall"]["docker_user"]
+    assert_equal [], Collector.parse_firewall("ufw" => "absent", "nft" => "absent", "iptables" => "absent", "docker_user" => "-N DOCKER-USER\n-A DOCKER-USER -j RETURN\n")["docker_user"]
+    assert_not parse(:firewalld)["firewall"].key?("docker_user"), "no chain: no Docker"
+    assert_not parse(:debian12)["firewall"].key?("docker_user"), "older output without the section"
   end
 
   test "without root, processes and firewall are unknown" do
