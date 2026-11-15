@@ -12,6 +12,31 @@ Listing...
 curl/stable 7.88.1-10+deb12u8 amd64 [upgradable from: 7.88.1-10+deb12u7]
 libssl3/stable-security 3.0.15-1~deb12u1 amd64 [upgradable from: 3.0.14-1~deb12u1]
 openssl/stable-security,stable-security 3.0.15-1~deb12u1 amd64 [upgradable from: 3.0.14-1~deb12u1]
+@@elio sources
+/var/lib/dpkg/status	a=now
+https://download.docker.com/linux/debian bookworm/stable amd64 Packages	o=Docker,a=bookworm,l=Docker CE,c=stable,b=amd64
+http://deb.debian.org/debian bookworm-backports/main amd64 Packages	o=Debian Backports,a=stable-backports,n=bookworm-backports,l=Debian Backports,c=main,b=amd64
+http://security.debian.org/debian-security bookworm-security/main amd64 Packages	v=12,o=Debian,a=stable-security,n=bookworm-security,l=Debian-Security,c=main,b=amd64
+http://deb.debian.org/debian bookworm/main amd64 Packages	v=12.7,o=Debian,a=stable,n=bookworm,l=Debian,c=main,b=amd64
+http://deb.debian.org/debian bookworm/main i386 Packages	v=12.7,o=Debian,a=stable,n=bookworm,l=Debian,c=main,b=i386
+@@elio origins
+@1	http://deb.debian.org/debian bookworm/main amd64 Packages
+@2	http://security.debian.org/debian-security bookworm-security/main amd64 Packages
+@3	http://deb.debian.org/debian bookworm/main i386 Packages
+@4	http://deb.debian.org/debian bookworm-backports/main amd64 Packages
+@5	http://apt.example.org/pgdg bookworm-pgdg/main amd64 Packages
+adduser	1
+curl	1
+libssl3	2,1
+libssl3:i386	3
+linux-image-amd64	4,1
+openssl	1
+postgresql-15	5
+@@elio history
+2024-09-02 06:25:13 install postgresql-15:amd64 <none> 15.7-1.pgdg120+1
+2024-09-10 14:02:11 upgrade curl:amd64 7.88.1-10+deb12u6 7.88.1-10+deb12u7
+2024-09-10 14:02:12 upgrade postgresql-15:amd64 15.7-1.pgdg120+1 15.8-0+deb12u1
+2024-09-11 09:12:40 remove old-package:amd64 1.0 <none>
 @@elio snap
 unsupported
 @@elio docker

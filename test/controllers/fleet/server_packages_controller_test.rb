@@ -69,4 +69,46 @@ class ServerPackagesControllerTest < ActionDispatch::IntegrationTest
     get server_packages_path(servers(:db))
     assert_select ".packages-empty", "Ni dpkg ni snap sur ce système"
   end
+
+  test "shows where each package comes from, filters the ones outside the distribution, links to the fleet comparison" do
+    record_packages(servers(:web), [
+      { manager: "dpkg", name: "curl", version: "7.88", arch: "amd64", origin: "Debian/bookworm-security" },
+      { manager: "dpkg", name: "linux-image-amd64", version: "6.10", arch: "amd64", origin: "Debian Backports/bookworm-backports" },
+      { manager: "dpkg", name: "docker-ce", version: "27.3", arch: "amd64", origin: "Docker/bookworm" },
+      { manager: "dpkg", name: "elio-tool", version: "1.0", arch: "amd64", origin: "local" },
+      { manager: "snap", name: "lxd", version: "5.21" }
+    ])
+    sign_in users(:viewer)
+
+    get server_packages_path(servers(:web))
+    assert_select "tr.package", text: /curl/ do
+      assert_select "a[href=?][target=_top]", packages_path(q: "curl"), text: "curl"
+      assert_select "td.package-origin span:not(.badge)", "Debian/bookworm-security"
+    end
+    assert_select "tr.package", text: /docker-ce/ do
+      assert_select "td.package-origin .badge", "Docker/bookworm"
+    end
+    assert_select "tr.package", text: /elio-tool/ do
+      assert_select "td.package-origin .badge.text-warn-ink", "Hors dépôt"
+    end
+
+    get server_packages_path(servers(:web), outside: "1")
+    assert_equal %w[docker-ce elio-tool linux-image-amd64], css_select("tr.package td:first-child a").map(&:text)
+  end
+
+  test "the last dpkg.log changes, under the list" do
+    snapshot = servers(:web).inventory("packages")
+    snapshot.update!(data: snapshot.data.merge("history" => [
+      { "at" => "2024-09-10 14:02:11", "action" => "upgrade", "name" => "curl", "from" => "7.88.1-10+deb12u6", "to" => "7.88.1-10+deb12u7" },
+      { "at" => "2024-09-02 06:25:13", "action" => "install", "name" => "htop", "from" => nil, "to" => "3.2.2" }
+    ]))
+    sign_in users(:viewer)
+
+    get server_packages_path(servers(:web))
+
+    assert_select "details.package-history summary", "2 derniers changements (dpkg.log)"
+    assert_select "tr.package-change", 2
+    assert_select "tr.package-change:first-child", text: /2024-09-10 14:02:11\s+Mis à jour\s+curl\s+7\.88\.1-10\+deb12u6 → 7\.88\.1-10\+deb12u7/
+    assert_select "tr.package-change:last-child td:last-child", "3.2.2"
+  end
 end

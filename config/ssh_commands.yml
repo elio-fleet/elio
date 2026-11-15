@@ -95,11 +95,22 @@ inventory:
       echo "@@elio boot_id"; cat /proc/sys/kernel/random/boot_id 2>/dev/null
 
   packages:
-    description: "Packages: dpkg packages (with their source package, for the CVE feeds) and the available updates (security ones flagged), snaps, Docker presence."
+    description: "Packages: dpkg packages (with their source package, for the CVE feeds) and the available updates (security ones flagged), the repository each installed version comes from (apt-cache policy of the installed packages, reduced by awk to one short line per package: numbered sources, then `package<TAB>source numbers`; a package no repository provides gets an empty list; an installed version no longer in the lists gets the repository of the package's other versions), the origin of those repositories (Release fields), the last 50 installs / upgrades / removals of dpkg.log, snaps, Docker presence."
     shell: true
     debian: |
       echo "@@elio dpkg"; dpkg-query -W -f='${db:Status-Abbrev}\t${Package}\t${Version}\t${Architecture}\t${source:Package}\t${source:Version}\t${Built-Using}\n' 2>/dev/null
       echo "@@elio upgradable"; apt list --upgradable 2>/dev/null
+      echo "@@elio sources"; LC_ALL=C apt-cache policy 2>/dev/null | awk '/^ *-?[0-9]+ / { src = $0; sub(/^ *-?[0-9]+ /, "", src); next } /^ +release / { sub(/^ +release /, ""); print src "\t" $0 }'
+      echo "@@elio origins"; dpkg-query -W -f='${db:Status-Abbrev} ${binary:Package}\n' 2>/dev/null | awk '/^[ih]i/ { print $2 }' | LC_ALL=C xargs -r apt-cache policy 2>/dev/null | awk '
+        /^[^ ]/ { pkg = $0; sub(/:$/, "", pkg); state = 0; next }
+        /^ \*\*\* / { state = 1; seen[pkg] = 1; next }
+        /^     [^ ]/ { state = 2; next }
+        state && /^        -?[0-9]+ / { src = $0; sub(/^ +-?[0-9]+ /, "", src); if (src == "/var/lib/dpkg/status") next
+          if (!(src in id)) { id[src] = ++n; print "@" n "\t" src }
+          if (state == 1) { if (pkg in mine) mine[pkg] = mine[pkg] "," id[src]; else mine[pkg] = id[src] }
+          else if (!(pkg in other)) other[pkg] = id[src] }
+        END { for (p in seen) print p "\t" ((p in mine) ? mine[p] : ((p in other) ? other[p] : "")) }'
+      echo "@@elio history"; grep -h -E '^[0-9-]+ [0-9:]+ (install|upgrade|remove|purge) ' /var/log/dpkg.log 2>/dev/null | tail -n 50
       echo "@@elio snap"; if command -v snap >/dev/null 2>&1; then snap list 2>/dev/null; else echo unsupported; fi
       echo "@@elio docker"; if command -v docker >/dev/null 2>&1; then echo present; fi
     default: |

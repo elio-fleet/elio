@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_110010) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -266,6 +266,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110010) do
     t.boolean "security", default: false, null: false
     t.string "source_name"
     t.string "source_version"
+    t.string "origin"
     t.index ["name"], name: "index_inventory_packages_on_name"
     t.index ["server_id"], name: "index_inventory_packages_on_server_id"
   end
