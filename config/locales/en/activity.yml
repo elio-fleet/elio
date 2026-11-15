@@ -154,9 +154,6 @@ en:
       user_unlocked:
         label: Account unlocked
         description: An administrator unlocked an account before the end of its lock.
-      password_change_required:
-        label: New password asked
-        description: An administrator asked a user to choose a new password.
       two_factor_enabled:
         label: 2FA turned on
         description: A user has turned on two-factor authentication.
@@ -335,7 +332,6 @@ en:
       user_deactivated: "%{email} deactivated"
       user_reactivated: "%{email} reactivated"
       user_unlocked: "%{email} unlocked"
-      password_change_required: "%{email} must choose a new password (asked by %{asked_by})"
       user_locked:
         one: "%{email} locked after %{count} failed attempt"
         other: "%{email} locked after %{count} failed attempts"

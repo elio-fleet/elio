@@ -47,9 +47,6 @@
 
   <section id="password" class="card p-5">
     <h2 class="text-sm font-semibold"><%= t(".password") %></h2>
-    <% if current_user.password_change_required? %>
-      <p class="password-change-required mt-2 rounded-md bg-warn-soft px-3 py-2 text-sm text-warn-ink"><%= t(".password_change_required") %></p>
-    <% end %>
     <%= form_with model: current_user, url: password_account_path, method: :patch, scope: :user, class: "mt-4 space-y-4" do |f| %>
       <%= render "shared/form_errors", record: current_user %>
       <div>

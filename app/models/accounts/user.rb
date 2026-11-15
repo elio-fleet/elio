@@ -28,9 +28,6 @@ class User < ApplicationRecord
   enum :role, { admin: "admin", operator: "operator", viewer: "viewer" }, default: :viewer, validate: true
 
   validate :must_keep_an_active_admin, on: :update
-  validate :new_password_must_differ, if: -> { password_change_required? && password.present? && persisted? }
-  # Choosing a new password (My account, or a reset by email) ends the request.
-  before_save -> { self.password_change_required = false }, if: -> { will_save_change_to_encrypted_password? && persisted? }
 
   scope :active, -> { where(deactivated_at: nil) }
 
@@ -66,10 +63,6 @@ class User < ApplicationRecord
   def deactivate! = update!(deactivated_at: Time.current)
 
   def reactivate! = update!(deactivated_at: nil)
-
-  # Asked by an admin (an account that may have been exposed): every page
-  # leads to My account until a new password is chosen.
-  def require_password_change! = update!(password_change_required: true)
 
   # Devise lockable: logged so a brute force attempt can be noticed / notified.
   def lock_access!(opts = {})
@@ -112,9 +105,5 @@ class User < ApplicationRecord
     return if User.active.admin.where.not(id: id).exists?
 
     errors.add(:base, :last_admin)
-  end
-
-  def new_password_must_differ
-    errors.add(:password, :same_as_before) if Devise::Encryptor.compare(self.class, encrypted_password_was, password)
   end
 end

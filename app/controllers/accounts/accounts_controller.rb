@@ -1,6 +1,6 @@
 # "My account": password and two-factor authentication of the signed-in user.
 class AccountsController < ApplicationController
-  skip_before_action :require_two_factor_setup, :redirect_to_password_change
+  skip_before_action :require_two_factor_setup
 
   def show
   end

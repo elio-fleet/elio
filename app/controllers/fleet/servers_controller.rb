@@ -71,6 +71,7 @@ class ServersController < ApplicationController
     show_vulnerabilities if @tab == "vulnerabilities"
     show_docker if @tab == "docker"
     show_overview if @tab == "overview"
+    @service_units = Inventory::ServiceUnits.new(@server, state: params[:state], query: params[:q]) if @tab == "services"
   end
 
   # Overview tab: 24-hour sparklines, charts over ?period= (24 h, 7 or 30

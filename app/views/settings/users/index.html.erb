@@ -96,38 +96,26 @@
             <% else %>
               <%= t(".never_signed_in") %>
             <% end %>
-            <% if (last_action = @last_actions[user.id]) %>
-              · <span class="user-last-action"><%= t(".last_action") %> <%= relative_time_tag last_action %></span>
-            <% end %>
             · <span class="user-two-factor"><%= user.two_factor_enabled? ? t(".two_factor_on") : t(".two_factor_off") %></span>
-            <% if user.password_change_required? %>
-              · <span class="user-password-change font-medium text-warn-ink"><%= t(".must_change_password") %></span>
-            <% end %>
           </p>
         </div>
         <%= form_with model: user, url: settings_user_path(user), class: "flex flex-wrap items-center gap-2", data: { controller: "auto-submit" } do |f| %>
           <%= f.select :role, User.role_options, {}, aria: { label: t(".role_of", email: user.email) }, class: select_class, data: { action: "change->auto-submit#submit" } %>
           <noscript><%= f.submit t("words.save"), class: "btn btn-secondary" %></noscript>
         <% end %>
-        <%# Same menu for every account: Deactivate and Reactivate at the same place. %>
-        <%= actions_menu label: t(".actions_of", email: user.email) do %>
-          <%= menu_item t(".journal"), activities_path(q: user.email), icon: :clock %>
+        <% if user.deactivated? %>
+          <%= button_to t(".reactivate"), reactivate_settings_user_path(user), class: "btn btn-secondary" %>
+        <% elsif user != current_user || user.two_factor_enabled? %>
           <% if user != current_user %>
-            <% if user.access_locked? && !user.deactivated? %>
-              <%= menu_item t(".unlock"), unlock_settings_user_path(user), icon: :lock_closed, method: :post %>
-            <% end %>
-            <% unless user.deactivated? || user.password_change_required? %>
-              <%= menu_item t(".require_password_change"), require_password_change_settings_user_path(user), icon: :key, method: :post,
-                            confirm: t(".require_password_change_confirm", email: user.email), data: { confirm_label: t(".require") } %>
-            <% end %>
-            <% if user.two_factor_enabled? %>
-              <%= menu_item t(".reset_two_factor"), reset_two_factor_settings_user_path(user), icon: :shield_exclamation, method: :post,
-                            confirm: t(".reset_two_factor_confirm", email: user.email), data: { confirm_label: t(".reset") } %>
-            <% end %>
-            <%= menu_separator %>
-            <% if user.deactivated? %>
-              <%= menu_item t(".reactivate"), reactivate_settings_user_path(user), icon: :arrow_path, method: :post %>
-            <% else %>
+            <%= actions_menu label: t(".actions_of", email: user.email) do %>
+              <% if user.access_locked? %>
+                <%= menu_item t(".unlock"), unlock_settings_user_path(user), icon: :lock_closed, method: :post %>
+              <% end %>
+              <% if user.two_factor_enabled? %>
+                <%= menu_item t(".reset_two_factor"), reset_two_factor_settings_user_path(user), icon: :key, method: :post,
+                              confirm: t(".reset_two_factor_confirm", email: user.email), data: { confirm_label: t(".reset") } %>
+              <% end %>
+              <%= menu_separator if user.access_locked? || user.two_factor_enabled? %>
               <%= menu_item t(".deactivate"), deactivate_settings_user_path(user), icon: :x_mark, method: :post, danger: true,
                             confirm: t(".deactivate_confirm", email: user.email), data: { confirm_label: t(".deactivate") } %>
             <% end %>

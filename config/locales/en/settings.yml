@@ -71,12 +71,6 @@ en:
         reset: Reset
         reactivate: Reactivate
         deactivate: Deactivate
-        last_action: last action
-        journal: Their actions in the journal
-        must_change_password: Must change their password
-        require_password_change: Ask for a new password
-        require_password_change_confirm: "%{email} will have to choose a new password, different from the current one, before going on in Elio."
-        require: Ask
         deactivate_confirm: "%{email} will no longer be able to sign in and will be signed out at once."
         users: users
         roles: Roles

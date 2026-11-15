@@ -41,7 +41,6 @@ en:
       password: Password
       current_password: Current password
       change_password: Change the password
-      password_change_required: An administrator asked you to choose a new password, different from the current one, before going on in Elio.
   users:
     roles:
       admin: Admin
@@ -177,7 +176,6 @@ en:
       reactivated: "%{email} can sign in again."
       two_factor_reset: The two-factor authentication of %{email} is reset.
       unlocked: "%{email} can sign in again."
-      password_change_required: "%{email} will have to choose a new password before going on."
     security:
       mandatory_admins: Two-factor authentication is mandatory for administrators.
       mandatory_operators: Two-factor authentication is mandatory for operators.

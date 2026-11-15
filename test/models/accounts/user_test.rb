@@ -103,38 +103,6 @@ class UserTest < ActiveSupport::TestCase
     assert_not users(:one).update(role: :viewer)
   end
 
-  test "a requested password change needs a different password, and ends once it is chosen" do
-    user = users(:viewer)
-    user.require_password_change!
-    assert user.reload.password_change_required?
-
-    assert_not user.update(password: "password1234", password_confirmation: "password1234")
-    assert_includes user.errors.details[:password], { error: :same_as_before }
-    user.reload
-
-    user.update!(password: "new-password-5678", password_confirmation: "new-password-5678")
-    assert_not user.reload.password_change_required?
-    assert user.valid_password?("new-password-5678")
-  end
-
-  test "a password reset by email also ends a requested password change" do
-    user = users(:viewer)
-    user.require_password_change!
-
-    user.reset_password("new-password-5678", "new-password-5678")
-
-    assert_not user.reload.password_change_required?
-  end
-
-  test "other changes keep the requested password change" do
-    user = users(:viewer)
-    user.require_password_change!
-
-    user.update!(locale: "en")
-
-    assert user.reload.password_change_required?
-  end
-
   test "locking logs an activity and sends no email" do
     assert_no_emails do
       users(:viewer).lock_access!
