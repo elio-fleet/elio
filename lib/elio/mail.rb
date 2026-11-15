@@ -12,7 +12,7 @@ module Elio
       user_name = env["SMTP_USERNAME"].presence
       {
         address: env["SMTP_ADDRESS"],
-        port: Integer(env.fetch("SMTP_PORT", 587)),
+        port: Env.integer("SMTP_PORT", env),
         user_name: user_name,
         password: (env["SMTP_PASSWORD"].presence if user_name),
         authentication: (env.fetch("SMTP_AUTHENTICATION", "plain").to_sym if user_name),

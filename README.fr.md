@@ -128,6 +128,8 @@ docker compose up -d
 | `ELIO_ACTIVITY_RETENTION_DAYS` | Durée de conservation du journal d'activité (365, `0` = tout garder). |
 | `ELIO_DEBIAN_TRACKER_URL`, `ELIO_UBUNTU_OSV_URL`, `ELIO_NVD_FEED_URL`, `ELIO_EPSS_URL`, `ELIO_KEV_URL` | Miroirs des bases de vulnérabilités, pour un réseau fermé (elles peuvent aussi être importées à la main). |
 
+Un nombre entier illisible (`ELIO_PARALLEL_LIMIT=quatre`) arrête Elio au démarrage avec un message qui nomme la variable. **Paramètres → Général → Configuration** montre ce qu'Elio a lu, les secrets seulement comme « définie » ou « non définie ».
+
 Tout le reste — seuils, notifications, automatisations, fournisseurs de notes, registres Docker, [extensions](#extensions) — se règle dans l'interface, par un administrateur. Les secrets qui y sont saisis (clés d'API, jetons, webhooks) sont chiffrés en base.
 
 ### Préparer les serveurs

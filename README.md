@@ -128,6 +128,8 @@ docker compose up -d
 | `ELIO_ACTIVITY_RETENTION_DAYS` | How long the activity log is kept (365, `0` = forever). |
 | `ELIO_DEBIAN_TRACKER_URL`, `ELIO_UBUNTU_OSV_URL`, `ELIO_NVD_FEED_URL`, `ELIO_EPSS_URL`, `ELIO_KEV_URL` | Mirrors of the vulnerability feeds, for a closed network (they can also be imported by hand). |
 
+A whole number that cannot be read (`ELIO_PARALLEL_LIMIT=four`) stops Elio at start with a message naming the variable. **Settings → General → Configuration** shows what Elio read, secrets as "set" or "not set" only.
+
 Everything else — thresholds, notifications, automations, score providers, Docker registries, [extensions](#extensions) — is set in the interface, by an administrator. Secrets entered there (API keys, tokens, webhooks) are encrypted in the database.
 
 ### Preparing the servers
