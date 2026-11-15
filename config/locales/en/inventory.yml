@@ -121,6 +121,10 @@ en:
       failed: failed
       boot: at boot
       failed_since_html: failed %{time}
+      failed_at_boot_html: failed at server startup (%{time})
+      journal: Journal and restart command
+      restart: Restart command
+      restart_hint: 'To restart it yourself on the server (Elio never runs it):'
       seen_by_health_html: seen by the health reading %{time}
       seen_by_health_hint: Not a service (mount, socket…), or failed after the last services inventory; the health reading, more frequent, saw it.
     firewall_card:
@@ -206,6 +210,14 @@ en:
       periodic_scripts: Periodic scripts
       etc_cron_html: "(/etc/cron.%{period})"
       scheduled_tasks_inventory_yet: No scheduled tasks inventory yet.
+  server_unit_journals:
+    frame:
+      loading: Reading the journal…
+      unreadable: 'Journal unreadable:'
+      empty: Nothing in the journal for this unit (or the journal is not readable without root).
+      last_lines:
+        one: The only line of the journal, read just now.
+        other: The last %{count} lines of the journal, read just now.
   server_packages:
     frame:
       loading_packages: Loading the packages…

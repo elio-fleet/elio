@@ -121,6 +121,12 @@ inventory:
       echo "@@elio unit-files"; systemctl list-unit-files --type=service --no-legend --plain --no-pager 2>/dev/null || true
       echo "@@elio docker"; if command -v docker >/dev/null 2>&1; then echo present; fi
 
+  unit_journal:
+    description: "Last lines of the journal of one failed systemd unit, read only when the user opens them on the Services tab (journalctl, read-only). The unit name is checked against the systemd naming rules before being sent. Root (or the adm / systemd-journal group) is needed to read the system journal."
+    run_as: root
+    timeout: 20
+    default: "journalctl --unit=@{unit} --lines=@{lines} --no-pager --quiet --output=short-iso"
+
   docker_containers:
     description: "Docker containers with their Compose project (labels set by Docker Compose; needs the docker group or root). No {{.State}}: it only exists since Docker 20.10, the state is read from {{.Status}}."
     run_as: root

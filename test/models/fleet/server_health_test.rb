@@ -60,6 +60,20 @@ class ServerHealthTest < ActiveSupport::TestCase
     assert_includes Activity.of_kind(:health_warning).order(:id).last.summary, "/var"
   end
 
+  test "failed units: a unit that recovers is not a new problem, a unit that fails is" do
+    collect_health
+    collect_health(failed_units: %w[a.service b.service c.service d.service]) # first warning
+
+    assert_no_difference("Activity.count") do
+      collect_health(failed_units: %w[b.service c.service d.service]) # a recovered: other names, other key
+      collect_health(failed_units: %w[c.service d.service])
+      collect_health(failed_units: %w[d.service])
+    end
+    assert_difference("Activity.of_kind(:health_warning).count") { collect_health(failed_units: %w[d.service e.service]) }
+    assert_equal "Nouveau problème sur « Web », toujours à surveiller : d et e en échec", Activity.of_kind(:health_warning).order(:id).last.summary
+    assert_difference("Activity.of_kind(:health_warning).count") { collect_health(failed_units: %w[a.service b.service d.service e.service]) }
+  end
+
   test "a reason that becomes critical on a server already critical is logged" do
     collect_health
     collect_health(disks: [ { "mount" => "/", "used_percent" => 97 }, { "mount" => "/var", "used_percent" => 85 } ])
