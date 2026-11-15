@@ -1,5 +1,9 @@
 fr:
   js:
+    selection:
+      count:
+        one: "%{count} serveur coché"
+        other: "%{count} serveurs cochés"
     relative_time:
       just_now: à l'instant
       within_a_minute: dans moins d'une minute

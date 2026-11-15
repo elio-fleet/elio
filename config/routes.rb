@@ -122,6 +122,7 @@ Rails.application.routes.draw do
   resources :activities, only: %i[index show], path: "journal", constraints: { id: /\d+/ }
   resources :tasks, only: %i[index show], path: "journal/runs"
   post "journal/runs/:task_id/rerun", to: "task_reruns#create", as: :task_rerun
+  post "journal/runs/:task_id/cancel", to: "task_cancellations#create", as: :task_cancellation
   resources :packages, only: :index, path: "updates"
   resources :ports, only: :index
   resources :scheduled_tasks, only: :index, path: "scheduled-tasks"

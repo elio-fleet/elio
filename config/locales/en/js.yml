@@ -1,5 +1,9 @@
 en:
   js:
+    selection:
+      count:
+        one: "%{count} server ticked"
+        other: "%{count} servers ticked"
     relative_time:
       just_now: just now
       within_a_minute: in less than a minute

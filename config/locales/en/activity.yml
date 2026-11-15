@@ -434,6 +434,7 @@ en:
   background_task:
     system: System
     interrupted: Interrupted
+    cancelled: Cancelled
     kinds:
       inventory: Inventory
       keys_scan: Key scan

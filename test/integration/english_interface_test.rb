@@ -65,7 +65,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   end
 
   test "the fleet pages" do
-    data = [ ".sidebar-groups", ".account-link", "#servers td:nth-child(2)", ".server-card-header", ".server-group-filter", "#activities", "#recent-activity ul", "#attention ul" ]
+    data = [ ".sidebar-groups", ".account-link", "#servers td.server-name", ".server-card-header", ".server-group-filter", "#activities", "#recent-activity ul", "#attention ul" ]
     assert_english root_path, except: data
     assert_english servers_path, except: data
     assert_english servers_path(view: "grid"), except: data
@@ -79,7 +79,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   end
 
   test "the inventory pages" do
-    data = [ ".sidebar-groups", ".account-link", ".server-group-filter", "#servers td:nth-child(2)" ]
+    data = [ ".sidebar-groups", ".account-link", ".server-group-filter", "#servers td.server-name" ]
     %w[overview packages services firewall schedules journal].each do |tab|
       assert_english server_path(servers(:web), tab: tab), except: data
     end
