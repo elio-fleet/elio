@@ -103,12 +103,12 @@ module Vulnerabilities::Matcher
     return [] if by_source.empty?
 
     Vulnerability.where(source: source, release: release, package: only ? by_source.keys & only.to_a : by_source.keys)
-                 .pluck(:package, :cve, :fixed_version, :severity, :description).filter_map do |package, cve, fixed, severity, description|
+                 .pluck(:package, :cve, :fixed_version, :severity, :distro_status, :description).filter_map do |package, cve, fixed, severity, status, description|
       installed = by_source.fetch(package).map(&:version).compact.min { |left, right| Inventory::DebianVersion.compare(left, right) }
       next if fixed && installed && !Inventory::DebianVersion.older?(installed, fixed)
 
       { source: source, cve: cve, source_package: package, packages: by_source.fetch(package).map(&:name).uniq.sort,
-        installed_version: installed, fixed_version: fixed, severity: severity, description: description }
+        installed_version: installed, fixed_version: fixed, severity: severity, distro_status: status, description: description }
     end
   end
 
