@@ -112,6 +112,11 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english new_public_key_path, except: data
     assert_english edit_public_key_path(public_keys(:alice)), except: data
     assert_english server_path(servers(:web), tab: "keys"), except: data
+    blob = public_keys(:alice).authorized_key.key
+    servers(:web).temporary_accesses.create!(public_key: public_keys(:alice), unix_user: "deploy", key_blob: blob, fingerprint: public_keys(:alice).fingerprint, expires_at: 1.hour.from_now)
+    servers(:web).temporary_accesses.create!(public_key: public_keys(:alice), unix_user: "root", key_blob: blob, fingerprint: public_keys(:alice).fingerprint,
+                                             expires_at: 1.hour.ago, ended_at: 1.hour.ago, extensions_count: 2)
+    assert_english server_temporary_accesses_path(servers(:web)), except: data + [ ".temporary-access .font-medium", ".past-temporary-access td:first-child" ]
     servers(:web).notes.create!(body: "Front **nginx**", user: users(:one))
     assert_english server_path(servers(:web), tab: "journal"), except: data + [ ".note-body" ]
     assert_english settings_path, except: data
