@@ -150,6 +150,7 @@ en:
       optional: "(optional)"
       ip_addresses_through_which: IP addresses through which this server is reached but that it does not see itself (NAT, failover IP…). The addresses of its interfaces are read by the inventory.
       expected_ports: Expected ports
+      health_thresholds: Health thresholds
       expected_ports_help: Public ports this server may expose, on top of those of its groups. Any other public port is flagged as unexpected.
       expected_containers: Expected containers
       expected_containers_help: Docker containers that must run on this server, by name. One that is stopped or missing makes its Docker state critical.
@@ -304,6 +305,7 @@ en:
       save: Save
       create_group: Create the group
       expected_ports: Expected ports
+      health_thresholds: Health thresholds
       optional: "(optional)"
       ports_servers_group_may: 'Ports that the servers of the group may expose publicly. Any other public port is reported as unexpected. Empty: no check.'
       ssh_sources: Sources allowed to reach SSH

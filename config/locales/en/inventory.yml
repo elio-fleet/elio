@@ -4,6 +4,7 @@ en:
     disk: Disk %{mount} at %{percent}
     inodes: Inodes %{mount} at %{percent}
     memory: Memory at %{percent}
+    swap: Swap at %{percent}
     load:
       one: Load %{load} for %{count} processor
       other: Load %{load} for %{count} processors
