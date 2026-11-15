@@ -1,0 +1,48 @@
+<%# The pending security updates, one card per server, with the apt command that installs them all (copied by the user, never run by Elio).
+    Locals: by_server ({ Server => [Inventory::Package] }), pager (Paginator of the servers). %>
+<% if by_server.any? %>
+  <div class="space-y-4">
+    <% by_server.each do |server, packages| %>
+      <section class="server-updates card" data-server="<%= server.id %>">
+        <div class="card-header">
+          <h2 class="flex flex-wrap items-center gap-2 font-semibold">
+            <%= link_to server.name, server_path(server, tab: "packages"), class: "hover:text-accent hover:underline" %>
+            <% if packages.any?(&:reboot?) %><span class="reboot-needed badge bg-warn-soft text-warn-ink"><%= t("packages.index.reboot") %></span><% end %>
+          </h2>
+          <span class="text-xs text-ink-3"><%= t("count.packages", count: packages.size) %></span>
+        </div>
+        <div class="px-4 py-3">
+          <p class="text-xs text-ink-3">
+            <%= t("packages.security_by_server.command_hint") %>
+            <% if packages.any?(&:reboot?) %><%= t("packages.security_by_server.reboot_hint") %><% end %>
+          </p>
+          <div class="mt-2 flex items-start gap-2" data-controller="clipboard">
+            <pre class="update-command min-w-0 flex-1 overflow-x-auto rounded-md bg-neutral-950 px-3 py-2 font-mono text-xs text-neutral-100" data-clipboard-target="source"><%= Vulnerabilities::FixCommands.upgrade_command(server, packages.map(&:name).uniq) %></pre>
+            <%= render "settings/copy_button" %>
+          </div>
+        </div>
+        <div class="overflow-x-auto border-t border-line">
+          <table class="table-dense">
+            <thead><tr><th class="pl-4"><%= t("packages.index.package") %></th><th><%= t("words.version") %></th><th><%= t("packages.index.available_version") %></th><th class="col-secondary pr-4"><%= t("packages.index.origin") %></th></tr></thead>
+            <tbody>
+              <% packages.each do |package| %>
+                <tr class="server-update">
+                  <td class="pl-4 font-medium">
+                    <%= link_to package.name, packages_path(q: package.name), class: "hover:text-accent hover:underline" %>
+                    <% if package.reboot? %><span class="reboot-needed badge ml-1 bg-warn-soft text-warn-ink"><%= t("packages.index.reboot") %></span><% end %>
+                  </td>
+                  <td class="font-mono text-xs text-ink-3"><%= package.version %></td>
+                  <td class="font-mono text-xs text-ink-2"><%= package.available_version %></td>
+                  <td class="col-secondary col-truncate pr-4 text-xs text-ink-3" title="<%= package.origin_label %>"><%= package.origin_label %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    <% end %>
+  </div>
+  <%= render "shared/pagination", pager: pager, noun: t("nouns.servers") %>
+<% else %>
+  <div class="card"><p class="flex items-center gap-2 px-4 py-4 text-sm text-good-ink"><%= icon :check_circle %> <%= t("packages.index.pending_security_update") %></p></div>
+<% end %>

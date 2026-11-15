@@ -1,6 +1,10 @@
 <% content_for :title, t("title", page: t("nav.packages")) %>
 
-<%= page_header t("nav.packages"), subtitle: t(".which_servers_have_package") %>
+<%= page_header t("nav.packages"), subtitle: t(".which_servers_have_package") do %>
+  <%= actions_menu do %>
+    <%= menu_item t(".export_csv"), packages_path(format: :csv), icon: :arrow_down_tray, class: "export-csv", data: { turbo: false } %>
+  <% end %>
+<% end %>
 
 <%= form_with url: packages_path, method: :get, data: { turbo_action: "advance" }, class: "packages-search" do |f| %>
   <%= filter_bar do %>
@@ -8,8 +12,14 @@
           aria: { label: t(".package_name") }, class: "input w-80 py-1.5" %>
     <%= f.button class: "btn btn-secondary" do %><%= icon :magnifying_glass %> <%= t(".search") %><% end %>
     <% if @q.present? %><%= link_to t("ui.clear_filters"), packages_path, class: "text-xs text-accent hover:underline" %><% end %>
-    <% if @servers_without_inventory.positive? %>
-      <%= filter_bar_end do %><span class="text-xs text-ink-3"><%= t(".packages_inventory_yet_html", t: (t("count.servers_have", count: @servers_without_inventory))) %></span><% end %>
+    <% if @servers_without_inventory.positive? || @q.blank? %>
+      <%= filter_bar_end do %>
+        <% if @servers_without_inventory.positive? %><span class="text-xs text-ink-3"><%= t(".packages_inventory_yet_html", t: (t("count.servers_have", count: @servers_without_inventory))) %></span><% end %>
+        <% if @q.blank? %>
+          <%= view_toggle [ [ "packages", t(".by_package"), :list_bullet, packages_path ], [ "servers", t(".by_server"), :server_stack, packages_path(view: "servers") ] ],
+                current: @view, label: t(".group_by") %>
+        <% end %>
+      <% end %>
     <% end %>
   <% end %>
 <% end %>
@@ -56,6 +66,8 @@
   <% else %>
     <div class="card"><%= empty_state t(".package_contains_html", q: @q), icon: :magnifying_glass %></div>
   <% end %>
+<% elsif @view == "servers" %>
+  <%= render "security_by_server", by_server: @by_server, pager: @pager %>
 <% else %>
   <section class="security-updates card">
     <div class="card-header">
@@ -68,7 +80,10 @@
         <tbody>
           <% @security.each do |name, packages| %>
             <tr class="security-update">
-              <td class="pl-4 font-medium"><%= link_to name, packages_path(q: name), class: "hover:text-accent hover:underline" %></td>
+              <td class="pl-4 font-medium">
+                <%= link_to name, packages_path(q: name), class: "hover:text-accent hover:underline" %>
+                <% if packages.any?(&:reboot?) %><span class="reboot-needed badge ml-1 bg-warn-soft text-warn-ink"><%= t(".reboot") %></span><% end %>
+              </td>
               <td class="font-mono text-xs text-ink-2"><%= packages.map(&:available_version).uniq.join(", ") %></td>
               <td class="pr-4">
                 <div class="flex flex-wrap gap-1.5">
