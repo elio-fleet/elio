@@ -81,6 +81,11 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
         Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
         post dns_record_link_path(DnsRecord.create!(source: "technitium", source_id: "x.a.test", zone: "a.test", name: "x.a.test", record_type: "A", value: "203.0.113.1")), params: { server_id: servers(:web).id }
       },
+      "attach several DNS names" => -> {
+        Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
+        record = DnsRecord.create!(source: "technitium", source_id: "y.a.test", zone: "a.test", name: "y.a.test", record_type: "A", value: "203.0.113.2")
+        post dns_link_batch_path, params: { record_ids: [ record.id.to_s ], server_id: servers(:web).id }
+      },
       "new server" => -> { get new_server_path },
       "create server" => -> { post servers_path, params: { server: { name: "New", host: "10.0.0.1", port: 22, username: "root" } } },
       "duplicate server" => -> { get new_server_path(from: servers(:web).id) },
