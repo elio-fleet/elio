@@ -106,11 +106,21 @@ en:
     since_prefix: "started "
     extension_settings: Extension settings
     trend: Trend
-    over_24_hours: "%{label} over 24 hours"
     now: "%{value} now"
     no_measure: no measure yet
-    hours_ago_24: 24 h ago
-    hours_12: 12 h
+    chart_periods:
+      24h:
+        over: "%{label} over 24 hours"
+        start: 24 h ago
+        middle: 12 h
+      7d:
+        over: "%{label} over 7 days"
+        start: 7 days ago
+        middle: 3.5 days
+      30d:
+        over: "%{label} over 30 days"
+        start: 30 days ago
+        middle: 15 days
     now_axis: now
     breadcrumb: Breadcrumb
     more_actions: More actions

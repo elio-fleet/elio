@@ -1,4 +1,5 @@
-<%# Health of the server: figures of the last inventory (Inventory::Collectors::Health), what needs attention, 24-hour history, disks. %>
+<%# Health of the server: figures of the last inventory (Inventory::Collectors::Health), 24-hour sparklines, the disk trend (Inventory::DiskTrend),
+    disks, and charts over a period (Inventory::HealthHistory, ?period=). Locals: server; @health_history, @chart_history, @disk_trend from the controller. %>
 <% snapshot = server.inventory("health") %>
 <% health = snapshot&.collected? ? snapshot.data : nil %>
 <% settings = app_settings %>
@@ -31,7 +32,11 @@
         <tr class="health-disk">
           <td class="pl-4 text-xs text-ink-3"><%= t(".fullest_disk") %><% if fullest %> · <span class="font-mono"><%= fullest["mount"] %></span><% end %></td>
           <td><% if fullest %><div class="flex flex-wrap items-center gap-x-3"><%= meter fullest["used_percent"], warn: settings.health_disk_warn, crit: settings.health_disk_crit, width: "w-24" %>
-            <span class="text-xs text-ink-3"><%= human_bytes(fullest["used"]) %> / <%= human_bytes(fullest["size"]) %></span></div><% else %><span class="text-ink-3">—</span><% end %></td>
+            <span class="text-xs text-ink-3"><%= human_bytes(fullest["used"]) %> / <%= human_bytes(fullest["size"]) %></span>
+            <% if (days = @disk_trend&.days_left) %>
+              <span class="disk-trend text-xs <%= { crit: "font-medium text-crit-ink", warn: "font-medium text-warn-ink" }.fetch(@disk_trend.tone, "text-ink-2") %>"
+                    title="<%= t(".disk_trend_title", date: l(@disk_trend.full_on, format: :long)) %>"><%= days < 1 ? t(".full_within_a_day") : t(".full_in_days", count: days.round) %></span>
+            <% end %></div><% else %><span class="text-ink-3">—</span><% end %></td>
           <td class="pr-4 text-right"><%= sparkline @health_history.map { |_, _, _, disk| disk }, max: 100, width: 200, height: 22, title: t(".fullest_disk"),
                                                     color: (fullest && fullest["used_percent"] >= settings.health_disk_crit ? "var(--color-crit)" : "var(--color-spark)") %></td>
         </tr>
@@ -62,12 +67,19 @@
       </table>
     <% end %>
 
-    <details id="disks-charts" class="health-history-details border-t border-line">
-      <summary class="cursor-pointer list-none px-4 py-2 text-xs font-medium text-accent hover:underline [&::-webkit-details-marker]:hidden"><%= t(".charts_24_h") %></summary>
+    <% chart = @chart_history.period.key %>
+    <details id="disks-charts" class="health-history-details border-t border-line" <%= "open" if params[:period] %>>
+      <summary class="cursor-pointer list-none px-4 py-2 text-xs font-medium text-accent hover:underline [&::-webkit-details-marker]:hidden"><%= t(".charts") %></summary>
+      <nav class="chart-periods flex flex-wrap gap-2 px-4 pb-3" aria-label="<%= t(".chart_period") %>">
+        <% Inventory::HealthHistory::PERIODS.each_key do |key| %>
+          <%= filter_chip Inventory::HealthHistory.period_label(key), server_path(server, period: key, anchor: "disks-charts"), active: key == chart %>
+        <% end %>
+      </nav>
+      <% points = @chart_history.points %>
       <div class="health-history grid gap-4 px-4 pb-4 sm:grid-cols-3">
-        <%= history_chart @health_history.map { |time, load, _, _| [ time, load ] }, label: t(".load_processors") %>
-        <%= history_chart @health_history.map { |time, _, memory, _| [ time, memory ] }, label: t(".memory"), threshold: settings.health_memory_warn %>
-        <%= history_chart @health_history.map { |time, _, _, disk| [ time, disk ] }, label: t(".fullest_disk"), threshold: settings.health_disk_warn,
+        <%= history_chart points.map { |time, load, _, _| [ time, load ] }, label: t(".load_processors"), from: @chart_history.from, to: @chart_history.to, period: chart %>
+        <%= history_chart points.map { |time, _, memory, _| [ time, memory ] }, label: t(".memory"), threshold: settings.health_memory_warn, from: @chart_history.from, to: @chart_history.to, period: chart %>
+        <%= history_chart points.map { |time, _, _, disk| [ time, disk ] }, label: t(".fullest_disk"), threshold: settings.health_disk_warn, from: @chart_history.from, to: @chart_history.to, period: chart,
                           color: (fullest && fullest["used_percent"] >= settings.health_disk_crit ? "var(--color-crit)" : "var(--color-accent)") %>
       </div>
     </details>
