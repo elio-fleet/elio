@@ -3,6 +3,7 @@
 <% when "allowed" %><%= status_badge :good, t(".allowed"), class: "port-firewall" %>
 <% when "blocked" %><%= status_badge :neutral, t(".blocked"), class: "port-firewall", title: t(".firewall_blocks_port_default") %>
 <% when "docker" %><%= status_badge :warn, t(".published_docker"), class: "port-firewall", title: t(".docker_bypasses_ufw_port") %>
+<% when "docker_user" %><%= status_badge :neutral, t(".docker_user"), class: "port-firewall", title: t(".docker_user_hint") %>
 <% when "open" %><%= status_badge :crit, t(".not_filtered"), class: "port-firewall", title: t(".firewall_filters_port") %>
 <% when "unknown" %><span class="port-firewall text-ink-3" title="<%= t(".firewall_unreadable_without_root") %>"><%= t(".unknown") %></span>
 <% else %><span class="port-firewall text-ink-3">—</span>

@@ -720,9 +720,14 @@ en:
       allowed: allowed by the machine's firewall
       blocked: blocked by the machine's firewall
       open: no filtering on the machine
-      docker: published by Docker, which bypasses ufw
+      docker: published by Docker, which bypasses the machine's firewall
+      docker_user: published by Docker, which bypasses the machine's firewall; the DOCKER-USER chain has rules
       unknown: machine's firewall not readable
     allowed_rule: allows %{rule} from %{from}
+    allowed_rule_family: allows %{rule} from %{from} (%{family} only)
+    ipv6_open: 'IPv6 not filtered: the firewall filters IPv4 only'
+    docker_user_rule: 'DOCKER-USER (Docker): %{rule}'
+    docker_user_empty: 'DOCKER-USER (Docker): no rule, the ports published by Docker are not filtered'
     anywhere: anywhere
     ovh:
       not_read: "%{block}: firewall not read (product not chosen in the extension)"
