@@ -27,7 +27,7 @@ en:
         description: An administrator has accepted the new fingerprint of a server (reinstallation…).
       server_unreachable:
         label: Server unreachable
-        description: A server no longer answers on its SSH port.
+        description: A server that answered before no longer answers on its SSH port, two checks in a row.
       server_back_online:
         label: Server reachable again
         description: An unreachable server answers again.
