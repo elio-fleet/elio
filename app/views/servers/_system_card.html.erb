@@ -23,7 +23,12 @@
       </div>
       <div class="flex justify-between gap-4 py-1.5">
         <dt class="text-ink-3"><%= t("words.kernel") %></dt>
-        <dd class="font-mono text-xs"><%= os["kernel"] %> <span class="text-ink-3"><%= os["arch"] %></span></dd>
+        <dd class="flex flex-wrap items-center justify-end gap-2 text-right">
+          <span class="font-mono text-xs"><%= os["kernel"] %> <span class="text-ink-3"><%= os["arch"] %></span></span>
+          <% if os["kernel_latest"] %>
+            <%= status_badge(:warn, t(".kernel_latest", version: os["kernel_latest"]), class: "kernel-latest", title: t(".kernel_latest_hint")) %>
+          <% end %>
+        </dd>
       </div>
       <div class="flex justify-between gap-4 py-1.5">
         <dt class="text-ink-3"><%= t("words.machine") %></dt>
@@ -33,6 +38,28 @@
           <% if os["memory_bytes"] %> <%= t(".memory_html", human_bytes: (human_bytes(os["memory_bytes"]))) %><% end %>
         </dd>
       </div>
+      <% if os["cpu_model"] || os["cpu_cores"] %>
+        <div class="flex justify-between gap-4 py-1.5">
+          <dt class="text-ink-3"><%= t(".processor") %></dt>
+          <dd class="cpu text-right">
+            <%= os["cpu_model"] %>
+            <% cores = [ (t(".physical_cores", count: os["cpu_cores"]) if os["cpu_cores"]), (t(".sockets", count: os["cpu_sockets"]) if os["cpu_sockets"].to_i > 1) ].compact %>
+            <% if cores.any? %><span class="text-xs text-ink-3"><%= " · " if os["cpu_model"] %><%= cores.join(" · ") %></span><% end %>
+          </dd>
+        </div>
+      <% end %>
+      <% if os["hardware"] %>
+        <div class="flex justify-between gap-4 py-1.5">
+          <dt class="text-ink-3"><%= Inventory::Collectors::Os.container?(os["virtualization"]) ? t(".host_hardware") : t(".hardware") %></dt>
+          <dd class="hardware text-right"><%= os["hardware"] %></dd>
+        </div>
+      <% end %>
+      <% if os["hypervisor"] == "proxmox" %>
+        <div class="flex justify-between gap-4 py-1.5">
+          <dt class="text-ink-3"><%= t(".hypervisor") %></dt>
+          <dd class="hypervisor text-right"><%= [ "Proxmox VE", os["hypervisor_version"] ].compact.join(" ") %></dd>
+        </div>
+      <% end %>
       <% if os["booted_at"] %>
         <div class="flex justify-between gap-4 py-1.5">
           <dt class="text-ink-3"><%= t(".started") %></dt>
