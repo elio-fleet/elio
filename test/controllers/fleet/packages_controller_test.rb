@@ -63,4 +63,86 @@ class PackagesControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "7.88.1-10+deb12u10", "7.88.1-10+deb12u9" ], versions.map { |row| row.at_css("td").text.strip }
     assert_equal [ "Debian/bookworm-security", "Debian/bookworm" ], versions.map { |row| row.at_css("td.package-origin").text.strip }
   end
+
+  test "by server: each server's security updates and the apt command that installs them all" do
+    record_packages(servers(:web), [ { manager: "dpkg", name: "openssl", version: "3.0.14", arch: "amd64", available_version: "3.0.15", security: true },
+                                     { manager: "dpkg", name: "linux-image-6.1.0-28-amd64", version: "6.1.119-1", arch: "amd64", available_version: "6.1.123-1",
+                                       security: true, origin: "Debian/bookworm-security" },
+                                     { manager: "dpkg", name: "vim", version: "9.0", arch: "amd64", available_version: "9.1" } ])
+    record_packages(servers(:backup), [ { manager: "dpkg", name: "libssl3", version: "3.0.14", arch: "amd64", available_version: "3.0.15", security: true } ])
+    sign_in users(:viewer)
+
+    get packages_path(view: "servers")
+
+    assert_select ".view-toggle a[aria-pressed=true]", text: "Par serveur"
+    assert_equal %w[Backup Web], css_select(".server-updates h2 a").map { |link| link.text.strip }
+    assert_select ".server-updates[data-server=?]", servers(:web).id.to_s do
+      assert_select "pre.update-command", text: "sudo apt-get install --only-upgrade linux-image-6.1.0-28-amd64 openssl"
+      assert_select "tr.server-update", 2
+      assert_select "h2 .reboot-needed", text: "redémarrage"
+      assert_select "tr.server-update", text: /linux-image.*redémarrage.*6\.1\.119-1.*6\.1\.123-1.*Debian\/bookworm-security/m
+      assert_select "p", text: /ne s'applique qu'après un redémarrage/
+    end
+    assert_select ".server-updates[data-server=?]", servers(:backup).id.to_s do
+      assert_select "pre.update-command", text: "apt-get install --only-upgrade libssl3"
+      assert_select ".reboot-needed", 0
+    end
+    assert_select ".server-updates[data-server=?]", servers(:db).id.to_s, 0
+  end
+
+  test "by server: says when no security update waits" do
+    record_packages(servers(:web), [ { manager: "dpkg", name: "openssl", version: "3.0.15", arch: "amd64" } ])
+    sign_in users(:viewer)
+
+    get packages_path(view: "servers")
+
+    assert_select ".server-updates", 0
+    assert_select "p", text: "Aucune mise à jour de sécurité en attente."
+  end
+
+  test "by server: the number of queries does not grow with the servers" do
+    sign_in users(:viewer)
+    count = -> do
+      ActiveRecord::Base.connection.clear_query_cache
+      queries = 0
+      ActiveSupport::Notifications.subscribed(->(*, payload) { queries += 1 unless payload[:name] == "SCHEMA" }, "sql.active_record") { get packages_path(view: "servers") }
+      queries
+    end
+    count.call # warm up
+    before = count.call
+    record_packages(servers(:backup), [ { manager: "dpkg", name: "libssl3", version: "3.0.14", arch: "amd64", available_version: "3.0.15", security: true } ])
+    record_packages(servers(:db), [ { manager: "dpkg", name: "curl", version: "1", arch: "amd64", available_version: "2", security: true } ])
+
+    assert_equal before, count.call
+    assert_select ".server-updates", 3
+  end
+
+  test "by package: flags the updates that need a reboot" do
+    record_packages(servers(:db), [ { manager: "dpkg", name: "intel-microcode", version: "1", arch: "amd64", available_version: "2", security: true } ])
+    sign_in users(:viewer)
+
+    get packages_path
+
+    assert_select "tr.security-update", text: /intel-microcode/ do
+      assert_select ".reboot-needed", text: "redémarrage"
+    end
+    assert_select "tr.security-update", text: /openssl/ do
+      assert_select ".reboot-needed", 0
+    end
+  end
+
+  test "exports the security updates of the fleet as CSV, one line per server and package" do
+    record_packages(servers(:db), [ { manager: "dpkg", name: "linux-image-amd64", version: "1", arch: "amd64", available_version: "2", security: true,
+                                      origin: "=cmd" } ])
+    sign_in users(:viewer)
+
+    get packages_path(format: :csv)
+
+    assert_response :success
+    assert_equal "text/csv", response.media_type
+    assert_match(/attachment; filename="elio-security-updates-\d{4}-\d{2}-\d{2}\.csv"/, response.headers["Content-Disposition"])
+    rows = CSV.parse(response.body)
+    assert_equal %w[server package installed_version available_version origin reboot], rows.first
+    assert_equal [ [ "Database", "linux-image-amd64", "1", "2", "'=cmd", "true" ], [ "Web", "openssl", "3.0.14", "3.0.15", nil, "false" ] ], rows.drop(1)
+  end
 end
