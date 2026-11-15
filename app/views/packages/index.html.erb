@@ -24,7 +24,7 @@
             <span class="text-xs text-ink-3"><%= t("count.servers", count: rows.map(&:server_id).uniq.size) %> · <%= t("count.versions", count: @versions[name].size) %></span>
           </div>
           <table class="table-dense">
-            <thead><tr><th class="pl-4"><%= t("words.version") %></th><th><%= t(".update") %></th><th class="pr-4"><%= t(".servers") %></th></tr></thead>
+            <thead><tr><th class="pl-4"><%= t("words.version") %></th><th><%= t(".update") %></th><th><%= t(".origin") %></th><th class="pr-4"><%= t(".servers") %></th></tr></thead>
             <tbody>
               <% @versions[name].each do |version, packages| %>
                 <tr class="package-version">
@@ -37,6 +37,7 @@
                       <span class="text-ink-3"><%= t(".up_date") %></span>
                     <% end %>
                   </td>
+                  <td class="package-origin text-xs text-ink-3"><%= packages.select(&:origin).uniq(&:origin).map(&:origin_label).join(", ") %></td>
                   <td class="pr-4">
                     <div class="flex flex-wrap gap-1.5">
                       <% packages.map(&:server).uniq.sort_by(&:name).each do |server| %>

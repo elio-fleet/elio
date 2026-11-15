@@ -266,6 +266,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110052) do
     t.boolean "security", default: false, null: false
     t.string "source_name"
     t.string "source_version"
+    t.string "origin"
     t.index ["name"], name: "index_inventory_packages_on_name"
     t.index ["server_id"], name: "index_inventory_packages_on_server_id"
   end

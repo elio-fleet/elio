@@ -252,6 +252,15 @@ en:
       security: security
       up_date: up to date
       package_matches: No package matches.
+      origin: Repository
+      outside_only: Outside the distribution
+      outside_only_help: Backports, third-party repositories and packages no repository provides
+      compare_versions: Compare its versions across the servers
+      history:
+        one: Last change (dpkg.log)
+        other: Last %{count} changes (dpkg.log)
+      history_date: Date (server time)
+      history_action: Change
   packages:
     index:
       search_placeholder: Search an installed package (openssl, nginx, postgres…)
@@ -269,6 +278,7 @@ en:
       available_version: Available version
       servers_concerned: Servers concerned
       pending_security_update: No pending security update.
+      origin: Repository
   ports:
     index:
       all_groups: All groups
@@ -375,6 +385,13 @@ en:
         dpkg: Debian (dpkg)
         snap: Snap
         docker: Docker image
+      origins:
+        local: Not from a repository
+      history_actions:
+        install: Installed
+        upgrade: Upgraded
+        remove: Removed
+        purge: Purged
     collection:
       internal_error: Internal error during the collection (%{class})
     collector:

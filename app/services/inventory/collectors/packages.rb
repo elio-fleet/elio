@@ -1,7 +1,8 @@
 # Packages of a server: dpkg packages with the updates apt knows about
-# (security ones flagged), snaps, and Docker images when Docker can be read
-# (docker group or root). The full list goes to Inventory::Package (replaced
-# at each collection); the snapshot only keeps the counts.
+# (security ones flagged) and the repository they come from, snaps, and Docker
+# images when Docker can be read (docker group or root). The full list goes to
+# Inventory::Package (replaced at each collection); the snapshot keeps the
+# counts and the last dpkg.log changes.
 class Inventory::Collectors::Packages < Inventory::Collector
   def collect
     result = run("inventory.packages")
@@ -10,14 +11,15 @@ class Inventory::Collectors::Packages < Inventory::Collector
     sections = self.class.sections(result.stdout)
     return unsupported(I18n.t("inventory.collectors.packages.unsupported")) if sections["dpkg"].strip == "unsupported" && sections["snap"].strip == "unsupported"
 
-    packages = self.class.parse_dpkg(sections["dpkg"], self.class.parse_upgradable(sections["upgradable"])) + self.class.parse_snap(sections["snap"])
+    origins = self.class.parse_origins(sections["origins"], sections["sources"])
+    packages = self.class.parse_dpkg(sections["dpkg"], self.class.parse_upgradable(sections["upgradable"]), origins) + self.class.parse_snap(sections["snap"])
     docker_error = nil
     if sections["docker"].strip == "present"
       images = run("inventory.docker_images")
       images.success? ? packages.concat(self.class.parse_docker(images.stdout)) : docker_error = I18n.t("inventory.collectors.packages.docker_unreadable", truncate: (images.stderr.strip.truncate(120)))
     end
 
-    data = self.class.summarize(packages)
+    data = self.class.summarize(packages).merge("history" => self.class.parse_history(sections["history"]))
     docker_error ? partial(data, docker_error) : ok(data)
   end
 
@@ -46,7 +48,7 @@ class Inventory::Collectors::Packages < Inventory::Collector
         { server_id: server.id, manager: package["manager"], name: package["name"], version: package["version"], arch: package["arch"],
           source_name: package["source"] || (package["name"] if package["manager"] == "dpkg"),
           source_version: package["source_version"] || (package["version"] if package["manager"] == "dpkg"),
-          available_version: package["available_version"], security: package["security"] == true }
+          available_version: package["available_version"], security: package["security"] == true, origin: package["origin"] }
       end
       Inventory::Package.insert_all(rows) if rows.any?
     end
@@ -74,7 +76,7 @@ class Inventory::Collectors::Packages < Inventory::Collector
   # "ii \tlibssl3\t3.0.14-1~deb12u1\tamd64\topenssl\t3.0.14-1~deb12u1\t" (installed or on hold only).
   # The source package (what the CVE feeds list) is only kept when it differs;
   # for a signed package, the one it signs (Built-Using, see Vulnerabilities::Matcher).
-  def self.parse_dpkg(text, upgradable)
+  def self.parse_dpkg(text, upgradable, origins = {})
     return [] if text.strip == "unsupported"
 
     text.lines.filter_map do |line|
@@ -89,8 +91,54 @@ class Inventory::Collectors::Packages < Inventory::Collector
                   "available_version" => update&.fetch("version"), "security" => update ? update["security"] : false }
       package["source"] = source if source.present? && source != name
       package["source_version"] = source_version if source_version.present? && source_version != version
+      origin = origins["#{name}:#{arch}"] || origins[name]
+      package["origin"] = origin if origin
       package
     end
+  end
+
+  # Repository of each installed package: { "curl" => "Debian/bookworm",
+  # "libssl3:i386" => …, "elio-tool" => "local" }. `origins` (see
+  # config/ssh_commands.yml): "@2\thttp://deb.debian.org/debian bookworm/main amd64 Packages"
+  # numbers a source, "curl\t2,3" gives the sources of the installed version
+  # (the first one is kept), "elio-tool\t" a package no repository provides.
+  # `sources`: "<source>\to=Debian,a=stable,n=bookworm,…" (Release fields).
+  def self.parse_origins(origins, sources)
+    releases = sources.to_s.lines.filter_map { |line| line.chomp.split("\t", 2) if line.include?("\t") }.to_h
+    labels = {}
+    origins.to_s.lines.each_with_object({}) do |line, result|
+      key, value = line.chomp.split("\t", 2)
+      if key.blank?
+        next
+      elsif key.start_with?("@")
+        labels[key.delete_prefix("@")] = origin_label(value.to_s, releases[value])
+      else
+        result[key] = value.to_s.split(",").filter_map { |id| labels[id] }.first || Inventory::Package::LOCAL_ORIGIN
+      end
+    end
+  end
+
+  # "Debian/bookworm-security": the Origin and codename (or suite) of the
+  # Release file; the host and distribution of the source line without one.
+  def self.origin_label(source, release)
+    fields = release.to_s.split(",").filter_map { |field| field.split("=", 2) if field.include?("=") }.to_h
+    url, distribution = source.split
+    name = fields["o"].presence || url.to_s.sub(%r{\A\w+:/*}, "").split("/").first.presence || url
+    suite = fields["n"].presence || fields["a"].presence || distribution.to_s.split("/").first
+    [ name, suite ].compact_blank.join("/").truncate(100)
+  end
+
+  # Last installs, upgrades and removals of /var/log/dpkg.log, newest first:
+  # "2024-09-10 14:02:11 upgrade curl:amd64 7.88.1-10+deb12u6 7.88.1-10+deb12u7"
+  # (server time; "<none>" for no version).
+  def self.parse_history(text)
+    text.to_s.lines.filter_map do |line|
+      date, time, action, package, from, to = line.split
+      next unless to && %w[install upgrade remove purge].include?(action)
+
+      { "at" => "#{date} #{time}", "action" => action, "name" => package.split(":").first,
+        "from" => (from unless from == "<none>"), "to" => (to unless to == "<none>") }
+    end.reverse
   end
 
   # "openssl/stable-security 3.0.15-1~deb12u1 amd64 [upgradable from: 3.0.14-1~deb12u1]"
