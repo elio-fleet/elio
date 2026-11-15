@@ -40,6 +40,8 @@ fr:
       add_keyring: Ajouter au trousseau
       optional: "(facultative)"
       content_hint_html: Contenu du fichier %{extension}, par exemple %{command}. Jamais la clé privée.
+      expires_on: Date d'expiration
+      expires_on_hint: La date à laquelle renouveler la clé (fin de mission d'un prestataire, règle annuelle). Elio le rappelle 14 jours avant, par les canaux de notification qui reçoivent « Clé du trousseau à renouveler ».
     edit:
       back_key: "← Retour à la clé"
       heading_html: Modifier « %{name_was} »
@@ -68,6 +70,8 @@ fr:
       edit: Modifier
       ssh_key: Clé SSH
       public_key: Clé publique
+      expires_on: Date d'expiration
+      weak_key: Clé faible
     outside:
       title: Hors trousseau
       intro: 'Les clés trouvées sur les serveurs qui ne correspondent à aucune clé du trousseau : ajoutez celles que vous connaissez, retirez les autres de leurs serveurs.'
@@ -302,6 +306,13 @@ fr:
     kinds:
       person: Personne
       server: Serveur
+    weakness:
+      badge: Clé faible
+      dsa: Clé DSA, refusée par OpenSSH depuis la version 7.0 — remplacez-la par une clé ed25519.
+      rsa_short: Clé RSA de %{bits} bits, sous les 3072 recommandés — remplacez-la par une clé ed25519 (ou RSA 4096).
+    expiry:
+      expired: Expirée
+      expires_on: Expire le %{date}
   key_rotation_step:
     phases:
       install: installation de la nouvelle clé
@@ -320,6 +331,13 @@ fr:
       generate_ssh_key: Générer une clé SSH
       disk_warning: 'Disque : attention (%)'
       disk_critical: 'Disque : critique (%)'
+      inodes_warning: 'Inodes : attention (%)'
+      inodes_critical: 'Inodes : critique (%)'
+      swap_warning: 'Swap : attention (%)'
+      swap_critical: 'Swap : critique (%)'
+      not_watched: Non surveillé
+      sustained_minutes: Charge et mémoire au-delà depuis (minutes)
+      thresholds_help: "Un groupe ou un serveur peut avoir ses propres seuils, plus stricts ou plus souples (dans sa modification). La charge et la mémoire ne comptent qu'une fois au-delà de leur seuil depuis le nombre de minutes indiqué (0 : tout de suite), pour qu'un pic bref ne déclenche rien."
       memory_warning: 'Mémoire : attention (%)'
       memory_critical: 'Mémoire : critique (%)'
       load_warning_processors: 'Charge : attention (× processeurs)'

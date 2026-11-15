@@ -1,8 +1,9 @@
-<%# Services of the server from its last inventory (Inventory::Collectors::Services): the systemd units; the containers are in the Docker tab. %>
+<%# Services of the server from its last inventory (Inventory::Collectors::Services): the systemd units, filtered by state and searched (instant search
+    reloading only the list); the containers are in the Docker tab. Locals: server, units (Inventory::ServiceUnits). %>
 <% snapshot = server.inventory("services") %>
 <% data = snapshot&.collected? ? snapshot.data : nil %>
 <%# The failed units, with those only the health reading saw (Inventory::FailedUnits). %>
-<% failed_units = Inventory::FailedUnits.new(server) %>
+<% failed_units = units.failed_units %>
 <section id="server-services" class="card">
   <div class="card-header">
     <h2 class="flex items-center gap-2 font-semibold"><%= icon :list_bullet, class: "h-4 w-4 text-ink-3" %> Services</h2>
@@ -13,10 +14,10 @@
   </div>
 
   <% if data && snapshot.status != "unsupported" %>
-    <% units = Array(data["units"]) %>
+    <% all_units = Array(data["units"]) %>
     <% failed = failed_units.units %>
-    <% active = units.select { |unit| unit["active"] == "active" } %>
-    <% others = units.reject { |unit| unit["active"].in?(%w[failed active]) } %>
+    <% active = all_units.select { |unit| unit["active"] == "active" } %>
+    <% others = all_units.reject { |unit| unit["active"].in?(%w[failed active]) } %>
     <% containers = Array(data["containers"]) %>
     <p class="services-summary border-b border-line px-4 py-2.5 text-xs text-ink-2">
       <strong class="text-ink"><%= active.size %></strong> <%= t(".active_services") %>
@@ -25,25 +26,56 @@
       <% if data["docker"] == "ok" %>· <strong class="text-ink"><%= containers.count { |c| c["state"] == "running" } %></strong><%= t(".containers_running_html", count: containers.size) %><% end %>
     </p>
 
-    <div>
+    <% path = ->(state) { server_path(server, tab: "services", state: state, q: units.query) } %>
+    <%= form_with url: server_path(server), method: :get, data: search_form_data("services-results"), class: "services-search px-4 pt-3" do |f| %>
+      <%= hidden_field_tag :tab, "services", id: nil %>
+      <% if units.state %><%= hidden_field_tag :state, units.state, id: nil %><% end %>
+      <%= f.search_field :q, value: units.query, placeholder: t(".search_placeholder"), aria: { label: t(".search") },
+            data: { action: "input->auto-submit#submitLater" }, class: "input w-full py-1.5 sm:w-72" %>
+      <noscript><%= f.submit t(".search"), class: "btn btn-secondary mt-2" %></noscript>
+    <% end %>
+
+    <%= search_results_frame("services-results") do %>
+      <div class="px-4 pt-3">
+        <%= filter_bar class: "services-filters" do %>
+          <%= filter_chip t(".all"), path.call(nil), active: units.state.nil?, count: units.count %>
+          <% Inventory::ServiceUnits::STATES.each do |state| %>
+            <%= filter_chip t(".states.#{state}"), path.call(state), active: units.state == state, count: units.count(state), data: { state: state } %>
+          <% end %>
+        <% end %>
+      </div>
       <div class="systemd-units">
-        <h3 class="px-4 pt-3 text-xs font-semibold tracking-wide text-ink-3 uppercase">systemd</h3>
-        <% if units.any? || failed.any? %>
-          <ul class="divide-y divide-line">
-            <%= render partial: "servers/systemd_unit", collection: failed + active, as: :unit, locals: { server: server } %>
-          </ul>
-          <% if others.any? %>
+        <h3 class="px-4 text-xs font-semibold tracking-wide text-ink-3 uppercase">systemd</h3>
+        <% if units.any? %>
+          <% if (shown = units.failed + units.active).any? %>
+            <ul class="divide-y divide-line">
+              <%= render partial: "servers/systemd_unit", collection: shown, as: :unit, locals: { server: server } %>
+            </ul>
+          <% end %>
+          <% if units.stopped.any? %>
+            <div class="services-stopped border-t border-line">
+              <h4 class="px-4 pt-3 text-sm font-semibold"><%= t(".stopped_title", count: units.stopped.size) %></h4>
+              <p class="px-4 text-xs text-ink-3"><%= t(".stopped_hint") %></p>
+              <ul class="divide-y divide-line"><%= render partial: "servers/systemd_unit", collection: units.stopped, as: :unit, locals: { server: server } %></ul>
+            </div>
+          <% end %>
+          <% if units.other_inactive.any? && units.filtered? %>
+            <ul class="services-inactive divide-y divide-line border-t border-line"><%= render partial: "servers/systemd_unit", collection: units.other_inactive, as: :unit, locals: { server: server } %></ul>
+          <% elsif units.other_inactive.any? %>
             <details class="border-t border-line">
-              <summary class="cursor-pointer px-4 py-2 text-xs text-ink-3 hover:text-ink"><%= t(".show_inactive_services_html", count: others.size) %></summary>
-              <ul class="divide-y divide-line"><%= render partial: "servers/systemd_unit", collection: others, as: :unit, locals: { server: server } %></ul>
+              <summary class="cursor-pointer px-4 py-2 text-xs text-ink-3 hover:text-ink"><%= t(".show_inactive_services_html", count: units.other_inactive.size) %></summary>
+              <ul class="divide-y divide-line"><%= render partial: "servers/systemd_unit", collection: units.other_inactive, as: :unit, locals: { server: server } %></ul>
             </details>
+          <% end %>
+        <% elsif units.filtered? %>
+          <%= empty_state t(".no_match"), icon: :magnifying_glass do %>
+            <%= link_to t(".clear_filters"), server_path(server, tab: "services"), class: "text-sm font-medium text-accent hover:underline" %>
           <% end %>
         <% else %>
           <p class="px-4 py-3 text-sm text-ink-3"><%= t(".systemd_system") %></p>
         <% end %>
       </div>
-
-    </div>
+    <% end %>
     <% if data["docker"].in?(%w[ok unreadable]) %>
       <p class="services-docker-link border-t border-line px-4 py-2.5 text-xs text-ink-3">
         <%= t(".containers_in_docker_tab", count: containers.size) %>

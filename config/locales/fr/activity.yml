@@ -169,6 +169,9 @@ fr:
       public_key_created:
         label: Clé ajoutée au trousseau
         description: Une clé a été ajoutée au trousseau.
+      public_key_expiring:
+        label: Clé du trousseau à renouveler
+        description: Une clé du trousseau atteint sa date d'expiration dans 14 jours ou moins (envoyé une fois par date).
       public_key_owner_changed:
         label: Propriétaire d'une clé
         description: Une clé du trousseau a été attribuée à un utilisateur (« ma clé »), ou ne l'est plus.
@@ -354,6 +357,8 @@ fr:
       public_key_created: Clé « %{name} » ajoutée au trousseau
       public_key_owner_set: Clé « %{name} » attribuée à %{owner}
       public_key_owner_removed: Clé « %{name} » attribuée à personne
+      public_key_expiring: La clé « %{name} » du trousseau expire le %{date}, à renouveler
+      public_key_expired: La clé « %{name} » du trousseau a expiré le %{date}, à renouveler
       public_key_deleted: Clé « %{name} » retirée du trousseau
       ssh_key_generated: Clé Elio générée
       ssh_key_regenerated: Clé Elio régénérée

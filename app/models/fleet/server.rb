@@ -1,6 +1,8 @@
 require "resolv"
 
 class Server < ApplicationRecord
+  include HealthThresholdOverrides
+
   # Activities logged when the health of the server or the state of its Docker changes.
   HEALTH_KINDS = { "ok" => :health_recovered, "warn" => :health_warning, "crit" => :health_critical }.freeze
   DOCKER_KINDS = { "ok" => :docker_recovered, "warn" => :docker_warning, "crit" => :docker_critical }.freeze
@@ -35,6 +37,7 @@ class Server < ApplicationRecord
 
   normalizes :name, :host, :username, with: ->(value) { value.strip }
   normalizes :expected_ports, with: ->(value) { value.squish.presence }
+  normalizes :expected_containers, with: ->(value) { value.split(/[\s,]+/).compact_blank.uniq.join(", ").presence }
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :host, presence: true
@@ -47,6 +50,10 @@ class Server < ApplicationRecord
   validate :host_must_be_an_ip_or_hostname
   validate :extra_addresses_must_be_ips
   validate :expected_ports_must_be_valid
+  # Docker's rule for a container name (the slash it prints first removed).
+  CONTAINER_NAME = /\A[a-z0-9][a-z0-9_.-]*\z/i
+  validates :expected_containers, length: { maximum: 1000 }
+  validate :expected_containers_must_be_names
 
   # Matching with external resources (probes, provider IPs): every address
   # by which the server is known.
@@ -155,6 +162,9 @@ class Server < ApplicationRecord
 
   # Ports this server may expose publicly, on top of those of its groups
   # (Inventory::PortAnalysis); nil = nothing of its own.
+  # Containers that must run on this server (Inventory::DockerStatus), by name.
+  def expected_container_names = expected_containers.to_s.split(", ")
+
   def expected_port_list = expected_ports.present? ? Inventory::PortList.new(expected_ports) : nil
 
   # "Ignore" an unexpected port: adds "8081/tcp" to its own expected ports.
@@ -239,6 +249,11 @@ class Server < ApplicationRecord
   def extra_addresses_must_be_ips
     invalid = extra_addresses.reject { |address| Inventory::IpScope.ip?(address) }
     errors.add(:extra_addresses_text, :invalid_ips, addresses: invalid.join(", ")) if invalid.any?
+  end
+
+  def expected_containers_must_be_names
+    invalid = expected_container_names.grep_v(CONTAINER_NAME)
+    errors.add(:expected_containers, :invalid_names, names: invalid.join(", ")) if invalid.any?
   end
 
   def expected_ports_must_be_valid

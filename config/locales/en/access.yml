@@ -40,6 +40,8 @@ en:
       add_keyring: Add to the keyring
       optional: "(optional)"
       content_hint_html: Content of the %{extension} file, for example %{command}. Never the private key.
+      expires_on: Expiry date
+      expires_on_hint: The date by which the key must be rotated (a contractor's mission, a yearly policy). Elio reminds of it 14 days before, through the notification channels that receive "Keyring key to rotate".
     edit:
       back_key: "← Back to the key"
       heading_html: Edit “%{name_was}”
@@ -68,6 +70,8 @@ en:
       edit: Edit
       ssh_key: SSH key
       public_key: Public key
+      expires_on: Expiry date
+      weak_key: Weak key
     outside:
       title: Outside the keyring
       intro: 'The keys found on the servers that match no key of the keyring: add the ones you know, remove the others from their servers.'
@@ -302,6 +306,13 @@ en:
     kinds:
       person: Person
       server: Server
+    weakness:
+      badge: Weak key
+      dsa: DSA key, refused by OpenSSH since version 7.0 — replace it with an ed25519 key.
+      rsa_short: RSA key of %{bits} bits, under the 3072 recommended — replace it with an ed25519 key (or RSA 4096).
+    expiry:
+      expired: Expired
+      expires_on: Expires %{date}
   key_rotation_step:
     phases:
       install: installing the new key
@@ -320,6 +331,13 @@ en:
       generate_ssh_key: Generate an SSH key
       disk_warning: 'Disk: warning (%)'
       disk_critical: 'Disk: critical (%)'
+      inodes_warning: 'Inodes: warning (%)'
+      inodes_critical: 'Inodes: critical (%)'
+      swap_warning: 'Swap: warning (%)'
+      swap_critical: 'Swap: critical (%)'
+      not_watched: Not watched
+      sustained_minutes: Load and memory beyond for (minutes)
+      thresholds_help: "A group or a server can have stricter or looser thresholds of its own (in its edit form). Load and memory count only once beyond their threshold for the given minutes (0: at once), so that a short peak raises nothing."
       memory_warning: 'Memory: warning (%)'
       memory_critical: 'Memory: critical (%)'
       load_warning_processors: 'Load: warning (× processors)'

@@ -18,4 +18,16 @@ class AppSettingTest < ActiveSupport::TestCase
     assert setting.errors.added?(:health_disk_warn, :less_than, count: 90)
     assert setting.errors.added?(:health_memory_warn, :less_than, count: 95)
   end
+
+  test "inodes and swap thresholds of their own, the swap optional; sustained minutes" do
+    setting = AppSetting.new
+    assert_equal [ 80, 90, nil, nil, 0 ], setting.attributes.values_at("health_inodes_warn", "health_inodes_crit", "health_swap_warn", "health_swap_crit", "health_sustained_minutes")
+
+    setting = AppSetting.new(health_inodes_warn: 95, health_inodes_crit: 90, health_swap_warn: 80, health_swap_crit: 60, health_sustained_minutes: -1)
+    assert_not setting.valid?
+    assert setting.errors.added?(:health_inodes_warn, :less_than, count: 90)
+    assert setting.errors.added?(:health_swap_warn, :less_than, count: 60)
+    assert setting.errors.key?(:health_sustained_minutes)
+    assert AppSetting.new(health_swap_warn: 80).valid?, "a warning alone"
+  end
 end
