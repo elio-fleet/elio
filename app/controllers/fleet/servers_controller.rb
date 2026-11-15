@@ -165,6 +165,8 @@ class ServersController < ApplicationController
     @vulnerability_counts = { total: scope.distinct.count(:cve), fixable: scope.fixable.distinct.count(:cve),
                               by_severity: scope.group(:severity).distinct.count(:cve),
                               images: all.images.distinct.count(:cve), image_count: all.images.distinct.count(:image) }
+    # What to run to fix everything that can be, whatever the filters (the system and the Docker images).
+    @fix_commands = Vulnerabilities::FixCommands.new(@server, all.fixable) if @vulnerability_counts[:fixable].positive? || all.images.fixable.exists?
     @fixable_only = params[:fixable] == "1"
     @severity = params[:severity].presence_in(Vulnerability::SEVERITIES.keys)
     scope = scope.fixable if @fixable_only

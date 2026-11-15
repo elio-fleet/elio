@@ -23,6 +23,11 @@ class PackageVulnerabilities
     end
 
     def severity = Vulnerability::SEVERITIES.keys.find { |key| by_severity.key?(key) } || "unknown"
+
+    # The worst severity of the CVEs that have a fix (nil without any).
+    def fixable_severity
+      rows.select(&:fixable?).map(&:severity).min_by { |severity| Vulnerability::SEVERITIES.keys.index(severity) || 9 }
+    end
     def max_score = ratings.values_at(*cves).compact.filter_map(&:score).max
     def exploited_count = ratings.values_at(*cves).compact.count(&:exploited)
     def binary_packages = rows.flat_map(&:packages).uniq.sort
@@ -88,7 +93,7 @@ class PackageVulnerabilities
 
   # Most worth updating first: fixable ones, by worst severity, then by number.
   def sort_key(group)
-    [ group.fixable_count.positive? ? 0 : 1, Vulnerability::SEVERITIES.keys.index(group.fixable_count.positive? ? fixable_severity(group) : group.severity) || 9,
+    [ group.fixable_count.positive? ? 0 : 1, Vulnerability::SEVERITIES.keys.index(group.fixable_severity || group.severity) || 9,
       -group.fixable_count, -group.count, group.source_package, group.image.to_s ]
   end
 
@@ -117,10 +122,6 @@ class PackageVulnerabilities
   def row_of(row)
     Row.new(cve: row.cve, severity: row.severity, source_package: row.source_package, image: row.image, source: row.source,
             fixed_version: row.fixed_version, installed_version: row.installed_version, packages: row.packages, servers: [ row.server ].compact)
-  end
-
-  def fixable_severity(group)
-    group.rows.select(&:fixable?).map(&:severity).min_by { |severity| Vulnerability::SEVERITIES.keys.index(severity) || 9 }
   end
 
   # { source package => { version: highest available, packages: binaries with an update } }
