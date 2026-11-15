@@ -18,6 +18,16 @@ module KeysReaderHelpers
       reader::All.new(accounts: accounts, privileged: !others.nil?)
     end
   end
+
+  # Runs the changes of the keys tab (Keys::ServerKeysChange) without a server,
+  # until the end of the test: the write session yields no connection (the
+  # services it calls are stubbed) and the read made after the change finds
+  # `lines` in the login account (the change is checked against it).
+  def stub_key_write_session(*lines)
+    read = Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse(lines.join("\n")), error_title: nil, error_details: nil)
+    stub_method_until_teardown(Keys::WriteSession, :open, ->(*, ssh: nil, **, &block) { block.call(ssh) })
+    stub_method_until_teardown(Keys::AuthorizedKeysReader, :call_all, keys_read(read))
+  end
 end
 
 ActiveSupport.on_load(:active_support_test_case) { include KeysReaderHelpers }

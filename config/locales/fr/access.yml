@@ -113,13 +113,19 @@ fr:
       key_will_be_removed_from: La clé « %{nom} » sera supprimée du compte %{account} de « %{server_name} ». Elle ne pourra plus se connecter à ce compte.
   servers:
     add_key_dialog:
-      account: Compte Unix
+      accounts: Comptes Unix
       login_account: "%{user} (connexion d'Elio)"
-      other_account: Autre compte…
-      other_account_name: Nom du compte
+      other_account_name: Autre compte (nom)
       account_hint: Un autre compte que celui d'Elio demande root ; son ~/.ssh est créé s'il manque, jamais le compte.
       other_accounts_need_root: "Elio n'a pas root sur ce serveur : seulement son propre compte."
-      subtitle: Dans le fichier ~/.ssh/authorized_keys du compte choisi.
+      subtitle: Dans le fichier ~/.ssh/authorized_keys de chaque compte choisi.
+      restrictions: Restrictions
+      restrictions_optional: "(facultatives)"
+      from: Adresses d'origine autorisées (from=)
+      from_hint: Adresses, réseaux (CIDR) ou noms d'hôte, séparés par des virgules ; la clé est refusée depuis ailleurs.
+      command: Commande imposée (command=)
+      command_hint: La seule commande que cette clé peut lancer, quoi qu'on demande (par exemple un script de sauvegarde).
+      no_port_forwarding: Pas de redirection de ports (no-port-forwarding)
       keyring: Depuis le trousseau
       new_key: Nouvelle clé
       keyring_key: Clé du trousseau
@@ -192,6 +198,11 @@ fr:
       unknown_account_details: Le compte %{account} n'existe pas sur ce serveur (ou n'a pas de dossier personnel). Elio ne crée jamais de compte.
       not_owned_title: Fichier refusé
       not_owned_details: Le dossier ~/.ssh ou le fichier authorized_keys de %{account} est un lien ou n'appartient pas à ce compte ; Elio n'y écrit pas en root.
+    server_keys_change:
+      not_written_title: Clé introuvable après l'écriture
+      not_written_details: La clé n'est pas dans le fichier authorized_keys de %{account} relu juste après l'ajout.
+      still_there_title: Clé toujours présente
+      still_there_details: La clé est toujours dans le fichier authorized_keys de %{account} relu juste après le retrait.
     bulk_access:
       added_for: ajoutée pendant %{label_for}
       added: ajoutée
@@ -229,6 +240,9 @@ fr:
     deleted: La clé « %{public_key_name} » a été retirée du trousseau.
   server_authorizations_controller:
     invalid_account: 'Nom de compte invalide : lettres minuscules, chiffres, « _ », « - » ou « . », 32 caractères au plus.'
+    no_account: Choisissez au moins un compte.
+    invalid_options: 'Restrictions invalides : %{errors}'
+    present_options_kept: "%{name} était déjà présente sur %{target} ; sa ligne, et ses restrictions, sont restées telles quelles."
     not_saved: 'Clé non enregistrée : %{full_messages_to_sentence}'
     target: "« %{server_name} »"
     added_for: "%{name} est ajoutée sur %{target} pendant %{label_for}, jusqu'à %{date}."
@@ -386,6 +400,10 @@ fr:
   health_thresholds_controller:
     saved: Seuils de santé enregistrés.
     invalid: 'Seuils invalides : %{full_messages_to_sentence}'
+  key_options:
+    errors:
+      from: "les adresses d'origine doivent être des adresses, réseaux (CIDR) ou noms d'hôte séparés par des virgules (200 caractères au plus)"
+      command: 'la commande imposée ne doit contenir que des caractères imprimables, sans barre oblique inverse à la fin (300 caractères au plus)'
   key_install_guide:
     accounts:
       root: root

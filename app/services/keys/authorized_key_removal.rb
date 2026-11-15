@@ -2,7 +2,8 @@
 # AuthorizedKeysAccount): the login account, or another one through root. The protected keys (Elio's, by default) are refused:
 # every line whose key blob is `blob` is dropped, other lines (comments,
 # other keys) are kept byte for byte. The Elio key can never be removed,
-# since the app would lose access to the server.
+# since the app would lose access to the server. Runs under the server's key
+# lock (Keys::WriteSession), on `ssh` when given.
 class Keys::AuthorizedKeyRemoval
   BLOB_FORMAT = %r{\A[A-Za-z0-9+/]+={0,2}\z}
 
@@ -12,12 +13,12 @@ class Keys::AuthorizedKeyRemoval
     def absent? = status == :absent
   end
 
-  def self.call(server, blob, account: nil, protected_keys: SshKey.app_keys, **connection_options)
+  def self.call(server, blob, account: nil, protected_keys: SshKey.app_keys, ssh: nil, **connection_options)
     account ||= AuthorizedKeysAccount.login(server)
-    return error(I18n.t("keys.authorized_key_removal.invalid_title"), I18n.t("keys.authorized_key_removal.invalid_details")) unless blob.to_s.match?(BLOB_FORMAT)
-    return error(I18n.t("keys.authorized_key_removal.forbidden_title"), I18n.t("keys.authorized_key_removal.forbidden_details")) if Array(protected_keys).any? { |key| key.blob == blob }
+    refused = refusal(blob, protected_keys)
+    return refused if refused
 
-    output = Ssh::Connection.open(server, **connection_options) do |ssh|
+    output = Keys::WriteSession.open(server, ssh: ssh, **connection_options) do |ssh|
       if account.login?
         ssh.run_command!("keys.remove", blob: blob).stdout
       elsif ssh.privileged?
@@ -31,6 +32,14 @@ class Keys::AuthorizedKeyRemoval
     Result.new(status: output.include?("removed") ? :removed : :absent, error_title: nil, error_details: nil)
   rescue Ssh::Connection::Error => e
     error(*account.error_for(e))
+  end
+
+  # The error Result when `blob` must not be removed (not a key blob, or a
+  # protected key), checked before connecting; nil otherwise.
+  def self.refusal(blob, protected_keys = SshKey.app_keys)
+    return error(I18n.t("keys.authorized_key_removal.invalid_title"), I18n.t("keys.authorized_key_removal.invalid_details")) unless blob.to_s.match?(BLOB_FORMAT)
+
+    error(I18n.t("keys.authorized_key_removal.forbidden_title"), I18n.t("keys.authorized_key_removal.forbidden_details")) if Array(protected_keys).any? { |key| key.blob == blob }
   end
 
   # The command sent (config/ssh_commands.yml: keys.remove), also run locally by the tests.

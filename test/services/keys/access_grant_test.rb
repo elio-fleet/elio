@@ -23,7 +23,7 @@ class Keys::AccessGrantTest < ActiveSupport::TestCase
   test "a permanent grant records nothing" do
     with_authorization(:added) { Keys::AccessGrant.call(@server, public_keys(:alice), account: @account) }
 
-    assert_equal [ { account: @account, expires_at: nil, replace: false } ], @calls
+    assert_equal [ { account: @account, expires_at: nil, options: nil, replace: false } ], @calls
     assert_equal 0, TemporaryAccess.count
     assert_no_enqueued_jobs only: ExpireTemporaryAccessJob
   end
