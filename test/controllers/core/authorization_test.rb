@@ -171,6 +171,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "reactivate a user" => -> { post reactivate_settings_user_path(users(:viewer)) },
       "reset a user's 2FA" => -> { post reset_two_factor_settings_user_path(users(:viewer)) },
       "unlock a user" => -> { post unlock_settings_user_path(users(:viewer)) },
+      "ask a user for a new password" => -> { post require_password_change_settings_user_path(users(:viewer)) },
       "start a key rotation" => -> { post settings_key_rotations_path },
       "follow a key rotation" => -> { get settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "retry a key rotation" => -> { post retry_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
