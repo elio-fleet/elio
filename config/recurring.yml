@@ -13,6 +13,9 @@ shared: &shared
   expire_temporary_accesses:
     class: ExpireTemporaryAccessesJob
     schedule: every minute
+  remind_expiring_public_keys:
+    class: RemindExpiringPublicKeysJob
+    schedule: every hour at minute 7
   run_due_automations:
     class: RunDueAutomationsJob
     schedule: every minute

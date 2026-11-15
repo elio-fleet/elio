@@ -30,6 +30,13 @@ module TasksHelper
     "#{question} #{t("tasks_helper.fleet_run_confirm.estimate", duration: task_duration([ estimate, 1 ].max))}"
   end
 
+  # 1234 ms → "1.2 s" (with the separator of the language), 72 000 ms → "1 min 12 s".
+  def short_duration(milliseconds)
+    return "—" unless milliseconds
+
+    milliseconds < 10_000 ? "#{number_with_precision(milliseconds / 1000.0, precision: 1)} s" : task_duration(milliseconds / 1000.0)
+  end
+
   def task_filter_count(filter)
     BackgroundTask::FILTERS.fetch(filter).sum { |status| @counts.fetch(status, 0) }
   end

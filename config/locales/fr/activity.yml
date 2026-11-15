@@ -169,6 +169,9 @@ fr:
       public_key_created:
         label: Clé ajoutée au trousseau
         description: Une clé a été ajoutée au trousseau.
+      public_key_expiring:
+        label: Clé du trousseau à renouveler
+        description: Une clé du trousseau atteint sa date d'expiration dans 14 jours ou moins (envoyé une fois par date).
       public_key_owner_changed:
         label: Propriétaire d'une clé
         description: Une clé du trousseau a été attribuée à un utilisateur (« ma clé »), ou ne l'est plus.
@@ -223,6 +226,12 @@ fr:
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
+      integration_credential_expiring:
+        label: Clé d'extension bientôt expirée
+        description: La clé d'API d'une extension expire dans moins de deux semaines (signalé une fois par clé).
+      integration_data_deleted:
+        label: Données d'extension supprimées
+        description: Un administrateur a supprimé ce qu'une extension désactivée avait lu de son service.
       coolify_deployed:
         label: Déploiement Coolify
         description: Coolify a fini de déployer une application sur un serveur.
@@ -348,6 +357,8 @@ fr:
       public_key_created: Clé « %{name} » ajoutée au trousseau
       public_key_owner_set: Clé « %{name} » attribuée à %{owner}
       public_key_owner_removed: Clé « %{name} » attribuée à personne
+      public_key_expiring: La clé « %{name} » du trousseau expire le %{date}, à renouveler
+      public_key_expired: La clé « %{name} » du trousseau a expiré le %{date}, à renouveler
       public_key_deleted: Clé « %{name} » retirée du trousseau
       ssh_key_generated: Clé Elio générée
       ssh_key_regenerated: Clé Elio régénérée
@@ -377,6 +388,10 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      integration_credential_expiring:
+        one: "Clé d'API %{integration} : expire dans %{count} jour (%{date})"
+        other: "Clé d'API %{integration} : expire dans %{count} jours (%{date})"
+      integration_data_deleted: Données de l'extension %{integration} supprimées
       notification_channel_disabled: 'Canal de notification « %{channel} » désactivé après une journée d''échecs : %{error}'
       coolify_deployed: "Coolify : %{application} déployée%{commit}"
       coolify_deploy_failed: "Coolify : déploiement de %{application} en échec%{commit}"

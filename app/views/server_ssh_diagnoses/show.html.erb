@@ -1,0 +1,41 @@
+<%# Step-by-step SSH diagnosis (Ssh::Diagnosis), in the SSH frame of the server page: each step with its result,
+    and what to do for the one that fails. The refresh arrow goes back to the plain check. %>
+<%= turbo_frame_tag dom_id(@server, :ssh_check), class: "group block" do %>
+  <%= render "servers/health_item", label: t("server_ssh_checks.show.ssh"), refresh_path: server_ssh_check_path(@server),
+                                    refresh_title: t("server_ssh_checks.show.test_ssh_connection_again") do %>
+    <% if (failed = @result.failed_step) %>
+      <%= status_badge(:crit, t("server_ssh_diagnoses.show.failed", step: t("ssh.diagnosis.steps.#{failed.key}")), class: "ssh-diagnosis-result") %>
+    <% else %>
+      <%= status_badge(:good, t("server_ssh_diagnoses.show.passed"), class: "ssh-diagnosis-result") %>
+    <% end %>
+  <% end %>
+
+  <ol class="ssh-diagnosis mt-2 space-y-2 text-sm group-aria-busy:opacity-50">
+    <% @result.steps.each do |step| %>
+      <li class="ssh-diagnosis-step flex items-start gap-2" data-step="<%= step.key %>" data-status="<%= step.status %>">
+        <% if (mark = { ok: [ :check_circle, "text-good" ], warn: [ :exclamation_triangle, "text-warn" ], failed: [ :x_circle, "text-crit" ] }[step.status]) %>
+          <%= icon mark.first, class: "mt-0.5 h-4 w-4 shrink-0 #{mark.last}" %>
+        <% else %>
+          <span class="mt-0.5 h-4 w-4 shrink-0 text-center text-ink-3" aria-hidden="true">–</span>
+        <% end %>
+        <span class="sr-only"><%= t(".status.#{step.status}") %></span>
+        <div class="min-w-0 flex-1">
+          <p class="<%= step.status == :skipped ? "text-ink-3" : "font-medium text-ink" %>"><%= t("ssh.diagnosis.steps.#{step.key}") %></p>
+          <% if step.detail.present? %>
+            <p class="ssh-diagnosis-detail break-all font-mono text-xs <%= step.failed? ? "text-crit-ink" : "text-ink-3" %>"><%= step.detail %></p>
+          <% end %>
+          <% if step.fix %>
+            <p class="ssh-diagnosis-fix mt-1 text-xs text-ink-2">
+              <%= t("ssh.diagnosis.fixes.#{step.fix}", host: @server.host, port: @server.port, username: @server.username) %>
+            </p>
+          <% end %>
+          <% if step.reason == :host_key_changed %>
+            <%= render "servers/host_key_changed", server: @server, host_key: step.host_key %>
+          <% elsif step.reason %>
+            <%= render "ssh_keys/setup_hint", server: @server, reason: step.reason %>
+          <% end %>
+        </div>
+      </li>
+    <% end %>
+  </ol>
+<% end %>

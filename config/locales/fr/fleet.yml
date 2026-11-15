@@ -156,6 +156,7 @@ fr:
       optional: "(facultatif)"
       ip_addresses_through_which: Adresses IP par lesquelles ce serveur est joint mais qu'il ne voit pas lui-même (NAT, IP de basculement…). Les adresses de ses interfaces sont relevées par l'inventaire.
       expected_ports: Ports attendus
+      health_thresholds: Seuils de santé
       expected_ports_help: Ports que ce serveur peut exposer publiquement, en plus de ceux de ses groupes. Tout autre port public est signalé comme inattendu.
       expected_containers: Conteneurs attendus
       expected_containers_help: Conteneurs Docker qui doivent tourner sur ce serveur, par nom. Un conteneur arrêté ou absent met son état Docker en critique.
@@ -310,6 +311,7 @@ fr:
       save: Enregistrer
       create_group: Créer le groupe
       expected_ports: Ports attendus
+      health_thresholds: Seuils de santé
       optional: "(facultatif)"
       ports_servers_group_may: 'Ports que les serveurs du groupe peuvent exposer publiquement. Tout autre port public est signalé comme inattendu. Vide : pas de vérification.'
       ssh_sources: Sources autorisées pour le SSH

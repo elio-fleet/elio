@@ -85,9 +85,8 @@ module Elio
       network = Inventory::Collectors::Network.parse(sections(FIX.join("network/debian13-wireguard.txt")))
       snapshot(db, "network", network)
       db.update_columns(Inventory::Collectors::Network.server_attributes(network))
-      services = File.read(FIX.join("services/debian12.txt"))
-      units = Inventory::Collectors::Services.parse_units(services.split("@@elio unit-files").first.sub("@@elio units\n", ""),
-                                                          Inventory::Collectors::Services.parse_unit_files(services.split("@@elio unit-files\n").last.split("@@elio docker").first))
+      services = sections(FIX.join("services/debian12.txt"))
+      units = Inventory::Collectors::Services.parse_units(services["units"], Inventory::Collectors::Services.parse_unit_details(services["unit-details"]))
       snapshot(db, "services", { "units" => units, "containers" => Inventory::Collectors::Services.parse_containers(File.read(FIX.join("services/docker_ps.txt"))), "docker" => "ok" })
       snapshot(db, "scheduled_tasks", Inventory::Collectors::ScheduledTasks.parse(File.read(FIX.join("scheduled_tasks/debian13.txt")), now: Time.zone.at(1_762_000_000)))
       docker = Inventory::Collectors::Docker.parse(sections(FIX.join("docker/debian13.txt")))

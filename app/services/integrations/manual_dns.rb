@@ -65,6 +65,9 @@ class Integrations::ManualDns < Integrations::Base
 
     def dns_source?(_integration) = true
 
+    # Its records are what was typed in the settings, read again at each sync: nothing to delete apart.
+    def purgeable? = false
+
     def help_partial = "integrations/manual_dns/help"
   end
 end

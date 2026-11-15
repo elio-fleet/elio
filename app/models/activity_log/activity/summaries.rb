@@ -105,6 +105,10 @@ module Activity::Summaries
     two_factor_disabled: proc { data["reset_by"] ? Activity::Summaries.t(:two_factor_reset, email: data["email"], by: data["reset_by"]) : Activity::Summaries.t(:two_factor_disabled, email: data["email"]) },
     two_factor_backup_code_used: proc { Activity::Summaries.t(:two_factor_backup_code_used, email: data["email"], count: data["left"].to_i) },
     public_key_created: proc { Activity::Summaries.t(:public_key_created, name: public_key_name) },
+    public_key_expiring: proc do
+      expires_on = Date.iso8601(data["expires_on"])
+      Activity::Summaries.t(expires_on <= created_at.to_date ? :public_key_expired : :public_key_expiring, name: public_key_name, date: I18n.l(expires_on, format: :long))
+    end,
     public_key_owner_changed: proc { data["owner"] ? Activity::Summaries.t(:public_key_owner_set, name: public_key_name, owner: data["owner"]) : Activity::Summaries.t(:public_key_owner_removed, name: public_key_name) },
     public_key_deleted: proc { Activity::Summaries.t(:public_key_deleted, name: public_key_name) },
     ssh_key_generated: proc { Activity::Summaries.t(data["regenerated"] ? :ssh_key_regenerated : :ssh_key_generated) },
@@ -127,6 +131,8 @@ module Activity::Summaries
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },
     integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) },
+    integration_credential_expiring: proc { Activity::Summaries.t(:integration_credential_expiring, integration: data["integration_label"], count: data["days"].to_i, date: I18n.l(Date.parse(data["expires_on"].to_s), format: :long)) },
+    integration_data_deleted: proc { Activity::Summaries.t(:integration_data_deleted, integration: data["integration_label"]) },
     notification_channel_disabled: proc { Activity::Summaries.t(:notification_channel_disabled, channel: data["channel_name"], error: data["error"]) },
     coolify_deployed: proc { Activity::Summaries.t(:coolify_deployed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
     coolify_deploy_failed: proc { Activity::Summaries.t(:coolify_deploy_failed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },

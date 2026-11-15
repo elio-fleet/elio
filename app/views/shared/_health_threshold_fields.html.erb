@@ -1,0 +1,18 @@
+<%# Fields of the own health thresholds of a server or a group (HealthThresholdOverrides), each blank by default with the
+    threshold it inherits as placeholder. Locals: f (form builder of the server or the group). %>
+<% record = f.object %>
+<% thresholds = Inventory::HealthThresholds.new(record, app_settings) if record.is_a?(Server) %>
+<div class="health-threshold-fields grid grid-cols-2 gap-4 sm:grid-cols-3">
+  <% Inventory::HealthThresholds::KEYS.each do |key| %>
+    <% inherited = thresholds ? thresholds.inherited(key) : app_settings.public_send("health_#{key}") %>
+    <% id = "#{f.object_name}_health_thresholds_#{key}" %>
+    <div>
+      <%= label_tag id, t("shared.health_threshold_fields.#{key}"), class: "label text-xs" %>
+      <%= number_field_tag "#{f.object_name}[health_thresholds][#{key}]", record.health_thresholds.to_h[key], id: id,
+            in: key == "load_warn" ? Inventory::HealthThresholds::LOAD_RANGE : Inventory::HealthThresholds::PERCENT_RANGE, step: key == "load_warn" ? 0.1 : 1,
+            placeholder: inherited.nil? ? t("shared.health_threshold_fields.not_watched") : number_with_precision(inherited, precision: 1, strip_insignificant_zeros: true),
+            class: "input mt-1" %>
+    </div>
+  <% end %>
+</div>
+<p class="mt-1 text-xs text-ink-3"><%= t("shared.health_threshold_fields.#{thresholds ? "help_server" : "help_group"}") %></p>
