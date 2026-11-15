@@ -54,6 +54,9 @@ class Integration < ApplicationRecord
     false
   end
 
+  # An expiring API key is announced this many days ahead.
+  CREDENTIAL_WARNING_DAYS = 14
+
   include IntegrationValues
 
   has_many :links, class_name: "IntegrationLink", dependent: :delete_all
@@ -74,8 +77,11 @@ class Integration < ApplicationRecord
   # several connections synchronizes each one (IntegrationConnection#sync!):
   # it fails only when every connection fails.
   def sync!
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     result = multiple_connections? ? sync_connections : definition.sync(self)
-    update!(last_synced_at: Time.current, last_error: nil)
+    duration = ((Process.clock_gettime(Process::CLOCK_MONOTONIC) - started) * 1000).round
+    update!(last_synced_at: Time.current, last_error: nil, last_sync_duration_ms: duration)
+    check_credential
     result
   rescue Integrations::Error => e
     Activity.record!(:integration_sync_failed, user: nil, integration: kind, integration_label: label, error: e.message) if last_error.nil?
@@ -93,7 +99,45 @@ class Integration < ApplicationRecord
   # Servers manually attached to (or detached from, server nil) an external resource.
   def manual_links = links.to_h { |link| [ link.external_id, link.server_id ] }
 
+  # The API key expires within CREDENTIAL_WARNING_DAYS (or has expired).
+  def credential_expiring? = credential_expires_at.present? && credential_expires_at <= CREDENTIAL_WARNING_DAYS.days.from_now
+
+  # Something read from the service is still stored (and can be deleted).
+  def stored_data? = definition.purgeable? && (last_synced_at.present? || connections.any?(&:last_synced_at))
+
+  # Deletes what the synchronizations stored (Integrations::Base.purge) and
+  # the memory of its alerts, so that the next sync starts afresh (as a first
+  # one: no alert for what is already there). Only while the extension is
+  # off: on, the next sync would bring everything back. The settings, the
+  # secrets and the manual attachments stay. Returns false when refused.
+  def purge_data!(user: Current.user)
+    return false if enabled? || !definition.purgeable?
+
+    transaction do
+      definition.purge(self)
+      update!(state: {}, last_synced_at: nil, last_error: nil, last_sync_duration_ms: nil, credential_expires_at: nil, credential_expiry_logged: false)
+    end
+    Activity.record!(:integration_data_deleted, user: user, integration: kind, integration_label: label)
+    true
+  end
+
   private
+
+  # After a successful sync: when the API key expires (if the service tells),
+  # logged once when it gets close (CREDENTIAL_WARNING_DAYS), again for a new
+  # key. Reading it may fail without failing the sync.
+  def check_credential
+    expires_at = definition.credential_expires_at(self)
+    logged = credential_expiry_logged? && expires_at == credential_expires_at
+    if expires_at && !logged && expires_at <= CREDENTIAL_WARNING_DAYS.days.from_now
+      Activity.record!(:integration_credential_expiring, user: nil, integration: kind, integration_label: label,
+                                                         expires_on: expires_at.to_date.iso8601, days: [ (expires_at.to_date - Date.current).to_i, 0 ].max)
+      logged = true
+    end
+    update_columns(credential_expires_at: expires_at, credential_expiry_logged: logged)
+  rescue Integrations::Error
+    nil
+  end
 
   def sync_connections
     return I18n.t("integration.no_connection") if connections.empty?

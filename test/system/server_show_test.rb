@@ -37,6 +37,25 @@ class ServerShowTest < ApplicationSystemTestCase
     assert_selector "h1", text: "Web"
   end
 
+  test "a failed SSH check can be diagnosed step by step in place" do
+    servers(:web).update_columns(host: "127.0.0.1", port: closed_port)
+    visit server_path(servers(:web))
+    execute_script("window.noFullReload = true")
+
+    within("#server-health") do
+      click_on "Diagnostiquer"
+      assert_selector ".ssh-diagnosis-result", text: "Échec : Port SSH ouvert"
+      assert_selector ".ssh-diagnosis-step[data-step=dns][data-status=ok]"
+      assert_selector ".ssh-diagnosis-step[data-step=tcp][data-status=failed] .ssh-diagnosis-fix", text: "Rien n'écoute sur le port"
+      assert_selector ".ssh-diagnosis-step[data-step=sudo][data-status=skipped]"
+
+      find("a[title='Retester la connexion SSH']").click
+      assert_selector ".ssh-check-result", text: "Connexion impossible"
+      assert_no_selector ".ssh-diagnosis"
+    end
+    assert evaluate_script("window.noFullReload")
+  end
+
 
   test "authorized keys load lazily in their tab and can be reloaded" do
     visit server_path(servers(:web))
@@ -127,5 +146,25 @@ class ServerShowTest < ApplicationSystemTestCase
       assert_selector ".unit-restart code", text: "sudo systemctl restart nginx.service"
     end
     assert_equal %w[nginx.service], reads
+  end
+
+  test "the services search reloads only the list, keeps the focus, and the state filters keep the search" do
+    units = [ { "name" => "nginx.service", "active" => "active", "sub" => "running", "description" => "Web server" },
+              { "name" => "cron.service", "active" => "active", "sub" => "running", "description" => "Regular jobs" },
+              { "name" => "nginx-exporter.service", "active" => "inactive", "sub" => "dead", "type" => "simple", "enabled" => "disabled" } ]
+    servers(:web).inventory_snapshots.create!(category: "services", status: "ok", data: { "units" => units }, collected_at: Time.current, checked_at: Time.current)
+    visit server_path(servers(:web), tab: "services")
+
+    field = find("form.services-search input[name=q]")
+    field.send_keys("nginx")
+    assert_current_path(/q=nginx/)
+    assert_no_selector "#services-results[busy]"
+    assert_selector "li.systemd-unit", count: 2
+    assert_equal "q", evaluate_script("document.activeElement.name")
+
+    click_on "Inactifs"
+    assert_selector ".filter-chip[aria-current=true]", text: "Inactifs"
+    assert_selector "li.systemd-unit", count: 1, text: "nginx-exporter"
+    assert_field "q", with: "nginx"
   end
 end

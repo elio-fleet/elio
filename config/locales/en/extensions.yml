@@ -600,6 +600,8 @@ en:
         edit: Edit
         delete: Delete the connection
         delete_confirm: "Delete the connection “%{label}” and everything it read?"
+      credential:
+        expires: API key valid until %{date}
       test_result:
         succeeded: 'Connection succeeded: '
         failed: 'Failed: '
@@ -607,7 +609,11 @@ en:
         save: Save
         sync_now: Sync now
         last_sync_failed_html: 'Last sync failed: %{last_error}'
-        synchronized_html: Synchronized %{last_synced_at}.
+        synchronized_html: Synchronized %{last_synced_at}
+        took: " · took %{duration}"
+        data_kept: The data read from the service is kept for when the extension is turned on again.
+        delete_data: Delete the data
+        delete_data_confirm: "Delete everything %{label} read from its service? The settings stay; the next sync reads it again."
         turn_extension: Turn the extension on
         tabs_pages_alerts_appear: "— its tabs, pages and alerts appear; a sync is started."
         test_connection: Test the connection
@@ -618,6 +624,7 @@ en:
         configure_turn: Configure and turn on
         synchronized_html: Synchronized %{last_synced_at}
         not_synchronized_yet: Not synchronized yet
+        took: " · took %{duration}"
         extension_available: No extension available.
         intro_html: 'Extensions connect Elio to your other tools, <strong class="font-medium text-ink-2">read-only</strong>: Elio creates, changes and deletes nothing there. A turned off extension appears nowhere in the interface.'
     integration_connections:
@@ -651,6 +658,8 @@ en:
     sync_started: "%{label} sync started."
     saved: Extension %{label} saved.
     saved_enabled: 'Extension %{label} saved and turned on: first sync started.'
+    data_deleted: Data of the %{label} extension deleted.
+    turn_off_first: Turn the extension off before deleting its data.
   ovh_helper:
     from_source: from %{source}
     no_firewall: 'OVH: no firewall'

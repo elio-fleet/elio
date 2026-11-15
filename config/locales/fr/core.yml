@@ -47,6 +47,19 @@ fr:
     vulnerability_feeds: Bases de vulnérabilités
     jobs: Suivi technique des jobs
   shared:
+    health_threshold_fields:
+      disk_warn: 'Disque : attention (%)'
+      disk_crit: 'Disque : critique (%)'
+      inodes_warn: 'Inodes : attention (%)'
+      inodes_crit: 'Inodes : critique (%)'
+      memory_warn: 'Mémoire : attention (%)'
+      memory_crit: 'Mémoire : critique (%)'
+      swap_warn: 'Swap : attention (%)'
+      swap_crit: 'Swap : critique (%)'
+      load_warn: 'Charge : attention (× processeurs)'
+      not_watched: Non surveillé
+      help_server: "Vide : le seuil en gris, celui de ses groupes (le plus strict) ou des réglages généraux."
+      help_group: "Vide : le seuil en gris, celui des réglages généraux. Un serveur dans plusieurs groupes prend le plus strict ; ses propres seuils passent avant."
     command_palette:
       label: Recherche rapide
       placeholder: key

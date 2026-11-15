@@ -45,6 +45,14 @@ class Integrations::ManualDnsTest < ActiveSupport::TestCase
     assert_equal [ "Bureau", "Labo" ], Dns.sources.map(&:label)
   end
 
+  test "no data to delete apart: the records are what was typed in" do
+    source("Bureau", "www.example.com,A,203.0.113.10").sync!
+    @integration.update!(enabled: false)
+    assert_not @integration.stored_data?
+    assert_not @integration.purge_data!(user: users(:one))
+    assert_equal 1, DnsRecord.unscoped.count
+  end
+
   test "deleting a source deletes its records" do
     office = source("Bureau", "www.example.com,A,203.0.113.10")
     office.sync!

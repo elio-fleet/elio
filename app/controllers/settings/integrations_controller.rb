@@ -53,6 +53,15 @@ module Settings
       redirect_to task_path(@integration.enqueue_sync!), notice: t("integrations_controller.sync_started", label: @integration.label)
     end
 
+    # Deletes what a turned off extension read from its service (confirmed, logged).
+    def purge
+      if @integration.purge_data!
+        redirect_to edit_settings_integration_path(@integration.kind), notice: t("integrations_controller.data_deleted", label: @integration.label), status: :see_other
+      else
+        redirect_to edit_settings_integration_path(@integration.kind), alert: t("integrations_controller.turn_off_first"), status: :see_other
+      end
+    end
+
     private
 
     def set_integration

@@ -47,6 +47,19 @@ en:
     vulnerability_feeds: Vulnerability feeds
     jobs: Technical job monitoring
   shared:
+    health_threshold_fields:
+      disk_warn: 'Disk: warning (%)'
+      disk_crit: 'Disk: critical (%)'
+      inodes_warn: 'Inodes: warning (%)'
+      inodes_crit: 'Inodes: critical (%)'
+      memory_warn: 'Memory: warning (%)'
+      memory_crit: 'Memory: critical (%)'
+      swap_warn: 'Swap: warning (%)'
+      swap_crit: 'Swap: critical (%)'
+      load_warn: 'Load: warning (× processors)'
+      not_watched: Not watched
+      help_server: "Blank: the threshold in grey, from its groups (the strictest) or the general settings."
+      help_group: "Blank: the threshold in grey, from the general settings. A server in several groups takes the strictest; its own thresholds come first."
     command_palette:
       label: Quick search
       placeholder: Server

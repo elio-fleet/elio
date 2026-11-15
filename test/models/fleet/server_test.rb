@@ -29,6 +29,18 @@ class ServerTest < ActiveSupport::TestCase
     assert server.expected_port_list.include?(51_820, "udp")
   end
 
+  test "expected containers: names only, one list separated by commas" do
+    server = servers(:web)
+    assert server.update(expected_containers: " nginx  shop-db-1,,nginx, worker.1 ")
+    assert_equal "nginx, shop-db-1, worker.1", server.expected_containers
+    assert_equal %w[nginx shop-db-1 worker.1], server.expected_container_names
+
+    assert_not server.update(expected_containers: "nginx, /db, $(id)")
+    assert_includes server.errors[:expected_containers].sole, "/db, $(id)"
+    assert server.update(expected_containers: " ")
+    assert_empty server.reload.expected_container_names
+  end
+
   test "fixtures are valid" do
     assert servers(:web).valid?
     assert servers(:db).valid?

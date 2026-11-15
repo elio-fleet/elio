@@ -1,4 +1,4 @@
 @@elio units
 unsupported
-@@elio unit-files
+@@elio unit-details
 @@elio docker

@@ -55,6 +55,8 @@ class Integrations::UptimeKuma < Integrations::Base
       Integrations::UptimeKuma::Sync.new(integration, result).call
     end
 
+    def purge(_integration) = UptimeKumaMonitor.delete_all
+
     def server_tabs = [ { key: "monitors", label: I18n.t("nav.probes"), count: ->(server) { server.uptime_kuma_monitors.size } } ]
 
     def sidebar_links = [ { label: I18n.t("nav.probes"), path: :monitors_path, icon: :signal, controller: "monitors", position: 1 } ]

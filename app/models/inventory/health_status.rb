@@ -1,5 +1,5 @@
-# Health state of a server from its last inventory and the thresholds of
-# AppSetting: ok, warn or crit with the reasons, or unknown before any health
+# Health state of a server from its last inventory and its thresholds
+# (Inventory::HealthThresholds): ok, warn or crit with the reasons, or unknown before any health
 # collection. Unreachability is shown on top of it (Server#health_state).
 class Inventory::HealthStatus
   # A reason is stored as its translation key and parameters (servers.health_reasons,
@@ -24,6 +24,8 @@ class Inventory::HealthStatus
       name.to_s.end_with?("_key") ? [ name.to_s.delete_suffix("_key").to_sym, I18n.t(value) ] : [ name.to_sym, format_param(name.to_s, value) ]
     end
     params[:count] = reason.dig("params", "count") if reason.dig("params", "count")
+    # Docker reasons about several containers stored before they were named (activities).
+    params[:containers] ||= "…" if reason["key"].to_s.start_with?("health.containers_")
     I18n.t(reason["key"], **params)
   end
 
@@ -33,7 +35,7 @@ class Inventory::HealthStatus
     when "ratio" then ActiveSupport::NumberHelper.number_to_percentage(value, precision: 2, locale: I18n.locale)
     when "load" then ActiveSupport::NumberHelper.number_to_rounded(value, precision: 1, strip_insignificant_zeros: true, locale: I18n.locale)
     when "names" then Array(value).to_sentence(locale: I18n.locale)
-    when "first_names" then Array(value).join(", ")
+    when "first_names", "containers" then Array(value).join(", ")
     else value
     end
   end
@@ -41,9 +43,10 @@ class Inventory::HealthStatus
   # Parameters that measure a problem rather than name it: a disk going from
   # 91 to 92 % is the same problem, a second failed service is a new one.
   MEASURES = %w[percent ratio load count].freeze
-  # Parameters kept only to compare two readings, never shown: every failed
-  # unit, when the text names only the first ones.
-  DETAILS = %w[names_all].freeze
+  # Parameters that detail a problem without being part of it: every failed
+  # unit (kept only to compare two readings, never shown), the containers
+  # named in a Docker reason about several.
+  DETAILS = %w[names_all containers].freeze
   FAILED_UNITS_KEYS = %w[health.service_failed health.units_failed health.units_failed_more].freeze
 
   # The stored reasons of `current` that were not in `previous`, or that went
@@ -91,7 +94,10 @@ class Inventory::HealthStatus
   # 5: failed units named (health.units_failed / units_failed_more).
   # 6: processes killed for lack of memory in the last 24 hours (health.oom_kills).
   # 7: every failed unit kept with the reason that names only the first ones (names_all).
-  VERSION = 7
+  # 8: Docker reasons name their containers, expected containers not running
+  #    (containers_missing), nothing about containers just after a boot.
+  # 9: thresholds of the server and its groups, inodes and swap thresholds of their own (health.swap).
+  VERSION = 9
 
   def self.refresh_outdated!
     setting = AppSetting.current
@@ -106,12 +112,13 @@ class Inventory::HealthStatus
   def initialize(server, settings)
     @server = server
     @settings = settings
+    @thresholds = Inventory::HealthThresholds.new(server, settings)
     @health = server.inventory("health")
     @os = server.inventory("os")
   end
 
   def evaluate
-    reasons = [ *access_reasons, *disk_reasons, *memory_reasons, *load_reasons, *system_reasons, *scheduled_task_reasons, *vulnerability_reasons, *port_reasons, *Integration.health_reasons(@server) ]
+    reasons = [ *access_reasons, *disk_reasons, *memory_reasons, *swap_reasons, *load_reasons, *system_reasons, *scheduled_task_reasons, *vulnerability_reasons, *port_reasons, *Integration.health_reasons(@server) ]
     reasons = reasons.sort_by { |reason| reason.tone == "crit" ? 0 : 1 }
     state = if reasons.any? { |reason| reason.tone == "crit" } then "crit"
     elsif reasons.any? then "warn"
@@ -131,18 +138,25 @@ class Inventory::HealthStatus
 
   def disk_reasons
     Array(data["disks"]).flat_map do |disk|
-      [ threshold_reason(:disk, disk["used_percent"], @settings.health_disk_warn, @settings.health_disk_crit, mount: disk["mount"]),
-        threshold_reason(:inodes, disk["inodes_used_percent"], @settings.health_disk_warn, @settings.health_disk_crit, mount: disk["mount"]) ].compact
+      [ threshold_reason(:disk, disk["used_percent"], @thresholds.disk_warn, @thresholds.disk_crit, mount: disk["mount"]),
+        threshold_reason(:inodes, disk["inodes_used_percent"], @thresholds.inodes_warn, @thresholds.inodes_crit, mount: disk["mount"]) ].compact
     end
   end
 
   def memory_reasons
-    [ threshold_reason(:memory, data.dig("memory", "used_percent"), @settings.health_memory_warn, @settings.health_memory_crit) ].compact
+    [ threshold_reason(:memory, data.dig("memory", "used_percent"), @thresholds.memory_warn, @thresholds.memory_crit, sampled: :memory_percent) ].compact
   end
 
+  def swap_reasons
+    [ threshold_reason(:swap, data.dig("swap", "used_percent"), @thresholds.swap_warn, @thresholds.swap_crit) ].compact
+  end
+
+  # The load is compared in percent of the processors, like its history
+  # (Inventory::HealthSample#load_percent).
   def load_reasons
     load, cpus = data["load"]&.first, data["cpus"]
-    return [] unless load && cpus.to_i.positive? && load >= cpus * @settings.health_load_warn.to_f
+    return [] unless load && cpus.to_i.positive?
+    return [] unless threshold_tone(load * 100.0 / cpus, @thresholds.load_warn.to_f * 100, nil, sampled: :load_percent)
 
     [ self.class.reason("warn", :load, load: load.round(1), count: cpus) ]
   end
@@ -209,10 +223,29 @@ class Inventory::HealthStatus
 
   # The percentage is formatted by the language ("83 %" with a non-breaking
   # space in French, so that it never splits at the end of a line).
-  def threshold_reason(key, value, warn, crit, **params)
-    return unless value
-    return self.class.reason("crit", key, percent: value.round, **params) if value >= crit
+  # `sampled`: the column of Inventory::HealthSample that holds the history
+  # of the value, to wait AppSetting#health_sustained_minutes before it counts.
+  def threshold_reason(key, value, warn, crit, sampled: nil, **params)
+    tone = threshold_tone(value, warn, crit, sampled: sampled)
+    self.class.reason(tone, key, percent: value.round, **params) if tone
+  end
 
-    self.class.reason("warn", key, percent: value.round, **params) if value >= warn
+  # "crit", "warn" or nil; a blank threshold is not watched.
+  def threshold_tone(value, warn, crit, sampled: nil)
+    return unless value
+
+    [ [ "crit", crit ], [ "warn", warn ] ].find { |_, limit| limit && value >= limit && sustained?(sampled, limit) }&.first
+  end
+
+  # Whether the readings stayed at or beyond `limit` for the last
+  # health_sustained_minutes: the reading at the start of that period and
+  # every one since. Without a reading that old, not yet.
+  def sustained?(column, limit)
+    minutes = @settings.health_sustained_minutes.to_i
+    return true if column.nil? || minutes.zero?
+
+    samples = @server.health_samples
+    start = samples.where(collected_at: ..(@health.collected_at - minutes.minutes)).maximum(:collected_at)
+    start.present? && samples.where(collected_at: start..).where(column => ...limit).none?
   end
 end
