@@ -57,6 +57,7 @@
     <div class="server-overview grid items-start gap-4 lg:grid-cols-[21rem_minmax(0,1fr)]">
       <div class="min-w-0 space-y-4">
         <%= render "servers/system_card", server: @server %>
+        <%= render "servers/partial_collection", server: @server %>
         <%= render "servers/network_card", server: @server %>
         <%= render "servers/hosting_card", server: @server %>
       </div>

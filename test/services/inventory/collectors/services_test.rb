@@ -51,7 +51,7 @@ class Inventory::Collectors::ServicesTest < ActiveSupport::TestCase
     outcome, = collect(:debian12, sudo: false, docker: FakeSsh::Response.new("", "permission denied while trying to connect to the Docker daemon socket", 1))
 
     assert_equal [ "partial", "unreadable", 7 ], [ outcome.status, outcome.data["docker"], outcome.data["units"].size ]
-    assert_match "Conteneurs Docker illisibles", outcome.message
+    assert_equal I18n.t("inventory.collector.no_docker_access"), outcome.message
   end
 
   test "a system without systemd nor Docker is unsupported" do

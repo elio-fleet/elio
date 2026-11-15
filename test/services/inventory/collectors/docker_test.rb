@@ -72,8 +72,7 @@ end
     assert_equal "unsupported", collect(:absent).first.status
     outcome, = collect(:unreadable, sudo: false)
     assert_equal [ "partial", "unreadable" ], [ outcome.status, outcome.data["docker"] ]
-    assert_match "permission denied", outcome.message
-    assert_match "Elio a besoin de root", outcome.message
+    assert_equal I18n.t("inventory.collector.no_docker_access"), outcome.message
   end
 
   test "without a scanner, Elio matches the packages of one container per image with the feeds" do

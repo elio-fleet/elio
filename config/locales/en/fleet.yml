@@ -167,6 +167,8 @@ en:
       title: Edit %{name}
     connection_test:
       succeeded: Elio can log in to this server.
+      root_access: 'Root access: %{access}.'
+      partial: Ports, firewall, Docker, the users' crontabs and the other accounts' keys will be read only in part. Log in as root, or give this account sudo without a password (or the docker group, for Docker alone).
     delete_button:
       warning: "“%{server_name}” will be removed from Elio, with its history of keys read. The keys installed on the machine, Elio's included, will not be removed from it."
       delete_server: Delete the server

@@ -111,6 +111,16 @@ class Server < ApplicationRecord
 
   def inventory(category) = inventory_snapshots.find { |snapshot| snapshot.category == category.to_s }
 
+  # Categories collected only in part, grouped by their reason so that a cause
+  # shared by several (no access to Docker) is told once:
+  # { reason => [category, …] }, categories in collection order.
+  def partial_collections
+    order = Inventory::Collector.categories
+    inventory_snapshots.select { |snapshot| snapshot.status == "partial" }
+                       .sort_by { |snapshot| order.index(snapshot.category) || order.size }
+                       .group_by(&:message).transform_values { |snapshots| snapshots.map(&:category) }
+  end
+
   # Host name of the machine (os inventory), nil until collected.
   def hostname = inventory(:os)&.data&.dig("hostname")
 

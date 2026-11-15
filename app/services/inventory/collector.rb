@@ -83,6 +83,14 @@ class Inventory::Collector
 
   def privileged? = ssh.privileged?
 
+  # Reason of a Docker command that failed. The account may not read the
+  # Docker socket (neither root nor in the docker group): one common reason,
+  # so Packages, Services and Docker show the same cause instead of three
+  # copies of Docker's error. `otherwise`: the reason of any other failure.
+  def docker_failure(error, otherwise)
+    error.to_s.match?(/denied/i) ? I18n.t("inventory.collector.no_docker_access") : otherwise
+  end
+
   def ok(data, message: nil) = Outcome.new(status: "ok", data: data, message: message)
 
   # Collected, but some details need root access that Elio does not have.

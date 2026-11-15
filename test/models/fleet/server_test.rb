@@ -5,6 +5,16 @@ class ServerTest < ActiveSupport::TestCase
     Server.new({ name: "New", host: "10.0.0.1", username: "deploy" }.merge(attributes))
   end
 
+  test "partial collections are grouped by reason, categories in collection order" do
+    server = servers(:web)
+    server.inventory_snapshots.delete_all
+    { "docker" => "Pas d'accès à Docker", "ports" => "Sans accès root", "packages" => "Pas d'accès à Docker", "os" => nil }.each do |category, message|
+      server.inventory_snapshots.create!(category: category, status: (message ? "partial" : "ok"), message: message, data: {}, collected_at: Time.current, checked_at: Time.current)
+    end
+
+    assert_equal({ "Pas d'accès à Docker" => %w[packages docker], "Sans accès root" => %w[ports] }, server.reload.partial_collections)
+  end
+
   test "expected ports: checked, squished, and a port added once" do
     server = servers(:web)
     assert_not server.update(expected_ports: "8081, http")

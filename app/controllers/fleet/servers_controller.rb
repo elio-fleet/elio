@@ -137,7 +137,7 @@ class ServersController < ApplicationController
     @server = Server.new(params.expect(server: %i[host port username]))
     @server.validate
     errors = @server.errors.select { |error| error.attribute.in?(%i[host port username]) && error.type != :taken }
-    @result = errors.any? ? Ssh::Check::Result.new(success: false, message: t("servers_controller.connection_invalid"), details: errors.map(&:full_message).to_sentence) : Ssh::Check.call(@server)
+    @result = errors.any? ? Ssh::Check::Result.new(success: false, message: t("servers_controller.connection_invalid"), details: errors.map(&:full_message).to_sentence) : Ssh::Check.call(@server, privilege: true)
 
     respond_to do |format|
       format.turbo_stream { render turbo_stream: turbo_stream.replace("server-connection-test", partial: "servers/connection_test", locals: { server: @server, result: @result }) }

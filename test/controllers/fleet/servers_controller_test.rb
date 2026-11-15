@@ -389,7 +389,7 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     tried = nil
     ok = Ssh::Check::Result.new(success: true, message: "ok", details: "deploy@staging.example.com a répondu")
 
-    check = lambda do |server|
+    check = lambda do |server, **|
       tried = server
       ok
     end
@@ -404,6 +404,27 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     assert_equal [ "staging.example.com", 2222, "deploy", false ], [ tried.host, tried.port, tried.username, tried.persisted? ]
     assert_select "turbo-stream[action=replace][target=server-connection-test]"
     assert_select ".connection-test-result[data-result=good]", text: /Elio peut se connecter à ce serveur/
+  end
+
+  test "testing the connection tells the root access Elio will have, and what stays partial without it" do
+    sign_in users(:one)
+    asked = nil
+    check = lambda do |_server, privilege: false|
+      asked = privilege
+      Ssh::Check::Result.new(success: true, message: "ok", details: "ok", privilege: "none")
+    end
+
+    stub_method(Ssh::Check, :call, check) do
+      post test_connection_servers_path, params: valid_params, as: :turbo_stream
+    end
+
+    assert asked
+    assert_select ".connection-test-privilege[data-privilege=none]", text: /Accès root : aucun.*ne seront lus qu'en partie/m
+
+    stub_method(Ssh::Check, :call, Ssh::Check::Result.new(success: true, message: "ok", details: "ok", privilege: "sudo")) do
+      post test_connection_servers_path, params: valid_params, as: :turbo_stream
+    end
+    assert_select ".connection-test-privilege[data-privilege=sudo]", text: "Accès root : sudo sans mot de passe."
   end
 
   test "testing the connection from the edit form (sent as PATCH) shows a refused key and how to install it" do

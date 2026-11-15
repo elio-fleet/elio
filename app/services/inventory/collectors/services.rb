@@ -17,7 +17,10 @@ class Inventory::Collectors::Services < Inventory::Collector
     data = { "units" => units || [], "containers" => [], "docker" => (docker_present ? "ok" : "absent") }
     if docker_present
       containers = run("inventory.docker_containers")
-      return partial(data.merge("docker" => "unreadable"), I18n.t("inventory.collectors.services.docker_unreadable", truncate: (containers.stderr.strip.truncate(120)))) unless containers.success?
+      unless containers.success?
+        return partial(data.merge("docker" => "unreadable"),
+                       docker_failure(containers.stderr, I18n.t("inventory.collectors.services.docker_unreadable", truncate: (containers.stderr.strip.truncate(120)))))
+      end
 
       data["containers"] = self.class.parse_containers(containers.stdout)
     end
