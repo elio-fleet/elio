@@ -194,6 +194,84 @@ class SettingsUsersTest < ActionDispatch::IntegrationTest
     assert_equal "operator@example.com réactivé", Activity.of_kind(:user_reactivated).sole.summary
   end
 
+  test "deactivate and reactivate are at the same place: the actions menu of the row" do
+    users(:viewer).deactivate!
+    sign_in users(:one)
+
+    get settings_users_path
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:operator))} [role=menu]" do
+      assert_select "form[action=?] button[role=menuitem]", deactivate_settings_user_path(users(:operator)), text: "Désactiver"
+      assert_select "form[action=?]", reactivate_settings_user_path(users(:operator)), count: 0
+    end
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:viewer))}" do
+      assert_select "[role=menu] form[action=?] button[role=menuitem]", reactivate_settings_user_path(users(:viewer)), text: "Réactiver"
+      assert_select "form[action=?]", deactivate_settings_user_path(users(:viewer)), count: 0
+      assert_select "form[action=?]", require_password_change_settings_user_path(users(:viewer)), count: 0
+    end
+  end
+
+  test "each account links to its actions in the journal and shows its last action" do
+    Current.user = users(:operator)
+    Activity.record!(:server_created, server: Server.first).update_columns(created_at: 3.days.ago)
+    Current.user = nil
+    sign_in users(:one)
+
+    get settings_users_path
+
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:operator))}" do
+      assert_select "p", text: /dernière action il y a 3 jours/
+      assert_select "[role=menu] a[href=?]", activities_path(q: "operator@example.com"), text: "Ses actions dans le journal"
+    end
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:viewer))} .user-last-action", 0
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:one))} [role=menu] a[href=?]", activities_path(q: "one@example.com")
+
+    get activities_path(q: "operator@example.com")
+    assert_select "#activities li", 1
+  end
+
+  test "an admin asks for a new password: the account goes to My account until it is chosen" do
+    sign_in users(:one)
+
+    post require_password_change_settings_user_path(users(:operator))
+
+    assert_redirected_to settings_users_path
+    assert users(:operator).reload.password_change_required?
+    assert_equal "operator@example.com devra choisir un nouveau mot de passe avant de continuer.", flash[:notice]
+    assert_equal "operator@example.com doit choisir un nouveau mot de passe (demandé par one@example.com)",
+                 Activity.of_kind(:password_change_required).sole.summary
+    get settings_users_path
+    assert_select "##{ActionView::RecordIdentifier.dom_id(users(:operator))}" do
+      assert_select ".user-password-change", "Doit changer son mot de passe"
+      assert_select "form[action=?]", require_password_change_settings_user_path(users(:operator)), count: 0
+    end
+
+    sign_in users(:operator)
+    get servers_path
+    assert_redirected_to account_path(anchor: "password")
+    get account_path
+    assert_select "#password .password-change-required", /Un administrateur vous demande/
+
+    patch password_account_path, params: { user: { current_password: "password1234", password: "password1234", password_confirmation: "password1234" } }
+    assert_response :unprocessable_entity
+    assert users(:operator).reload.password_change_required?
+
+    patch password_account_path, params: { user: { current_password: "password1234", password: "new-password-5678", password_confirmation: "new-password-5678" } }
+    assert_redirected_to account_path
+    assert_not users(:operator).reload.password_change_required?
+    get servers_path
+    assert_response :success
+  end
+
+  test "an admin changes their own password in My account, not through the request" do
+    sign_in users(:one)
+
+    post require_password_change_settings_user_path(users(:one))
+
+    assert_redirected_to account_path(anchor: "password")
+    assert_not users(:one).reload.password_change_required?
+  end
+
   test "an admin cannot deactivate their own account" do
     users(:operator).update!(role: :admin)
     sign_in users(:one)
