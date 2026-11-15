@@ -12,6 +12,8 @@
   <% end %>
   <% if entry.unreadable %>
     <p class="account-unreadable rounded-md border border-dashed border-line px-4 py-3 text-sm text-ink-3"><%= t(".unreadable") %></p>
+  <% elsif entry.missing_file %>
+    <p class="account-no-file rounded-md border border-dashed border-line px-4 py-3 text-sm text-ink-3"><%= t(".no_file") %></p>
   <% elsif entry.keys.empty? %>
     <p class="rounded-md border border-dashed border-line px-4 py-6 text-center text-sm text-ink-3"><%= t(account.login? ? "server_authorized_keys.index.authorized_key_server" : ".no_key") %></p>
   <% else %>
@@ -57,6 +59,7 @@
                         class: "key-expiry inline-flex items-center rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn-ink ring-1 ring-inset ring-warn/20 hover:underline" %>
                 <% end %>
               <% end %>
+              <%= key_option_badges(key, expiry: !@temporary_accesses.key?([ account.unix_user, key.fingerprint ])) %>
               <% if key.matches?(@app_key) %>
                 <span class="key-badge key-master rounded-full bg-accent-fill px-2 py-0.5 text-xs font-semibold text-white" title="<%= t("server_authorized_keys.index.ssh_key_elio_application") %>"><%= t("words.master") %></span>
               <% end %>
@@ -96,5 +99,29 @@
         </li>
       <% end %>
     </ul>
+  <% end %>
+  <% entry.extra_files.each do |file| %>
+    <%# Keys sshd also accepts (AuthorizedKeysFile): listed, never changed by Elio. %>
+    <div class="extra-key-file mt-3 rounded-md border border-warn/40 bg-warn-soft px-4 py-3 text-sm text-warn-ink" data-path="<%= file.path %>">
+      <p>
+        <strong><%= t(".extra_file_html", path: file.path, count: file.keys.size) %></strong>
+        <%= t(".extra_file_hint") %>
+      </p>
+      <ul class="mt-2 space-y-1">
+        <% file.keys.each do |key| %>
+          <li class="extra-key flex flex-wrap items-center gap-2">
+            <%= icon :key, class: "h-4 w-4 shrink-0" %>
+            <% if (public_key = @public_keys_by_fingerprint[key.fingerprint]) %>
+              <%= link_to public_key.name, public_key_path(public_key), data: { turbo_frame: "_top" }, class: "font-medium hover:underline" %>
+            <% else %>
+              <span class="<%= "italic" unless key.named? %>"><%= key.name || t("server_authorized_keys.index.unnamed") %></span>
+              <span class="extra-key-unknown font-medium"><%= t("server_authorized_keys.index.outside_keyring") %></span>
+            <% end %>
+            <span class="break-all font-mono text-xs"><%= key.fingerprint %></span>
+            <%= key_option_badges(key) %>
+          </li>
+        <% end %>
+      </ul>
+    </div>
   <% end %>
 </section>

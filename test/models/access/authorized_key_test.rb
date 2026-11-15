@@ -93,4 +93,28 @@ class AuthorizedKeyTest < ActiveSupport::TestCase
     assert_not key.matches?([ ssh_keys(:main) ])
     assert_not key.matches?([])
   end
+
+  test "options are split on the commas outside quotes, values unquoted" do
+    line = %(from="10.0.0.0/8,192.168.1.*",command="echo \\"a,b\\"",No-Pty,expiry-time="20300102" #{@ed25519})
+    key = AuthorizedKey.parse(line).sole
+
+    assert_equal [ [ "from", "10.0.0.0/8,192.168.1.*" ], [ "command", 'echo "a,b"' ], [ "no-pty", nil ], [ "expiry-time", "20300102" ] ], key.option_list
+    assert_equal "10.0.0.0/8,192.168.1.*", key.option("from")
+    assert_nil key.option("restrict")
+    assert_empty AuthorizedKey.parse(@ed25519).sole.option_list
+  end
+
+  test "expiry-time: UTC with Z, the server's local time without" do
+    utc = AuthorizedKey.parse(%(expiry-time="20300102030405Z" #{@ed25519})).sole
+    assert_equal Time.utc(2030, 1, 2, 3, 4, 5), utc.expires_at
+    assert_not utc.expiry_local_time?
+
+    local = AuthorizedKey.parse(%(expiry-time="203001020304" #{@ed25519})).sole
+    assert_equal Time.utc(2030, 1, 2, 3, 4), local.expires_at
+    assert local.expiry_local_time?
+
+    assert_nil AuthorizedKey.parse(%(expiry-time="2030" #{@ed25519})).sole.expires_at
+    assert_nil AuthorizedKey.parse(%(expiry-time="20301399" #{@ed25519})).sole.expires_at
+    assert_nil AuthorizedKey.parse(@ed25519).sole.expires_at
+  end
 end

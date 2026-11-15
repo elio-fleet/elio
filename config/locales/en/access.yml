@@ -111,7 +111,37 @@ en:
       temporary_access_hint: Temporary access, see and extend it
       unreadable: Its authorized_keys file could not be read, even as root.
       no_key: No key in this file.
+      no_file: No authorized_keys file.
       key_will_be_removed_from: The key “%{nom}” will be removed from the %{account} account of “%{server_name}”. It will no longer be able to log in to that account.
+      extra_file_html:
+        one: "%{count} key in <code class=\"font-mono text-xs\">%{path}</code>, which the SSH server also reads."
+        other: "%{count} keys in <code class=\"font-mono text-xs\">%{path}</code>, which the SSH server also reads."
+      extra_file_hint: Elio lists them but does not change this file; check them on the server.
+    list:
+      dormant:
+        one: "%{count} account with a login shell and no key"
+        other: "%{count} accounts with a login shell and no key"
+      dormant_hint: No authorized_keys file. Check they are still needed; they may still log in with a password if the server allows it.
+    options:
+      from: from %{from}
+      command: forced command
+      restrict: restricted
+      expired: Expired, refused by the server
+      server_local_time: "%{time} (server local time)"
+      labels:
+        from: Allowed source addresses
+        command: Forced command
+        expiry_time: Refused after
+        restrict: Restricted (no forwarding, no terminal)
+        no_pty: No terminal
+        no_port_forwarding: No port forwarding
+        no_agent_forwarding: No agent forwarding
+        no_x11_forwarding: No X11 forwarding
+        permitopen: Allowed forwarding to
+        permitlisten: Allowed listening on
+        principals: Certificate principals
+        environment: Environment variable
+        cert_authority: Certificate authority
   servers:
     add_key_dialog:
       accounts: Unix accounts

@@ -62,7 +62,7 @@ class ServerAuthorizationsTest < ApplicationSystemTestCase
         within("#server-authorized-keys") do
           within("li.authorized-key", text: "CI") do
             assert_selector ".key-expiry", text: "Expire dans 10 minutes"
-            assert_selector "dialog.key-details .key-options", text: "expiry-time=", visible: :all
+            assert_selector "dialog.key-details .key-options", text: "Refusée après", visible: :all
           end
         end
         assert_selector "#flash", text: "La clé « CI » est ajoutée sur « Web » pendant 10 minutes"
