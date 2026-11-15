@@ -698,6 +698,7 @@ en:
       virtualization: 'Virtualization: %{value}'
       ssh: 'SSH address used by Elio: %{value}'
       groups: 'Groups: %{value}'
+      expected_ports: 'Expected public ports of this server (on top of its groups): %{value}'
     expected_ports: "(expected public ports: %{ports})"
     scopes:
       public: public

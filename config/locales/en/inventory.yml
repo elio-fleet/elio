@@ -167,6 +167,9 @@ en:
       suggested_ufw_rules: Suggested ufw rules
       elio_never_changes_firewall: 'Elio never changes the firewall: read them, then apply them yourself.'
       ports_inventory_yet: No ports inventory yet.
+    unexpected_port:
+      ignore: Ignore
+      ignore_hint: Add %{port} to the expected ports of this server
     port_firewall:
       allowed: allowed
       blocked: blocked
@@ -396,6 +399,11 @@ en:
       vxlan: VXLAN
       other: Other
   inventory_helper:
+    listen_address:
+      all_ipv4: every IPv4 interface
+      all_ipv6: every interface (IPv6, often IPv4 too)
+      all: every interface
+      loopback: this machine only
     virtualization:
       none: Physical machine
       kvm: KVM

@@ -107,8 +107,9 @@ class ServersController < ApplicationController
 
   def update
     if @server.update(server_params)
-      changed = @server.saved_changes.keys & %w[name host port username]
+      changed = @server.saved_changes.keys & %w[name host port username expected_ports]
       Activity.record!(:server_updated, server: @server, changed: changed) if changed.any?
+      @server.refresh_health! if changed.include?("expected_ports") && @server.health_status.present?
       redirect_to server_path(@server), notice: t("servers_controller.updated", server_name: @server.name)
     else
       render :edit, status: :unprocessable_entity
@@ -229,6 +230,6 @@ class ServersController < ApplicationController
   end
 
   def server_params
-    params.expect(server: [ :name, :host, :port, :username, :extra_addresses_text, server_group_ids: [] ])
+    params.expect(server: [ :name, :host, :port, :username, :extra_addresses_text, :expected_ports, server_group_ids: [] ])
   end
 end

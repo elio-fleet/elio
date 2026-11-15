@@ -28,6 +28,7 @@ Rails.application.routes.draw do
     resource :inventory, only: :create, controller: "server_inventories"
     resources :packages, only: :index, controller: "server_packages"
     resource :host_key, only: :create, controller: "server_host_keys"
+    resource :expected_port, only: :create, controller: "server_expected_ports"
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
     resource :authorized_key, only: :destroy, controller: "server_authorized_keys"
     resources :authorizations, only: :create, controller: "server_authorizations"
