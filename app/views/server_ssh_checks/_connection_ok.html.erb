@@ -6,4 +6,6 @@
     <%= icon :check, class: "h-3.5 w-3.5" %> <%= t("server_ssh_checks.show.connection_ok") %>
   </span>
   <span class="text-xs text-ink-3"><%= t("server_ssh_checks.show.checked_html", current: relative_time_tag(checked_at)) %></span>
+  <%= link_to t("server_ssh_checks.show.diagnose"), server_ssh_diagnosis_path(server), data: { turbo_prefetch: false }, title: t("server_ssh_checks.show.diagnose_help"),
+        class: "ssh-diagnose text-xs font-medium text-accent hover:underline" %>
 <% end %>

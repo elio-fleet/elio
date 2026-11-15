@@ -188,6 +188,17 @@ en:
       test_ssh_connection_again: Test the SSH connection again
       connection_ok: Connection OK
       checked_html: checked %{current}
+      diagnose: Diagnose
+      diagnose_help: Checks each step of the connection (name, port, SSH server, host key, Elio's key, sudo) and says what to fix.
+  server_ssh_diagnoses:
+    show:
+      passed: All steps passed
+      failed: 'Failed: %{step}'
+      status:
+        ok: passed
+        warn: works with a limit
+        failed: failed
+        skipped: not tested
   keys:
     rotation_check:
       ready: 'Ready: Elio logs in and can add the new key.'
@@ -224,6 +235,38 @@ en:
       added: added
       present: already present
   ssh:
+    diagnosis:
+      steps:
+        dns: Name lookup
+        tcp: SSH port open
+        banner: SSH server answers
+        host_key: Host key
+        authentication: Login with Elio's key
+        sudo: Root access (sudo without a password)
+      details:
+        ip_address: An IP address, nothing to look up.
+        resolved: 'Addresses: %{addresses}'
+        error: "%{message}"
+        connected: Connected to %{address}:%{port}.
+        no_banner: Nothing received within %{timeout} s.
+        closed: The connection was closed without an SSH banner.
+        not_ssh: Received “%{received}” instead of an SSH banner.
+        host_key_known: 'Same key as before: %{fingerprints}'
+        host_key_pinned: 'First connection, key now pinned: %{fingerprints}'
+        logged_in: Logged in as %{username}.
+        root: Logged in as root.
+        sudo: "`sudo -n` works: Elio can read everything."
+        no_sudo: "%{username} cannot use sudo without a password."
+      fixes:
+        dns: Check the spelling of “%{host}”, or enter the server's IP address instead.
+        port_refused: Nothing listens on port %{port}. Check the port of the server, and that the SSH server runs on it (systemctl status ssh).
+        port_silent: No answer from %{host}:%{port}. Check that the server is on, and that a firewall (on the server or the network) lets Elio's address reach port %{port}.
+        banner_silent: The service on port %{port} says nothing. It may not be an SSH server, or it waits for the client to speak first (a web server, a proxy). Check the port.
+        banner_closed: The connection was cut at once. The SSH server may refuse Elio's address (fail2ban, AllowUsers or ListenAddress of sshd, tcp_wrappers) or have too many pending connections (MaxStartups).
+        not_ssh: Another service runs on port %{port}. Check the SSH port of the server.
+        handshake: The SSH server and Elio found no common algorithm, or the server cut the exchange. Check the sshd logs of the server (journalctl -u ssh).
+        command: Elio logged in but the test command failed. Check the shell of %{username} (a forced command or a menu in its profile can get in the way).
+        sudo: The inventory will be partial (ports, firewall, Docker, other accounts). Log in as root, or give %{username} sudo without a password.
     check:
       succeeded: SSH connection succeeded
       answered: "%{username}@%{host} answered `echo %{token}`."
