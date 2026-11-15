@@ -438,6 +438,19 @@ en:
       running: running
       stopped: stopped
       stopped_code: stopped (code %{code})
+      privileged: privileged
+      privileged_hint: "Privileged container: it can do anything on the host, as root."
+      docker_socket: Docker socket
+      docker_socket_hint: "The Docker socket is mounted in this container: it can start any container on the host, so it is root on the host."
+      networks: "networks: %{list}"
+      mounts: "mounts: %{list}"
+      exposure:
+        all: public
+        all_hint: "Published on every interface: reachable from the network unless a firewall blocks it (Docker's own rules usually bypass ufw)."
+        loopback: local
+        loopback_hint: Published on the loopback address only, reachable from this server only.
+        address: one address
+        address_hint: Published on this address only.
     image_update:
       available: new version
       newer: "%{version} available"

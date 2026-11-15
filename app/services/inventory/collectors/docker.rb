@@ -1,12 +1,14 @@
 # Docker of a server, read-only (docker group or root): containers with their
-# state, health check, restarts and resources, images (tags, digests, age,
-# size, used or not), disk usage, and the vulnerabilities of the images:
-# with Trivy or Grype when the server has one, otherwise from the Debian /
-# Ubuntu packages of the image (copied out of one of its containers) matched
-# by Elio with the vulnerability feeds.
+# state, health check, restarts and resources, what they reach of the host
+# (privileged, Docker socket, mounts, networks, published ports), images
+# (tags, digests, age, size, used or not), disk usage, and the
+# vulnerabilities of the images: with Trivy or Grype when the server has one,
+# otherwise from the Debian / Ubuntu packages of the image (copied out of one
+# of its containers) matched by Elio with the vulnerability feeds.
 #
 # Scans are kept per image ID (data["scans"]): Trivy / Grype at most once a
-# day per image, at most MAX_SCANS images per collection.
+# day per image, at most MAX_SCANS images per collection. The disk usage
+# (`docker system df`, slow on big hosts) is read every DF_EVERY.
 class Inventory::Collectors::Docker < Inventory::Collector
   MAX_SCANS = 10
   SCAN_COMMANDS = { "trivy" => "inventory.trivy_scan", "grype" => "inventory.grype_scan" }.freeze
@@ -19,6 +21,10 @@ class Inventory::Collectors::Docker < Inventory::Collector
   LOOP_RESTARTS = 3
   LOOP_UPTIME = 2.minutes
   STOPPED_LONG = 7.days
+  DF_EVERY = 6.hours
+  # Host addresses of a published port meaning every interface.
+  ALL_INTERFACES = [ "", "0.0.0.0", "::" ].freeze
+  DOCKER_SOCKET = %r{(\A|/)docker\.sock\z}
   ZERO_TIME = "0001-01-01"
   UNITS = { "b" => 1, "kb" => 1e3, "mb" => 1e6, "gb" => 1e9, "tb" => 1e12, "kib" => 1024, "mib" => 1024**2, "gib" => 1024**3, "tib" => 1024**4 }.freeze
 
@@ -34,6 +40,7 @@ class Inventory::Collectors::Docker < Inventory::Collector
 
     data = self.class.parse(sections, previous: previous).merge("docker" => "ok", "version" => access)
     scan_images(data)
+    read_disk(data)
     failed = data["scans"].values.select { |scan| !scan["kept"] && scan["error"].present? && scan["method"].in?(SCAN_COMMANDS.keys) }
     return partial(data, I18n.t("inventory.collectors.docker.scan_failed", count: failed.size, error: failed.first["error"].truncate(160))) if failed.any?
 
@@ -46,7 +53,7 @@ class Inventory::Collectors::Docker < Inventory::Collector
     containers = parse_containers(sections["containers"], now: now, previous_restarts: restarts).map { |container| container.merge(stats.fetch(container["id"], {})) }
     used = containers.map { |container| container["image_id"] }.to_set
     images = parse_images(sections["images"]).map { |image| image.merge("used" => used.include?(image["id"])) }
-    { "containers" => containers, "images" => images, "disk" => parse_df(sections["df"]), "scanner" => sections["scanners"].split.first }
+    { "containers" => containers, "images" => images, "scanner" => sections["scanners"].split.first }
   end
 
   # The vulnerability rows are not kept in the snapshot (ServerVulnerability).
@@ -56,10 +63,12 @@ class Inventory::Collectors::Docker < Inventory::Collector
   # missing key of `index .Config.Labels` (older versions print nothing).
   def self.label(value) = (value.presence unless value == "<no value>")
 
-  # "<id>\t/<name>\t<image>\t<image id>\t<state>\t<restarts>\t<health>\t<started>\t<finished>\t<exit>\t<policy>\t<created>\t<project>\t<service>"
+  # "<id>\t/<name>\t<image>\t<image id>\t<state>\t<restarts>\t<health>\t<started>\t<finished>\t<exit>\t<policy>\t<created>\t<project>\t<service>
+  #  \t<privileged>\t<mounts JSON>\t<networks>\t<ports JSON>" (the last four are missing from older snapshots' outputs)
   def self.parse_containers(text, now:, previous_restarts: {})
     text.to_s.lines.filter_map do |line|
-      id, name, image, image_id, state, restarts, health, started, finished, exit_code, policy, created, project, service = line.chomp.split("\t", -1)
+      id, name, image, image_id, state, restarts, health, started, finished, exit_code, policy, created, project, service,
+        privileged, mounts, networks, ports = line.chomp.split("\t", -1)
       next if name.blank? || image_id.blank?
 
       started_at, finished_at = time(started), time(finished)
@@ -67,11 +76,64 @@ class Inventory::Collectors::Docker < Inventory::Collector
                     "restarts" => restarts.to_i, "health" => health.presence, "started_at" => started_at&.iso8601, "finished_at" => finished_at&.iso8601,
                     "exit_code" => exit_code.to_i, "restart_policy" => policy.presence, "created_at" => time(created)&.iso8601,
                     "project" => label(project), "service" => label(service) }.compact
+      container.merge!(host_access(privileged, mounts, networks, ports))
       new_restarts = container["restarts"] - previous_restarts.fetch(container["id"], 0)
       container["looping"] = true if state == "restarting" || (new_restarts >= LOOP_RESTARTS && started_at && started_at > now - LOOP_UPTIME)
       container["stopped_long"] = true if state == "exited" && finished_at && finished_at < now - STOPPED_LONG
       container
     end
+  end
+
+  # What a container reaches of the host, only the keys that say something:
+  # privileged, Docker socket mounted (both give root on the host), mounts,
+  # networks, published ports.
+  def self.host_access(privileged, mounts, networks, ports)
+    mounts = parse_mounts(mounts)
+    socket = mounts.any? { |mount| mount.values_at("source", "destination").any? { |path| path.to_s.match?(DOCKER_SOCKET) } }
+    { "privileged" => (true if privileged == "true"), "docker_socket" => (true if socket), "mounts" => mounts.presence,
+      "networks" => networks.to_s.split.presence, "ports" => parse_ports(ports).presence }.compact
+  end
+
+  # `{{json .Mounts}}` → [{ type, source (volume name or host path), destination, read_only }]
+  def self.parse_mounts(json)
+    Array(json_value(json)).filter_map do |mount|
+      next unless mount.is_a?(Hash) && mount["Destination"].present?
+
+      { "type" => mount["Type"], "source" => (mount["Type"] == "volume" ? mount["Name"] : mount["Source"]).presence,
+        "destination" => mount["Destination"], "read_only" => (true if mount["RW"] == false) }.compact
+    end
+  end
+
+  # `{{json .NetworkSettings.Ports}}` ({"80/tcp": [{"HostIp": "0.0.0.0", "HostPort": "8080"}], "443/tcp": null})
+  # → the published ones: [{ address, port, target, exposure }], exposure "all"
+  # (every interface), "loopback" (the machine only) or "address" (one
+  # address). The IPv4 and IPv6 bindings of a port count once.
+  def self.parse_ports(json)
+    bindings = json_value(json)
+    return [] unless bindings.is_a?(Hash)
+
+    ports = bindings.flat_map do |target, list|
+      Array(list).filter_map do |binding|
+        next unless binding.is_a?(Hash) && binding["HostPort"].present?
+
+        address = binding["HostIp"].to_s
+        { "address" => address.presence || "0.0.0.0", "port" => binding["HostPort"].to_i, "target" => target, "exposure" => exposure(address) }
+      end
+    end
+    ports.uniq { |port| port.values_at("port", "target", "exposure") }.sort_by { |port| [ port["port"], port["target"] ] }
+  end
+
+  def self.exposure(address)
+    if address.in?(ALL_INTERFACES) then "all"
+    elsif address.start_with?("127.") || address == "::1" then "loopback"
+    else "address"
+    end
+  end
+
+  def self.json_value(text)
+    JSON.parse(text.to_s)
+  rescue JSON::ParserError
+    nil
   end
 
   # "<id 64>\t0.15%\t12.5MiB / 1.94GiB\t0.63%" → { id12 => { cpu_percent, memory_bytes, memory_percent } }
@@ -231,6 +293,21 @@ class Inventory::Collectors::Docker < Inventory::Collector
     data["images"].each do |image|
       data["scans"][image["id"]] ||= (previous_scans[image["id"]] || { "method" => "none" }).merge("kept" => previous_scans.key?(image["id"]))
     end
+  end
+
+  # Disk usage, read every DF_EVERY (slow on hosts with many images and
+  # volumes); in between, when it fails or after a scan that lost the SSH
+  # session, the last one is kept with its date.
+  def read_disk(data)
+    last = previous&.dig("disk_at")
+    fresh = last && previous["disk"] && Time.zone.parse(last) > DF_EVERY.ago
+    if fresh || data["scans"].each_value.any? { |scan| scan["session_lost"] }
+      data.merge!(previous.to_h.slice("disk", "disk_at"))
+    else
+      data.merge!("disk" => self.class.parse_df(run("inventory.docker_df").stdout), "disk_at" => Time.current.iso8601)
+    end
+  rescue Inventory::Collector::Error, Ssh::Connection::CommandTimeoutError
+    data.merge!(previous.to_h.slice("disk", "disk_at"))
   end
 
   def keep?(previous, scanner)

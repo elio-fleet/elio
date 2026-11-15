@@ -9,10 +9,11 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
   def output(name) = file_fixture("inventory/docker/#{name}.txt").read
 
   # Runs the collector against a fake server: the main command, then the scans.
-  def collect(name, previous: nil, sudo: true, trivy: nil, packages: output(:image_packages), command_timeout: nil)
+  def collect(name, previous: nil, sudo: true, trivy: nil, packages: output(:image_packages), command_timeout: nil, df: nil)
     known_hosts = Rails.root.join("tmp", "test", "docker-#{SecureRandom.hex(4)}", "known_hosts")
     handler = lambda do |command|
       if command.end_with?(Ssh::Commands.render("inventory.docker")) then FakeSsh::Response.new(output(name), "", 0)
+      elsif command.end_with?(Ssh::Commands.render("inventory.docker_df")) then df || FakeSsh::Response.new(output(:df), "", 0)
       elsif command.include?("trivy image") then trivy || FakeSsh::Response.new(file_fixture("inventory/docker/trivy_report.txt").read, "", 0)
       elsif command.include?("docker\\ cp") then FakeSsh::Response.new(packages, "", 0)
       end
@@ -32,7 +33,9 @@ class Inventory::Collectors::DockerTest < ActiveSupport::TestCase
     assert_equal %w[web worker db backup-once], containers.keys
     assert_equal({ "id" => "3f4e5d6c7b8a", "name" => "web", "image" => "nginx:1.27", "image_id" => "sha256:#{"a" * 64}", "state" => "running", "restarts" => 0,
                    "health" => "healthy", "started_at" => "2025-10-20T10:00:00+02:00", "exit_code" => 0, "restart_policy" => "unless-stopped",
-                   "created_at" => "2025-10-01T12:00:00+02:00", "project" => "shop", "service" => "web", "cpu_percent" => 0.15, "memory_bytes" => 13_107_200,
+                   "created_at" => "2025-10-01T12:00:00+02:00", "project" => "shop", "service" => "web",
+                   "mounts" => [ { "type" => "bind", "source" => "/srv/shop/nginx.conf", "destination" => "/etc/nginx/nginx.conf", "read_only" => true } ],
+                   "networks" => [ "shop_default" ], "ports" => [ { "address" => "0.0.0.0", "port" => 8080, "target" => "80/tcp", "exposure" => "all" } ], "cpu_percent" => 0.15, "memory_bytes" => 13_107_200,
                    "memory_percent" => 0.63 }, containers["web"])
     assert containers["worker"]["looping"]
     assert_equal "unhealthy", containers["db"]["health"]
@@ -54,13 +57,14 @@ end
 
   test "reads the images (used or not, dangling ones without tag) and the disk usage" do
     data = Collector.parse(Collector.sections(output(:debian13)), now: NOW)
+    disk = Collector.parse_df(output(:df))
     images = data["images"].index_by { |image| image["id"].delete_prefix("sha256:").first }
 
     assert_equal [ [ "nginx:1.27" ], [ "nginx@sha256:#{"1" * 64}" ], true, 191_623_458, "2025-09-10T20:31:27+02:00" ],
                  images["a"].values_at("tags", "digests", "used", "size", "created_at")
     assert_equal [ [], false ], images["f"].values_at("tags", "used")
     assert_not images["e"]["used"]
-    assert_equal({ "total" => 6, "active" => 4, "size" => 1_221_000_000, "reclaimable" => 228_000_000 }, data["disk"]["images"])
+    assert_equal({ "total" => 6, "active" => 4, "size" => 1_221_000_000, "reclaimable" => 228_000_000 }, disk["images"])
     assert_nil data["scanner"]
   end
 
@@ -178,7 +182,47 @@ test "Grype reports" do
     assert_equal [ "restarting", true, "always" ], containers["worker"].values_at("state", "looping", "restart_policy")
     assert_equal %w[alpine:3.20 debian:12-slim nginx:1.27 redis:7], data["images"].map { |image| image["tags"].first }.sort
     assert_equal [ false ], data["images"].select { |image| image["tags"] == [ "redis:7" ] }.map { |image| image["used"] }
-    assert_equal 4, data["disk"]["images"]["total"]
+    assert_equal 4, Collector.parse_df(Collector.sections(output(:"debian13-real"))["df"])["images"]["total"]
+    assert_not containers.values.any? { |container| container.key?("ports") || container.key?("mounts") }, "output of the command before ports and mounts were read"
     assert_not_includes output(:"debian13-real"), "ne-doit-pas-sortir", "the environment of the worker (SECRET_TOKEN) is not read"
+  end
+
+  test "what a container reaches of the host: privileged, Docker socket, volumes, networks, port exposure" do
+    containers = Collector.parse(Collector.sections(output(:debian13)), now: NOW)["containers"].index_by { |container| container["name"] }
+
+    assert_equal [ true, true ], containers["worker"].values_at("privileged", "docker_socket")
+    assert_equal [ nil, nil ], containers["web"].values_at("privileged", "docker_socket")
+    assert_equal [ { "type" => "volume", "source" => "shop_pgdata", "destination" => "/var/lib/postgresql/data" } ], containers["db"]["mounts"]
+    assert_equal %w[shop_default shop_backend], containers["db"]["networks"]
+    assert_equal [ { "address" => "127.0.0.1", "port" => 5432, "target" => "5432/tcp", "exposure" => "loopback" } ], containers["db"]["ports"]
+    assert_equal [ 8080 ], containers["web"]["ports"].map { |port| port["port"] }, "0.0.0.0 and :: are one port; 443 is exposed, not published"
+    assert_not containers["backup-once"].key?("ports")
+  end
+
+  test "port exposure: every interface, the machine only, or one address" do
+    ports = Collector.parse_ports({ "53/udp" => [ { "HostIp" => "192.0.2.10", "HostPort" => "53" } ], "80/tcp" => [ { "HostIp" => "", "HostPort" => "80" } ],
+                                    "9000/tcp" => [ { "HostIp" => "::1", "HostPort" => "9000" }, { "HostIp" => "127.0.0.1", "HostPort" => "9000" } ] }.to_json)
+    assert_equal [ [ 53, "address", "192.0.2.10" ], [ 80, "all", "0.0.0.0" ], [ 9000, "loopback", "::1" ] ], ports.map { |port| port.values_at("port", "exposure", "address") }
+    assert_equal [], Collector.parse_ports("null")
+    assert_equal [], Collector.parse_ports("not json")
+    assert Collector.host_access("false", [ { "Type" => "bind", "Source" => "/run/user/1000/docker.sock", "Destination" => "/docker.sock" } ].to_json, "", "{}")["docker_socket"],
+           "rootless Docker socket"
+  end
+
+  test "the disk usage is read every few hours, and kept in between or when it fails" do
+    outcome, commands = collect(:debian13)
+    df = "sudo -n #{Ssh::Commands.render("inventory.docker_df")}"
+    assert_equal 1, commands.count(df)
+    assert_equal [ 6, NOW.iso8601 ], [ outcome.data.dig("disk", "images", "total"), outcome.data["disk_at"] ]
+    assert_not Ssh::Commands.render("inventory.docker").include?("system df"), "not at every collection"
+
+    again, commands = collect(:debian13, previous: outcome.data.as_json)
+    assert_equal 0, commands.count(df)
+    assert_equal [ 6, NOW.iso8601 ], [ again.data.dig("disk", "images", "total"), again.data["disk_at"] ]
+
+    stale = outcome.data.as_json.merge("disk_at" => (NOW - Collector::DF_EVERY - 1.minute).iso8601)
+    failed, commands = collect(:debian13, previous: stale, df: FakeSsh::Response.new("", "", 0, true), command_timeout: 0.2)
+    assert_equal 1, commands.count(df)
+    assert_equal [ 6, stale["disk_at"] ], [ failed.data.dig("disk", "images", "total"), failed.data["disk_at"] ], "too slow: the last one stays"
   end
 end

@@ -127,7 +127,7 @@ inventory:
     default: "docker ps -a --no-trunc --format '{{.ID}}\t{{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}\t{{.Label \"com.docker.compose.project\"}}\t{{.Label \"com.docker.compose.project.working_dir\"}}\t{{.Label \"com.docker.compose.project.config_files\"}}\t{{.Label \"com.docker.compose.service\"}}'"
 
   docker:
-    description: "Docker: containers (state, health check, restarts, Compose project; never their environment), their CPU / memory, images (tags, digests, age, size), disk usage, scanners installed (Trivy, Grype). Needs the docker group or root."
+    description: "Docker: containers (state, health check, restarts, Compose project, privileged or not, mounts, networks, published ports; never their environment), their CPU / memory, images (tags, digests, age, size), scanners installed (Trivy, Grype). Needs the docker group or root."
     run_as: root
     shell: true
     timeout: 120
@@ -137,12 +137,17 @@ inventory:
       if [ -z "$version" ]; then docker version 2>&1 | grep -i -m 1 -E 'denied|cannot|error' || echo unreadable; exit 0; fi
       echo "$version"
       echo "@@elio containers"; ids=$(docker ps -aq --no-trunc 2>/dev/null)
-      if [ -n "$ids" ]; then docker inspect --format '{{.Id}}	{{.Name}}	{{.Config.Image}}	{{.Image}}	{{.State.Status}}	{{.RestartCount}}	{{with index .State "Health"}}{{index . "Status"}}{{end}}	{{.State.StartedAt}}	{{.State.FinishedAt}}	{{.State.ExitCode}}	{{.HostConfig.RestartPolicy.Name}}	{{.Created}}	{{with .Config.Labels}}{{index . "com.docker.compose.project"}}{{end}}	{{with .Config.Labels}}{{index . "com.docker.compose.service"}}{{end}}' $ids 2>/dev/null; fi
+      if [ -n "$ids" ]; then docker inspect --format '{{.Id}}	{{.Name}}	{{.Config.Image}}	{{.Image}}	{{.State.Status}}	{{.RestartCount}}	{{with index .State "Health"}}{{index . "Status"}}{{end}}	{{.State.StartedAt}}	{{.State.FinishedAt}}	{{.State.ExitCode}}	{{.HostConfig.RestartPolicy.Name}}	{{.Created}}	{{with .Config.Labels}}{{index . "com.docker.compose.project"}}{{end}}	{{with .Config.Labels}}{{index . "com.docker.compose.service"}}{{end}}	{{.HostConfig.Privileged}}	{{json .Mounts}}	{{range $name, $network := .NetworkSettings.Networks}}{{$name}} {{end}}	{{json .NetworkSettings.Ports}}' $ids 2>/dev/null; fi
       echo "@@elio stats"; if [ -n "$ids" ]; then docker stats --no-stream --no-trunc --format '{{.ID}}	{{.CPUPerc}}	{{.MemUsage}}	{{.MemPerc}}' 2>/dev/null; fi
       echo "@@elio images"; images=$(docker image ls -q --no-trunc 2>/dev/null | sort -u)
       if [ -n "$images" ]; then docker image inspect --format '{{.Id}}	{{json .RepoTags}}	{{json .RepoDigests}}	{{.Created}}	{{.Size}}	{{.Os}}/{{.Architecture}}' $images 2>/dev/null; fi
-      echo "@@elio df"; docker system df --format '{{.Type}}	{{.TotalCount}}	{{.Active}}	{{.Size}}	{{.Reclaimable}}' 2>/dev/null
       echo "@@elio scanners"; for tool in trivy grype; do if command -v $tool >/dev/null 2>&1; then echo $tool; fi; done
+
+  docker_df:
+    description: "Docker disk usage (docker system df). Slow on big hosts: read every few hours, not at every collection. Needs the docker group or root."
+    run_as: root
+    timeout: 120
+    default: "docker system df --format '{{.Type}}\t{{.TotalCount}}\t{{.Active}}\t{{.Size}}\t{{.Reclaimable}}'"
 
   docker_image_packages:
     description: "System and Debian / Ubuntu packages of an image, copied out of one of its containers (docker cp, read-only), for Elio to match with the vulnerability feeds when neither Trivy nor Grype is installed."

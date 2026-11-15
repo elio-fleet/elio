@@ -24,6 +24,8 @@
     <p class="docker-summary border-b border-line px-4 py-2.5 text-xs text-ink-2">
       <strong class="text-ink"><%= containers.count { |container| container["state"] == "running" } %></strong><%= t(".containers_running_html", count: containers.size) %>
       <% if (problems = troubled).positive? %>· <strong class="text-crit-ink"><%= t(".trouble_html", problems: problems) %></strong><% end %>
+      <% if (risky = containers.count { |container| container["privileged"] || container["docker_socket"] }).positive? %>· <strong class="docker-host-access text-warn-ink" title="<%= t(".host_access_hint") %>"><%= t(".host_access", count: risky) %></strong><% end %>
+      <% if (public_ports = containers.sum { |container| Array(container["ports"]).count { |port| port["exposure"] == "all" } }).positive? %>· <span class="docker-public-ports"><%= t(".public_ports", count: public_ports) %></span><% end %>
       · <strong class="text-ink"><%= images.size %></strong> <%= t(".images_unused_html", used: (images.count { |image| !image["used"] })) %>
       <% if (disk = data.dig("disk", "images")) %><%= t(".images_reclaimable_html", human_bytes: (human_bytes(disk["size"])), human_bytes2: (human_bytes(disk["reclaimable"]))) %><% end %>
       <%= t(".analysis") %> <%= data["scanner"] ? scan_label(data["scanner"]) : t(".elio_neither_trivy_nor") %>
@@ -61,7 +63,10 @@
                   <% else %>
                     <span class="font-mono text-xs"><%= container["name"] %></span>
                   <% end %>
-                  <% if container["project"] && !coolify %><span class="compose-project block text-[11px] text-ink-3" title="<%= Array(container["config_files"]).join(", ") %>"><%= container["project"] %> · <%= container["service"] %></span><% end %></td>
+                  <%= container_risk_badges(container) %>
+                  <% if container["project"] && !coolify %><span class="compose-project block text-[11px] text-ink-3" title="<%= Array(container["config_files"]).join(", ") %>"><%= container["project"] %> · <%= container["service"] %></span><% end %>
+                  <%= container_ports(container) %>
+                  <%= container_attachments(container) %></td>
                 <td class="font-mono text-xs text-ink-2"><%= container["image"] %></td>
                 <td class="text-right text-xs tabular-nums <%= "text-crit-ink" if container["looping"] %>"><%= container["restarts"] %></td>
                 <td class="text-right text-xs tabular-nums"><%= container["cpu_percent"] ? number_to_percentage(container["cpu_percent"], precision: 1) : "—" %></td>

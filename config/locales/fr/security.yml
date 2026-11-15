@@ -221,6 +221,13 @@ fr:
       read_html: relevé %{collected_at}
       containers_running_html: "/%{count} conteneurs en cours"
       trouble_html: "%{problems} en difficulté"
+      host_access:
+        one: "%{count} root sur l'hôte"
+        other: "%{count} root sur l'hôte"
+      host_access_hint: Conteneurs privilégiés ou avec le socket Docker monté.
+      public_ports:
+        one: "%{count} port publié sur toutes les interfaces"
+        other: "%{count} ports publiés sur toutes les interfaces"
       images_unused_html: images (%{used} inutilisées)
       images_reclaimable_html: "· %{human_bytes} d'images, %{human_bytes2} récupérables"
       analysis: "· analyse :"

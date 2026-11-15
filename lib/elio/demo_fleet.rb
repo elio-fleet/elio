@@ -91,6 +91,7 @@ module Elio
       snapshot(db, "services", { "units" => units, "containers" => Inventory::Collectors::Services.parse_containers(File.read(FIX.join("services/docker_ps.txt"))), "docker" => "ok" })
       snapshot(db, "scheduled_tasks", Inventory::Collectors::ScheduledTasks.parse(File.read(FIX.join("scheduled_tasks/debian13.txt")), now: Time.zone.at(1_762_000_000)))
       docker = Inventory::Collectors::Docker.parse(sections(FIX.join("docker/debian13.txt")))
+      docker["disk"] = Inventory::Collectors::Docker.parse_df(File.read(FIX.join("docker/df.txt")))
       docker["images"].each { |image| image["reference"] = image["tags"].first || image["id"] }
       snapshot(db, "docker", docker.merge("docker" => "ok", "version" => "27.3.1", "scans" => { "sha256:#{"a" * 64}" => { "method" => "elio", "at" => AGO.ago.iso8601, "count" => 12 } }))
       ImageUpdate.create!(reference: "nginx:1.27", registry: "docker.io", repository: "library/nginx", tag: "1.27", remote_digest: "sha256:#{"9" * 64}", checked_at: AGO.ago)
