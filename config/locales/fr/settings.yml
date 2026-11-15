@@ -31,12 +31,22 @@ fr:
           one: 'Un lien à usage unique, valable %{count} jour, est créé : copiez-le et envoyez-le à la personne.'
           other: 'Un lien à usage unique, valable %{count} jours, est créé : copiez-le et envoyez-le à la personne.'
         email: Email
+        emails_help:
+          one: Plusieurs adresses à la fois (jusqu'à %{count}), séparées par des virgules.
+          other: Plusieurs adresses à la fois (jusqu'à %{count}), séparées par des virgules.
         role: Rôle
         language: Langue
         create_invitation: Créer l'invitation
         pending: Invitations en attente
         invited_by_html: Par %{email} · %{expiry}
         expires: 'expire '
+        expired: Invitations expirées
+        expired_intro:
+          one: Pas acceptées à temps. Renvoyez-en une pour que son lien fonctionne de nouveau ; elles sont oubliées après %{count} jour.
+          other: Pas acceptées à temps. Renvoyez-en une pour que son lien fonctionne de nouveau ; elles sont oubliées après %{count} jours.
+        expired_at: 'expirée '
+        resend: Renvoyer
+        resend_label: Renvoyer l'invitation de %{email}
         link: Lien d'invitation
         revoke: Révoquer
         revoke_label: Révoquer l'invitation de %{email}

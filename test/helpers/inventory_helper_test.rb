@@ -4,6 +4,15 @@ class InventoryHelperTest < ActionView::TestCase
   include UiHelper
   include IconsHelper
 
+  test "why Debian leaves a CVE without a fix, explained on hover; nothing for another status" do
+    badge = Nokogiri::HTML.fragment(distro_status_badge("postponed")).at("span")
+    assert_equal "Reportée par Debian", badge.text.strip
+    assert_equal "postponed", badge["data-distro-status"]
+    assert_match "prochaine mise à jour", badge["title"]
+    assert_nil distro_status_badge(nil)
+    assert_nil distro_status_badge("unknown")
+  end
+
   test "listen_address says what a wildcard or a loopback address means" do
     assert_equal "0.0.0.0 toutes les interfaces IPv4", Nokogiri::HTML.fragment(listen_address("0.0.0.0")).text
     assert_match "toutes les interfaces (IPv6", listen_address("::")

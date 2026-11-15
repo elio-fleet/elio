@@ -37,5 +37,11 @@ class SshKey < ApplicationRecord
   end
   private_class_method :build_generated
 
+  # Past this age, the settings remind to rotate the key (a leak nobody noticed
+  # stays usable as long as the key does).
+  ROTATION_REMINDER_AGE = 1.year
+
   def blob = public_key.split(" ")[1]
+
+  def rotation_due? = created_at < ROTATION_REMINDER_AGE.ago
 end

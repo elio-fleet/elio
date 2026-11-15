@@ -458,6 +458,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
     t.string "severity", null: false
     t.string "description"
     t.string "distro_severity"
+    t.string "distro_status"
     t.index ["cve"], name: "index_server_vulnerabilities_on_cve"
     t.index ["server_id", "origin"], name: "index_server_vulnerabilities_on_server_id_and_origin"
     t.index ["server_id"], name: "index_server_vulnerabilities_on_server_id"
@@ -591,6 +592,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110039) do
     t.string "fixed_version"
     t.string "severity", default: "unknown", null: false
     t.string "description"
+    t.string "distro_status"
     t.index ["cve"], name: "index_vulnerabilities_on_cve"
     t.index ["source", "release", "package", "cve"], name: "index_vulnerabilities_uniqueness", unique: true
   end

@@ -27,4 +27,21 @@ class KeyRotationTest < ApplicationSystemTestCase
     assert_no_selector "#ssh-key-fingerprint", text: old_fingerprint
     assert_selector "#ssh-key-actions button", text: "Faire tourner la clé", visible: :all
   end
+
+  test "a dry run tells which servers would fail, without changing anything" do
+    results = { "Database" => Keys::RotationCheck::Result.new(status: :read_only, message: "Le fichier ~/.ssh/authorized_keys de admin est en lecture seule") }
+    stub_method_until_teardown(Keys::RotationCheck, :call, ->(server, **) { results.fetch(server.name) { Keys::RotationCheck::Result.new(status: :ready, message: "Prêt") } })
+    sign_in users(:one)
+    visit settings_path
+
+    find("#ssh-key-actions summary").click
+    click_on "Simuler une rotation"
+    assert_text "Simulation lancée"
+    perform_enqueued_jobs
+    visit current_path
+
+    assert_text "Simulation de rotation de la clé (3 serveurs)"
+    assert_text "Le fichier ~/.ssh/authorized_keys de admin est en lecture seule"
+    assert_equal 0, KeyRotation.count
+  end
 end

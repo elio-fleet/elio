@@ -50,6 +50,31 @@ class ServerServicesCardTest < ActionDispatch::IntegrationTest
     assert_select "a.tab", text: /Services\s*2/
   end
 
+  test "a failed unit opens on its journal (read when opened) and the command to restart it; a unit failed at startup says so" do
+    servers(:web).inventory_snapshots.create!(category: "os", status: "ok", collected_at: Time.current, checked_at: Time.current, data: { "booted_at" => 3.days.ago.utc.iso8601 })
+    servers(:web).inventory_snapshots.create!(category: "health", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                              data: { "failed_units" => %w[mnt-backup.mount nginx.service],
+                                                      "failed_units_details" => [ { "name" => "mnt-backup.mount", "since" => (3.days.ago + 40.seconds).utc.iso8601 },
+                                                                                  { "name" => "nginx.service", "since" => 2.hours.ago.utc.iso8601 } ] })
+    sign_in users(:operator)
+
+    get server_path(servers(:web), tab: "services")
+
+    assert_select "li.systemd-unit[data-state=failed]", text: /mnt-backup\.mount.*a échoué au démarrage du serveur \(il y a 3 jours\)/m
+    assert_select "li.systemd-unit[data-state=failed]", text: /nginx.*a échoué il y a 2 heures/m
+    assert_select "li.systemd-unit[data-state=failed] details.unit-journal", 2
+    assert_select "details.unit-journal summary", text: "Journal et commande de relance", count: 2
+    assert_select "details.unit-journal .unit-restart code", text: "sudo systemctl restart nginx.service"
+    assert_select "details.unit-journal turbo-frame[loading=lazy][src=?]", server_unit_journal_path(servers(:web), unit: "nginx.service")
+
+    sign_in users(:viewer)
+    get server_path(servers(:web), tab: "services")
+
+    assert_select "details.unit-journal summary", text: "Commande de relance", count: 2
+    assert_select "details.unit-journal .unit-restart code", text: "sudo systemctl restart nginx.service"
+    assert_select "details.unit-journal turbo-frame", 0
+  end
+
   test "without a services inventory, the failed units of the health reading are listed anyway" do
     servers(:web).inventory_snapshots.create!(category: "health", status: "ok", collected_at: Time.current, checked_at: Time.current,
                                               data: { "failed_units" => %w[mnt-archive.mount] })

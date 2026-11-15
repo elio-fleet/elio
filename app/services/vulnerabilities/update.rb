@@ -66,7 +66,7 @@ module Vulnerabilities::Update
   # A digest of the entries of each package of each release:
   # { ["bookworm", "openssl"] => "9e1…" }.
   def self.fingerprints(source)
-    digest = Arel.sql("md5(string_agg(concat_ws('|', cve, fixed_version, severity, md5(coalesce(description, ''))), ',' ORDER BY cve))")
+    digest = Arel.sql("md5(string_agg(concat_ws('|', cve, fixed_version, severity, distro_status, md5(coalesce(description, ''))), ',' ORDER BY cve))")
     Vulnerability.where(source: source).group(:release, :package).pluck(:release, :package, digest).to_h { |release, package, sum| [ [ release, package ], sum ] }
   end
 

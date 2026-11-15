@@ -31,12 +31,22 @@ en:
           one: 'A single-use link, valid for %{count} day, is created: copy it and send it to the person.'
           other: 'A single-use link, valid for %{count} days, is created: copy it and send it to the person.'
         email: Email
+        emails_help:
+          one: Several addresses at once (up to %{count}), separated by commas.
+          other: Several addresses at once (up to %{count}), separated by commas.
         role: Role
         language: Language
         create_invitation: Create the invitation
         pending: Pending invitations
         invited_by_html: By %{email} · %{expiry}
         expires: 'expires '
+        expired: Expired invitations
+        expired_intro:
+          one: Not accepted in time. Resend one to make its link valid again; they are forgotten after %{count} day.
+          other: Not accepted in time. Resend one to make its link valid again; they are forgotten after %{count} days.
+        expired_at: 'expired '
+        resend: Resend
+        resend_label: Resend the invitation of %{email}
         link: Invitation link
         revoke: Revoke
         revoke_label: Revoke the invitation of %{email}

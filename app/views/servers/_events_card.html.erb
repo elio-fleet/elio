@@ -1,0 +1,11 @@
+<%# "Latest events" on a server's overview: its newest activities, with a link to the events of its journal. Locals: server, events (Activity). %>
+<%= panel t("servers.events_card.title"), id: "server-latest-events", icon: :clock,
+          link: [ t("servers.events_card.all"), server_path(server, tab: "journal", show: "events") ] do %>
+  <% if events.any? %>
+    <ul class="latest-events divide-y divide-line px-4">
+      <%= render partial: "activities/activity", collection: events, as: :activity, locals: { show_server: false } %>
+    </ul>
+  <% else %>
+    <p class="px-4 py-3 text-sm text-ink-3"><%= t("servers.events_card.empty") %></p>
+  <% end %>
+<% end %>

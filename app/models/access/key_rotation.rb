@@ -6,6 +6,11 @@
 class KeyRotation < ApplicationRecord
   class AlreadyRunning < StandardError; end
 
+  # Longer than one server can take (connection and command time limits of
+  # the install, the check and the removal): a running rotation that has not
+  # moved for that long has lost its job (Elio restarted, worker killed).
+  STALLED_AFTER = 15.minutes
+
   belongs_to :old_key, class_name: "SshKey", optional: true
   belongs_to :new_key, class_name: "SshKey", optional: true
   belongs_to :started_by, class_name: "User", optional: true
@@ -22,6 +27,8 @@ class KeyRotation < ApplicationRecord
   end
 
   def running? = finished_at.nil?
+
+  def stalled? = running? && updated_at < STALLED_AFTER.ago
 
   def activated? = activated_at.present?
 

@@ -71,6 +71,14 @@ en:
       fixed: Fixed
       servers_affected_html: Servers affected (%{count})
       fixes_release: Fixes by release
+      matched_by: Matched by
+      unknown_match: Image scanner
+      match_servers:
+        one: packages of %{count} server
+        other: packages of %{count} servers
+      match_images:
+        one: "%{count} Docker image"
+        other: "%{count} Docker images"
       derived: 'not rated by %{distribution}: derived from the score'
       exploited_since: ", since %{date}"
       how_to_fix: How to fix it
@@ -122,8 +130,10 @@ en:
       available: fix available
       pending: not seen by the server yet
       update_image: update the image
+      awaiting_reboot: reboot needed
       hint_available: The repositories of the server offer the fixed version.
       hint_pending: 'A fixed version exists, but the server did not offer it at its last inventory: refresh the package lists first. If apt still offers nothing, the fix has not reached the repositories yet.'
+      hint_reboot: 'The fixed kernel is already installed, but the server still runs the old one: reboot it to load the new kernel.'
       hint_image: Pull the image again (or rebuild it if it is built here), then recreate its containers.
       reboot: The kernel is only replaced at the next reboot.
       containers: 'Containers: %{containers}. A container started without Compose must be recreated with its options.'
@@ -145,6 +155,8 @@ en:
         other: "%{count} system packages"
       compose_html: Compose project %{name}
       image_html: Image %{image}
+      reboot_step_html: Reboot on kernel %{version}
+      reboot_step_hint: Already installed, nothing to install.
       images_containers: 'Images: %{images} · containers: %{containers}'
       recreate: Containers started without Compose must then be recreated with their options.
       after: After the updates
@@ -213,6 +225,9 @@ en:
       repositories_server_already_offer: The repositories of the server already offer this version
       not_repositories_yet: not in the repositories yet
       fix_exists_but_server: 'The fix exists but the server does not see it: apt update, or missing security repository'
+      awaiting_reboot: installed, reboot needed
+      awaiting_reboot_title: 'Kernel %{version} is installed, but the server still runs %{running}: its fixes apply at the next reboot'
+      awaiting_reboot_html: Kernel %{version} is already installed, but the server still runs %{running}. Reboot the server to load it and fix these CVEs.
       update_image: update the image
       fix: no fix
       fixed: fixed in %{fixed_version}
@@ -524,6 +539,19 @@ en:
       low: Low
       unknown: Not rated
     at_least: "%{severity} or more"
+    distro_statuses:
+      no_dsa:
+        label: Minor for Debian
+        inline: minor for Debian, no advisory
+        help: Debian will not publish a security advisory for it; a fix may come with a point release of the distribution.
+      postponed:
+        label: Postponed by Debian
+        inline: postponed by Debian
+        help: Debian will fix it in a later update, together with other fixes, not through a security advisory.
+      ignored:
+        label: Ignored by Debian
+        inline: ignored by Debian
+        help: Debian does not plan to fix it in this release (minor issue, or a fix too hard to backport).
   server_vulnerability:
     origins:
       host: System

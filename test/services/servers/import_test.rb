@@ -39,6 +39,36 @@ class Servers::ImportTest < ActiveSupport::TestCase
     assert_equal [ "Web", "Web", nil, "New", nil ], rows.map(&:duplicate_of)
   end
 
+  test "a second row with the address of a valid row is a duplicate, not a cancelled import" do
+    rows = parse("A,10.0.0.60\nB,10.0.0.60\nC,10.0.0.60,2200\nBad name with no host,\nD,10.0.0.61\n")
+
+    assert_equal [ :valid, :duplicate, :valid, :invalid, :valid ], rows.map(&:status)
+    assert_equal "A", rows.second.duplicate_of
+    assert_equal 3, Servers::Import.import!(rows).size
+  end
+
+  test "rows corrected in the preview are checked again" do
+    rows = Servers::Import.from_rows([
+      { "line" => "2", "name" => " API ", "host" => "10.0.0.70", "port" => "", "username" => "", "groups" => "Prod, Clients" },
+      { "line" => "3", "name" => "Bad", "host" => "not a host!", "port" => "22", "username" => "root", "groups" => "" },
+      { "line" => "4", "name" => "web", "host" => "10.0.0.71", "port" => "22", "username" => "root", "groups" => "" }
+    ], default_username: "debian")
+
+    assert_equal [ [ 2, "API", 22, "debian", [ "Prod", "Clients" ], :valid ], [ 3, "Bad", 22, "root", [], :invalid ], [ 4, "web", 22, "root", [], :duplicate ] ],
+                 rows.map { |row| [ row.line, row.name, row.port, row.username, row.group_names, row.status ] }
+    assert_match "Aucun serveur", assert_raises(Servers::Import::Error) { Servers::Import.from_rows([]) }.message
+  end
+
+  test "ssh config: ProxyJump and ProxyCommand are reported as ignored, Include files listed" do
+    text = "Include ~/.ssh/config.d/*\ninclude=work.conf\nHost app\n  HostName 10.0.0.80\n  ProxyJump bastion\nHost db\n  HostName 10.0.0.81\n"
+
+    rows = parse(text, format: "ssh_config")
+
+    assert_equal [ [ "ProxyJump ignoré : Elio se connecte directement à l'hôte." ], [] ], rows.map(&:warnings)
+    assert rows.first.valid?, "a warning does not stop the import"
+    assert_equal [ "~/.ssh/config.d/*", "work.conf" ], Servers::Import.ssh_config_includes(text)
+  end
+
   test "ssh config: one server per concrete Host, defaults, patterns and Match skipped" do
     rows = parse(<<~CONFIG, format: "ssh_config", default_username: "admin")
       # personal servers
@@ -70,6 +100,7 @@ class Servers::ImportTest < ActiveSupport::TestCase
     assert_match "UTF-8", assert_raises(Servers::Import::Error) { parse("caf\xE9,10.0.0.1".b) }.message
     assert_match "CSV invalide", assert_raises(Servers::Import::Error) { parse("a,\"b\n") }.message
     assert_match "Trop de lignes", assert_raises(Servers::Import::Error) { parse((1..501).map { |n| "s#{n},10.0.0.1" }.join("\n")) }.message
+    I18n.with_locale(:en) { assert_equal "Paste or choose a file.", assert_raises(Servers::Import::Error) { parse("") }.message }
   end
 
   test "a UTF-8 BOM is ignored" do

@@ -108,4 +108,24 @@ class ServerShowTest < ApplicationSystemTestCase
     find("dialog.key-details[open]").send_keys(:escape)
     assert_no_selector "dialog.key-details[open]"
   end
+
+  test "the journal of a failed unit is read only when its details are opened" do
+    servers(:web).inventory_snapshots.create!(category: "health", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                              data: { "failed_units" => %w[nginx.service] })
+    reads = []
+    stub_method_until_teardown(Inventory::UnitJournal, :call, ->(_server, unit) {
+      reads << unit
+      Inventory::UnitJournal::Result.new(lines: [ "nginx[812]: bind() to 0.0.0.0:80 failed (98: Address already in use)" ], error: nil)
+    })
+    visit server_path(servers(:web), tab: "services")
+
+    within("li.systemd-unit[data-state=failed]") do
+      assert_selector "summary", text: "Journal et commande de relance"
+      assert_empty reads
+      find("summary").click
+      assert_selector "pre", text: "Address already in use"
+      assert_selector ".unit-restart code", text: "sudo systemctl restart nginx.service"
+    end
+    assert_equal %w[nginx.service], reads
+  end
 end

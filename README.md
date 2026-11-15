@@ -134,7 +134,7 @@ Everything else — thresholds, notifications, automations, score providers, Doc
 
 1. In *Settings → General*, generate Elio's SSH key (Ed25519, kept encrypted).
 2. Add its public key to `~/.ssh/authorized_keys` of the account Elio will use (the page gives the command for root, an account with sudo or a dedicated account, optionally restricted to Elio's address with `from=`, and shows on which servers the key was found).
-3. Add the server (*Test the connection* checks the access before saving; *Duplicate* in its menu starts another one with the same port, user and groups): its first inventory runs on its own when Elio can already log in. Or import many from a CSV or your `~/.ssh/config`, then run an inventory.
+3. Add the server (*Test the connection* checks the access before saving; *Duplicate* in its menu starts another one with the same port, user and groups): its first inventory runs on its own when Elio can already log in. Or import many from a CSV, your `~/.ssh/config` or the servers your OVHcloud and Coolify extensions already know: lines in error are corrected in the preview, and the first inventory of the imported servers can run right away.
 
 Elio reads everything an unprivileged account can read. Some details need root — the process behind each port, the firewall, Docker, the users' crontabs, the SSH keys of the other accounts: log in as root, or give the account password-less `sudo`. Without it, those collections are marked *partial*, and only the keys of Elio's account are listed.
 
@@ -149,7 +149,7 @@ Supported: **Debian and Ubuntu** (others get health and system only), Docker, sn
 | System, network | `/etc/os-release`, `uname`, `hostname`, `systemd-detect-virt`, `/proc`, `timedatectl`, `ip -j addr`, `ip -j link` |
 | Health | `/proc/loadavg`, `/proc/meminfo`, `df`, `/var/run/reboot-required`, `systemctl --failed` (and `show` of the failed units), `apt-get -s dist-upgrade` (simulation, only when the package database changed), `/proc/vmstat` (out-of-memory kills) |
 | Packages | `dpkg-query -W`, `apt list --upgradable`, `apt-cache policy` (repository of each package), the last lines of `/var/log/dpkg.log`, `snap list` |
-| Services, scheduled tasks | `systemctl list-units`, `list-unit-files`, `show` of the timers, `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
+| Services, scheduled tasks | `systemctl list-units`, `list-unit-files`, `show` of the timers, `journalctl -u` of a failed unit (only when an operator or admin opens its journal), `/etc/crontab`, `/etc/cron.d`, `/var/spool/cron` |
 | Docker | `docker inspect` (state, health, restarts — **never the environment variables**), `docker stats`, `docker image inspect`, `docker system df`, `trivy` / `grype` if installed, `docker cp` of `os-release` and the dpkg status |
 | Ports | `ss -tulpn`, `/proc/<pid>/cgroup`, `ufw status verbose`, `nft list ruleset`, `iptables -S INPUT` |
 | SSH keys | reading `~/.ssh/authorized_keys` (with root, of every account with a login shell — never through a link, nor a file the account does not own); **writing only** when you add a key (to Elio's account, or with root to another existing account: its `~/.ssh` is created if missing, never the account), extend a temporary access (only its `expiry-time` option changes) or remove one. Another account's file is read and written **as that account** (`runuser`): root only finds it |

@@ -10,6 +10,7 @@ module Settings
       @pager = paginate(User.order(:email), per_page: PER_PAGE)
       @users = @pager.records
       @invitations = Invitation.pending.includes(:invited_by).order(created_at: :desc)
+      @expired_invitations = Invitation.expired_unanswered.includes(:invited_by).order(expires_at: :desc)
       @invitation = Invitation.new
       @setting = AppSetting.current
     end

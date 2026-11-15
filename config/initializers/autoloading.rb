@@ -6,7 +6,7 @@
 DOMAIN_FOLDERS = {
   "app/models" => %w[fleet access accounts activity_log operations extensions security core],
   "app/controllers" => %w[fleet access accounts activity_log operations extensions security core],
-  "app/jobs" => %w[access activity_log operations security]
+  "app/jobs" => %w[access accounts activity_log operations security]
 }.freeze
 
 DOMAIN_FOLDERS.each do |root, folders|

@@ -4,6 +4,7 @@ class ServersController < ApplicationController
   # Grid: the problems first.
   STATE_ORDER = { "crit" => 0, "off" => 0, "warn" => 1, "unknown" => 2, "ok" => 3 }.freeze
   HISTORY_PER_PAGE = 30
+  LATEST_EVENTS = 5
 
   require_permission :operate, only: %i[new create edit update destroy test_connection]
 
@@ -69,8 +70,18 @@ class ServersController < ApplicationController
     show_journal if @tab == "journal"
     show_vulnerabilities if @tab == "vulnerabilities"
     show_docker if @tab == "docker"
-    @health_history = @server.health_samples.since(24.hours.ago).pluck(:collected_at, :load_percent, :memory_percent, :disk_percent) if @tab == "overview"
+    show_overview if @tab == "overview"
   end
+
+  # Overview tab: 24-hour sparklines, charts over ?period= (24 h, 7 or 30
+  # days), the disk trend and the latest events.
+  def show_overview
+    @chart_history = Inventory::HealthHistory.new(@server, period: params[:period])
+    @health_history = (@chart_history.period.key == Inventory::HealthHistory::DEFAULT ? @chart_history : Inventory::HealthHistory.new(@server)).points
+    @disk_trend = Inventory::DiskTrend.new(@server)
+    @latest_events = Activity.recent.where(server: @server).includes(:user, :server, :public_key).limit(LATEST_EVENTS)
+  end
+  private :show_overview
 
   # ?from=<id>: a copy of that server (port, user, groups), to fill in the
   # name and the host.
@@ -150,9 +161,12 @@ class ServersController < ApplicationController
   private
 
   # By package (default) or by CVE, remembered in a cookie like the fleet view;
-  # a package filter (?package=) asks for the CVE view.
+  # a package filter (?package=) asks for the CVE view without remembering it:
+  # opening the CVEs of one package is not choosing the CVE view for good.
   def vulnerability_view
-    view = params[:view].presence_in(VULNERABILITY_VIEWS) || ("cves" if params[:package].present?)
+    return "cves" if params[:package].present?
+
+    view = params[:view].presence_in(VULNERABILITY_VIEWS)
     cookies.permanent[:elio_vulnerability_view] = { value: view, same_site: :lax, httponly: true } if view
     view || cookies[:elio_vulnerability_view].presence_in(VULNERABILITY_VIEWS) || "packages"
   end

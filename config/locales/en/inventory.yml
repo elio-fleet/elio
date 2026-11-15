@@ -64,13 +64,23 @@ en:
       last_attempt_html: 'Last attempt %{checked_at}: %{message}'
       inventory_yet_elio_reads: 'No inventory yet: Elio reads the system, health and services of the server over SSH, read-only.'
       run_inventory: Run the inventory
+    events_card:
+      title: Latest events
+      all: All events
+      empty: No event yet for this server.
     attention_card:
       do: To handle
       points:
         one: "%{count} point"
         other: "%{count} points"
     health_card:
-      charts_24_h: Charts of the last 24 hours
+      charts: History charts
+      chart_period: Period of the charts
+      full_in_days:
+        one: full in about %{count} day
+        other: full in about %{count} days
+      full_within_a_day: full within a day
+      disk_trend_title: 'At the pace of the last 7 days: full around %{date}'
       load_over_24_h: Load over 24 h
       synchronized: synchronized
       not_synchronized: not synchronized
@@ -121,6 +131,10 @@ en:
       failed: failed
       boot: at boot
       failed_since_html: failed %{time}
+      failed_at_boot_html: failed at server startup (%{time})
+      journal: Journal and restart command
+      restart: Restart command
+      restart_hint: 'To restart it yourself on the server (Elio never runs it):'
       seen_by_health_html: seen by the health reading %{time}
       seen_by_health_hint: Not a service (mount, socket…), or failed after the last services inventory; the health reading, more frequent, saw it.
     firewall_card:
@@ -206,6 +220,14 @@ en:
       periodic_scripts: Periodic scripts
       etc_cron_html: "(/etc/cron.%{period})"
       scheduled_tasks_inventory_yet: No scheduled tasks inventory yet.
+  server_unit_journals:
+    frame:
+      loading: Reading the journal…
+      unreadable: 'Journal unreadable:'
+      empty: Nothing in the journal for this unit (or the journal is not readable without root).
+      last_lines:
+        one: The only line of the journal, read just now.
+        other: The last %{count} lines of the journal, read just now.
   server_packages:
     frame:
       loading_packages: Loading the packages…
@@ -336,6 +358,11 @@ en:
         one: "%{count} second"
         other: "%{count} seconds"
   inventory:
+    health_history:
+      periods:
+        24h: 24 h
+        7d: 7 days
+        30d: 30 days
     port_analysis:
       no_firewall: no active firewall
       unknown_firewall: unknown firewall (root access required)

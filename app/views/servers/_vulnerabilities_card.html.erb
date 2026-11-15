@@ -87,7 +87,7 @@
                 </td>
                 <td class="font-mono text-xs" title="<%= [ vulnerability.packages.join(", "), ("image #{vulnerability.image}" if vulnerability.image) ].compact.join(" · ") %>"><%= vulnerability.source_package %></td>
                 <td class="pr-4 font-mono text-xs whitespace-nowrap"><%= vulnerability.installed_version %> →
-                  <% if vulnerability.fixable? %><span class="text-good-ink"><%= vulnerability.fixed_version %></span><% else %><span class="font-sans text-ink-3"><%= t(".fix") %></span><% end %></td>
+                  <% if vulnerability.fixable? %><span class="text-good-ink"><%= vulnerability.fixed_version %></span><% else %><%= distro_status_badge(vulnerability.distro_status) || tag.span(t(".fix"), class: "font-sans text-ink-3") %><% end %></td>
               </tr>
             <% end %>
           </tbody>

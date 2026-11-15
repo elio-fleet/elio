@@ -29,6 +29,7 @@ Rails.application.routes.draw do
     resources :commands, only: :index, controller: "server_commands"
     resource :inventory, only: :create, controller: "server_inventories"
     resources :packages, only: :index, controller: "server_packages"
+    resource :unit_journal, only: :show, controller: "server_unit_journals"
     resource :host_key, only: :create, controller: "server_host_keys"
     resource :expected_port, only: :create, controller: "server_expected_ports"
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
@@ -59,7 +60,9 @@ Rails.application.routes.draw do
         post :unlock
       end
     end
-    resources :invitations, only: %i[create destroy]
+    resources :invitations, only: %i[create destroy] do
+      post :resend, on: :member
+    end
     resource :security, only: :update
     resource :health_thresholds, only: :update
     resource :prompt_instructions, only: :update
@@ -85,9 +88,11 @@ Rails.application.routes.draw do
       post :import
       post :scores
     end
+    resource :key_rotation_check, only: :create
     resources :key_rotations, only: %i[create show] do
       member do
         post :retry
+        post :resume
         post :finalize
       end
     end

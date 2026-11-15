@@ -76,6 +76,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "set up 2FA" => -> { get new_two_factor_path }
     },
     operate: {
+      "journal of a failed unit" => -> { get server_unit_journal_path(servers(:web), unit: "nginx.service") },
       "attach a DNS name" => -> {
         Integration.create!(kind: "technitium", enabled: true, settings: { "url" => "https://d.test" }, secrets: { "api_token" => "t" })
         post dns_record_link_path(DnsRecord.create!(source: "technitium", source_id: "x.a.test", zone: "a.test", name: "x.a.test", record_type: "A", value: "203.0.113.1")), params: { server_id: servers(:web).id }
@@ -155,6 +156,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "run automation" => -> { post run_settings_automation_path(Automation.all_kinds.find { |automation| automation.kind == "keys_scan" }) },
       "users" => -> { get settings_users_path },
       "invite a user" => -> { post settings_invitations_path, params: { invitation: { email: "new@example.com", role: "viewer" } } },
+      "resend an invitation" => -> { post resend_settings_invitation_path(Invitation.create!(email: "y@example.com", invited_by: users(:one)).tap { |invitation| invitation.update_columns(expires_at: 1.day.ago) }) },
       "revoke an invitation" => -> { delete settings_invitation_path(Invitation.create!(email: "x@example.com", invited_by: users(:one))) },
       "change a user's role" => -> { patch settings_user_path(users(:viewer)), params: { user: { role: "operator", public_key_id: "" } } },
       "deactivate a user" => -> { post deactivate_settings_user_path(users(:viewer)) },
@@ -165,6 +167,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "follow a key rotation" => -> { get settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "retry a key rotation" => -> { post retry_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "finalize a key rotation" => -> { post finalize_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
+      "resume a key rotation" => -> { post resume_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
+      "simulate a key rotation" => -> { post settings_key_rotation_check_path },
       "require 2FA for admins" => -> { patch settings_security_path, params: { app_setting: { require_admin_two_factor: "0" } } },
       "health thresholds" => -> { patch settings_health_thresholds_path, params: { app_setting: { health_disk_warn: 80 } } },
       "prompt instructions" => -> { patch settings_prompt_instructions_path, params: { prompt_instructions: { firewall: "x" } } },

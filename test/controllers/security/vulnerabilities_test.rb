@@ -121,6 +121,9 @@ class VulnerabilitiesTest < ActionDispatch::IntegrationTest
     assert_select ".package-filter", /openssh/
     assert_select "tr.server-vulnerability", 2
     get server_path(servers(:web), tab: "vulnerabilities")
+    assert_select ".vulnerability-view-toggle a[data-view=packages][aria-pressed=true]", 1, "the CVEs of one package are not a choice of the CVE view"
+    get server_path(servers(:web), tab: "vulnerabilities", view: "cves")
+    get server_path(servers(:web), tab: "vulnerabilities")
     assert_select ".vulnerability-view-toggle a[data-view=cves][aria-pressed=true]", 1, "the choice is remembered"
   end
 
@@ -246,5 +249,42 @@ class VulnerabilitiesTest < ActionDispatch::IntegrationTest
     assert_select ".vulnerabilities-none", "Aucune CVE ni paquet ne correspond à « zzz »."
     get server_path(servers(:web), tab: "vulnerabilities", view: "packages", q: "zzz")
     assert_select ".vulnerabilities-none", "Aucune CVE ni paquet ne correspond à « zzz »."
+  end
+
+  test "a CVE Debian ignores is shown apart from those waiting for a fix, everywhere it has no fix" do
+    Vulnerability.where(cve: "CVE-2023-51767").update_all(distro_status: "ignored")
+    Vulnerabilities::Matcher.call(servers(:web))
+    sign_in users(:viewer)
+
+    get server_path(servers(:web), tab: "vulnerabilities", view: "cves")
+    assert_select "tr.server-vulnerability[data-cve=CVE-2023-51767] .distro-status[data-distro-status=ignored][title*='ne prévoit pas']", "Ignorée par Debian"
+    assert_select "tr.server-vulnerability[data-cve=CVE-2024-5535] .distro-status", 0, "a fixable CVE keeps its fix"
+
+    get vulnerabilities_path(view: "cves")
+    assert_select "tr.fleet-vulnerability[data-cve=CVE-2023-51767] .distro-status", "Ignorée par Debian"
+    assert_select "tr.fleet-vulnerability[data-cve=CVE-2023-44487] .distro-status", 0
+
+    get vulnerability_path("CVE-2023-51767", server_id: servers(:web).id)
+    assert_select ".detail-on-server .distro-status", "Ignorée par Debian"
+    assert_select ".detail-servers .distro-status", 1, "Web only: Database has not been matched again"
+    assert_select "section", text: /Debian bookworm : pas de correctif \(faible, ignorée par Debian\)/
+  end
+
+  test "the CVE page says what matched it: the feed of the servers, the scanner of each image" do
+    servers(:db).server_vulnerabilities.create!(origin: "image", source: "debian", image: "nginx:1.27", cve: "CVE-2024-6387", source_package: "openssh",
+                                                packages: [ "openssh-client" ], installed_version: "1:9.2p1-2", severity: "high")
+    servers(:db).server_vulnerabilities.create!(origin: "image", source: "alpine", image: "redis:7", cve: "CVE-2024-6387", source_package: "openssh",
+                                                packages: [ "openssh-client" ], installed_version: "9.7", severity: "high")
+    servers(:db).inventory_snapshots.create!(category: "docker", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                             data: { "images" => [ { "id" => "sha256:aaa", "reference" => "nginx:1.27" }, { "id" => "sha256:bbb", "reference" => "redis:7" } ],
+                                                     "scans" => { "sha256:aaa" => { "method" => "trivy" } } })
+    sign_in users(:viewer)
+
+    get vulnerability_path("CVE-2024-6387")
+
+    assert_select ".detail-match li.match-source", 3
+    assert_select ".detail-match li.match-source[data-source=debian]", text: /Debian Security Tracker · paquets de 2 serveurs/
+    assert_select ".detail-match li.match-source[data-source=trivy]", { text: /Trivy · 1 image Docker/ }, "a Debian image read by Trivy: Trivy matched it"
+    assert_select ".detail-match li.match-source[data-source=unknown]", text: /Scanner d'images · 1 image Docker/
   end
 end

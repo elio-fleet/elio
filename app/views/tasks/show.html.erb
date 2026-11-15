@@ -31,7 +31,7 @@
             <tr id="<%= dom_id(item) %>" class="task-item">
               <td class="whitespace-nowrap">
                 <% if item.server %>
-                  <%= link_to item.server_name, server_path(item.server, tab: (@task.kind == "keys_scan" ? "keys" : nil)), class: "font-medium text-ink hover:text-accent" %>
+                  <%= link_to item.server_name, server_path(item.server, tab: (%w[keys_scan key_rotation_check].include?(@task.kind) ? "keys" : nil)), class: "font-medium text-ink hover:text-accent" %>
                 <% else %>
                   <span class="font-medium text-ink-2"><%= item.server_name %></span> <span class="text-xs text-ink-3"><%= t(".deleted") %></span>
                 <% end %>

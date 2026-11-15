@@ -102,11 +102,12 @@ module UiHelper
 
   def sidebar_section(label) = tag.p(label, class: "sidebar-section px-2.5 pt-4 pb-1 text-[11px] font-semibold tracking-wider text-ink-3 uppercase")
 
-  # Line chart of a percentage over time (24 h by default), stretched to the
+  # Line chart of a percentage over time (24 h by default; period: a key of
+  # Inventory::HealthHistory::PERIODS for the axis labels), stretched to the
   # width of its container: grid at 0/50/100 %, optional dashed threshold, and
   # one hover zone per point with its time and value (native tooltip). Labels
   # are HTML around the drawing so they keep their size.
-  def history_chart(points, label:, threshold: nil, color: "var(--color-accent)", from: 24.hours.ago, to: Time.current, height: 96)
+  def history_chart(points, label:, threshold: nil, color: "var(--color-accent)", from: 24.hours.ago, to: Time.current, height: 96, period: "24h")
     points = points.select { |time, value| value && time >= from }
     span = (to - from).to_f
     x = ->(time) { ((time - from) / span * 100).clamp(0, 100).round(2) }
@@ -116,7 +117,7 @@ module UiHelper
     zones = [ 0, *zones, 0 ]
 
     svg = tag.svg(viewBox: "0 0 100 100", preserveAspectRatio: "none", class: "block w-full overflow-visible", style: "height: #{height}px",
-                  role: "img", aria: { label: t("ui.over_24_hours", label: label) }) do
+                  role: "img", aria: { label: t("ui.chart_periods.#{period}.over", label: label) }) do
       safe_join([
         *[ 0, 50, 100 ].map { |v| tag.line(x1: 0, x2: 100, y1: y.(v), y2: y.(v), stroke: "var(--color-line)", "vector-effect" => "non-scaling-stroke") },
         (tag.line(x1: 0, x2: 100, y1: y.(threshold), y2: y.(threshold), stroke: "var(--color-warn)", "stroke-dasharray" => "4 3",
@@ -125,7 +126,7 @@ module UiHelper
         *points.each_with_index.map do |(time, value), i|
           left = x.(time) - zones[i]
           tag.rect(x: left, y: 0, width: [ zones[i] + zones[i + 1], 0.5 ].max, height: 100, fill: "transparent", class: "chart-point") do
-            tag.title("#{l(time, format: "%H:%M")} — #{number_to_percentage(value, precision: 0)}")
+            tag.title("#{l(time, format: period == "24h" ? "%H:%M" : "%-d %b %H:%M")} — #{number_to_percentage(value, precision: 0)}")
           end
         end
       ].compact)
@@ -143,7 +144,7 @@ module UiHelper
             svg
           ])
         end,
-        tag.div(class: "mt-1 flex justify-between pl-7 text-[10px] text-ink-3") { safe_join([ tag.span(t("ui.hours_ago_24")), tag.span(t("ui.hours_12")), tag.span(t("ui.now_axis")) ]) }
+        tag.div(class: "mt-1 flex justify-between pl-7 text-[10px] text-ink-3") { safe_join([ tag.span(t("ui.chart_periods.#{period}.start")), tag.span(t("ui.chart_periods.#{period}.middle")), tag.span(t("ui.now_axis")) ]) }
       ])
     end
   end

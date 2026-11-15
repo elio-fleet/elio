@@ -145,6 +145,13 @@ fr:
       signed_in: 'Vous êtes déjà connecté : déconnectez-vous pour accepter cette invitation.'
       emailed: Invitation envoyée par email à %{email}. Le lien reste copiable ci-dessous.
       created: Invitation créée pour %{email}. Copiez le lien et envoyez-le-lui.
+      emailed_many:
+        one: '%{count} invitation envoyée par email : %{emails}. Les liens restent copiables ci-dessous.'
+        other: '%{count} invitations envoyées par email : %{emails}. Les liens restent copiables ci-dessous.'
+      created_many:
+        one: '%{count} invitation créée : %{emails}. Copiez les liens et envoyez-les.'
+        other: '%{count} invitations créées : %{emails}. Copiez les liens et envoyez-les.'
+      too_many: Au plus %{count} adresses à la fois.
       failed: 'Invitation impossible : %{errors}'
       revoked: L'invitation de %{email} a été révoquée.
     two_factor:

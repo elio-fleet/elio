@@ -418,6 +418,7 @@ en:
     kinds:
       inventory: Inventory
       keys_scan: Key scan
+      key_rotation_check: Key rotation dry run
       automation: Automation
       integration: Extension
       vulnerabilities: Vulnerabilities

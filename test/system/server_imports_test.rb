@@ -20,4 +20,21 @@ class ServerImportsTest < ApplicationSystemTestCase
     assert_selector "#servers tbody tr", text: "api"
     assert_equal [ "10.0.0.12", 22, "deploy" ], Server.find_by!(name: "api").then { |server| [ server.host, server.port, server.username ] }
   end
+
+  test "correcting a line in error in the preview, then importing without the inventory" do
+    visit new_server_import_path
+    fill_in "Contenu", with: "nom,hôte\nAPI,10.0.0.12\nDB,not a host!\n"
+    click_on "Voir l'aperçu"
+
+    assert_selector ".import-counts", text: "1 serveur à importer · 0 doublon ignoré · 1 ligne en erreur"
+    within("tr.import-row.is-invalid") { find("input[aria-label='Hôte']").fill_in(with: "10.0.0.13") }
+    click_on "Vérifier à nouveau"
+
+    assert_selector ".import-counts", text: "2 serveurs à importer · 0 doublon ignoré · 0 ligne en erreur"
+    uncheck "Lancer le premier inventaire des serveurs importés"
+    click_on "Importer 2 serveurs"
+
+    assert_selector "#flash .toast", text: "2 serveurs importés"
+    assert_equal "10.0.0.13", Server.find_by!(name: "DB").host
+  end
 end
