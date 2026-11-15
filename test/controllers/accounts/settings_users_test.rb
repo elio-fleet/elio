@@ -263,6 +263,29 @@ class SettingsUsersTest < ActionDispatch::IntegrationTest
     assert_response :success
   end
 
+  test "a new password asked while 2FA is mandatory: the password first, then the 2FA setup, without a loop" do
+    AppSetting.current.update!(require_operator_two_factor: true)
+    users(:operator).require_password_change!
+    sign_in users(:operator)
+
+    get servers_path
+    assert_redirected_to account_path(anchor: "password")
+    get new_two_factor_path
+    assert_redirected_to account_path(anchor: "password")
+    get account_path
+    assert_response :success
+    assert_select "#password .password-change-required"
+
+    patch password_account_path, params: { user: { current_password: "password1234", password: "new-password-5678", password_confirmation: "new-password-5678" } }
+    assert_redirected_to account_path
+    assert_not users(:operator).reload.password_change_required?
+
+    get servers_path
+    assert_redirected_to new_two_factor_path
+    get new_two_factor_path
+    assert_response :success
+  end
+
   test "an admin changes their own password in My account, not through the request" do
     sign_in users(:one)
 
