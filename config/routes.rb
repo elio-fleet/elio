@@ -118,6 +118,7 @@ Rails.application.routes.draw do
   # One event by its id only: /journal/runs stays the runs tab.
   resources :activities, only: %i[index show], path: "journal", constraints: { id: /\d+/ }
   resources :tasks, only: %i[index show], path: "journal/runs"
+  post "journal/runs/:task_id/rerun", to: "task_reruns#create", as: :task_rerun
   resources :packages, only: :index, path: "updates"
   resources :ports, only: :index
   resources :scheduled_tasks, only: :index, path: "scheduled-tasks"
