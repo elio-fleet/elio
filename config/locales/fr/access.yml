@@ -184,6 +184,17 @@ fr:
       test_ssh_connection_again: Retester la connexion SSH
       connection_ok: Connexion OK
       checked_html: vérifié %{current}
+      diagnose: Diagnostiquer
+      diagnose_help: Vérifie chaque étape de la connexion (nom, port, serveur SSH, clé d'hôte, clé d'Elio, sudo) et dit quoi corriger.
+  server_ssh_diagnoses:
+    show:
+      passed: Toutes les étapes passent
+      failed: 'Échec : %{step}'
+      status:
+        ok: réussie
+        warn: fonctionne avec une limite
+        failed: échouée
+        skipped: non testée
   keys:
     rotation_check:
       ready: 'Prêt : Elio se connecte et peut ajouter la nouvelle clé.'
@@ -220,6 +231,38 @@ fr:
       added: ajoutée
       present: déjà présente
   ssh:
+    diagnosis:
+      steps:
+        dns: Résolution du nom
+        tcp: Port SSH ouvert
+        banner: Le serveur SSH répond
+        host_key: Clé d'hôte
+        authentication: Connexion avec la clé d'Elio
+        sudo: Accès root (sudo sans mot de passe)
+      details:
+        ip_address: Une adresse IP, rien à résoudre.
+        resolved: 'Adresses : %{addresses}'
+        error: "%{message}"
+        connected: Connecté à %{address}:%{port}.
+        no_banner: Rien reçu en %{timeout} s.
+        closed: La connexion a été fermée sans bannière SSH.
+        not_ssh: Reçu « %{received} » au lieu d'une bannière SSH.
+        host_key_known: 'Même clé qu''avant : %{fingerprints}'
+        host_key_pinned: 'Première connexion, clé maintenant épinglée : %{fingerprints}'
+        logged_in: Connecté en tant que %{username}.
+        root: Connecté en root.
+        sudo: "`sudo -n` fonctionne : Elio peut tout lire."
+        no_sudo: "%{username} ne peut pas utiliser sudo sans mot de passe."
+      fixes:
+        dns: Vérifiez l'orthographe de « %{host} », ou saisissez plutôt l'adresse IP du serveur.
+        port_refused: Rien n'écoute sur le port %{port}. Vérifiez le port du serveur, et que le serveur SSH y tourne (systemctl status ssh).
+        port_silent: Pas de réponse de %{host}:%{port}. Vérifiez que le serveur est allumé, et qu'un pare-feu (sur le serveur ou le réseau) laisse l'adresse d'Elio joindre le port %{port}.
+        banner_silent: Le service du port %{port} ne dit rien. Ce n'est peut-être pas un serveur SSH, ou il attend que le client parle d'abord (serveur web, proxy). Vérifiez le port.
+        banner_closed: La connexion a été coupée aussitôt. Le serveur SSH refuse peut-être l'adresse d'Elio (fail2ban, AllowUsers ou ListenAddress de sshd, tcp_wrappers) ou a trop de connexions en attente (MaxStartups).
+        not_ssh: Un autre service tourne sur le port %{port}. Vérifiez le port SSH du serveur.
+        handshake: Le serveur SSH et Elio n'ont trouvé aucun algorithme commun, ou le serveur a coupé l'échange. Consultez les journaux de sshd sur le serveur (journalctl -u ssh).
+        command: Elio s'est connecté mais la commande de test a échoué. Vérifiez le shell de %{username} (une commande forcée ou un menu dans son profil peut gêner).
+        sudo: L'inventaire sera partiel (ports, pare-feu, Docker, autres comptes). Connectez-vous en root, ou donnez à %{username} sudo sans mot de passe.
     check:
       succeeded: Connexion SSH réussie
       answered: "%{username}@%{host} a répondu à `echo %{token}`."
