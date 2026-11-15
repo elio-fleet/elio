@@ -45,6 +45,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server port check" => -> { get server_ping_path(servers(:web)) },
       "server SSH check" => -> { get server_ssh_check_path(servers(:web)) },
       "server keys" => -> { get server_authorized_keys_path(servers(:web)) },
+      "server temporary accesses" => -> { get server_temporary_accesses_path(servers(:web)) },
       "server packages" => -> { get server_packages_path(servers(:web)) },
       "fleet packages" => -> { get packages_path(q: "ssl") },
       "fleet ports" => -> { get ports_path },
@@ -109,7 +110,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "claim a keyring key as mine" => -> { post account_keys_path, params: { public_key_id: public_keys(:alice).id } },
       "release one of my keys" => -> { delete account_key_path(public_keys(:alice)) },
       "add my key to a server" => -> { post server_my_key_accesses_path(servers(:web)) },
-      "remove my key from a server" => -> { delete server_my_key_access_path(servers(:web), 0) }
+      "remove my key from a server" => -> { delete server_my_key_access_path(servers(:web), 0) },
+      "extend a temporary access" => -> { patch server_temporary_access_path(servers(:web), 0), params: { duration: "60" } }
     },
     administer: {
       "DNS alerts" => -> { patch settings_dns_alerts_path, params: { dns_alerts: { outside: "1" } } },

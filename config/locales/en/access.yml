@@ -108,6 +108,7 @@ en:
       root_needed: 'Only the keys of %{login} are shown: Elio needs root (or sudo without a password) to read the other accounts.'
     account:
       login: Elio's login
+      temporary_access_hint: Temporary access, see and extend it
       unreadable: Its authorized_keys file could not be read, even as root.
       no_key: No key in this file.
       key_will_be_removed_from: The key “%{nom}” will be removed from the %{account} account of “%{server_name}”. It will no longer be able to log in to that account.
@@ -184,6 +185,11 @@ en:
       connection_ok: Connection OK
       checked_html: checked %{current}
   keys:
+    access_extension:
+      expired_title: Access already ended
+      expired_details: This temporary access has reached its end (or has been removed); grant the key again instead.
+      absent_title: Key not found
+      absent_details: The key is no longer in the authorized_keys file of %{account} with an expiry (removed or made permanent by hand?). Refresh the keys of the server.
     authorized_key_removal:
       invalid_title: Invalid key
       invalid_details: The key to delete is not a valid public key.
@@ -426,3 +432,35 @@ en:
       installed:
         one: Key installed on %{count} server
         other: Key installed on %{count} servers
+  temporary_accesses:
+    index:
+      title: Temporary accesses · %{server_name}
+      heading: Temporary accesses
+      subtitle: Keys granted for a limited time on this server. sshd refuses each one at its end (expiry-time), then Elio removes its line.
+      in_progress: In progress
+      count:
+        one: "%{count} access"
+        other: "%{count} accesses"
+      key_deleted: Key deleted from the keyring
+      since: since %{time}
+      extended:
+        one: extended once
+        other: extended %{count} times
+      extend_by: Extend by
+      extend: Extend
+      no_active: No temporary access in progress
+      no_active_text: Grant a key for a limited time from the SSH keys tab of the server (“Add a key”, duration).
+      history: History
+      history_meta: "%{count} most recent"
+      key: Key
+      account: Account
+      started: Start
+      ended: End
+      outcome: Outcome
+      expired: Expired
+      ended_early: Removed or replaced before its end
+      no_history: No ended temporary access
+      no_history_text: Temporary accesses appear here once they have expired or been removed.
+  temporary_accesses_controller:
+    extended: "%{name} on %{account}: extended by %{label}, until %{date}."
+    extend_failed: 'Access not extended: %{error_title}. %{error_details}'

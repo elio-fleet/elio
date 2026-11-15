@@ -108,6 +108,7 @@ fr:
       root_needed: 'Seules les clés de %{login} sont affichées : Elio a besoin de root (ou de sudo sans mot de passe) pour lire les autres comptes.'
     account:
       login: connexion d'Elio
+      temporary_access_hint: Accès temporaire, le voir et le prolonger
       unreadable: Son fichier authorized_keys n'a pas pu être lu, même en root.
       no_key: Aucune clé dans ce fichier.
       key_will_be_removed_from: La clé « %{nom} » sera supprimée du compte %{account} de « %{server_name} ». Elle ne pourra plus se connecter à ce compte.
@@ -184,6 +185,11 @@ fr:
       connection_ok: Connexion OK
       checked_html: vérifié %{current}
   keys:
+    access_extension:
+      expired_title: Accès déjà terminé
+      expired_details: Cet accès temporaire est arrivé à son terme (ou a été retiré) ; accordez de nouveau la clé.
+      absent_title: Clé introuvable
+      absent_details: La clé n'est plus dans le fichier authorized_keys de %{account} avec une expiration (retirée ou rendue permanente à la main ?). Rafraîchissez les clés du serveur.
     authorized_key_removal:
       invalid_title: Clé invalide
       invalid_details: La clé à supprimer n'est pas une clé publique valide.
@@ -426,3 +432,35 @@ fr:
       installed:
         one: Clé installée sur %{count} serveur
         other: Clé installée sur %{count} serveurs
+  temporary_accesses:
+    index:
+      title: Accès temporaires · %{server_name}
+      heading: Accès temporaires
+      subtitle: Clés accordées pour une durée limitée sur ce serveur. sshd refuse chacune à son terme (expiry-time), puis Elio retire sa ligne.
+      in_progress: En cours
+      count:
+        one: "%{count} accès"
+        other: "%{count} accès"
+      key_deleted: Clé supprimée du trousseau
+      since: depuis le %{time}
+      extended:
+        one: prolongé une fois
+        other: prolongé %{count} fois
+      extend_by: Prolonger de
+      extend: Prolonger
+      no_active: Aucun accès temporaire en cours
+      no_active_text: Accordez une clé pour une durée limitée depuis l'onglet Clés SSH du serveur (« Ajouter une clé », durée).
+      history: Historique
+      history_meta: "%{count} plus récents"
+      key: Clé
+      account: Compte
+      started: Début
+      ended: Fin
+      outcome: Issue
+      expired: Expiré
+      ended_early: Retiré ou remplacé avant son terme
+      no_history: Aucun accès temporaire terminé
+      no_history_text: Les accès temporaires apparaissent ici une fois expirés ou retirés.
+  temporary_accesses_controller:
+    extended: "%{name} sur %{account} : prolongé de %{label}, jusqu'au %{date}."
+    extend_failed: "Accès non prolongé : %{error_title}. %{error_details}"

@@ -14,6 +14,16 @@ class ExpireTemporaryAccessesJobTest < ActiveJob::TestCase
     assert_enqueued_with(job: ExpireTemporaryAccessJob, args: [ expired ])
   end
 
+  test "reminds once of the accesses about to end" do
+    access = create_temporary_access(expires_at: 5.minutes.from_now)
+    access.update_column(:created_at, 1.hour.ago)
+
+    2.times { ExpireTemporaryAccessesJob.perform_now }
+
+    assert_equal [ access.fingerprint ], Activity.of_kind(:key_expiring).map { |activity| activity.data["fingerprint"] }
+    assert_no_enqueued_jobs only: ExpireTemporaryAccessJob
+  end
+
   test "runs every minute in development and production" do
     recurring = YAML.load_file(Rails.root.join("config/recurring.yml"), aliases: true)
     %w[development production].each do |environment|

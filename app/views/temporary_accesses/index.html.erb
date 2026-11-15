@@ -1,0 +1,69 @@
+<% content_for :title, t("title", page: t(".title", server_name: @server.name)) %>
+
+<%= page_header t(".heading"), subtitle: t(".subtitle"),
+                crumbs: [ [ t("nav.fleet"), servers_path ], [ @server.name, server_path(@server, tab: "keys") ], t(".heading") ] %>
+
+<div class="space-y-6">
+  <%= panel t(".in_progress"), meta: t(".count", count: @active.size), icon: :clock, id: "active-temporary-accesses" do %>
+    <% if @active.any? %>
+      <ul class="divide-y divide-line">
+        <% @active.each do |access| %>
+          <li id="<%= dom_id(access) %>" class="temporary-access flex flex-wrap items-center gap-x-4 gap-y-2 px-4 py-3">
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-sm font-medium"><%= access.public_key ? link_to(access.public_key.name, public_key_path(access.public_key), class: "hover:text-accent hover:underline") : t(".key_deleted") %></p>
+              <p class="text-xs text-ink-3">
+                <span class="font-mono"><%= access.unix_user %></span> ·
+                <%= t(".since", time: l(access.created_at, format: :short)) %> ·
+                <%= relative_time_tag access.expires_at, prefix: t("public_keys.accesses.expires"), expired: t("public_keys.accesses.expired"), class: "access-expiry" %>
+                <% if access.extensions_count.positive? %> · <%= t(".extended", count: access.extensions_count) %><% end %>
+              </p>
+            </div>
+            <% if can?(:operate) && !access.expired? %>
+              <%= form_with url: server_temporary_access_path(@server, access), method: :patch, class: "extend-access flex items-center gap-2", data: { controller: "quiet-submit" } do %>
+                <%= label_tag :duration, t(".extend_by"), for: dom_id(access, :duration), class: "text-xs text-ink-3" %>
+                <%= select_tag :duration, options_for_select(TemporaryAccess.options, "60"), id: dom_id(access, :duration), class: "input py-1 text-sm" %>
+                <%= button_tag t(".extend"), type: "submit", class: "btn btn-secondary" %>
+              <% end %>
+            <% end %>
+          </li>
+        <% end %>
+      </ul>
+    <% else %>
+      <%= empty_state t(".no_active"), t(".no_active_text"), icon: :clock %>
+    <% end %>
+  <% end %>
+
+  <%= panel t(".history"), meta: t(".history_meta", count: TemporaryAccessesController::HISTORY_LIMIT), icon: :list_bullet, id: "temporary-access-history" do %>
+    <% if @history.any? %>
+      <div class="overflow-x-auto">
+        <table class="table-dense">
+          <thead>
+            <tr>
+              <th class="pl-4"><%= t(".key") %></th>
+              <th><%= t(".account") %></th>
+              <th class="col-nowrap"><%= t(".started") %></th>
+              <th class="col-nowrap"><%= t(".ended") %></th>
+              <th class="pr-4"><%= t(".outcome") %></th>
+            </tr>
+          </thead>
+          <tbody>
+            <% @history.each do |access| %>
+              <tr id="<%= dom_id(access) %>" class="past-temporary-access">
+                <td class="pl-4 col-truncate" title="<%= access.fingerprint %>"><%= access.public_key&.name || t(".key_deleted") %></td>
+                <td class="font-mono"><%= access.unix_user %></td>
+                <td class="col-nowrap tabular-nums"><%= l(access.created_at, format: :short) %></td>
+                <td class="col-nowrap tabular-nums"><%= l(access.ended_at, format: :short) %></td>
+                <td class="pr-4">
+                  <%= access.expired_at_term? ? status_badge(:neutral, t(".expired")) : status_badge(:neutral, t(".ended_early")) %>
+                  <% if access.extensions_count.positive? %><span class="ml-1 text-xs text-ink-3"><%= t(".extended", count: access.extensions_count) %></span><% end %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% else %>
+      <%= empty_state t(".no_history"), t(".no_history_text"), icon: :list_bullet %>
+    <% end %>
+  <% end %>
+</div>
