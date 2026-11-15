@@ -95,7 +95,7 @@
 
   <%= panel "À traiter", meta: "2 points", id: "design-attention" do %>
     <%= attention_list do %>
-      <%= attention_item :crit, "Disque / à 94 %", servers: [ "db-prod" ], action: [ "Voir le disque", "#" ] %>
+      <%= attention_item :crit, "Disque / à 94 %", servers: [ "db-prod" ], since: 3.days.ago, action: [ "Voir le disque", "#" ] %>
       <%= attention_item :warn, "Redémarrage requis", servers: [ "worker-1" ], action: [ "Voir", "#" ] %>
     <% end %>
     <%= rule.("une action nommée par ligne", "onze boutons « Voir » identiques") %>

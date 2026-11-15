@@ -3,20 +3,25 @@
 # Elio key), unknown keys, pending security updates, servers never inventoried;
 # then, apart (docker_items), Docker: the servers whose Docker is to watch or
 # critical (Inventory::DockerStatus) and the fixable CVEs of the images.
-# Each item names its action ("See the disks") and the servers it is about.
+# Each item names its action ("See the disks", or the page with the command
+# that fixes it), the servers it is about and, for a server's problem, since
+# when it has been there (ProblemSince, nil when the journal does not say).
 # Servers must come with their inventory snapshots loaded.
 class AttentionList
-  Item = Data.define(:tone, :icon, :subject, :text, :action, :path, :servers) do
-    def initialize(tone:, icon:, subject:, text:, action:, path:, servers: [])
+  Item = Data.define(:tone, :icon, :subject, :text, :action, :path, :servers, :since) do
+    def initialize(tone:, icon:, subject:, text:, action:, path:, servers: [], since: nil)
       super
     end
   end
 
-  # The action of a health reason: its label (attention_list.actions.<key>) and the tab it opens.
+  # The action of a health reason: its label (attention_list.actions.<key>), the
+  # tab it opens, its anchor and other parameters. The CVEs open the view by
+  # package of the fixable ones, where each package unfolds to its command.
+  FIXES = [ :fixes, "vulnerabilities", nil, { view: "packages", fixable: 1 } ].freeze
   REASON_ACTIONS = {
     "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "server-health-details" ], "load" => [ :health, nil, "server-health-details" ],
     "oom_kills" => [ :health, nil, "server-health-details" ],
-    "vulnerability" => [ :fixes, "vulnerabilities" ], "vulnerabilities" => [ :fixes, "vulnerabilities" ],
+    "vulnerability" => FIXES, "vulnerabilities" => FIXES,
     "service_failed" => [ :services, "services" ], "services_failed" => [ :services, "services" ],
     "units_failed" => [ :services, "services" ], "units_failed_more" => [ :services, "services" ],
     "timer_failed" => [ :schedules, "schedules" ], "timers_failed" => [ :schedules, "schedules" ], "timer_late" => [ :schedules, "schedules" ], "timers_late" => [ :schedules, "schedules" ],
@@ -35,6 +40,7 @@ class AttentionList
     @insights = insights
     @summary = summary
     @routes = routes
+    @since = ProblemSince.new(@servers)
   end
 
   # The named action of a health (or Docker) reason of a server: [label, path], or a plain "See".
@@ -42,10 +48,10 @@ class AttentionList
     key = reason["key"].to_s
     return [ I18n.t("attention_list.see_docker"), routes.server_path(server, tab: "docker") ] if key.start_with?("health.container", "health.image")
 
-    label, tab, anchor = REASON_ACTIONS[key.delete_prefix("health.")] || EXTENSION_ACTIONS.find { |prefix, _| key.start_with?(prefix) }&.last
+    label, tab, anchor, params = REASON_ACTIONS[key.delete_prefix("health.")] || EXTENSION_ACTIONS.find { |prefix, _| key.start_with?(prefix) }&.last
     return [ I18n.t("attention_list.see"), routes.server_path(server) ] unless label
 
-    [ I18n.t("attention_list.actions.#{label}"), routes.server_path(server, tab: tab, anchor: anchor) ]
+    [ I18n.t("attention_list.actions.#{label}"), routes.server_path(server, tab: tab, anchor: anchor, **params.to_h) ]
   end
 
   def items
@@ -60,8 +66,15 @@ class AttentionList
 
   def size = items.size + docker_items.size
 
-  # Everything, Docker included, by gravity: { "crit" => [...], "warn" => [...], "info" => [...] }.
-  def by_tone = (items + docker_items).sort_by { |item| [ TONE_ORDER.fetch(item.tone), item.subject ] }.group_by(&:tone)
+  # Everything, Docker included, by gravity: { "crit" => [...], "warn" => [...], "info" => [...] };
+  # only the `limit` most serious items when given (the overview, until "See all").
+  def by_tone(limit: nil)
+    all = (items + docker_items).sort_by { |item| [ TONE_ORDER.fetch(item.tone), item.subject ] }
+    (limit ? all.first(limit) : all).group_by(&:tone)
+  end
+
+  # How many items of each gravity, shown or not: { "crit" => 2, "warn" => 5 }.
+  def tone_counts = (items + docker_items).map(&:tone).tally
 
   private
 
@@ -69,20 +82,24 @@ class AttentionList
     @servers.flat_map do |server|
       items = []
       if server.health_state == "off"
-        items << Item.new("crit", :signal_slash, server.name, I18n.t("attention_list.unreachable"), I18n.t("attention_list.actions.connection"), @routes.server_path(server), [ server_ref(server) ])
+        items << Item.new("crit", :signal_slash, server.name, I18n.t("attention_list.unreachable"), I18n.t("attention_list.actions.connection"), @routes.server_path(server), [ server_ref(server) ],
+                          @since.unreachable(server))
       elsif (reasons = without_fleet_reasons(server.health_reasons, VULNERABILITY_REASONS, vulnerabilities_item)).any?
         first = reasons.first
         more = reasons.size > 1 ? " (+#{reasons.size - 1})" : ""
         label, path = reason_action(server, first)
-        items << Item.new(first["tone"], first["tone"] == "crit" ? :x_mark : :exclamation_triangle, server.name, "#{Inventory::HealthStatus.text(first)}#{more}", label, path, [ server_ref(server) ])
+        items << Item.new(first["tone"], first["tone"] == "crit" ? :x_mark : :exclamation_triangle, server.name, "#{Inventory::HealthStatus.text(first)}#{more}", label, path, [ server_ref(server) ],
+                          @since.reason(server, first, :health))
       elsif server.ssh_ok == false
-        items << Item.new("crit", :key, server.name, I18n.t("attention_list.key_refused"), I18n.t("attention_list.install_key"), @routes.server_path(server), [ server_ref(server) ])
+        items << Item.new("crit", :key, server.name, I18n.t("attention_list.key_refused"), I18n.t("attention_list.install_key"), @routes.server_path(server), [ server_ref(server) ],
+                          @since.key_refused(server))
       end
       if (orphans = @insights.orphans_by_server_id[server.id]).present?
         items << Item.new("warn", :key, server.name, I18n.t("attention_list.unknown_keys", count: orphans.size), I18n.t("attention_list.see_keys"), @routes.server_path(server, tab: "keys"), [ server_ref(server) ])
       end
       if server.inventoried_at.nil? && server.ssh_ok
-        items << Item.new("info", :pulse, server.name, I18n.t("attention_list.no_inventory"), I18n.t("attention_list.actions.inventory"), @routes.server_path(server), [ server_ref(server) ])
+        items << Item.new("info", :pulse, server.name, I18n.t("attention_list.no_inventory"), I18n.t("attention_list.actions.inventory"), @routes.server_path(server), [ server_ref(server) ],
+                          server.created_at)
       end
       items
     end
@@ -101,7 +118,7 @@ class AttentionList
 
       more = reasons.size > 1 ? " (+#{reasons.size - 1})" : ""
       Item.new(server.docker_status, :docker, server.name, "#{Inventory::HealthStatus.text(reasons.first)}#{more}", I18n.t("attention_list.see_docker"),
-               @routes.server_path(server, tab: "docker"), [ server_ref(server) ])
+               @routes.server_path(server, tab: "docker"), [ server_ref(server) ], @since.reason(server, reasons.first, :docker))
     end
   end
 
@@ -122,9 +139,15 @@ class AttentionList
     @vulnerabilities_item = find_vulnerabilities_item
   end
 
+  # On a single server, straight to its packages to update and their commands
+  # (the fleet page lists the servers, the commands are on each server's page).
   def find_vulnerabilities_item
-    serious_vulnerabilities_item("crit", :host, :vulnerabilities, :shield_exclamation, I18n.t("attention_list.see_vulnerabilities")) do |minimum|
-      @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: "host")
+    serious_vulnerabilities_item("crit", :host, :vulnerabilities, :shield_exclamation, I18n.t("attention_list.see_vulnerabilities")) do |minimum, servers|
+      if servers.one?
+        [ I18n.t("attention_list.actions.fixes"), @routes.server_path(servers.first, tab: "vulnerabilities", view: "packages", fixable: 1, severity: minimum) ]
+      else
+        @routes.vulnerabilities_path(fixable: 1, severity: minimum, origin: "host")
+      end
     end
   end
 
@@ -152,7 +175,8 @@ class AttentionList
 
     ids = scope.distinct.pluck(:server_id)
     servers = @servers.select { |server| ids.include?(server.id) }
-    Item.new(tone, icon, I18n.t("count.servers", count: servers.size), I18n.t("attention_list.#{key}", count: cves), action, yield(minimum), servers.map { |server| server_ref(server) })
+    action, path = Array(yield(minimum, servers)).then { |found| found.one? ? [ action, found.first ] : found }
+    Item.new(tone, icon, I18n.t("count.servers", count: servers.size), I18n.t("attention_list.#{key}", count: cves), action, path, servers.map { |server| server_ref(server) })
   end
 
   def server_ref(server) = [ server.name, @routes.server_path(server) ]

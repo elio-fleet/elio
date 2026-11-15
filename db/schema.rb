@@ -520,6 +520,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_110010) do
     t.datetime "ended_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "extensions_count", default: 0, null: false
+    t.datetime "expiry_reminded_at"
     t.index ["expires_at"], name: "index_temporary_accesses_active_expiry", where: "(ended_at IS NULL)"
     t.index ["public_key_id"], name: "index_temporary_accesses_on_public_key_id"
     t.index ["server_id", "unix_user", "fingerprint"], name: "index_temporary_accesses_active_key", unique: true, where: "(ended_at IS NULL)"

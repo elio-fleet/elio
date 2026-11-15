@@ -4,8 +4,9 @@
 # by its groups and by itself, and the ufw rules to copy. Elio never applies them.
 class Inventory::PortAnalysis
   # firewall: allowed (rule found), blocked (default deny, no rule), open (no
-  # filtering firewall), docker (published by Docker, which bypasses ufw) or
-  # unknown (firewall not readable).
+  # filtering firewall), docker (published by Docker, which bypasses the
+  # firewall), docker_user (published by Docker, with rules in its
+  # DOCKER-USER chain that may filter it) or unknown (firewall not readable).
   Port = Data.define(:port, :proto, :addresses, :scope, :process, :unit, :container, :firewall, :unexpected) do
     def key = "#{port}/#{proto}"
     def public? = scope == "public"
@@ -48,10 +49,22 @@ class Inventory::PortAnalysis
 
   def firewall_active? = firewall["active"] == true
 
+  # Rules of Docker's DOCKER-USER chain (empty: Docker's published ports are
+  # filtered by nothing), nil without Docker or with an older inventory.
+  def docker_user_rules = firewall["docker_user"]
+
+  # The firewall filters IPv4 only: IPv6 reaches every listening port.
+  def ipv6_open? = firewall_active? && firewall["ipv6_open"] == true
+
+  # The allow rules by family: { nil (both) => [...], "ipv4" => [...], "ipv6" => [...] }.
+  def rules_by_family
+    Array(firewall["allowed"]).group_by { |rule| rule["family"] }.sort_by { |family, _rules| [ nil, "ipv4", "ipv6" ].index(family) || 3 }.to_h
+  end
+
   def firewall_label
     case firewall["tool"]
-    when "ufw", "nftables", "iptables"
-      tool = { "ufw" => "ufw", "nftables" => "nftables", "iptables" => "iptables" }.fetch(firewall["tool"])
+    when "ufw", "firewalld", "nftables", "iptables"
+      tool = firewall["tool"]
       firewall_active? ? I18n.t(firewall["default_incoming"] == "deny" ? "inventory.port_analysis.active_deny" : "inventory.port_analysis.active_allow", tool: tool) : I18n.t("inventory.port_analysis.inactive", tool: tool)
     when "none" then I18n.t("inventory.port_analysis.no_firewall")
     else I18n.t("inventory.port_analysis.unknown_firewall")
@@ -98,17 +111,36 @@ class Inventory::PortAnalysis
 
   def listening = collected? ? Array(@snapshot.data["listening"]) : []
 
-  # { [port, proto] => { name:, address: } } from the containers' published ports.
+  # { [port, proto] => { name:, address: } } from the containers' published
+  # ports: the "docker ps" text of the services inventory, completed by the
+  # docker inventory (ports with their exposure) when it has them.
   def published
     @published ||= begin
       services = server.inventory("services")
       containers = services&.collected? ? Array(services.data["containers"]) : []
-      containers.each_with_object({}) do |container, result|
+      result = containers.each_with_object({}) do |container, ports|
         next unless container["state"] == "running"
 
         container["ports"].to_s.scan(%r{(?:(\[?[\d.:a-f]*\]?):)?(\d+)->\d+/(tcp|udp)}).each do |address, port, proto|
-          result[[ port.to_i, proto ]] ||= { name: container["name"], address: address.to_s.delete("[]").presence || "0.0.0.0" }
+          ports[[ port.to_i, proto ]] ||= { name: container["name"], address: address.to_s.delete("[]").presence || "0.0.0.0" }
         end
+      end
+      docker_published.each { |key, container| result[key] ||= container }
+      result
+    end
+  end
+
+  # [{ "address", "port", "target" => "80/tcp", "exposure" }] of the running
+  # containers of the docker inventory; a port on the loopback is not published.
+  def docker_published
+    docker = server.inventory("docker")
+    containers = docker&.collected? ? Array(docker.data["containers"]) : []
+    containers.select { |container| container["state"] == "running" && container["ports"].is_a?(Array) }.each_with_object({}) do |container, result|
+      container["ports"].each do |port|
+        next unless port.is_a?(Hash) && port["port"].to_i.positive? && port["exposure"] != "loopback"
+
+        proto = port["target"].to_s[%r{/(tcp|udp)\z}, 1] || "tcp"
+        result[[ port["port"].to_i, proto ]] ||= { name: container["name"], address: port["address"].presence || "0.0.0.0" }
       end
     end
   end
@@ -128,7 +160,7 @@ class Inventory::PortAnalysis
   def firewall_state(port, proto, container)
     return "unknown" if firewall["active"].nil?
     return "open" unless firewall_active? && firewall["default_incoming"] == "deny"
-    return "docker" if container
+    return docker_user_rules.present? ? "docker_user" : "docker" if container
 
     rule_allows?(port, proto) ? "allowed" : "blocked"
   end

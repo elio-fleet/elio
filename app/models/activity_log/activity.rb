@@ -16,6 +16,8 @@ class Activity < ApplicationRecord
     Kind.new(:key_added, :keys, :info),
     Kind.new(:key_removed, :keys, :info),
     Kind.new(:key_expired, :keys, :info),
+    Kind.new(:key_expiring, :keys, :info),
+    Kind.new(:key_access_extended, :keys, :info),
     Kind.new(:unknown_key_detected, :security, :warning),
     Kind.new(:key_disappeared, :security, :warning),
     Kind.new(:ssh_access_lost, :security, :critical),

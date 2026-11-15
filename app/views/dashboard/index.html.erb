@@ -39,13 +39,21 @@
   <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
     <%= panel t(".do"), meta: (t(".most_serious_first") if @attention.any?), id: "attention" do %>
       <% if @attention.any? %>
-        <% @attention.by_tone.each do |tone, items| %>
-          <%= tag.p t(".group_#{tone}", count: items.size), class: "attention-group border-t border-line bg-subtle/60 px-4 py-1.5 text-[11px] font-semibold tracking-wider text-ink-3 uppercase first:border-t-0", data: { tone: tone } %>
+        <% counts = @attention.tone_counts %>
+        <% limit = DashboardController::ATTENTION_SHOWN %>
+        <% @attention.by_tone(limit: (limit unless @attention_all)).each do |tone, items| %>
+          <%= tag.p t(".group_#{tone}", count: counts[tone]), class: "attention-group border-t border-line bg-subtle/60 px-4 py-1.5 text-[11px] font-semibold tracking-wider text-ink-3 uppercase first:border-t-0", data: { tone: tone } %>
           <%= attention_list do %>
             <% items.each do |item| %>
-              <%= attention_item (tone == "info" ? :neutral : tone.to_sym), item.text, icon: item.icon, servers: item.servers, action: [ item.action, item.path ] %>
+              <%= attention_item (tone == "info" ? :neutral : tone.to_sym), item.text, icon: item.icon, servers: item.servers, since: item.since, action: [ item.action, item.path ] %>
             <% end %>
           <% end %>
+        <% end %>
+        <% if @attention.size > limit %>
+          <p class="attention-more border-t border-line px-4 py-2 text-sm">
+            <%= @attention_all ? link_to(t(".attention_fewer"), root_path(anchor: "attention"), class: "text-accent hover:underline")
+                               : link_to(t(".attention_all", count: @attention.size - limit), root_path(attention: "all", anchor: "attention"), class: "text-accent hover:underline") %>
+          </p>
         <% end %>
       <% else %>
         <%= empty_state t(".nothing_to_report"), t(".nothing_report_servers_reachable"), icon: :check_circle %>

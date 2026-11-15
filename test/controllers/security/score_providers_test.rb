@@ -114,9 +114,50 @@ class ScoreProvidersTest < ActionDispatch::IntegrationTest
 
     assert_select "li.detail-provider-score", 3, "NVD, Red Hat, CVE.org; EPSS and KEV apart"
     assert_select "li.detail-provider-score[data-provider=nvd] .score-pill[data-color=red]", "9,3"
-    assert_select "li.detail-provider-score[data-provider=redhat] .provider-pending", /pas encore demandé/
+    assert_select "li.detail-provider-score[data-provider=redhat] .provider-asking", /demande en cours/
     assert_select "li.detail-provider-score[data-provider=cveorg]", /pas de note chez ce fournisseur/
     assert_select ".detail-score .score-pill[data-color=red]", "9,3"
+  end
+
+  test "opening a CVE asks at once the providers that never answered, the page reloads until they did" do
+    vulnerable(servers(:web), "CVE-2024-6387")
+    CveScore.store("nvd", [ { cve: "CVE-2024-6387", score: 9.3, version: "3.1" } ])
+    sign_in users(:viewer)
+
+    assert_enqueued_with(job: FetchCveScoresJob, args: [ "CVE-2024-6387" ]) do
+      get vulnerability_path("CVE-2024-6387"), headers: { "Turbo-Frame" => "vulnerability-detail" }
+    end
+    assert_select "li.detail-provider-score[data-provider=redhat] .provider-asking", /demande en cours/
+    assert_select "turbo-frame#vulnerability-detail [data-controller=auto-refresh]"
+
+    assert_no_enqueued_jobs { get vulnerability_path("CVE-2024-6387"), headers: { "Turbo-Frame" => "vulnerability-detail" } }
+    assert_select "[data-controller=auto-refresh]", 1, "still being asked"
+
+    with_score_answers("access.redhat.com" => "redhat-CVE-2024-6387.json", "cveawg.mitre.org" => :limited) { perform_enqueued_jobs }
+    get vulnerability_path("CVE-2024-6387"), headers: { "Turbo-Frame" => "vulnerability-detail" }
+    assert_select "li.detail-provider-score[data-provider=redhat] .score-pill", "8,1"
+    assert_select "li.detail-provider-score[data-provider=cveorg] .provider-pending", /pas encore demandé \(prochain passage des notes\)/, "asked again in an hour at most"
+    assert_select "[data-controller=auto-refresh]", 0
+
+    CveScore.store("nvd", [ { cve: "CVE-2023-0001", score: 5.0 } ])
+    assert_no_enqueued_jobs { get vulnerability_path("CVE-2023-0001") }
+    assert_response :success
+    assert_select ".provider-asking", 0, "only the CVEs of the fleet are asked"
+  end
+
+  test "the detail of a CVE lists its Debian and Ubuntu advisories and its fixes" do
+    vulnerable(servers(:web), "CVE-2024-6387")
+    references = [ { "url" => "https://www.debian.org/security/2024/dsa-5724", "kind" => "advisory" },
+                   { "url" => "https://github.com/openssh/openssh-portable/commit/81c1099d22b81ebfd20a334ce986c4f753b0db29", "kind" => "fix" } ]
+    %w[nvd redhat cveorg].each { |key| CveScore.store(key, [ { cve: "CVE-2024-6387", score: 8.1, data: (key == "nvd" ? { "references" => references } : {}) } ]) }
+    sign_in users(:viewer)
+
+    assert_no_enqueued_jobs { get vulnerability_path("CVE-2024-6387") }
+
+    assert_select ".detail-references [data-kind=advisory]", text: /Avis\s+DSA-5724/
+    assert_select ".detail-references [data-kind=advisory] a[href=?][target=_blank][rel='noopener noreferrer']", "https://www.debian.org/security/2024/dsa-5724"
+    assert_select ".detail-references [data-kind=fix]", text: /Correctifs\s+github\.com/
+    assert_select "[data-controller=auto-refresh]", 0
   end
 
   test "the score colours are set in the settings and used in the lists" do

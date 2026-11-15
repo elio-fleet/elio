@@ -16,9 +16,10 @@ module ActiveSupport
     # Setup all fixtures in test/fixtures/*.yml for all tests in alphabetical order.
     fixtures :all
 
-    # Rate limits of the public pages are kept in memory across tests: start fresh.
+    # Rate limits (public pages, scores asked on demand) are kept in memory across tests: start fresh.
     setup do
       Throttled::STORE.clear
+      Vulnerabilities::Scores::OnDemand::STORE.clear
       ApplicationController.setup_done = false # some tests delete every user
     end
 

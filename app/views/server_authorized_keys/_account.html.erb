@@ -52,8 +52,10 @@
                 <% end %>
               <% end %>
               <% if (access = @temporary_accesses[[ account.unix_user, key.fingerprint ]]) %>
-                <%= relative_time_tag access.expires_at, prefix: t("public_keys.accesses.expires"), expired: t("public_keys.accesses.expired"),
-                      class: "key-expiry inline-flex items-center rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn-ink ring-1 ring-inset ring-warn/20" %>
+                <%= link_to server_temporary_accesses_path(@server), data: { turbo_frame: "_top" }, title: t("server_authorized_keys.account.temporary_access_hint") do %>
+                  <%= relative_time_tag access.expires_at, prefix: t("public_keys.accesses.expires"), expired: t("public_keys.accesses.expired"),
+                        class: "key-expiry inline-flex items-center rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn-ink ring-1 ring-inset ring-warn/20 hover:underline" %>
+                <% end %>
               <% end %>
               <% if key.matches?(@app_key) %>
                 <span class="key-badge key-master rounded-full bg-accent-fill px-2 py-0.5 text-xs font-semibold text-white" title="<%= t("server_authorized_keys.index.ssh_key_elio_application") %>"><%= t("words.master") %></span>

@@ -45,6 +45,8 @@
                   <% if score.severity %><span class="text-xs text-ink-3"><%= score.severity %></span><% end %>
                 <% elsif score %>
                   <span class="text-xs text-ink-3"><%= t(".score_provider_asked_again_html", _: (relative_time_tag score.fetched_at + CveScore::REFRESH_MISSING)) %></span>
+                <% elsif @scores_pending && provider.enabled? %>
+                  <span class="provider-pending provider-asking text-xs text-ink-3"><%= t(".asking_now") %></span>
                 <% else %>
                   <span class="provider-pending text-xs text-ink-3"><%= t(".not_asked_yet_next") %></span>
                 <% end %>
@@ -59,6 +61,8 @@
           </li>
         <% end %>
       </ul>
+      <%# Reloads the frame while the missing scores are being asked (Vulnerabilities::Scores::OnDemand). %>
+      <% if @scores_pending %><div data-controller="auto-refresh" data-auto-refresh-interval-value="3000" hidden></div><% end %>
     </section>
 
     <% if @server_rows.any? %>
@@ -126,6 +130,25 @@
         <p class="mt-1 text-xs text-ink-2">
           <%= safe_join(@feed_entries.map { |entry| "#{t("words.label_value", label: "#{entry.source == "ubuntu" ? "Ubuntu" : "Debian"} #{entry.release}", value: entry.fixed_version || t("words.no_fix"))} (#{[ Vulnerability.severity_label(entry.severity).downcase, (Vulnerability.distro_status_label(entry.distro_status, :inline) if !entry.fixed_version && entry.distro_status) ].compact.join(", ")})" }, " · ") %>
         </p>
+      </section>
+    <% end %>
+
+    <% if @references.any? %>
+      <section class="detail-references">
+        <h3 class="text-xs font-semibold tracking-wide text-ink-3 uppercase"><%= t(".references") %></h3>
+        <dl class="mt-2 space-y-1.5 text-sm">
+          <% @references.group_by { |reference| reference["kind"] }.each do |kind, references| %>
+            <div class="flex flex-wrap gap-x-3 gap-y-1" data-kind="<%= kind %>">
+              <dt class="w-28 shrink-0 text-xs text-ink-3"><%= t(".reference_kinds.#{kind}") %></dt>
+              <dd class="flex min-w-0 flex-1 flex-wrap gap-x-3 gap-y-1">
+                <% references.first(10).each do |reference| %>
+                  <%= link_to Vulnerabilities::References.label(reference["url"]), reference["url"], target: "_blank", rel: "noopener noreferrer", title: reference["url"],
+                              class: "break-all text-xs text-accent hover:underline #{"font-mono" if kind == "advisory"}" %>
+                <% end %>
+              </dd>
+            </div>
+          <% end %>
+        </dl>
       </section>
     <% end %>
 

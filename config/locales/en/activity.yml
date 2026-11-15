@@ -10,6 +10,12 @@ en:
       key_expired:
         label: Temporary access expired
         description: A temporary access has expired and its key has been removed.
+      key_expiring:
+        label: Temporary access ending soon
+        description: A temporary access ends in a few minutes (sent once, for accesses longer than 30 minutes).
+      key_access_extended:
+        label: Temporary access extended
+        description: The end of a temporary access has been pushed back.
       unknown_key_detected:
         label: Unknown key detected
         description: A key missing from the keyring has been found on a server.
@@ -251,6 +257,8 @@ en:
       key_added_for: "“%{name}” added on %{target} for %{duration}"
       key_removed: Key “%{name}” deleted from %{target}
       key_expired: Temporary access of “%{name}” removed from %{target}
+      key_expiring: Temporary access of “%{name}” on %{target} ends at %{time}
+      key_access_extended: Temporary access of “%{name}” on %{target} extended by %{duration}, until %{time}
       unknown_key_detected: Unknown key “%{name}” found on %{target}
       key_disappeared: Key “%{name}” gone from %{target}
       ssh_access_lost: "“%{server}” refuses Elio's key"

@@ -154,6 +154,43 @@ class Inventory::PortAnalysisTest < ActiveSupport::TestCase
     assert_includes analysis.suggested_ufw_rules, "sudo ufw allow from 0.0.0.0/0 to any port 22 proto tcp comment 'ssh (Elio)'"
   end
 
+  test "a Docker port is filtered by nothing, or maybe by the DOCKER-USER chain when it has rules" do
+    collect_ports(:ufw_docker)
+    collect_containers([ { "name" => "web", "state" => "running", "ports" => "0.0.0.0:8080->80/tcp" } ])
+
+    assert_equal [ "docker_user", "ufw-user-forward" ], [ analysis.public_ports.find { |port| port.port == 8080 }.firewall, analysis.docker_user_rules.first.split.last ]
+
+    @server.inventory_snapshots.where(category: "ports").destroy_all
+    collect_ports(:ufw_docker, firewall: { "tool" => "ufw", "active" => true, "default_incoming" => "deny", "allowed" => [], "docker_user" => [] })
+    assert_equal "docker", analysis.public_ports.find { |port| port.port == 8080 }.firewall
+  end
+
+  test "ports published by a container in the docker inventory, the loopback ones excepted" do
+    collect_ports(:firewalld)
+    @server.inventory_snapshots.create!(category: "docker", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                        data: { "containers" => [ { "name" => "api", "state" => "running", "ports" => [ { "address" => "0.0.0.0", "port" => 3000, "target" => "3000/tcp", "exposure" => "all" },
+                                                                                                                         { "address" => "127.0.0.1", "port" => 6379, "target" => "6379/tcp", "exposure" => "loopback" } ] },
+                                                                  { "name" => "old", "state" => "exited", "ports" => [ { "address" => "0.0.0.0", "port" => 4000, "target" => "80/tcp", "exposure" => "all" } ] },
+                                                                  { "name" => "before", "state" => "running" } ] })
+
+    port = analysis.ports.find { |entry| entry.port == 3000 }
+    assert_equal [ "api", "public", "docker" ], [ port.container, port.scope, port.firewall ]
+    assert_not analysis.ports.any? { |entry| entry.port.in?([ 6379, 4000 ]) }
+    assert_equal "firewalld actif (entrant : bloqué par défaut)", analysis.firewall_label
+  end
+
+  test "the rules by family, and an IPv6 left open" do
+    collect_ports
+
+    assert_equal [ "ipv4", "ipv6" ], analysis.rules_by_family.keys
+    assert_equal [ "22/tcp" ], analysis.rules_by_family["ipv6"].map { |rule| rule["rule"] }
+    assert_not analysis.ipv6_open?
+
+    @server.inventory_snapshots.destroy_all
+    collect_ports(:ufw_docker)
+    assert analysis.ipv6_open?
+  end
+
   test "nothing collected" do
     assert_not analysis.collected?
     assert_empty analysis.ports

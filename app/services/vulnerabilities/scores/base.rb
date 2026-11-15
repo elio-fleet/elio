@@ -1,6 +1,7 @@
 # A score provider: `fetch(cves)` stores what it knows of those CVEs
-# (CveScore) and returns how many it asked about; `test(cve)` returns the
-# Score it would store, without storing it (the settings' test button).
+# (CveScore) and returns how many it asked about; `fetch_one(cve)` asks for
+# one CVE right away; `test(cve)` returns the Score it would store, without
+# storing it (the settings' test button).
 class Vulnerabilities::Scores::Base
   Score = Data.define(:score, :version, :vector, :severity, :data) do
     def initialize(score:, version: nil, vector: nil, severity: nil, data: {}) = super
@@ -18,6 +19,15 @@ class Vulnerabilities::Scores::Base
   end
 
   def test(cve) = lookup(cve)
+
+  # One CVE at once (its page was opened), stored like in a run, then a
+  # pause at the provider's pace before the next request.
+  def fetch_one(cve)
+    score = lookup(cve)
+    CveScore.store(provider.key, [ { cve: cve, **(score&.to_h || { score: nil }) } ])
+  ensure
+    sleep(provider.setting("delay_ms").to_f / 1000) if pause?
+  end
 
   private
 

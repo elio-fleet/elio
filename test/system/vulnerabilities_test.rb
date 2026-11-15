@@ -3,6 +3,8 @@ require "application_system_test_case"
 class VulnerabilitiesSystemTest < ApplicationSystemTestCase
   include Devise::Test::IntegrationHelpers
   include ScoreHelpers
+  include PackageHelpers
+  include VulnerabilityHelpers
 
   setup do
     vulnerable(servers(:web), "CVE-2024-6387")
@@ -33,7 +35,33 @@ class VulnerabilitiesSystemTest < ApplicationSystemTestCase
 
     find("a.vulnerability-link", text: "CVE-2024-0002").click
     assert_selector "dialog.vulnerability-dialog[open] .vulnerability-detail[data-cve='CVE-2024-0002']"
-    assert_selector "li.detail-provider-score[data-provider=nvd] .provider-pending", text: "pas encore demandé"
+    # Never asked: asked at once, the modal reloads itself meanwhile (the job does not run here).
+    assert_selector "li.detail-provider-score[data-provider=nvd] .provider-asking", text: "demande en cours"
+    sleep 3.5
+    assert_selector "dialog.vulnerability-dialog[open] .vulnerability-detail[data-cve='CVE-2024-0002'] li.detail-provider-score[data-provider=nvd] .provider-asking"
+  end
+
+  test "the fix plan of the server unfolds, and its long commands never widen a phone screen" do
+    record_packages(servers(:web), (1..30).map { |index| dpkg("libvery-long-package-name-#{index}", "1.0", source: "openssh").merge("available_version" => "2.0") } +
+                                   [ dpkg("curl", "1.0").merge("available_version" => "2.0") ])
+    servers(:web).server_vulnerabilities.create!(origin: "host", source: "debian", cve: "CVE-2024-0003", source_package: "curl", packages: [ "curl" ],
+                                                 installed_version: "1.0", fixed_version: "2.0", severity: "low")
+    visit server_path(servers(:web), tab: "vulnerabilities")
+
+    assert_no_selector "li.fix-step"
+    find("details.fix-plan summary").click
+    within("details.fix-plan[open]") do
+      assert_selector ".fix-plan-system .fix-commands", text: /sudo apt-get install --only-upgrade curl libvery-long-package-name-1 /
+      assert_selector "li.fix-step", count: 2
+      assert_selector "li.fix-step:last-child .fix-commands", text: "sudo apt-get install --only-upgrade curl"
+      assert_selector "li.fix-step button", text: "Copier", count: 2
+    end
+    page.driver.browser.execute_cdp("Emulation.setDeviceMetricsOverride", width: 375, height: 812, deviceScaleFactor: 1, mobile: true)
+    assert_selector "details.fix-plan[open] li.fix-step"
+    overflow = evaluate_script("document.documentElement.scrollWidth - document.documentElement.clientWidth")
+    assert_operator overflow, :<=, 0, "the plan scrolls the page sideways by #{overflow} px"
+  ensure
+    page.driver.browser.execute_cdp("Emulation.clearDeviceMetricsOverride")
   end
 
   test "on the Docker CVE tab, the packages of an image load when it is unfolded, and a CVE opens its detail" do

@@ -63,6 +63,7 @@ en:
       turned_off: "(turned off)"
       score_provider_asked_again_html: no score at this provider (asked again %{_})
       not_asked_yet_next: not asked yet (next scores run)
+      asking_now: being asked now…
       text_html: On %{server_name}
       source_package: Source package
       installed_packages: Installed packages
@@ -82,6 +83,10 @@ en:
       exploited_since: ", since %{date}"
       how_to_fix: How to fix it
       fix_never_run: 'Commands to run yourself: Elio only reads the servers.'
+      references: Advisories and fixes
+      reference_kinds:
+        advisory: Advisories
+        fix: Fixes
     debian_tracker:
       not_tracker: This file is not the Debian Security Tracker one
       unreadable: 'Unreadable Debian Security Tracker file: %{truncate}'
@@ -133,6 +138,28 @@ en:
       none_host: 'No fix for now: the distribution has not published a fixed version.'
       none_image: 'No fix in the distribution of the image for now: a more recent tag of the image may be based on a fixed release.'
   servers:
+    fix_plan:
+      summary_html: "Fix plan: %{steps} for %{cves}"
+      steps:
+        one: "%{count} step"
+        other: "%{count} steps"
+      never_run: commands to copy, Elio never runs them
+      all_system:
+        one: The system package, in one command
+        other: All %{count} system packages, in one command
+      ordered: Step by step, most serious first
+      packages:
+        one: "%{count} system package"
+        other: "%{count} system packages"
+      compose_html: Compose project %{name}
+      image_html: Image %{image}
+      images_containers: 'Images: %{images} · containers: %{containers}'
+      recreate: Containers started without Compose must then be recreated with their options.
+      after: After the updates
+      restart_html: Services that use an updated library keep running the old code until they restart. %{command} lists them (needrestart package, installed by default on Ubuntu).
+      reboot: Reboot the server to load the new kernel.
+      reboot_waiting: The server already waits for a reboot (reboot-required).
+      check: Elio sees the fixes at the next inventory of the server.
     vulnerabilities_card:
       whole_fleet: The whole fleet
       distribution_not_covered_elio: 'Distribution not covered: Elio knows the vulnerabilities of Debian and Ubuntu.'
