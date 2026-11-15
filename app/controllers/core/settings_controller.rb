@@ -6,6 +6,10 @@ class SettingsController < ApplicationController
   def show
     @ssh_key = SshKey.current
     @rotation = KeyRotation.in_progress
+    return unless @ssh_key
+
+    @install_guide = KeyInstallGuide.new(@ssh_key, **install_params)
+    @key_presence = KeyPresence.new
   end
 
   # The one Save of the General page: default language, health thresholds and
@@ -24,5 +28,12 @@ class SettingsController < ApplicationController
     else
       redirect_to settings_path, alert: setting.errors.full_messages.to_sentence
     end
+  end
+
+  private
+
+  # Choices of the install command form (GET, nothing is saved).
+  def install_params
+    (params.permit(install: %i[account username from])[:install]&.to_h || {}).symbolize_keys
   end
 end

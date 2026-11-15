@@ -8,7 +8,7 @@ class RunAutomationJob < ApplicationJob
   def perform(automation, task = nil)
     task&.start!
     result = automation.run!(task: task)
-    task&.refresh!(result: result)
+    task&.refresh!(result: LocalizedText.render(result)) # plain text: searched in the Journal
   rescue StandardError => e
     task&.fail!(I18n.t("run_automation_job.internal_error", class: e.class))
     raise

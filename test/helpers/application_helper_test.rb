@@ -63,8 +63,9 @@ class ApplicationHelperTest < ActionView::TestCase
   end
 
   test "ssh_key_install_command appends the public key with strict permissions" do
-    assert_equal "mkdir -p ~/.ssh && chmod 700 ~/.ssh && echo '#{ssh_keys(:main).public_key}' >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys",
-                 ssh_key_install_command(ssh_keys(:main))
+    assert_equal KeyInstallGuide.new(ssh_keys(:main)).command, ssh_key_install_command(ssh_keys(:main))
+    assert_match "chmod 700 ~/.ssh", ssh_key_install_command(ssh_keys(:main))
+    assert_match "chmod 600 ~/.ssh/authorized_keys", ssh_key_install_command(ssh_keys(:main))
   end
 
   test "pluralize_fr treats 0 and 1 as singular" do

@@ -85,7 +85,7 @@ class Integration < ApplicationRecord
 
   # Background synchronization, followed on the "Tâches" page.
   def enqueue_sync!(user: Current.user)
-    task = BackgroundTask.enqueue!(kind: "integration", label: I18n.t("integration.sync_label", label: label), servers: [], user: user)
+    task = BackgroundTask.enqueue!(kind: "integration", label: LocalizedText.part("integration.sync_label", label: label), servers: [], user: user)
     Integrations::SyncJob.perform_later(self, task)
     task
   end

@@ -21,5 +21,9 @@
         <%= render "settings/copy_button" %>
       </div>
     </div>
+    <% if can?(:administer) %>
+      <%= link_to t(".other_accounts"), settings_path(anchor: "ssh-key-install"), data: { turbo_frame: "_top" },
+            class: "mt-2 inline-block text-xs text-accent hover:underline" %>
+    <% end %>
   <% end %>
 </div>

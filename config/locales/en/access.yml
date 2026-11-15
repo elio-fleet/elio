@@ -149,8 +149,28 @@ en:
       trust: Trust
       presented: Presented
       ask_administrator_check_accept: Ask an administrator to check and accept the new fingerprint.
-      warning_html: 'If the server has just been %{reinstalled} or has changed its host key, this is normal. Otherwise, someone may be impersonating it: check the fingerprint on the server (%{command}) before accepting.'
+      warning_html: If the server has just been %{reinstalled} or has changed its host key, this is normal. Otherwise, someone may be impersonating it.
       reinstalled: reinstalled
+      new_algorithm_html: The server now presents a key of another type (%{type}) than the one Elio knows (%{known}). It may have added or replaced a key type, but someone may also be impersonating it.
+      verify_html: 'Before accepting, check the fingerprint on the server itself (console, not through this network): %{command}'
+      review_all: Review all changed host keys
+  host_key_batches:
+    show:
+      title: Changed host keys
+      help_html: These servers present another host key than the one Elio knows, so Elio no longer connects to them. After a planned reinstall, check each new fingerprint on the server's console (for instance %{command}) and trust the ones that match. Elio contacts each server again and accepts only the fingerprint shown here.
+      all: All
+      server: Server
+      change: Change
+      presented: Presented
+      detected: Detected
+      new_algorithm: New key type
+      key_changed: Key changed
+      trust_for: Trust the new fingerprint of “%{server_name}”
+      trust_selected: Trust the selected fingerprints
+      trust_selected_confirm: The new fingerprints will replace the old ones for the selected servers. Only do it after checking them on the servers.
+      trust: Trust
+      none: No changed host key
+      none_text: Every server presents the host key Elio knows. A server that presents another one appears here until an administrator accepts it.
   server_ssh_checks:
     show:
       ssh: SSH
@@ -231,6 +251,15 @@ en:
   server_host_keys_controller:
     accepted: New fingerprint accepted for “%{server_name}”.
     changed_again: 'The server no longer presents the fingerprint shown (%{expected}): nothing was accepted. Check the server before trying again.'
+    unreachable: 'The server could not be contacted to read its key (%{expected} was not accepted). Try again once it answers.'
+  host_key_batches_controller:
+    choose_server: Choose at least one server.
+    accepted:
+      one: New fingerprint accepted for %{count} server.
+      other: New fingerprints accepted for %{count} servers.
+    failed:
+      one: 'Nothing accepted for %{count} server, which no longer presents the fingerprint shown or does not answer: %{servers}.'
+      other: 'Nothing accepted for %{count} servers, which no longer present the fingerprint shown or do not answer: %{servers}.'
   key_rotations_controller:
     started: Rotation of Elio's key started.
     already_running: A key rotation is already in progress.
@@ -292,7 +321,6 @@ en:
       ssh_key_application: SSH key of the application
       generated: Generated on
       public_key: Public key
-      command_run_each_server: Command to run on each server
       key_rotation_progress_elio: 'A key rotation is in progress: Elio uses the old and the new key.'
       new_key_installed_each: 'A new key is installed on each server next to the old one, checked, then the old one is removed: no interruption.'
       only_if_key_compromised: 'Only if the key is compromised: regenerating cuts the access to every server at once, until the new public key is added to them by hand.'
@@ -304,6 +332,29 @@ en:
         one: A new Elio key will replace the current one on the %{count} server, without interruption. Unreachable servers can be retried afterwards.
         other: A new Elio key will replace the current one on the %{count} servers, without interruption. Unreachable servers can be retried afterwards.
       key_intro_html: Elio logs in to your servers with this key. Its public key must be added to the %{file} file of the user configured on each server. The private key stays encrypted in the database and is never shown.
+    key_install:
+      title: Install the key on a server
+      account: Account Elio uses
+      username: Account name
+      from: Restrict to Elio's address (optional)
+      apply: Apply
+      from_hint: "Adds from=\"…\" to the line: the server only accepts the key from this address (or CIDR network), as the server sees it. A wrong address cuts Elio's access, and a key rotation installs the new key without this restriction."
+      errors:
+        username: Invalid account name (lowercase letters, digits, "_", "-" or ".", not root); "elio" is used.
+        from: Invalid address (IP addresses, CIDR networks or names separated by commas); the key is not restricted.
+      run_as:
+        root: Run as root on each server
+        sudo: Run with Elio's account on each server
+        dedicated: "Run as root on each server: creates the %{username} account if it does not exist"
+      sudoers: Then, so that this account becomes root without a password (sudo -n), with the same account
+      next:
+        root_html: Then add the server with the <code class="font-mono">root</code> account (root login by key allowed by sshd).
+        sudo_html: "Then add the server with this account. The sudoers line gives it every root right without a password: without it, Elio only reads what an unprivileged account can read."
+        dedicated_html: "Then add the server with the %{username} account. Without sudo, Elio only reads what an unprivileged account can read: port processes, firewall, Docker and the other accounts' keys stay partial."
+    key_presence:
+      title: Where the key is installed
+      source: From the last scan of the keys of Elio's account on each server and the last SSH check.
+      no_servers: No server yet.
     key_rotations:
       show:
         ssh_key_application: "← SSH key of the application"
@@ -335,3 +386,25 @@ en:
   health_thresholds_controller:
     saved: Health thresholds saved.
     invalid: 'Invalid thresholds: %{full_messages_to_sentence}'
+  key_install_guide:
+    accounts:
+      root: root
+      sudo: Existing account with sudo
+      dedicated: Dedicated account, without sudo
+  key_presence:
+    states:
+      failing:
+        one: SSH login failing on %{count} server (key refused or another error)
+        other: SSH login failing on %{count} servers (key refused or another error)
+      missing:
+        one: Key missing from Elio's account at the last scan on %{count} server
+        other: Key missing from Elio's account at the last scan on %{count} servers
+      unreachable:
+        one: "%{count} unreachable server"
+        other: "%{count} unreachable servers"
+      unknown:
+        one: Keys not scanned yet on %{count} server
+        other: Keys not scanned yet on %{count} servers
+      installed:
+        one: Key installed on %{count} server
+        other: Key installed on %{count} servers

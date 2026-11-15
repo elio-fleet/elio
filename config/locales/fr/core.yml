@@ -86,14 +86,20 @@ fr:
       sign_out: Déconnexion
     application:
       open_menu: Ouvrir le menu
+    plain_http_notice:
+      text: "Elio est consulté en HTTP simple : les mots de passe et les cookies de session circulent en clair sur le réseau. Acceptable sur un réseau local de confiance ; sinon, placez Elio derrière un reverse proxy HTTPS (README, section « Sécurité »)."
+      hide: Masquer
   errors:
     forbidden:
       title: Accès refusé
       ask: Demandez à un administrateur si vous avez besoin de ce droit.
-      back: Retour à la vue d'ensemble
+      back: Retour à la page précédente
+      overview: Retour à la vue d'ensemble
   title: "%{page} · Elio"
   authorization:
     forbidden: Votre rôle (%{role}) ne permet pas cette action.
+    forbidden_needs: 'Votre rôle (%{role}) ne permet pas cette action : il faut le rôle %{roles}.'
+    or: ou
   throttled:
     too_many: 'Trop de tentatives : réessayez dans quelques minutes.'
   ui:
@@ -206,7 +212,6 @@ fr:
       inactive: "%{tool} inactif"
   flash:
     two_factor:
-      mandatory: 'La double authentification est obligatoire pour votre rôle : activez-la pour continuer.'
       mandatory_role: La double authentification est obligatoire pour votre rôle (%{role}).
   nouns:
     servers: serveurs

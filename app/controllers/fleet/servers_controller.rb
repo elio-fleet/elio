@@ -5,7 +5,7 @@ class ServersController < ApplicationController
   STATE_ORDER = { "crit" => 0, "off" => 0, "warn" => 1, "unknown" => 2, "ok" => 3 }.freeze
   HISTORY_PER_PAGE = 30
 
-  require_permission :operate, only: %i[new create edit update destroy]
+  require_permission :operate, only: %i[new create edit update destroy test_connection]
 
   before_action :set_server, only: %i[show edit update destroy]
 
@@ -56,15 +56,23 @@ class ServersController < ApplicationController
     end
 
     @integration_tabs = Integration.server_tabs
-    @tab = params[:tab].presence_in(TABS + @integration_tabs.map { |tab| tab[:key] }) || "overview"
+    tab_keys = TABS + @integration_tabs.map { |tab| tab[:key] }
+    remembered = remembered_tabs[@server.id.to_s].presence_in(tab_keys - [ "overview" ])
+    return redirect_to server_path(@server, tab: remembered) if remembered && request.query_parameters.empty?
+
+    @tab = params[:tab].presence_in(tab_keys) || "overview"
+    remember_tab(@tab) if params[:tab] == @tab
     show_journal if @tab == "journal"
     show_vulnerabilities if @tab == "vulnerabilities"
     show_docker if @tab == "docker"
     @health_history = @server.health_samples.since(24.hours.ago).pluck(:collected_at, :load_percent, :memory_percent, :disk_percent) if @tab == "overview"
   end
 
+  # ?from=<id>: a copy of that server (port, user, groups), to fill in the
+  # name and the host.
   def new
-    @server = Server.new
+    @source = Server.find_by(id: params[:from]) if params[:from].present?
+    @server = @source ? Server.new(port: @source.port, username: @source.username, server_group_ids: @source.server_group_ids) : Server.new
   end
 
   # The journal of a server: its notes and its activities on one timeline,
@@ -87,6 +95,7 @@ class ServersController < ApplicationController
 
     if @server.save
       Activity.record!(:server_created, server: @server, address: "#{@server.username}@#{@server.host}:#{@server.port}")
+      Inventory::FirstCollectJob.perform_later(@server)
       redirect_to server_path(@server), notice: t("servers_controller.created", server_name: @server.name)
     else
       render :new, status: :unprocessable_entity
@@ -103,6 +112,20 @@ class ServersController < ApplicationController
       redirect_to server_path(@server), notice: t("servers_controller.updated", server_name: @server.name)
     else
       render :edit, status: :unprocessable_entity
+    end
+  end
+
+  # Tries the SSH values of the form (host, port, user) without saving:
+  # connection, Elio's key, host key. Answers in the form (Turbo Stream).
+  def test_connection
+    @server = Server.new(params.expect(server: %i[host port username]))
+    @server.validate
+    errors = @server.errors.select { |error| error.attribute.in?(%i[host port username]) && error.type != :taken }
+    @result = errors.any? ? Ssh::Check::Result.new(success: false, message: t("servers_controller.connection_invalid"), details: errors.map(&:full_message).to_sentence) : Ssh::Check.call(@server)
+
+    respond_to do |format|
+      format.turbo_stream { render turbo_stream: turbo_stream.replace("server-connection-test", partial: "servers/connection_test", locals: { server: @server, result: @result }) }
+      format.html { redirect_to new_server_path }
     end
   end
 
@@ -170,6 +193,28 @@ class ServersController < ApplicationController
 
     @pager = paginate(PackageVulnerabilities.new(images, server: @server).groups, per_page: VULNERABILITY_PACKAGES_PER_PAGE)
     @package_groups = @pager.records
+  end
+
+  # Last tab opened on each server page, by server id: a link to a server
+  # without ?tab= opens it again (a convenience of this browser, in a cookie
+  # like the fleet view; the Overview tab link carries ?tab=overview).
+  SERVER_TABS_COOKIE = :elio_server_tabs
+  REMEMBERED_TABS = 50 # servers, the most recent ones (cookie size)
+
+  def remembered_tabs
+    tabs = JSON.parse(cookies[SERVER_TABS_COOKIE].to_s)
+    tabs.is_a?(Hash) ? tabs : {}
+  rescue JSON::ParserError
+    {}
+  end
+
+  # A link prefetched on hover is not an opened tab.
+  def remember_tab(tab)
+    return if request.headers["X-Sec-Purpose"] == "prefetch"
+
+    tabs = remembered_tabs.except(@server.id.to_s)
+    tabs[@server.id.to_s] = tab unless tab == "overview"
+    cookies.permanent[SERVER_TABS_COOKIE] = { value: tabs.to_a.last(REMEMBERED_TABS).to_h.to_json, same_site: :lax, httponly: true }
   end
 
   # List (dense table) or grid (cards): ?view=, remembered in a cookie.

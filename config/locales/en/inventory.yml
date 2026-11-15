@@ -17,6 +17,9 @@ en:
       one: "%{first_names} and %{count} other failed"
       other: "%{first_names} and %{count} others failed"
     clock: Clock not synchronized
+    oom_kills:
+      one: "%{count} process killed for lack of memory in 24 h"
+      other: "%{count} processes killed for lack of memory in 24 h"
     unsupported: "%{name} is no longer supported"
     timer_failed: Scheduled task %{name} failed
     timers_failed:

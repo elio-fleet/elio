@@ -66,6 +66,19 @@ class Inventory::HealthStatusTest < ActiveSupport::TestCase
     assert_equal [ "Mémoire à 85\u00A0%" ], evaluate.reasons.map(&:text)
   end
 
+  test "processes killed for lack of memory in the last 24 hours" do
+    health(:minimal, oom_kill_events: [ { "at" => 25.hours.ago.utc.iso8601, "count" => 4 }, { "at" => 2.hours.ago.utc.iso8601, "count" => 1 },
+                                        { "at" => 10.minutes.ago.utc.iso8601, "count" => 2 } ])
+
+    assert_equal [ "warn", [ "3 processus tués faute de mémoire en 24 h" ] ], [ evaluate.state, evaluate.reasons.map(&:text) ]
+    assert_equal "3 processes killed for lack of memory in 24 h", I18n.with_locale(:en) { evaluate.reasons.sole.text }
+
+    travel 23.hours
+    assert_equal [ "2 processus tués faute de mémoire en 24 h" ], evaluate.reasons.map(&:text)
+    travel 1.hour
+    assert_equal [ "ok", [] ], evaluate.to_h.values_at(:state, :reasons)
+  end
+
   test "a system past its end of support needs attention" do
     health(:minimal)
     os("debian", "10", "Debian GNU/Linux 10 (buster)")

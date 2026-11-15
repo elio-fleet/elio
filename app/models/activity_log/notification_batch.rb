@@ -14,14 +14,15 @@ class NotificationBatch < ApplicationRecord
   scope :undelivered, -> { where(delivered_at: nil, failed_at: nil) }
 
   # Adds the activity to the open batch of its kind on this channel, opening
-  # one (and scheduling its delivery) if needed.
+  # one (and scheduling its delivery) if needed. A failing channel keeps
+  # everything here until its next attempt (NotificationChannel#retry_at).
   def self.add!(channel, activity)
     opened = false
     batch = channel.with_lock do
       # FOR UPDATE: if the delivery job is closing this batch, PostgreSQL waits for it and then
       # sees it closed (closed_at is checked again): the activity opens a new batch, it is not lost.
       open.lock.find_by(channel: channel, kind: activity.kind)&.tap { |found| found.update!(activity_ids: found.activity_ids | [ activity.id ]) } ||
-        create!(channel: channel, kind: activity.kind, activity_ids: [ activity.id ], send_at: channel.group_minutes.minutes.from_now).tap { opened = true }
+        create!(channel: channel, kind: activity.kind, activity_ids: [ activity.id ], send_at: [ channel.group_minutes.minutes.from_now, channel.retry_at ].compact.max).tap { opened = true }
     end
     DeliverNotificationBatchJob.set(wait_until: batch.send_at).perform_later(batch) if opened
     batch
@@ -35,6 +36,12 @@ class NotificationBatch < ApplicationRecord
       update!(closed_at: Time.current) unless closed_at
       true
     end
+  end
+
+  # The channel is failing: tried again at its next attempt.
+  def postpone!(until_time)
+    update!(send_at: until_time)
+    DeliverNotificationBatchJob.set(wait_until: until_time).perform_later(self)
   end
 
   def activities = Activity.where(id: activity_ids).includes(:user, :server, :public_key).order(:created_at, :id).to_a

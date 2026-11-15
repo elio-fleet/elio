@@ -42,4 +42,19 @@ class SettingsTest < ApplicationSystemTestCase
       assert_text "Copié"
     end
   end
+
+  test "choosing a dedicated account and Elio's address updates the command to copy" do
+    visit settings_path
+
+    within "#ssh-key-install" do
+      select "Compte dédié, sans sudo", from: "Compte utilisé par Elio"
+      fill_in "Nom du compte", with: "monitor"
+      fill_in "Limiter à l'adresse d'Elio (facultatif)", with: "203.0.113.10"
+      click_on "Appliquer"
+
+      assert_field "ssh-install-command", with: /useradd -m -s \/bin\/bash monitor.*from="203\.0\.113\.10" ssh-ed25519/
+      assert_text "Ajoutez ensuite le serveur avec le compte monitor."
+    end
+    assert_selector "#ssh-key-presence", text: "Clés pas encore scannées sur 3 serveurs"
+  end
 end

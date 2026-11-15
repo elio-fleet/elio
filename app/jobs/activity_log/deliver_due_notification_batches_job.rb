@@ -2,7 +2,8 @@
 # (restart of an in-memory queue, job deleted) are sent once they are well
 # overdue. The batches delivered or failed for a month are deleted.
 class DeliverDueNotificationBatchesJob < ApplicationJob
-  queue_as :default
+  queue_as :notifications
+  queue_with_priority NOTIFICATIONS_PRIORITY
 
   # The delivery job retries for a few minutes on errors: leave it that time.
   GRACE = 15.minutes

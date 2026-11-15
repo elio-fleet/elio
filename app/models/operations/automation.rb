@@ -1,7 +1,9 @@
 # A recurring task configured from the settings (one row per kind, created on
 # first access). RunDueAutomationsJob runs every minute (config/recurring.yml)
-# and starts the enabled automations whose interval has elapsed. Each one runs
-# on the whole fleet or on some server groups (server_group_ids).
+# and starts the enabled automations whose interval has elapsed, within their
+# hours if they have some (window_start_hour…window_end_hour, instance time
+# zone). Each one runs on the whole fleet or on some server groups
+# (server_group_ids), minus the groups it leaves out (excluded_server_group_ids).
 class Automation < ApplicationRecord
   # `categories`: inventory categories collected (Inventory::Collection) by the
   # inventory kinds. `default_enabled`: state of a new installation (every
@@ -37,18 +39,31 @@ class Automation < ApplicationRecord
   ].index_by(&:key).freeze
 
   INTERVALS = [ 5, 15, 60, 360, 1440 ].freeze
+  HOURS = (0..23).to_a.freeze
+  # Durations kept (run_durations, seconds): enough for a trend.
+  DURATIONS_KEPT = 20
+  # Longest wait before trying again a server unreachable for a long time.
+  BACKOFF_MAX = 1.day
 
   def self.interval_label(minutes) = I18n.t("automation.intervals.i#{minutes}")
 
   def self.interval_options = INTERVALS.map { |minutes| [ interval_label(minutes), minutes ] }
 
+  def self.hour_label(hour) = format("%02d:00", hour)
+
+  def self.hour_options = HOURS.map { |hour| [ hour_label(hour), hour ] }
+
   # The label of a kind, also for a kind no longer defined (old activities).
   def self.label_for(kind) = KINDS.key?(kind.to_sym) ? KINDS.fetch(kind.to_sym).label : kind.to_s.humanize
 
-  normalizes :server_group_ids, with: ->(ids) { Array(ids).compact_blank.map(&:to_i).uniq.sort }
+  normalizes :server_group_ids, :excluded_server_group_ids, with: ->(ids) { Array(ids).compact_blank.map(&:to_i).uniq.sort }
 
   validates :kind, inclusion: { in: KINDS.keys.map(&:to_s) }, uniqueness: true
   validates :interval_minutes, inclusion: { in: INTERVALS }
+  validates :window_start_hour, :window_end_hour, inclusion: { in: HOURS }, allow_nil: true
+  validate :window_complete
+  # No start hour = at any time (the form always sends an end hour).
+  before_validation { self.window_end_hour = nil if window_start_hour.nil? }
 
   # Every automation, in KINDS order, created with its default interval and state.
   # Automations offered in the interface (those of a disabled extension aside).
@@ -68,6 +83,9 @@ class Automation < ApplicationRecord
 
   def definition = KINDS.fetch(kind.to_sym)
 
+  # The result of the last run in the reader's language (LocalizedText).
+  def last_result = LocalizedText.render(super)
+
   # Runs an automation now because something needs it (a release new to the
   # fleet needs the vulnerability feeds, new CVEs need their scores), unless
   # it is disabled — a closed network turns it off — or already waiting or
@@ -84,26 +102,63 @@ class Automation < ApplicationRecord
 
   def server_groups = ServerGroup.where(id: server_group_ids).order(:name)
 
-  # Servers the automation runs on: its groups, or the whole fleet.
+  def excluded_server_groups = ServerGroup.where(id: excluded_server_group_ids).order(:name)
+
+  # Servers the automation runs on: its groups (or the whole fleet), except
+  # the members of the groups it leaves out.
   def servers
     scope = server_group_ids.any? ? Server.where(id: ServerGroupMembership.where(server_group_id: server_group_ids).select(:server_id)) : Server.all
+    scope = scope.where.not(id: ServerGroupMembership.where(server_group_id: excluded_server_group_ids).select(:server_id)) if excluded_server_group_ids.any?
     scope.order(:name)
   end
 
-  def scope_label = server_group_ids.any? ? server_groups.map(&:name).join(", ") : I18n.t("automation.whole_fleet")
+  def scope_label
+    scope = server_group_ids.any? ? server_groups.map(&:name).join(", ") : I18n.t("automation.whole_fleet")
+    excluded = excluded_server_groups.map(&:name)
+    excluded.any? ? I18n.t("automation.scope_except", included: scope, groups: excluded.join(", ")) : scope
+  end
 
   def interval = interval_minutes.minutes
 
-  def next_run_at = enabled? ? (last_run_at ? last_run_at + interval : Time.current) : nil
+  def window? = !window_start_hour.nil? && !window_end_hour.nil?
 
-  def due?(now = Time.current) = enabled? && available? && (last_run_at.nil? || last_run_at + interval <= now)
+  def window_label
+    return I18n.t("automation.any_time") unless window?
+
+    I18n.t("automation.window", from: self.class.hour_label(window_start_hour), to: self.class.hour_label(window_end_hour))
+  end
+
+  # Whether a scheduled run may start at this time: always without hours,
+  # else from window_start_hour (included) to window_end_hour (excluded); a
+  # window may go over midnight (22:00 → 06:00).
+  def in_window?(time = Time.current)
+    return true unless window?
+
+    hour = time.hour
+    if window_start_hour < window_end_hour
+      hour >= window_start_hour && hour < window_end_hour
+    else
+      hour >= window_start_hour || hour < window_end_hour
+    end
+  end
+
+  def next_run_at
+    return unless enabled?
+
+    after = last_run_at ? last_run_at + interval : Time.current
+    window? ? next_time_in_window([ after, Time.current ].max) : after
+  end
+
+  def due?(now = Time.current) = enabled? && available? && in_window?(now) && (last_run_at.nil? || last_run_at + interval <= now)
+
+  def last_duration = run_durations.last
 
   # Runs the task now, remembers its result and logs an automation_run
   # activity (except for the quiet ones).
   # Enqueues a run, followed on the "Tâches" page except for the quiet
   # automations started on schedule. Returns the task (or nil).
   def enqueue!(user: nil, tracked: !definition.quiet)
-    task = BackgroundTask.enqueue!(kind: "automation", label: label, servers: [], user: user, automation: self) if tracked
+    task = BackgroundTask.enqueue!(kind: "automation", label: LocalizedText.part("automation.kinds.#{kind}.label"), servers: [], user: user, automation: self) if tracked
     RunAutomationJob.perform_later(self, task)
     task
   end
@@ -121,6 +176,7 @@ class Automation < ApplicationRecord
   # scheduled one runs): the second run is skipped and says so.
   def run!(task: nil)
     @task = task
+    started = Process.clock_gettime(Process::CLOCK_MONOTONIC)
     result = AdvisoryLock.try("automation:#{kind}") do
       if inventory? then run_inventory
       elsif definition.integration then run_integration_sync
@@ -129,22 +185,63 @@ class Automation < ApplicationRecord
     end
     return self.class.already_running if result.equal?(AdvisoryLock::HELD)
 
-    update!(last_run_at: Time.current, last_result: result)
+    duration = (Process.clock_gettime(Process::CLOCK_MONOTONIC) - started).round(1)
+    update!(last_run_at: Time.current, last_result: result, run_durations: (run_durations + [ duration ]).last(DURATIONS_KEPT))
     Activity.record!(:automation_run, user: nil, automation: kind, automation_label: label, result: result) unless definition.quiet
-    result
+    LocalizedText.render(result)
   end
 
   private
 
-  # Collects the automation's categories on its servers, a few at a time.
+  def window_complete
+    return if window_start_hour.nil? && window_end_hour.nil?
+
+    errors.add(:window_end_hour, :blank) if window_end_hour.nil? || window_start_hour.nil?
+    errors.add(:window_end_hour, :same_as_start) if window_start_hour == window_end_hour
+  end
+
+  # The first time from `time` on that is within the hours.
+  def next_time_in_window(time)
+    return time if in_window?(time)
+
+    start = time.change(hour: window_start_hour)
+    start > time ? start : start + 1.day
+  end
+
+  # Collects the automation's categories on its servers, a few at a time,
+  # leaving for later the unreachable ones that are waiting (backing_off).
+  # A run started by hand tries every server.
   def run_inventory
     servers = self.servers.to_a
-    collected = each_tracked(servers) do |server, item|
+    waiting = @task&.user ? [] : backing_off(servers)
+    collected = each_tracked(servers - waiting) do |server, item|
       outcomes = Inventory::Collection.call(server, categories: definition.categories)
       item&.finish_inventory!(outcomes)
       outcomes.values.none? { |outcome| outcome.status == "error" }
     end
-    I18n.t("automation.results.inventoried", done: collected.count(true), count: servers.size)
+    return LocalizedText.dump("automation.results.inventoried", done: collected.count(true), count: servers.size) if waiting.empty?
+
+    LocalizedText.dump("automation.results.inventoried_with_waiting", done: collected.count(true), count: servers.size,
+                       waiting: LocalizedText.part("automation.results.waiting", count: waiting.size))
+  end
+
+  # The servers not tried again yet: the last collection of these categories
+  # could not connect, and the server has been unreachable for less time
+  # since then than before (an hour down → next try in an hour, at most a
+  # day), unless a check saw it answer again since. Spares an SSH timeout on
+  # every pass for a server that is off.
+  def backing_off(servers, now = Time.current)
+    last_checks = Inventory::Snapshot.where(server_id: servers.map(&:id), category: definition.categories)
+                                     .order(:checked_at).pluck(:server_id, :status, :checked_at)
+                                     .index_by(&:first)
+    servers.select do |server|
+      _, status, checked_at = last_checks[server.id]
+      last_success = server.inventoried_at || server.created_at
+      next false unless status == "error" && checked_at > last_success
+      next false if server.reachable && server.last_checked_at && server.last_checked_at > checked_at
+
+      now < checked_at + (checked_at - last_success).clamp(0, BACKOFF_MAX.to_i)
+    end
   end
 
   def run_keys_scan
@@ -157,7 +254,7 @@ class Automation < ApplicationRecord
     end.count(true)
     detected = Activity.of_kind(:unknown_key_detected).count - detected_before
 
-    I18n.t("automation.results.scanned", done: scanned, count: servers.size, keys: I18n.t("automation.results.new_unknown_keys", count: detected))
+    LocalizedText.dump("automation.results.scanned", done: scanned, count: servers.size, keys: LocalizedText.part("automation.results.new_unknown_keys", count: detected))
   end
 
   # Runs the block on each server, a few at a time, with its task item (if any).
@@ -204,6 +301,6 @@ class Automation < ApplicationRecord
 
   def run_servers_ping
     results = Servers::Ping.check_all!(servers)
-    I18n.t("automation.results.reachable", done: results.values.count(true), count: results.size)
+    LocalizedText.dump("automation.results.reachable", done: results.values.count(true), count: results.size)
   end
 end

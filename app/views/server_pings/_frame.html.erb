@@ -1,0 +1,7 @@
+<%# Reachability frame of the server page: the last ping result and a button to ping again. Locals: server. %>
+<%= turbo_frame_tag dom_id(server, :reachability), class: "group block" do %>
+  <%= render "servers/health_item", label: t("server_pings.show.port", port: server.port), refresh_path: server_ping_path(server), refresh_title: t("server_pings.show.check_port_again") do %>
+    <%= render "servers/status", server: server %>
+    <span class="text-xs text-ink-3"><%= t("server_pings.show.checked_html", last_checked_at: relative_time_tag(server.last_checked_at)) %></span>
+  <% end %>
+<% end %>

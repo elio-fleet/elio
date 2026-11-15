@@ -16,11 +16,22 @@ module Vulnerabilities
 
   # Releases of each feed to keep: those of the servers (and of their Docker
   # images): { "debian" => ["bookworm", "trixie"], "ubuntu" => ["24.04"] }.
-  def self.releases
-    systems = Inventory::Snapshot.where(category: "os").where.not(collected_at: nil).pluck(:data) +
-              Inventory::Snapshot.where(category: "docker").where.not(collected_at: nil).pluck(:data).flat_map { |data| Array(data["images"]).filter_map { |image| image["os"] } }
-    targets = systems.filter_map { |data| target(data) }.uniq
-    Vulnerability::SOURCES.keys.index_with { |source| targets.select { |feed, _| feed == source }.map(&:last).sort }
+  def self.releases = usage.transform_values(&:keys)
+
+  # Why each release is downloaded: the servers on it and the Docker images
+  # built on it, { "debian" => { "bookworm" => { servers: 2, images: 1 } } },
+  # releases in order.
+  def self.usage
+    usage = Vulnerability::SOURCES.keys.index_with { {} }
+    count = lambda do |data, kind|
+      source, release = target(data)
+      (usage[source][release] ||= { servers: 0, images: 0 })[kind] += 1 if source
+    end
+    Inventory::Snapshot.where(category: "os").where.not(collected_at: nil).pluck(:data).each { |data| count.call(data, :servers) }
+    Inventory::Snapshot.where(category: "docker").where.not(collected_at: nil).pluck(:data).each do |data|
+      Array(data["images"]).each { |image| count.call(image["os"], :images) if image["os"] }
+    end
+    usage.transform_values { |releases| releases.sort.to_h }
   end
 
   # A server on a release that its feed does not hold yet — the first server

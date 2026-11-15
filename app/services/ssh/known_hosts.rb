@@ -1,6 +1,9 @@
 # The host keys pinned by Ssh::Connection (trust on first use), in `file`
 # (Ssh::Connection::KNOWN_HOSTS_FILE by default, replaced in tests).
 module Ssh::KnownHosts
+  # One pinned key: its type ("ssh-ed25519") and SHA256 fingerprint.
+  Entry = Data.define(:type, :fingerprint)
+
   class << self
     attr_writer :file
 
@@ -18,19 +21,35 @@ module Ssh::KnownHosts
     end
 
     # SHA256 fingerprints ("SHA256:…", like `ssh-keygen -l`) pinned for host:port.
-    def fingerprints(host, port, file: self.file)
-      file = Pathname(file)
-      return [] unless file.exist?
+    def fingerprints(host, port, file: self.file) = entries(host, port, file: file).map(&:fingerprint)
 
-      file.readlines.select { |line| entry_for?(line, host, port) }.filter_map do |line|
-        blob = line.split[2]
-        Ssh::KeyGenerator.fingerprint(Base64.strict_decode64(blob)) if blob
+    # The keys pinned for host:port, as Entry (unreadable lines are skipped).
+    def entries(host, port, file: self.file)
+      lines_for(host, port, file).filter_map do |line|
+        _, type, blob = line.split
+        Entry.new(type: type, fingerprint: Ssh::KeyGenerator.fingerprint(Base64.strict_decode64(blob))) if blob
       rescue ArgumentError
         nil
       end
     end
 
+    # Replaces the pins of host:port by the known_hosts lines of `source`
+    # (a file net-ssh pinned them in) for that host. Returns the new entries.
+    def replace(host, port, source:, file: self.file)
+      file = Pathname(file)
+      lines = lines_for(host, port, source)
+      forget(host, port, file: file)
+      file.dirname.mkpath
+      File.open(file, "a") { |out| lines.each { |line| out.write(line.end_with?("\n") ? line : "#{line}\n") } }
+      entries(host, port, file: file)
+    end
+
     private
+
+    def lines_for(host, port, file)
+      file = Pathname(file)
+      file.exist? ? file.readlines.select { |line| entry_for?(line, host, port) } : []
+    end
 
     # net-ssh writes "host" for port 22 and "[host]:port" otherwise.
     def entry_for?(line, host, port)

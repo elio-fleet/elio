@@ -19,7 +19,10 @@ Rails.application.routes.draw do
   resource :server_import, only: %i[new create], path: "servers/import" do
     post :preview
   end
+  resource :host_key_batch, only: %i[show create], path: "servers/host-keys"
   resources :servers do
+    # Tests the SSH values of the form before saving (the edit form is sent as PATCH).
+    match :test_connection, on: :collection, via: %i[post patch]
     resource :ping, only: %i[show create], controller: "server_pings"
     resource :ssh_check, only: :show, controller: "server_ssh_checks"
     resource :inventory, only: :create, controller: "server_inventories"
@@ -49,6 +52,7 @@ Rails.application.routes.draw do
         post :deactivate
         post :reactivate
         post :reset_two_factor
+        post :unlock
       end
     end
     resources :invitations, only: %i[create destroy]
@@ -131,6 +135,9 @@ Rails.application.routes.draw do
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
   get "up" => "rails/health#show", as: :rails_health_check
+
+  # Content Security Policy violation reports of the browsers (no sign in).
+  post "csp-reports" => "csp_reports#create", as: :csp_reports
 
   # Technical view of the background jobs (admins, see JobsDashboardController).
   mount MissionControl::Jobs::Engine, at: "/jobs"

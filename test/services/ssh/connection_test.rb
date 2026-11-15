@@ -162,6 +162,23 @@ class Ssh::ConnectionTest < ActiveSupport::TestCase
 
     error = assert_raises(Ssh::Connection::HostKeyMismatchError) { connect(server, FakeSsh.new(error: mismatch)) { } }
     assert_equal [ pinned.fingerprint ], error.known_fingerprints
+    assert_equal [ "ssh-ed25519" ], error.known.map(&:type)
+  end
+
+  test "a host key mismatch tells a key of a new type apart from a changed key" do
+    server = servers(:web)
+    FileUtils.mkdir_p(@known_hosts.dirname)
+    @known_hosts.write("#{server.port == 22 ? server.host : "[#{server.host}]:#{server.port}"} #{Ssh::KeyGenerator.generate.public_key.split.first(2).join(" ")}\n")
+    rsa = "ssh-rsa #{[ OpenSSL::PKey::RSA.new(2048).public_key.to_blob ].pack("m0")}"
+
+    errors = [ Ssh::KeyGenerator.generate.public_key, rsa ].map do |public_key|
+      mismatch = Net::SSH::HostKeyMismatch.new("fingerprint does not match")
+      mismatch.data = { fingerprint: "SHA256:new", key: Net::SSH::KeyFactory.load_data_public_key(public_key) }
+      assert_raises(Ssh::Connection::HostKeyMismatchError) { connect(server, FakeSsh.new(error: mismatch)) { } }
+    end
+
+    assert_equal [ "ssh-ed25519", "ssh-rsa" ], errors.map(&:new_type)
+    assert_equal [ false, true ], errors.map(&:new_algorithm?)
   end
 
   test "each error has a French title" do
@@ -319,14 +336,14 @@ class Ssh::ConnectionTest < ActiveSupport::TestCase
     })
     connect(servers(:web), fake) do |ssh|
       ssh.run_command("inventory.os")
-      2.times { ssh.run_command("inventory.health") }
+      2.times { ssh.run_command("inventory.health", updates_stamp: "") }
       assert_equal %w[ubuntu debian], ssh.distros
     end
 
     os_release, os, health, health_again = fake.commands
     assert_equal Ssh::Commands.render("inventory.os"), os_release, "inventory.os has no variant: no os-release read before it"
     assert_equal Ssh::Commands.render("connection.os_release"), os
-    assert_equal Ssh::Commands.render("inventory.health", distros: %w[ubuntu debian]), health
+    assert_equal Ssh::Commands.render("inventory.health", distros: %w[ubuntu debian], updates_stamp: ""), health
     assert_equal health, health_again
   end
 

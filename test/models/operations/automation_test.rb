@@ -114,4 +114,96 @@ class AutomationTest < ActiveSupport::TestCase
     assert_equal [ server_groups(:production).id ], automation.server_group_ids
     assert_equal %w[Database Web], automation.servers.map(&:name)
   end
+
+  test "hours: a scheduled run starts only within them, over midnight too" do
+    automation = Automation.all_kinds.find { |candidate| candidate.kind == "inventory_packages" }
+    automation.update!(window_start_hour: 22, window_end_hour: 6, last_run_at: 2.days.ago)
+    assert_equal "De 22:00 à 06:00", automation.window_label
+
+    travel_to Time.zone.parse("2026-11-14 12:00") do
+      assert_not automation.in_window?
+      assert_not automation.due?
+      assert_equal Time.zone.parse("2026-11-14 22:00"), automation.next_run_at
+    end
+    travel_to(Time.zone.parse("2026-11-14 23:30")) { assert automation.due? }
+    travel_to(Time.zone.parse("2026-11-15 05:59")) { assert automation.due? }
+    travel_to(Time.zone.parse("2026-11-15 06:00")) { assert_not automation.due? }
+
+    automation.update!(window_start_hour: 1, window_end_hour: 5)
+    travel_to Time.zone.parse("2026-11-14 12:00") do
+      assert_equal Time.zone.parse("2026-11-15 01:00"), automation.next_run_at, "after today's hours: tomorrow"
+    end
+    travel_to(Time.zone.parse("2026-11-14 03:00")) { assert automation.due? }
+  end
+
+  test "hours: none means at any time, the same hour twice is refused" do
+    automation = Automation.all_kinds.find { |candidate| candidate.kind == "inventory_packages" }
+    automation.update!(window_start_hour: "", window_end_hour: "6")
+    assert_nil automation.window_end_hour, "no start hour: at any time"
+    assert_equal "À toute heure", automation.window_label
+    travel_to(Time.zone.parse("2026-11-14 12:00")) { assert automation.in_window? }
+
+    automation.window_start_hour = 6
+    assert_not automation.valid?
+    assert automation.errors.key?(:window_end_hour)
+    automation.window_start_hour = 24
+    assert automation.errors.key?(:window_start_hour) unless automation.valid?
+  end
+
+  test "groups left out: their servers are not part of the run" do
+    automation = Automation.all_kinds.find { |candidate| candidate.kind == "keys_scan" }
+    ServerGroupMembership.create!(server: servers(:backup), server_group: server_groups(:staging))
+
+    automation.update!(excluded_server_group_ids: [ "", server_groups(:production).id.to_s ])
+    assert_equal %w[Backup], automation.servers.map(&:name)
+    assert_equal "Tout le parc sauf Production", automation.scope_label
+
+    automation.update!(server_group_ids: [ server_groups(:production).id, server_groups(:staging).id ], excluded_server_group_ids: [ server_groups(:staging).id ])
+    assert_equal %w[Database Web], automation.servers.map(&:name)
+    assert_equal "Production, Staging sauf Staging", automation.scope_label
+  end
+
+  test "each run keeps its duration, the last ones only" do
+    automation = Automation.all_kinds.find { |candidate| candidate.kind == "cve_scores_update" }
+    automation.update!(run_durations: Array.new(Automation::DURATIONS_KEPT, 3.0))
+
+    stub_method(Vulnerabilities::Scores, :update_all, -> { "ok" }) { automation.run! }
+
+    assert_equal Automation::DURATIONS_KEPT, automation.reload.run_durations.size
+    assert_operator automation.last_duration, :<, 3
+  end
+
+  test "an unreachable server is tried again after a wait as long as it has been down, unless a check saw it answer" do
+    automation = Automation.all_kinds.find { |candidate| candidate.kind == "inventory_ports" }
+    web, db, backup = servers(:web), servers(:db), servers(:backup)
+    freeze_time do
+      # Database: down for 3 hours, tried an hour ago → waits until 2 hours from now.
+      db.update_columns(inventoried_at: 3.hours.ago, reachable: false)
+      db.inventory_snapshots.create!(category: "ports", status: "error", checked_at: 1.hour.ago)
+      # Backup: the same, but the ping has seen it answer since.
+      backup.update_columns(inventoried_at: 3.hours.ago, reachable: true, last_checked_at: 10.minutes.ago)
+      backup.inventory_snapshots.create!(category: "ports", status: "error", checked_at: 1.hour.ago)
+      # Web: connected, only the collector failed.
+      web.update_columns(inventoried_at: 1.hour.ago)
+      web.inventory_snapshots.create!(category: "ports", status: "error", checked_at: 1.hour.ago)
+      calls = Concurrent::Array.new
+      collection = ->(server, **) { calls << server.name; { "ports" => Inventory::Collector::Outcome.new(status: "ok", data: {}, message: nil) } }
+
+      result = stub_method(Inventory::Collection, :call, collection) { automation.run! }
+
+      assert_equal %w[Backup Web], calls.sort
+      assert_equal "2/3 serveurs inventoriés, 1 serveur injoignable réessayé plus tard", result
+
+      calls.clear
+      travel 2.hours
+      stub_method(Inventory::Collection, :call, collection) { automation.run! }
+      assert_includes calls, "Database", "the wait is over"
+
+      calls.clear
+      task = automation.enqueue!(user: users(:one))
+      db.inventory_snapshots.find_by!(category: "ports").update!(status: "error", checked_at: Time.current)
+      stub_method(Inventory::Collection, :call, collection) { automation.run!(task: task) }
+      assert_includes calls, "Database", "a run started by hand tries every server"
+    end
+  end
 end

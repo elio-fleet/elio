@@ -37,6 +37,8 @@ class Server < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :host, presence: true
+  # The same account on the same machine once (unique index on lower(host), port, username).
+  validates :host, uniqueness: { scope: %i[port username], case_sensitive: false, message: :address_taken }, if: -> { host.present? }
   validates :port, numericality: { only_integer: true, in: 1..65_535 }
   # A POSIX account name (useradd's default rule), never passed to a shell anyway.
   USERNAME_FORMAT = /\A[a-z_][a-z0-9_.-]{0,31}\z/i
@@ -61,12 +63,13 @@ class Server < ApplicationRecord
   end
 
   # Logs host_key_mismatch the first time the server presents a fingerprint
-  # Elio does not know (once per new fingerprint, until it is accepted).
-  def record_host_key_mismatch!(new_fingerprint)
+  # Elio does not know (once per new fingerprint, until it is accepted), with
+  # the key type and whether it is a new algorithm rather than a changed key.
+  def record_host_key_mismatch!(new_fingerprint, key_type: nil, new_algorithm: false)
     last = activities.where(kind: %w[host_key_mismatch host_key_changed]).order(:id).last
     return if last&.kind == "host_key_mismatch" && last.data["new_fingerprint"] == new_fingerprint
 
-    Activity.record!(:host_key_mismatch, server: self, new_fingerprint: new_fingerprint)
+    Activity.record!(:host_key_mismatch, server: self, new_fingerprint: new_fingerprint, key_type: key_type, new_algorithm: new_algorithm)
   end
 
   # Remembers a ping result (see Servers::Ping) and logs when the server goes
@@ -80,6 +83,17 @@ class Server < ApplicationRecord
       Activity.record!(:server_back_online, server: self)
     end
   end
+
+  # How long the server page trusts a port or SSH result instead of checking
+  # again on display (one SSH login per visit otherwise).
+  FRESH_CHECK = 5.minutes
+
+  # The last ping is recent enough to be shown as is.
+  def reachability_fresh? = !reachable.nil? && last_checked_at.present? && last_checked_at > FRESH_CHECK.ago
+
+  # Elio logged in recently (check, inventory, key scan). A failure is always
+  # checked again: its details (host key, setup hint) are not stored.
+  def ssh_fresh? = ssh_ok == true && ssh_checked_at.present? && ssh_checked_at > FRESH_CHECK.ago
 
   def inventory(category) = inventory_snapshots.find { |snapshot| snapshot.category == category.to_s }
 
@@ -138,24 +152,35 @@ class Server < ApplicationRecord
 
   # Recomputes the health of the server (Inventory::HealthStatus) and the state
   # of its Docker (Inventory::DockerStatus), and logs each change between ok,
-  # warn and crit (not on the first evaluation).
-  def refresh_health!
-    previous = { health: health_status, docker: docker_status }
+  # warn and crit (not on the first evaluation), or a new reason while the
+  # state stays warn or crit (`new_reasons: false` after an upgrade, when the
+  # rules rename reasons that are not new problems).
+  def refresh_health!(new_reasons: true)
+    previous = { health: health_status, docker: docker_status, health_reasons: health_reasons, docker_reasons: docker_reasons }
     inventory_snapshots.reset
     health = Inventory::HealthStatus.evaluate(self)
     docker = Inventory::DockerStatus.evaluate(self)
     update_columns(health_status: health.state, health_reasons: health.reasons.map(&:to_h),
                    docker_status: docker.state, docker_reasons: docker.reasons.map(&:to_h))
-    record_state_change(previous[:health], health, HEALTH_KINDS)
-    record_state_change(previous[:docker], docker, DOCKER_KINDS)
+    record_state_change(previous[:health], (previous[:health_reasons] if new_reasons), health, HEALTH_KINDS)
+    record_state_change(previous[:docker], (previous[:docker_reasons] if new_reasons), docker, DOCKER_KINDS)
   end
 
   private
 
-  def record_state_change(previous, result, kinds)
-    return if previous.nil? || previous == "unknown" || result.state.nil? || result.state == "unknown" || previous == result.state
+  # A server already to watch that gains a problem (reboot required on top of
+  # a full disk) is logged again with the new reasons only, so that the
+  # notification names what just went wrong.
+  # Without previous reasons (nil), only the changes of state are logged.
+  def record_state_change(previous, previous_reasons, result, kinds)
+    return if previous.nil? || previous == "unknown" || result.state.nil? || result.state == "unknown"
 
-    Activity.record!(kinds.fetch(result.state), server: self, user: nil, reasons: result.reasons.map(&:to_h).first(3))
+    reasons = result.reasons.map(&:to_h)
+    if previous != result.state
+      Activity.record!(kinds.fetch(result.state), server: self, user: nil, reasons: reasons.first(3))
+    elsif result.state != "ok" && previous_reasons && (added = Inventory::HealthStatus.new_reasons(previous_reasons, reasons)).any?
+      Activity.record!(kinds.fetch(result.state), server: self, user: nil, reasons: added.first(3), new_reasons: true)
+    end
   end
 
   # The last ping and SSH results no longer apply once the address changes.

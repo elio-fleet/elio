@@ -1,9 +1,17 @@
+<%# The 403 page: why (role held, roles needed), who to ask, and a way back. Locals: message, back_path (nil when unknown). %>
 <% content_for :title, t("title", page: t(".title")) %>
 
 <div class="card mx-auto mt-12 max-w-md p-8 text-center">
   <p class="text-sm font-semibold uppercase tracking-wide text-crit-ink">403</p>
-  <h1 class="mt-2 text-xl font-bold tracking-tight"><%= t(".title") %></h1>
-  <p class="mt-2 text-sm text-ink-2"><%= message %></p>
+  <h1 class="mt-2 text-xl font-semibold tracking-tight"><%= t(".title") %></h1>
+  <p class="forbidden-message mt-2 text-sm text-ink-2"><%= message %></p>
   <p class="mt-1 text-sm text-ink-3"><%= t(".ask") %></p>
-  <%= link_to t(".back"), root_path, class: "btn btn-primary mt-6" %>
+  <div class="mt-6 flex flex-wrap justify-center gap-2">
+    <% if back_path %>
+      <%= link_to t(".back"), back_path, class: "forbidden-back btn btn-primary" %>
+      <%= link_to t(".overview"), root_path, class: "btn btn-secondary" %>
+    <% else %>
+      <%= link_to t(".overview"), root_path, class: "forbidden-back btn btn-primary" %>
+    <% end %>
+  </div>
 </div>

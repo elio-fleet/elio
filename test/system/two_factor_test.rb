@@ -31,4 +31,42 @@ class TwoFactorTest < ApplicationSystemTestCase
     assert_text "Connexion réussie."
     assert_selector ".sidebar .user-role", text: "Opérateur"
   end
+
+  test "a mandatory 2FA opens its setup page at once; the backup codes can be downloaded" do
+    AppSetting.current.update!(require_operator_two_factor: true)
+    sign_in users(:operator)
+    visit servers_path
+
+    assert_selector "h1", text: "Activer la double authentification"
+    assert_selector ".two-factor-mandatory", text: "obligatoire pour votre rôle (opérateur)"
+    secret = find(".two-factor-secret").text.delete(" ")
+    find("input[name=code]").fill_in(with: ROTP::TOTP.new(secret).now)
+    click_on "Activer"
+
+    assert_selector "textarea.backup-codes"
+    # Catch the download instead of letting the browser save a file.
+    execute_script(<<~JS)
+      HTMLAnchorElement.prototype.click = function () { window.downloaded = [this.download, this.href.startsWith("blob:")] }
+    JS
+    click_on "Télécharger"
+    assert_equal [ "elio-backup-codes-127.0.0.1.txt", true ], evaluate_script("window.downloaded")
+    click_on "J'ai enregistré mes codes"
+    assert_selector ".two-factor-state", text: "Activée"
+  end
+
+  test "an admin unlocks a locked account from the users page" do
+    users(:operator).lock_access!
+    sign_in users(:one)
+    visit settings_users_path
+
+    within "#user_#{users(:operator).id}" do
+      assert_selector ".user-state", text: "Verrouillé"
+      find("details.actions-menu summary").click
+      click_on "Déverrouiller"
+    end
+
+    assert_text "operator@example.com peut de nouveau se connecter."
+    assert_no_selector "#user_#{users(:operator).id} .user-state"
+    assert_not users(:operator).reload.access_locked?
+  end
 end

@@ -48,6 +48,9 @@ en:
         users_intro: Role and access to Elio.
         you: " (you)"
         deactivated: Deactivated
+        locked: Locked
+        lock_ends: 'ends '
+        unlock: Unlock
         last_sign_in: Last sign in
         never_signed_in: Never signed in
         two_factor_on: 2FA on
@@ -60,6 +63,21 @@ en:
         deactivate: Deactivate
         deactivate_confirm: "%{email} will no longer be able to sign in and will be signed out at once."
         users: users
+        roles: Roles
+        roles_intro: What each role can do in Elio. A forbidden action is hidden from the menus and refused if the page is opened directly.
+        permission: Permission
+        allowed: Allowed
+        denied: Not allowed
+        permissions:
+          view:
+            label: See
+            description: Servers, inventory, vulnerabilities, Docker, keys, extensions and the journal; notes and connection checks.
+          operate:
+            label: Act on the fleet
+            description: Add, edit and delete servers, scan them, grant and revoke SSH keys, manage the keyring, link extension resources.
+          administer:
+            label: Administer Elio
+            description: Settings, users and invitations, extensions, notifications, automations, Elio's SSH key and job monitoring.
     copy_button:
       copy: Copy
       copied: Copied

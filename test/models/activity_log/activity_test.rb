@@ -80,12 +80,18 @@ test "summaries" do
       [ :server_group_created, { group_name: "Prod", servers: 2 } ] => "Groupe « Prod » créé (2 serveurs)",
       [ :server_group_deleted, { group_name: "Prod" } ] => "Groupe « Prod » supprimé",
       [ :host_key_changed, { new_fingerprint: "SHA256:new" } ] => "Nouvelle empreinte acceptée pour « Web » : SHA256:new",
+      [ :host_key_changed, { new_fingerprint: "SHA256:new", key_type: "ssh-rsa", new_algorithm: true } ] => "Nouveau type de clé (ssh-rsa) accepté pour « Web » : SHA256:new",
+      [ :host_key_mismatch, { new_fingerprint: "SHA256:new", key_type: "ssh-ed25519", new_algorithm: false } ] =>
+        "« Web » présente une autre empreinte : SHA256:new. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée.",
+      [ :host_key_mismatch, { new_fingerprint: "SHA256:new", key_type: "ssh-rsa", new_algorithm: true } ] =>
+        "« Web » présente une clé d'un nouveau type (ssh-rsa) : SHA256:new. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée.",
       [ :server_unreachable, {} ] => "« Web » ne répond plus",
       [ :server_back_online, {} ] => "« Web » répond à nouveau",
       [ :os_upgraded, { from: "Debian 11", to: "Debian 12" } ] => "« Web » est passé de Debian 11 à Debian 12",
       [ :server_rebooted, {} ] => "« Web » a redémarré",
       [ :health_warning, { reasons: [ "Redémarrage requis", "Mémoire à 92 %" ] } ] => "« Web » est à surveiller : Redémarrage requis, Mémoire à 92 %",
       [ :health_recovered, {} ] => "« Web » est de nouveau sain",
+      [ :docker_warning, { reasons: [ "Conteneur web arrêté" ], new_reasons: true } ] => "Nouveau problème avec Docker de « Web », toujours à surveiller : Conteneur web arrêté",
       [ :packages_changed, { installed: 2, upgraded: 1, removed: 0, examples: [ "curl" ] } ] => "Paquets de « Web » : 2 installés, 1 mis à jour (curl)",
       [ :security_updates_available, { count: 3 } ] => "3 mises à jour de sécurité disponibles sur « Web »",
       [ :service_failed, { service: "nginx.service" } ] => "nginx.service est en échec sur « Web »",

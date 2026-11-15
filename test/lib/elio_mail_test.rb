@@ -18,6 +18,12 @@ class ElioMailTest < ActiveSupport::TestCase
     assert_equal :login, Elio::Mail.smtp_settings("SMTP_ADDRESS" => "x", "SMTP_USERNAME" => "u", "SMTP_AUTHENTICATION" => "login")[:authentication]
   end
 
+  test "links in https in production, in http when ELIO_FORCE_SSL=false or outside production" do
+    assert_equal "https", Elio::Mail.url_protocol({}, production: true)
+    assert_equal "http", Elio::Mail.url_protocol({ "ELIO_FORCE_SSL" => "false" }, production: true)
+    assert_equal "http", Elio::Mail.url_protocol({}, production: false)
+  end
+
   test "a password without user name is ignored (no half authentication)" do
     assert_nil Elio::Mail.smtp_settings("SMTP_ADDRESS" => "x", "SMTP_PASSWORD" => "secret")[:password]
   end

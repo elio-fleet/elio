@@ -38,6 +38,26 @@ class Inventory::HealthStatus
     end
   end
 
+  # Parameters that measure a problem rather than name it: a disk going from
+  # 91 to 92 % is the same problem, a second failed service is a new one.
+  MEASURES = %w[percent ratio load count].freeze
+
+  # The stored reasons of `current` that were not in `previous`, or that went
+  # from warn to crit (Server#refresh_health! logs them).
+  def self.new_reasons(previous, current)
+    tones = Array(previous).to_h { |reason| [ identity(reason), reason["tone"] ] }
+    Array(current).select do |reason|
+      tone = tones[identity(reason)]
+      tone.nil? || (reason["tone"] == "crit" && tone != "crit")
+    end
+  end
+
+  def self.identity(reason)
+    return reason.to_s unless reason.is_a?(Hash)
+
+    [ reason["key"] || reason["text"], (reason["params"] || {}).to_h.except(*MEASURES) ]
+  end
+
   def self.reason(tone, key, **params) = Reason.new(tone: tone, key: key.to_s.include?(".") ? key.to_s : "health.#{key}", params: params)
 
   def self.evaluate(server, settings: AppSetting.current) = new(server, settings).evaluate
@@ -51,14 +71,15 @@ class Inventory::HealthStatus
   # 3: no "OVH firewall disabled" reason for IPv6 blocks (OVH has no firewall for IPv6).
   # 4: Coolify backups (integrations.coolify.health.*).
   # 5: failed units named (health.units_failed / units_failed_more).
-  VERSION = 5
+  # 6: processes killed for lack of memory in the last 24 hours (health.oom_kills).
+  VERSION = 6
 
   def self.refresh_outdated!
     setting = AppSetting.current
     return if setting.health_version >= VERSION
 
     AdvisoryLock.try("health_version") do
-      Server.find_each(&:refresh_health!)
+      Server.find_each { |server| server.refresh_health!(new_reasons: false) }
       setting.update_columns(health_version: VERSION)
     end
   end
@@ -112,10 +133,18 @@ class Inventory::HealthStatus
     reasons << self.class.reason("warn", :reboot_required) if data["reboot_required"]
     reasons << failed_units_reason(Array(data["failed_units"])) if Array(data["failed_units"]).any?
     reasons << self.class.reason("warn", :clock) if data["ntp_synchronized"] == false
+    reasons << self.class.reason("warn", :oom_kills, count: oom_kills) if oom_kills.positive?
     if @os&.collected? && Inventory::EndOfLife.status(@os.data["id"], @os.data["version_id"]).ended?
       reasons << self.class.reason("warn", :unsupported, name: @os.data["name"])
     end
     reasons
+  end
+
+  # Processes the kernel killed for lack of memory in the last
+  # Inventory::Collectors::Health::OOM_WINDOW (events kept by the collector).
+  def oom_kills
+    window = Inventory::Collectors::Health::OOM_WINDOW.ago
+    Array(data["oom_kill_events"]).sum { |event| Time.zone.parse(event["at"].to_s)&.after?(window) ? event["count"].to_i : 0 }
   end
 
   # The failed units by name ("nginx", "mnt-backup.mount"): all of them up to

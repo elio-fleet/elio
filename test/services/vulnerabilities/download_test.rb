@@ -24,6 +24,24 @@ class Vulnerabilities::DownloadTest < ActiveSupport::TestCase
     end
   end
 
+  test "a conditional download: the validators of the answer are yielded, an unchanged file is not downloaded again" do
+    handler = lambda do |_method, _path, headers|
+      if headers["if-none-match"] == %("v1") && headers["if-modified-since"] == "Sat, 14 Nov 2026 10:00:00 GMT"
+        "HTTP/1.1 304 Not Modified\r\nConnection: close\r\n\r\n"
+      else
+        http_response("200 OK", "{}", "ETag" => %("v1"), "Last-Modified" => "Sat, 14 Nov 2026 10:00:00 GMT")
+      end
+    end
+    with_https_server(Vulnerabilities::Download, handler: handler) do |host, requests|
+      validators = Vulnerabilities::Download.open("https://#{host}/feed") { |_path, received| received }
+      assert_equal({ "etag" => %("v1"), "last_modified" => "Sat, 14 Nov 2026 10:00:00 GMT" }, validators)
+      assert_nil requests.pop[2]["if-none-match"], "the first download is not conditional"
+
+      assert_equal :not_modified, Vulnerabilities::Download.open("https://#{host}/feed", validators: validators) { flunk "not downloaded" }
+      assert_equal "{}", Vulnerabilities::Download.open("https://#{host}/feed", validators: { "etag" => %("v0") }) { |path| File.read(path) }
+    end
+  end
+
   test "an HTTP error, a file too big, a plain HTTP address" do
     with_https_server(Vulnerabilities::Download, handler: HANDLER) do |host|
       error = assert_raises(Vulnerabilities::Error) { Vulnerabilities::Download.open("https://#{host}/missing") { } }

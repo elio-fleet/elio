@@ -7,10 +7,11 @@
 <% snapshots = @server.account_snapshots.to_a %>
 
 <div>
-  <% first_group = @server.server_groups.first %>
+  <% groups = @server.server_groups.to_a %>
+  <% first_group = groups.first %>
   <% crumbs = [ [ t("nav.fleet"), servers_path ], ([ first_group.name, servers_path(group: first_group.id) ] if first_group), @server.name ].compact %>
   <% badges = safe_join([ render("servers/status", server: @server, health: true), render("servers/docker_pill", server: @server),
-                          (tag.span(safe_join(@server.server_groups.map { |server_group| group_tag(server_group, path: servers_path(group: server_group.id)) }), class: "server-groups flex flex-wrap gap-2") if @server.server_groups.any?) ].compact) %>
+                          (tag.span(safe_join(groups.map { |server_group| group_tag(server_group, path: servers_path(group: server_group.id)) }), class: "server-groups flex flex-wrap gap-2") if groups.any?) ].compact) %>
   <% summary = tag.span([ "#{@server.username}@#{@server.host}:#{@server.port}", (os["hostname"] if os["hostname"].present? && os["hostname"] != @server.host), os["name"],
                           (t("count.processors", count: os["cpus"]) if os["cpus"]), (human_bytes(os["memory_bytes"]) if os["memory_bytes"]) ].compact.join(" · "), class: "server-summary font-mono") %>
   <%= page_header @server.name, crumbs: crumbs, badges: badges, subtitle: summary do %>
@@ -26,6 +27,7 @@
       <%= actions_menu id: "server-actions" do %>
         <%= menu_item t(".add_note"), server_path(@server, tab: "journal", anchor: "server-notes"), icon: :pencil_square %>
         <%= menu_item t(".see_keys"), server_path(@server, tab: "keys"), icon: :key %>
+        <%= menu_item t(".duplicate"), new_server_path(from: @server.id), icon: :server_stack %>
         <%= menu_separator %>
         <%= menu_item t("servers.delete_button.delete_server"), server_path(@server), icon: :trash, method: :delete, danger: true, class: "delete-server",
                       confirm: t("servers.delete_button.warning", server_name: @server.name) + (temporary.positive? ? t("servers.delete_button.temporary_warning", count: temporary) : ""),
@@ -37,7 +39,7 @@
   <%= render "servers/health_bar", server: @server %>
 
   <% tab_list = [ [ "overview", t("servers.tabs.overview"), nil ],
-                  [ "vulnerabilities", t("servers.tabs.vulnerabilities"), @server.server_vulnerabilities.host.fixable.distinct.count(:cve).nonzero?, (:crit if @server.health_reasons.any? { |reason| reason["key"].to_s.start_with?("health.vulnerabilit") }) ],
+                  [ "vulnerabilities", t("servers.tabs.vulnerabilities"), (@vulnerability_counts&.dig(:fixable) || @server.server_vulnerabilities.host.fixable.distinct.count(:cve)).nonzero?, (:crit if @server.health_reasons.any? { |reason| reason["key"].to_s.start_with?("health.vulnerabilit") }) ],
                   [ "packages", t("servers.tabs.packages"), health_data.dig("updates", "total").to_i.nonzero?, (:warn if health_data.dig("updates", "security").to_i.positive?) ],
                   [ "services", t("servers.tabs.services"), Inventory::FailedUnits.new(@server).count.nonzero?, :crit ],
                   *([ docker_tab(@server, docker) ] if docker["docker"].in?(%w[ok unreadable])),
@@ -46,7 +48,7 @@
                   [ "keys", t("servers.tabs.keys"), (snapshots.sum { |snapshot| snapshot.keys.size } if snapshots.any?) ],
                   *@integration_tabs.filter_map { |tab| [ tab[:key], tab[:label], tab[:count]&.call(@server), tab[:tone]&.call(@server) ] if tab[:visible].nil? || tab[:visible].call(@server) },
                   [ "journal", t("servers.tabs.journal"), nil ] ] %>
-  <%= tabs tab_list.map { |key, label, count, tone| { key: key, label: label, count: count, tone: (tone if count), path: server_path(@server, tab: (key unless key == "overview")) } },
+  <%= tabs tab_list.map { |key, label, count, tone| { key: key, label: label, count: count, tone: (tone if count), path: server_path(@server, tab: key) } },
            current: @tab, label: t("servers.tabs.server_sections"), class: "server-tabs" %>
 
   <% case @tab %>

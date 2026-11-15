@@ -39,10 +39,10 @@ fr:
         description: Un serveur a redémarré depuis le dernier inventaire.
       health_warning:
         label: Serveur à surveiller
-        description: La santé d'un serveur se dégrade (disque, mémoire, charge, redémarrage requis…).
+        description: La santé d'un serveur se dégrade (disque, mémoire, charge, redémarrage requis…), ou un serveur déjà à surveiller a un nouveau problème.
       health_critical:
         label: Serveur en état critique
-        description: Un seuil critique est dépassé sur un serveur (disque ou mémoire presque pleins…).
+        description: Un seuil critique est dépassé sur un serveur (disque ou mémoire presque pleins…), ou un serveur critique a un nouveau problème.
       health_recovered:
         label: Serveur de nouveau sain
         description: Un serveur à surveiller ou critique est revenu à la normale.
@@ -81,7 +81,7 @@ fr:
         description: Une vulnérabilité (CVE) grave et corrigeable touche un serveur ou une de ses images Docker (gravité choisie dans les paramètres).
       vulnerability_feed_failed:
         label: Base de vulnérabilités non mise à jour
-        description: Le téléchargement ou l'import d'une base de vulnérabilités a échoué (signalé une fois, jusqu'au retour à la normale).
+        description: Le téléchargement ou l'import d'une base de vulnérabilités a échoué, ou une base dont le parc a besoin n'a pas été mise à jour depuis 3 jours (signalé une fois, jusqu'au retour à la normale).
       container_unhealthy:
         label: Conteneur en mauvaise santé
         description: Le healthcheck d'un conteneur Docker échoue (alerte au choix dans Paramètres → Docker).
@@ -145,6 +145,9 @@ fr:
       user_locked:
         label: Compte verrouillé
         description: 'Trop d''essais de connexion ratés : le compte est bloqué 15 minutes.'
+      user_unlocked:
+        label: Compte déverrouillé
+        description: Un administrateur a déverrouillé un compte avant la fin de son verrouillage.
       two_factor_enabled:
         label: 2FA activée
         description: Un utilisateur a activé la double authentification.
@@ -205,6 +208,9 @@ fr:
       integration_disabled:
         label: Extension désactivée
         description: Un administrateur a désactivé une extension.
+      notification_channel_disabled:
+        label: Canal de notification désactivé
+        description: "Un canal de notification a échoué pendant une journée sans un seul envoi réussi : Elio l'a désactivé."
       integration_sync_failed:
         label: Échec de synchronisation d'une extension
         description: Une extension n'arrive plus à lire son service (signalé une fois, jusqu'au retour à la normale).
@@ -250,15 +256,21 @@ fr:
       ssh_access_lost: "« %{server} » refuse la clé d'Elio"
       host_key_mismatch: "« %{server} » présente une autre empreinte : %{fingerprint}. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée."
       host_key_changed: 'Nouvelle empreinte acceptée pour « %{server} » : %{fingerprint}'
+      host_key_mismatch_new_type: "« %{server} » présente une clé d'un nouveau type (%{type}) : %{fingerprint}. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée."
+      host_key_added: 'Nouveau type de clé (%{type}) accepté pour « %{server} » : %{fingerprint}'
       server_unreachable: "« %{server} » ne répond plus"
       server_back_online: "« %{server} » répond à nouveau"
       os_upgraded: "« %{server} » est passé de %{from} à %{to}"
       server_rebooted: "« %{server} » a redémarré"
       health_warning: "« %{server} » est à surveiller : %{reasons}"
+      health_warning_new: "Nouveau problème sur « %{server} », toujours à surveiller : %{reasons}"
       health_critical: "« %{server} » est en état critique : %{reasons}"
+      health_critical_new: "Nouveau problème sur « %{server} », toujours en état critique : %{reasons}"
       health_recovered: "« %{server} » est de nouveau sain"
       docker_warning: "Docker de « %{server} » est à surveiller : %{reasons}"
+      docker_warning_new: "Nouveau problème avec Docker de « %{server} », toujours à surveiller : %{reasons}"
       docker_critical: "Docker de « %{server} » est en état critique : %{reasons}"
+      docker_critical_new: "Nouveau problème avec Docker de « %{server} », toujours en état critique : %{reasons}"
       docker_recovered: "Docker de « %{server} » est de nouveau sain"
       packages_changed: 'Paquets de « %{server} » : %{counts}'
       packages:
@@ -282,6 +294,9 @@ fr:
         one: "%{count} vulnérabilité corrigeable sur %{where} : %{cves}"
         other: "%{count} vulnérabilités corrigeables sur %{where} : %{cves}"
       vulnerability_feed_failed: 'Base de vulnérabilités %{feed} non mise à jour : %{error}'
+      vulnerability_feed_stale:
+        one: Base de vulnérabilités %{feed} non mise à jour depuis %{count} jour
+        other: Base de vulnérabilités %{feed} non mise à jour depuis %{count} jours
       container_unhealthy: Le conteneur %{container} est en mauvaise santé sur « %{server} »
       container_restarting: Le conteneur %{container} redémarre en boucle sur « %{server} »
       image_update_available: Nouvelle version de l'image %{image} pour « %{server} »
@@ -308,6 +323,7 @@ fr:
       user_role_changed: 'Rôle de %{email} : %{from} → %{to}'
       user_deactivated: "%{email} désactivé"
       user_reactivated: "%{email} réactivé"
+      user_unlocked: "%{email} déverrouillé"
       user_locked:
         one: "%{email} verrouillé après %{count} essai raté"
         other: "%{email} verrouillé après %{count} essais ratés"
@@ -349,6 +365,7 @@ fr:
       integration_enabled: Extension %{integration} activée
       integration_disabled: Extension %{integration} désactivée
       integration_sync_failed: 'Synchronisation %{integration} impossible : %{error}'
+      notification_channel_disabled: 'Canal de notification « %{channel} » désactivé après une journée d''échecs : %{error}'
       coolify_deployed: "Coolify : %{application} déployée%{commit}"
       coolify_deploy_failed: "Coolify : déploiement de %{application} en échec%{commit}"
       quoted: "« %{text} »"
@@ -362,6 +379,9 @@ fr:
     target_account: "« %{server_name} » (compte %{account})"
   automation:
     whole_fleet: Tout le parc
+    scope_except: "%{included} sauf %{groups}"
+    any_time: À toute heure
+    window: De %{from} à %{to}
     extension_off: 'Extension désactivée : rien à faire'
     failed: 'Échec : %{message}'
     feed_failed: "%{label} : échec (%{message})"
@@ -375,6 +395,12 @@ fr:
       new_unknown_keys:
         one: "%{count} nouvelle clé inconnue"
         other: "%{count} nouvelles clés inconnues"
+      inventoried_with_waiting:
+        one: "%{done}/%{count} serveur inventorié, %{waiting}"
+        other: "%{done}/%{count} serveurs inventoriés, %{waiting}"
+      waiting:
+        one: "%{count} serveur injoignable réessayé plus tard"
+        other: "%{count} serveurs injoignables réessayés plus tard"
       reachable:
         one: "%{done}/%{count} serveur joignable"
         other: "%{done}/%{count} serveurs joignables"
@@ -458,6 +484,11 @@ fr:
         signing_secret: Secret de signature
         last_delivery_failed_html: 'Dernier envoi en échec : %{last_error}'
         last_delivery_html: Dernier envoi %{last_delivered_at}.
+        verification_example: 'Vérifier un message (Python) :'
+        given_up_html: 'Désactivé par Elio : aucun envoi réussi depuis %{failing_since}. Corrigez la destination, puis réactivez le canal.'
+        backing_off_html:
+          one: 'Un échec, prochain essai %{retry_at} : les notifications attendent jusque-là.'
+          other: '%{count} échecs de suite, prochain essai %{retry_at} : les notifications attendent jusque-là.'
         notification_channel_yet: Aucun canal de notification pour le moment.
         secret_html: Secret de signature (HMAC SHA-256 de « %{body} », en-têtes %{timestamp} et %{signature} ; refusez les messages trop anciens)
     notification_channels:
@@ -476,7 +507,9 @@ fr:
         daily_digest: Résumé quotidien
         every_morning_8_00: "— chaque matin à 8 h : état du parc et activité de la veille."
         uncheck_pause_channel: "— décochez pour mettre le canal en pause."
-        webhook_help_html: 'Slack : %{slack} · Discord : %{discord} · Webhook : toute URL HTTPS qui reçoit du JSON signé (en-têtes %{timestamp} et %{signature}). Stockée chiffrée.'
+        webhook_help_html: 'Slack : %{slack} · Discord : %{discord} · Compatible Slack (Mattermost, Rocket.Chat) : l''adresse d''un webhook entrant du service · Webhook : toute URL HTTPS qui reçoit du JSON signé (en-têtes %{timestamp} et %{signature}). Stockée chiffrée.'
+        allow_http: Autoriser une adresse en HTTP simple
+        allow_http_hint: "— seulement pour un service de votre réseau interne : les messages circulent en clair."
         discord_path: Paramètres du salon → Intégrations → Webhooks
         mention_html: Mentionner tout le monde <span class="text-ink-3">— %{channel} sur Slack, %{everyone} sur Discord.</span>
         type: Type
@@ -503,6 +536,7 @@ fr:
     kinds:
       slack: Slack
       discord: Discord
+      slack_compatible: Mattermost, Rocket.Chat (compatible Slack)
       webhook: Webhook (JSON signé)
       email: Email
     group:

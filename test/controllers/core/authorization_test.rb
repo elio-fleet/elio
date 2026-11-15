@@ -46,6 +46,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "fleet ports" => -> { get ports_path },
       "fleet scheduled tasks" => -> { get scheduled_tasks_path },
       "fleet vulnerabilities" => -> { get vulnerabilities_path },
+      "export the fleet vulnerabilities" => -> { get vulnerabilities_path(format: :csv) },
       "fleet docker" => -> { get docker_path },
       "vulnerability detail" => -> { Vulnerability.create!(source: "debian", release: "bookworm", package: "x", cve: "CVE-2024-1", severity: "low") && get(vulnerability_path("CVE-2024-1")) },
       "server docker" => -> { get server_path(servers(:web), tab: "docker") },
@@ -75,6 +76,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       },
       "new server" => -> { get new_server_path },
       "create server" => -> { post servers_path, params: { server: { name: "New", host: "10.0.0.1", port: 22, username: "root" } } },
+      "duplicate server" => -> { get new_server_path(from: servers(:web).id) },
+      "test a server connection" => -> { post test_connection_servers_path, params: { server: { host: "10.0.0.1", port: 22, username: "root" } }, as: :turbo_stream },
       "edit server" => -> { get edit_server_path(servers(:web)) },
       "update server" => -> { patch server_path(servers(:web)), params: { server: { name: "Renamed" } } },
       "delete server" => -> { delete server_path(servers(:web)) },
@@ -110,6 +113,8 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "save the automations" => -> { patch settings_automations_update_path, params: { automations: {} } },
       "generate the Elio key" => -> { post ssh_key_path },
       "trust a new host key" => -> { post server_host_key_path(servers(:web)), params: { fingerprint: "SHA256:new" } },
+      "changed host keys" => -> { get host_key_batch_path },
+      "trust several new host keys" => -> { post host_key_batch_path },
       "notifications" => -> { get settings_notifications_path },
       "new channel" => -> { get new_settings_notification_channel_path },
       "create channel" => -> { post settings_notification_channels_path, params: { notification_channel: { name: "#x", webhook_url: WEBHOOK, activity_kinds: [ "" ] } } },
@@ -147,6 +152,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "deactivate a user" => -> { post deactivate_settings_user_path(users(:viewer)) },
       "reactivate a user" => -> { post reactivate_settings_user_path(users(:viewer)) },
       "reset a user's 2FA" => -> { post reset_two_factor_settings_user_path(users(:viewer)) },
+      "unlock a user" => -> { post unlock_settings_user_path(users(:viewer)) },
       "start a key rotation" => -> { post settings_key_rotations_path },
       "follow a key rotation" => -> { get settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
       "retry a key rotation" => -> { post retry_settings_key_rotation_path(KeyRotation.start!(by: users(:one))) },
@@ -193,7 +199,34 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
     get new_server_path
 
     assert_select "h1", "Accès refusé"
-    assert_select "p", text: "Votre rôle (Lecture) ne permet pas cette action."
+    assert_select "p.forbidden-message", text: "Votre rôle (Lecture) ne permet pas cette action : il faut le rôle Admin ou Opérateur."
+    assert_select "a.forbidden-back[href=?]", root_path, text: "Retour à la vue d'ensemble"
+  end
+
+  test "a forbidden page names the role needed and leads back to the previous page" do
+    sign_in users(:operator)
+    get settings_path, headers: { "Referer" => "http://www.example.com#{server_path(servers(:web))}?tab=keys" }
+
+    assert_select "p.forbidden-message", text: "Votre rôle (Opérateur) ne permet pas cette action : il faut le rôle Admin."
+    assert_select "a.forbidden-back[href=?]", "#{server_path(servers(:web))}?tab=keys", text: "Retour à la page précédente"
+    assert_select "a[href=?]", root_path, text: "Retour à la vue d'ensemble"
+  end
+
+  test "a forbidden page never leads back to another site" do
+    sign_in users(:viewer)
+    get new_server_path, headers: { "Referer" => "https://evil.example/phish" }
+
+    assert_select "a.forbidden-back[href=?]", root_path
+    assert_select "a[href*=evil]", 0
+  end
+
+  test "a rule of its own (someone else's note) keeps the short message" do
+    note = ServerNote.create!(server: servers(:web), user: users(:one), body: "Admin note")
+    sign_in users(:operator)
+    get edit_server_note_path(servers(:web), note)
+
+    assert_response :forbidden
+    assert_select "p.forbidden-message", text: "Votre rôle (Opérateur) ne permet pas cette action."
   end
 
   test "a forbidden Turbo Stream request shows a toast" do

@@ -54,8 +54,16 @@
     <% end %>
   <% end %>
 
-  <div class="flex items-center gap-3 border-t border-line pt-4">
-    <%= f.submit server.persisted? ? t(".save") : t(".add_server"), class: "btn btn-primary" %>
-    <%= link_to t(".cancel"), server.persisted? ? server_path(server) : servers_path, class: "btn btn-ghost" %>
+  <div class="border-t border-line pt-4">
+    <div class="flex flex-wrap items-center gap-3">
+      <%= f.submit server.persisted? ? t(".save") : t(".add_server"), class: "btn btn-primary" %>
+      <%# After the save button: Enter in a field submits the first button of the form. %>
+      <%= f.button type: "submit", formaction: test_connection_servers_path, formnovalidate: true, name: nil, class: "btn btn-secondary test-connection",
+                   title: t(".test_connection_help") do %>
+        <%= icon :signal, class: "h-4 w-4" %> <%= t(".test_connection") %>
+      <% end %>
+      <%= link_to t(".cancel"), server.persisted? ? server_path(server) : servers_path, class: "btn btn-ghost" %>
+    </div>
+    <%= render "servers/connection_test", server: server %>
   </div>
 <% end %>

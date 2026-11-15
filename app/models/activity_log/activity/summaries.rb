@@ -28,17 +28,24 @@ module Activity::Summaries
     unknown_key_detected: proc { Activity::Summaries.t(:unknown_key_detected, name: key_name, target: target) },
     key_disappeared: proc { Activity::Summaries.t(:key_disappeared, name: key_name, target: target) },
     ssh_access_lost: proc { Activity::Summaries.t(:ssh_access_lost, server: server_name) },
-    host_key_mismatch: proc { Activity::Summaries.t(:host_key_mismatch, server: server_name, fingerprint: data["new_fingerprint"]) },
-    host_key_changed: proc { Activity::Summaries.t(:host_key_changed, server: server_name, fingerprint: data["new_fingerprint"]) },
+    # A key of a type Elio had not pinned (new algorithm) reads differently from the same type of key replaced.
+    host_key_mismatch: proc do
+      Activity::Summaries.t(data["new_algorithm"] ? :host_key_mismatch_new_type : :host_key_mismatch,
+                            server: server_name, fingerprint: data["new_fingerprint"], type: data["key_type"])
+    end,
+    host_key_changed: proc do
+      Activity::Summaries.t(data["new_algorithm"] ? :host_key_added : :host_key_changed,
+                            server: server_name, fingerprint: data["new_fingerprint"], type: data["key_type"])
+    end,
     server_unreachable: proc { Activity::Summaries.t(:server_unreachable, server: server_name) },
     server_back_online: proc { Activity::Summaries.t(:server_back_online, server: server_name) },
     os_upgraded: proc { Activity::Summaries.t(:os_upgraded, server: server_name, from: data["from"], to: data["to"]) },
     server_rebooted: proc { Activity::Summaries.t(:server_rebooted, server: server_name) },
-    health_warning: proc { Activity::Summaries.t(:health_warning, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
-    health_critical: proc { Activity::Summaries.t(:health_critical, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
+    health_warning: proc { Activity::Summaries.t(data["new_reasons"] ? :health_warning_new : :health_warning, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
+    health_critical: proc { Activity::Summaries.t(data["new_reasons"] ? :health_critical_new : :health_critical, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
     health_recovered: proc { Activity::Summaries.t(:health_recovered, server: server_name) },
-    docker_warning: proc { Activity::Summaries.t(:docker_warning, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
-    docker_critical: proc { Activity::Summaries.t(:docker_critical, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
+    docker_warning: proc { Activity::Summaries.t(data["new_reasons"] ? :docker_warning_new : :docker_warning, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
+    docker_critical: proc { Activity::Summaries.t(data["new_reasons"] ? :docker_critical_new : :docker_critical, server: server_name, reasons: Array(data["reasons"]).map { |reason| Inventory::HealthStatus.text(reason) }.join(", ")) },
     docker_recovered: proc { Activity::Summaries.t(:docker_recovered, server: server_name) },
     packages_changed: proc do
       counts = %w[installed upgraded removed].filter_map { |key| Activity::Summaries.t("packages.#{key}", count: data[key].to_i) if data[key].to_i.positive? }
@@ -54,7 +61,11 @@ module Activity::Summaries
       where = data["image"] ? Activity::Summaries.t(:in_image, image: data["image"], server: server_name) : target
       Activity::Summaries.t(:vulnerability_found, count: data["count"].to_i, where: where, cves: Array(data["cves"]).join(", ")) + Activity::Summaries.list(data["packages"])
     end,
-    vulnerability_feed_failed: proc { Activity::Summaries.t(:vulnerability_feed_failed, feed: data["feed"], error: data["error"]) },
+    vulnerability_feed_failed: proc do
+      next Activity::Summaries.t(:vulnerability_feed_stale, feed: data["feed"], count: data["days"].to_i) if data["days"]
+
+      Activity::Summaries.t(:vulnerability_feed_failed, feed: data["feed"], error: data["error"])
+    end,
     container_unhealthy: proc { Activity::Summaries.t(:container_unhealthy, container: data["container"], server: server_name) },
     container_restarting: proc { Activity::Summaries.t(:container_restarting, container: data["container"], server: server_name) },
     image_update_available: proc { Activity::Summaries.t(:image_update_available, image: data["image"], server: server_name) },
@@ -80,6 +91,7 @@ module Activity::Summaries
     user_role_changed: proc { Activity::Summaries.t(:user_role_changed, email: data["email"], from: Activity::Summaries.role(data["from_role"], data["from"]), to: Activity::Summaries.role(data["to_role"], data["to"])) },
     user_deactivated: proc { Activity::Summaries.t(:user_deactivated, email: data["email"]) },
     user_reactivated: proc { Activity::Summaries.t(:user_reactivated, email: data["email"]) },
+    user_unlocked: proc { Activity::Summaries.t(:user_unlocked, email: data["email"]) },
     user_locked: proc { Activity::Summaries.t(:user_locked, email: data["email"], count: data["attempts"].to_i) },
     two_factor_enabled: proc { Activity::Summaries.t(:two_factor_enabled, email: data["email"]) },
     two_factor_disabled: proc { data["reset_by"] ? Activity::Summaries.t(:two_factor_reset, email: data["email"], by: data["reset_by"]) : Activity::Summaries.t(:two_factor_disabled, email: data["email"]) },
@@ -93,7 +105,7 @@ module Activity::Summaries
       forced = data["forced"] ? " #{Activity::Summaries.t(:rotation_forced, count: data["failed"].to_i)}" : ""
       Activity::Summaries.t(:ssh_key_rotated, count: data["servers"].to_i) + forced
     end,
-    automation_run: proc { Activity::Summaries.t(:automation_run, automation: data["automation"] ? Automation.label_for(data["automation"]) : data["automation_label"], result: data["result"]) },
+    automation_run: proc { Activity::Summaries.t(:automation_run, automation: data["automation"] ? Automation.label_for(data["automation"]) : data["automation_label"], result: LocalizedText.render(data["result"])) },
     monitor_down: proc { Activity::Summaries.t(:monitor_down, monitor: data["monitor"]) + (server_name ? " (#{server_name})" : "") },
     monitor_up: proc { Activity::Summaries.t(:monitor_up, monitor: data["monitor"]) + (server_name ? " (#{server_name})" : "") },
     monitor_cert_expiring: proc { Activity::Summaries.t(:monitor_cert_expiring, monitor: data["monitor"], count: data["days"].to_i) },
@@ -107,6 +119,7 @@ module Activity::Summaries
     integration_enabled: proc { Activity::Summaries.t(:integration_enabled, integration: data["integration_label"]) },
     integration_disabled: proc { Activity::Summaries.t(:integration_disabled, integration: data["integration_label"]) },
     integration_sync_failed: proc { Activity::Summaries.t(:integration_sync_failed, integration: data["integration_label"], error: data["error"]) },
+    notification_channel_disabled: proc { Activity::Summaries.t(:notification_channel_disabled, channel: data["channel_name"], error: data["error"]) },
     coolify_deployed: proc { Activity::Summaries.t(:coolify_deployed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
     coolify_deploy_failed: proc { Activity::Summaries.t(:coolify_deploy_failed, application: data["application"], commit: Activity::Summaries.coolify_commit(data)) },
     coolify_backup_failed: proc { Activity::Summaries.t(:coolify_backup_failed, database: data["database"], team: data["team"]) },

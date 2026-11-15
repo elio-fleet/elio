@@ -34,6 +34,54 @@ class ServerHealthTest < ActiveSupport::TestCase
     assert_equal "critical", Activity::KINDS.fetch(:health_critical).severity.to_s
   end
 
+  test "logs a new problem of a server that stays to watch, with the new reasons only" do
+    collect_health(disks: [ { "mount" => "/", "used_percent" => 81 } ])
+    collect_health(disks: [ { "mount" => "/", "used_percent" => 81 } ], reboot_required: true) # first warning
+
+    assert_difference("Activity.of_kind(:health_warning).count") do
+      collect_health(disks: [ { "mount" => "/", "used_percent" => 82 } ], reboot_required: true, ntp_synchronized: false)
+    end
+    activity = Activity.of_kind(:health_warning).order(:id).last
+    assert_equal "Nouveau problème sur « Web », toujours à surveiller : Horloge non synchronisée", activity.summary
+    assert activity.data["new_reasons"]
+  end
+
+  test "a measure that changes or a reason that improves is not a new problem" do
+    collect_health
+    collect_health(disks: [ { "mount" => "/", "used_percent" => 81 } ], failed_units: [ "nginx.service" ])
+
+    assert_no_difference("Activity.count") do
+      collect_health(disks: [ { "mount" => "/", "used_percent" => 83 } ], failed_units: [ "nginx.service" ])
+      collect_health(disks: [ { "mount" => "/", "used_percent" => 83 } ])
+    end
+    assert_difference("Activity.of_kind(:health_warning).count") do
+      collect_health(disks: [ { "mount" => "/", "used_percent" => 83 }, { "mount" => "/var", "used_percent" => 85 } ])
+    end
+    assert_includes Activity.of_kind(:health_warning).order(:id).last.summary, "/var"
+  end
+
+  test "a reason that becomes critical on a server already critical is logged" do
+    collect_health
+    collect_health(disks: [ { "mount" => "/", "used_percent" => 97 }, { "mount" => "/var", "used_percent" => 85 } ])
+
+    assert_difference("Activity.of_kind(:health_critical).count") do
+      collect_health(disks: [ { "mount" => "/", "used_percent" => 97 }, { "mount" => "/var", "used_percent" => 96 } ])
+    end
+    assert_equal "Nouveau problème sur « Web », toujours en état critique : Disque /var à 96\u00A0%", Activity.of_kind(:health_critical).order(:id).last.summary
+    assert_no_difference("Activity.count") do
+      collect_health(disks: [ { "mount" => "/", "used_percent" => 97 }, { "mount" => "/var", "used_percent" => 85 } ])
+    end
+  end
+
+  test "an upgrade that computes the reasons again logs no new problem" do
+    collect_health
+    collect_health(reboot_required: true)
+    @server.update_columns(health_reasons: [ { "text" => "Redémarrage requis" } ])
+
+    assert_no_difference("Activity.count") { @server.refresh_health!(new_reasons: false) }
+    assert_equal [ "Redémarrage requis" ], @server.health_reason_texts
+  end
+
   test "an unreachable server is shown off, whatever its inventory" do
     collect_health
     @server.update_columns(reachable: false)

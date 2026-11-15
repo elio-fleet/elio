@@ -1,7 +1,8 @@
 # Every morning (config/recurring.yml): sends yesterday's digest to the
 # enabled channels that asked for it, each by its own job.
 class NotificationDigestJob < ApplicationJob
-  queue_as :default
+  queue_as :notifications
+  queue_with_priority NOTIFICATIONS_PRIORITY
 
   retry_on Notifications::DeliveryError, wait: :polynomially_longer, attempts: 5 do |job, error|
     job.arguments.first&.record_delivery!(error: error.message)

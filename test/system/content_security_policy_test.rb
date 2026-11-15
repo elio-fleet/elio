@@ -4,6 +4,7 @@ require "application_system_test_case"
 # violation reported by the browser (scripts, Turbo's progress bar, theme).
 class ContentSecurityPolicyTest < ApplicationSystemTestCase
   include Devise::Test::IntegrationHelpers
+  include StubHelpers
 
   test "no CSP violation on the main pages, the quick search and the jobs dashboard" do
     sign_in users(:one)
@@ -24,5 +25,17 @@ class ContentSecurityPolicyTest < ApplicationSystemTestCase
     header = page.driver.browser.execute_script("return document.querySelector('meta[name=csp-nonce]')?.content")
     assert header.present?
     assert_selector "script[nonce]", visible: :all
+  end
+
+  test "an administrator reaching production over plain HTTP sees a notice, hidden for good by its button" do
+    stub_method_until_teardown(SecurityHelper, :plain_http?, true)
+    sign_in users(:one)
+    visit root_path
+    assert_selector ".plain-http-notice", text: "HTTP simple"
+    find(".plain-http-notice").click_on "Masquer"
+    assert_no_selector ".plain-http-notice"
+    visit servers_path
+    assert_selector "h1"
+    assert_no_selector ".plain-http-notice"
   end
 end
