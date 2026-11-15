@@ -81,6 +81,52 @@ class DnsRecordsControllerTest < ActionDispatch::IntegrationTest
     assert_response :forbidden
   end
 
+  test "searching an IP lists every name that leads to it, not the IPs that merely contain it" do
+    Dns::Store.replace("technitium", [ { zone: "example.test", name: "web.example.test", record_type: "A", value: "203.0.113.10" },
+                                       { zone: "example.test", name: "near.example.test", record_type: "A", value: "203.0.113.100" },
+                                       { zone: "example.test", name: "alias.example.test", record_type: "CNAME", value: "web.example.test" } ])
+    sign_in users(:viewer)
+    get dns_records_path(q: "203.0.113.10")
+    assert_select ".dns-ip-names", /2 noms mènent à 203\.0\.113\.10 :\s*alias\.example\.test, web\.example\.test/
+    assert_equal %w[alias.example.test web.example.test], css_select("tr.dns-record").map { _1["data-name"] }
+    assert_select "input[name='record_ids[]']", 0, "a viewer cannot attach"
+
+    get dns_records_path(q: "near")
+    assert_select ".dns-ip-names", 0
+    assert_select "tr.dns-record", 1
+  end
+
+  test "an operator attaches several names at once, to a server, to none, then back to automatic" do
+    sign_in users(:operator)
+    get dns_records_path(filter: "outside")
+    assert_select "form#dns-link-batch select[name=server_id][required]"
+    assert_select "tr.dns-record input[type=checkbox][name='record_ids[]'][form=dns-link-batch]", 4
+    ids = DnsRecord.outside_fleet.order(:name).first(2).map(&:id)
+    names = DnsRecord.where(id: ids).pluck(:name)
+
+    post dns_link_batch_path, params: { record_ids: ids.map(&:to_s), server_id: servers(:backup).id }
+    assert_equal "2 noms sont rattachés à « #{servers(:backup).name} ».", flash[:notice]
+    assert_equal [ servers(:backup).id ] * 2, DnsRecord.where(name: names).pluck(:server_id)
+    assert_equal %w[manual manual], DnsRecord.where(name: names).pluck(:matched_by)
+
+    post dns_link_batch_path, params: { record_ids: ids.map(&:to_s), server_id: "none" }
+    assert_equal [ nil, nil ], DnsLink.where(name: names).pluck(:server_id)
+    assert_equal [ nil, nil ], DnsRecord.where(name: names).pluck(:server_id)
+
+    post dns_link_batch_path, params: { record_ids: ids.map(&:to_s), server_id: "auto" }
+    assert_not DnsLink.exists?(name: names)
+    assert_equal "2 noms reviennent au rattachement automatique.", flash[:notice]
+
+    post dns_link_batch_path, params: { server_id: servers(:web).id }
+    assert_equal "Cochez au moins un enregistrement et choisissez où le rattacher.", flash[:alert]
+    post dns_link_batch_path, params: { record_ids: ids.map(&:to_s), server_id: "" }
+    assert_not DnsLink.exists?
+
+    sign_in users(:viewer)
+    post dns_link_batch_path, params: { record_ids: ids.map(&:to_s), server_id: servers(:web).id }
+    assert_response :forbidden
+  end
+
   test "the settings page offers the extension with its help" do
     sign_in users(:one)
     get edit_settings_integration_path("technitium")

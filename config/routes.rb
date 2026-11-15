@@ -129,6 +129,7 @@ Rails.application.routes.draw do
     resource :link, only: %i[create destroy], controller: "monitor_links"
   end
   # OVHcloud extension.
+  resource :dns_link_batch, only: :create, path: "dns/links"
   resources :dns_records, only: :index, path: "dns" do
     resource :link, only: %i[create destroy], controller: "dns_links"
   end
