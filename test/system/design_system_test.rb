@@ -29,7 +29,8 @@ class DesignSystemTest < ApplicationSystemTestCase
       settings_path, settings_users_path, settings_notifications_path, settings_automations_path, settings_vulnerabilities_path,
       settings_docker_path, settings_firewall_path, settings_integrations_path, edit_settings_integration_path("coolify"),
       new_settings_integration_connection_path("coolify"), coolify_path, server_path(web, tab: "coolify"), account_path,
-      edit_settings_integration_path("manual_dns"), new_settings_integration_connection_path("manual_dns"), activities_path(q: "web") ]
+      edit_settings_integration_path("manual_dns"), new_settings_integration_connection_path("manual_dns"), activities_path(q: "web"),
+      activity_path(Activity.record!(:server_unreachable, server: web)) ]
   end
 
   [ 1024, 1280 ].each do |width|

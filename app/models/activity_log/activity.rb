@@ -117,7 +117,12 @@ class Activity < ApplicationRecord
              "OR activities.unix_user ILIKE :q OR activities.kind IN (:kinds)", q: JournalSearch.like(text), kinds: kinds.presence || [ "" ])
   end
 
-  scope :in_category, ->(category) { where(kind: KINDS.values.select { |kind| kind.category == category.to_sym }.map { |kind| kind.key.to_s }) }
+  scope :in_category, ->(category) { where(kind: kinds_where { |kind| kind.category == category.to_sym }) }
+  # This severity or a more serious one (warning: warnings and criticals).
+  scope :at_least, ->(severity) { where(kind: kinds_where { |kind| SEVERITIES.index(kind.severity) >= SEVERITIES.index(severity.to_sym) }) }
+
+  # The keys (strings) of the kinds the block keeps.
+  def self.kinds_where(&block) = KINDS.values.select(&block).map { |kind| kind.key.to_s }
 
   # Records an activity; the author defaults to the signed-in user (Current.user).
   def self.record!(kind, server: nil, public_key: nil, unix_user: nil, user: Current.user, **data)
