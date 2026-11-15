@@ -17,7 +17,9 @@ class Notifications::Discord
 
   # Several activities of one kind (NotificationBatch::Group), as one embed.
   def self.deliver_batch(channel, group)
-    embed = { title: escape(group.title).first(256), description: group.lines.map { |line| "• #{escape(line)}" }.join("\n").first(4000),
+    lines = group.lines.map { |line| "• #{escape(line)}" }
+    lines.unshift(escape(group.summary)) if group.summary
+    embed = { title: escape(group.title).first(256), description: lines.join("\n").first(4000),
               color: COLORS.fetch(group.severity), timestamp: group.activities.last.created_at.iso8601, url: group.url }.compact
     post(channel, embeds: [ embed ])
   end

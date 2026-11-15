@@ -485,6 +485,12 @@ fr:
         one: "…et %{count} autre"
         other: "…et %{count} autres"
       see_all: Les voir dans Elio
+      servers:
+        one: "1 serveur touché : %{servers}"
+        other: "%{count} serveurs touchés : %{servers}"
+      more_servers:
+        one: " et %{count} autre"
+        other: " et %{count} autres"
   notification_mailer:
     test_subject: "[Elio] Test du canal « %{channel_name} »"
     activity:
@@ -546,11 +552,10 @@ fr:
         instance_language: Langue de cet Elio (%{language})
         language_hint: La langue des messages, des tests et du résumé quotidien de ce canal.
         group_minutes: Regrouper les notifications
-        group_none: Non, envoyer chacune tout de suite
-        group_for:
-          one: Sur %{count} minute
-          other: Sur %{count} minutes
-        group_hint: Les activités d'un même type survenues pendant ce temps partent en un seul message. Les critiques partent toujours tout de suite.
+        minutes: minutes
+        group_hint: Les activités d'un même type survenues pendant ce temps partent en un seul message (0 pour envoyer chacune tout de suite, %{max} au plus). Les critiques partent toujours tout de suite.
+        group_by_server: Regrouper aussi par serveur
+        group_by_server_hint: "— un message par type et par serveur, au lieu d'un par type pour tout le parc."
       edit:
         edit_html: Modifier « %{name_was} »
       new:
@@ -571,3 +576,6 @@ fr:
     group:
       one: regroupées sur %{count} min
       other: regroupées sur %{count} min
+    group_by_server:
+      one: regroupées par serveur sur %{count} min
+      other: regroupées par serveur sur %{count} min

@@ -36,6 +36,7 @@ class Notifications::Slack
   def self.deliver_batch(channel, group)
     title = "#{"<!channel> " if channel.mention_channel}#{SEVERITY_EMOJIS.fetch(group.severity)} *#{escape(group.title)}*"
     lines = group.lines.map { |line| "• #{escape(line)}" }
+    lines.unshift(escape(group.summary)) if group.summary
     lines << "<#{group.url}|#{escape(I18n.t("notifications.batch.see_all"))}>" if group.url
     text = "#{title}\n#{lines.join("\n")}"
     post(channel.webhook_url, { text: text, blocks: [ { type: "section", text: { type: "mrkdwn", text: text.first(3000) } } ] })
