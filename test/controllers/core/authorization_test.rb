@@ -156,6 +156,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "run automation" => -> { post run_settings_automation_path(Automation.all_kinds.find { |automation| automation.kind == "keys_scan" }) },
       "users" => -> { get settings_users_path },
       "invite a user" => -> { post settings_invitations_path, params: { invitation: { email: "new@example.com", role: "viewer" } } },
+      "resend an invitation" => -> { post resend_settings_invitation_path(Invitation.create!(email: "y@example.com", invited_by: users(:one)).tap { |invitation| invitation.update_columns(expires_at: 1.day.ago) }) },
       "revoke an invitation" => -> { delete settings_invitation_path(Invitation.create!(email: "x@example.com", invited_by: users(:one))) },
       "change a user's role" => -> { patch settings_user_path(users(:viewer)), params: { user: { role: "operator", public_key_id: "" } } },
       "deactivate a user" => -> { post deactivate_settings_user_path(users(:viewer)) },

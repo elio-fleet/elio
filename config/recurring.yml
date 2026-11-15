@@ -28,6 +28,9 @@ shared: &shared
   purge_background_tasks:
     class: PurgeBackgroundTasksJob
     schedule: every day at 4:15am
+  purge_invitations:
+    class: PurgeInvitationsJob
+    schedule: every day at 4:20am
   record_vulnerability_count:
     class: RecordVulnerabilityCountJob
     schedule: every hour at minute 50

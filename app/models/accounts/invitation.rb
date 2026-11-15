@@ -7,6 +7,11 @@ class Invitation < ApplicationRecord
   localized # the invitation email and the new account's language
 
   VALIDITY = 7.days
+  # Expired invitations stay listed (to be resent in one click) that long,
+  # then expired and revoked ones are purged (PurgeInvitationsJob).
+  KEPT = 30.days
+  # Addresses accepted at once by the invitation form.
+  MAX_AT_ONCE = 20
 
   belongs_to :invited_by, class_name: "User"
   belongs_to :user, optional: true
@@ -26,6 +31,16 @@ class Invitation < ApplicationRecord
   end
 
   scope :pending, -> { where(accepted_at: nil, revoked_at: nil).where(expires_at: Time.current..) }
+  # Expired without being accepted or revoked, recently enough to be resent.
+  scope :expired_unanswered, -> { where(accepted_at: nil, revoked_at: nil).where(expires_at: KEPT.ago...Time.current) }
+  # Accepted invitations are kept: they tell who invited each account.
+  scope :purgeable, -> { where(accepted_at: nil).where("revoked_at < :limit OR expires_at < :limit", limit: KEPT.ago) }
+
+  # Splits what was typed in the form ("a@x.org, b@x.org" or one per line)
+  # into distinct addresses, in the order typed.
+  def self.split_emails(text)
+    text.to_s.split(/[\s,;]+/).map { |email| email.strip.downcase }.compact_blank.uniq
+  end
 
   def self.find_pending_by_token(token)
     invitation = find_by(token: token.to_s) if token.present?
@@ -55,6 +70,18 @@ class Invitation < ApplicationRecord
       update!(user: account, accepted_at: Time.current)
       account
     end
+  end
+
+  # Gives an expired invitation a new validity period and a new link (the old
+  # one may have been forwarded meanwhile: it stays invalid), sent again by
+  # `by`. Refused if the person has joined or been invited since.
+  def renew!(by:)
+    raise ActiveRecord::RecordInvalid, self unless status == :expired
+
+    email_must_be_free
+    raise ActiveRecord::RecordInvalid, self if errors.any?
+
+    update!(invited_by: by, token: SecureRandom.urlsafe_base64(32), expires_at: VALIDITY.from_now)
   end
 
   def revoke!

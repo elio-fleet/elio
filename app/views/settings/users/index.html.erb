@@ -7,8 +7,9 @@
   <%= form_with model: @invitation, url: settings_invitations_path, class: "mt-4 flex flex-wrap items-end gap-3" do |f| %>
     <div class="min-w-60 flex-1">
       <%= f.label :email, t(".email"), class: "label" %>
-      <%= f.email_field :email, required: true, placeholder: "alice@example.com",
-            class: "input mt-1" %>
+      <%= f.email_field :email, required: true, multiple: true, name: "invitation[email]", placeholder: "alice@example.com, bob@example.com",
+            aria: { describedby: "invitation-emails-help" }, class: "input mt-1" %>
+      <p id="invitation-emails-help" class="mt-1 text-xs text-ink-3"><%= t(".emails_help", count: Invitation::MAX_AT_ONCE) %></p>
     </div>
     <div>
       <%= f.label :role, t(".role"), class: "label" %>
@@ -39,6 +40,22 @@
                 class: "cursor-pointer rounded-md p-1.5 text-ink-3 hover:bg-crit-soft hover:text-crit-ink" do %>
             <%= icon :trash %>
           <% end %>
+        </li>
+      <% end %>
+    </ul>
+  <% end %>
+
+  <% if @expired_invitations.any? %>
+    <h3 class="mt-6 text-sm font-semibold text-ink-2"><%= t(".expired") %></h3>
+    <p class="mt-1 text-xs text-ink-3"><%= t(".expired_intro", count: Invitation::KEPT.in_days.to_i) %></p>
+    <ul id="expired-invitations" class="mt-2 divide-y divide-line rounded-md border border-line">
+      <% @expired_invitations.each do |invitation| %>
+        <li id="<%= dom_id(invitation) %>" class="expired-invitation flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
+          <div class="min-w-0 flex-1">
+            <p class="font-medium text-ink-2"><%= invitation.email %> <span class="ml-1 rounded-full bg-subtle px-2 py-0.5 text-xs font-medium text-ink-2"><%= invitation.role_label %></span></p>
+            <p class="text-xs text-ink-3"><%= t(".invited_by_html", email: invitation.invited_by.email, expiry: relative_time_tag(invitation.expires_at, prefix: t(".expired_at"))) %></p>
+          </div>
+          <%= button_to t(".resend"), resend_settings_invitation_path(invitation), aria: { label: t(".resend_label", email: invitation.email) }, class: "btn btn-secondary" %>
         </li>
       <% end %>
     </ul>

@@ -145,6 +145,13 @@ en:
       signed_in: 'You are already signed in: sign out to accept this invitation.'
       emailed: Invitation emailed to %{email}. The link can still be copied below.
       created: Invitation created for %{email}. Copy the link and send it to them.
+      emailed_many:
+        one: '%{count} invitation emailed: %{emails}. The links can still be copied below.'
+        other: '%{count} invitations emailed: %{emails}. The links can still be copied below.'
+      created_many:
+        one: '%{count} invitation created: %{emails}. Copy the links and send them.'
+        other: '%{count} invitations created: %{emails}. Copy the links and send them.'
+      too_many: At most %{count} addresses at once.
       failed: 'Cannot invite: %{errors}'
       revoked: The invitation of %{email} has been revoked.
     two_factor:
