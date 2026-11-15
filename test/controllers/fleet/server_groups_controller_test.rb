@@ -91,6 +91,32 @@ class ServerGroupsControllerTest < ActionDispatch::IntegrationTest
     assert Server.exists?(servers(:web).id)
   end
 
+  test "the thresholds of a group recompute the health of its servers, and its form shows the inherited ones" do
+    server = servers(:web)
+    server.inventory_snapshots.create!(category: "health", status: "ok", data: { "disks" => [ { "mount" => "/", "used_percent" => 75 } ] },
+                                       collected_at: Time.current, checked_at: Time.current)
+    server.refresh_health!
+    assert_equal "ok", server.health_status
+    sign_in users(:one)
+
+    get edit_server_group_path(server_groups(:production))
+    assert_select "input[name='server_group[health_thresholds][disk_warn]'][placeholder='80']"
+    assert_select "input[name='server_group[health_thresholds][swap_warn]'][placeholder='Non surveillé']"
+
+    patch server_group_path(server_groups(:production)), params: { server_group: { name: "Production", health_thresholds: { disk_warn: "70", disk_crit: "" } } }
+
+    assert_redirected_to servers_path(group: server_groups(:production).id)
+    assert_equal({ "disk_warn" => 70 }, server_groups(:production).reload.health_thresholds)
+    assert_equal [ "warn", [ "Disque / à 75 %" ] ], [ server.reload.health_status, server.health_reason_texts ]
+
+    patch server_group_path(server_groups(:production)), params: { server_group: { name: "Production", health_thresholds: { disk_warn: "95", disk_crit: "90" } } }
+    assert_response :unprocessable_entity
+    assert_select "#error_explanation li", text: /seuil d'attention sous son seuil critique/
+
+    delete server_group_path(server_groups(:production))
+    assert_equal "ok", server.reload.health_status, "its servers lose its thresholds"
+  end
+
   test "deletes a group but keeps its servers" do
     sign_in users(:one)
 

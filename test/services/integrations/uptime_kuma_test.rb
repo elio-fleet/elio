@@ -50,6 +50,14 @@ class Integrations::UptimeKumaTest < ActiveSupport::TestCase
     assert_nil UptimeKumaMonitor.find_by!(monitor_id: "58").server
   end
 
+  test "deleting the data removes the probes" do
+    uptime_kuma_metrics
+    @integration.sync!
+    @integration.update!(enabled: false)
+    assert @integration.purge_data!(user: users(:one))
+    assert_empty UptimeKumaMonitor.all
+  end
+
   test "Uptime Kuma 1.x (no monitor_id): the probes keep the same record from one sync to the next" do
     servers(:web).update_columns(ip_addresses: [ "192.0.2.44" ])
     uptime_kuma_metrics(file_fixture("integrations/uptime_kuma/metrics_v1.txt").read)

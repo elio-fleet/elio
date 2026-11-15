@@ -4,7 +4,8 @@ module Settings
   class HealthThresholdsController < ApplicationController
     require_permission :administer
 
-    FIELDS = %i[health_disk_warn health_disk_crit health_memory_warn health_memory_crit health_load_warn].freeze
+    FIELDS = %i[health_disk_warn health_disk_crit health_inodes_warn health_inodes_crit health_memory_warn health_memory_crit
+                health_swap_warn health_swap_crit health_load_warn health_sustained_minutes].freeze
 
     def update
       setting = AppSetting.current

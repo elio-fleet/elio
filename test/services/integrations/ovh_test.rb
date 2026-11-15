@@ -100,6 +100,38 @@ class Integrations::OvhTest < ActiveSupport::TestCase
     assert_equal 0, Activity.of_kind(:ovh_service_expiring).count, "already expiring at the first sync"
   end
 
+  test "the expiration of the consumer key is read after each sync and announced before it" do
+    routes = ovh_account
+    routes["/auth/currentCredential"] = routes["/auth/currentCredential"].merge("expiration" => 5.days.from_now.change(usec: 0).iso8601)
+    fake_ovh(routes)
+    @integration.sync!
+    assert_equal 5.days.from_now.to_date, @integration.reload.credential_expires_at.to_date
+    assert_equal [ "Clé d'API OVHcloud : expire dans 5 jours (#{I18n.l(5.days.from_now.to_date, format: :long)})" ], Activity.of_kind(:integration_credential_expiring).map(&:summary)
+
+    fake_ovh
+    @integration.reload.sync!
+    assert_nil @integration.reload.credential_expires_at, "a key without expiration"
+  end
+
+  test "deleting the data: resources, DNS records and the memory of the alerts; the next sync is a first one again" do
+    AppSetting.current.update!(dns_alert_outside: true)
+    fake_ovh
+    @integration.sync!
+    assert OvhResource.any?
+    assert DnsRecord.of_source("ovh").any?
+    assert AppSetting.current.reload.dns_alert_state["outside"].key?("ovh")
+
+    @integration.update!(enabled: false)
+    assert @integration.purge_data!(user: users(:one))
+    assert_empty OvhResource.all
+    assert_empty DnsRecord.unscoped.of_source("ovh")
+    assert_not AppSetting.current.reload.dns_alert_state["outside"].key?("ovh")
+
+    @integration.update!(enabled: true)
+    @integration.sync!
+    assert_equal 0, Activity.where(kind: %w[ovh_service_expiring dns_record_outside_fleet ovh_service_unmanaged]).count, "nothing logged for what is already there"
+  end
+
   test "an expiring service is logged when it enters the window" do
     fake_ovh(ovh_account(expiration: 90.days.from_now.to_date))
     @integration.sync!

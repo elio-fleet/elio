@@ -148,6 +148,27 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     assert_equal "Le serveur « Web prod » a été modifié.", flash[:notice]
   end
 
+  test "update saves the server's own thresholds and recomputes its health; the form shows the inherited ones" do
+    server = servers(:web)
+    server.inventory_snapshots.create!(category: "health", status: "ok", data: { "memory" => { "used_percent" => 60 } }, collected_at: Time.current, checked_at: Time.current)
+    server.refresh_health!
+    server_groups(:production).update!(health_thresholds: { "memory_warn" => 85 })
+    sign_in users(:one)
+
+    get edit_server_path(server)
+    assert_select "input[name='server[health_thresholds][memory_warn]'][placeholder='85']"
+    assert_select "input[name='server[health_thresholds][disk_warn]'][placeholder='80']"
+
+    patch server_path(server), params: { server: { name: "Web", health_thresholds: { memory_warn: "50", memory_crit: "" } } }
+
+    assert_redirected_to server_path(server)
+    assert_equal [ { "memory_warn" => 50 }, "warn" ], [ server.reload.health_thresholds, server.health_status ]
+    assert_equal %w[health_thresholds], Activity.of_kind(:server_updated).sole.data["changed"]
+
+    patch server_path(server), params: { server: { health_thresholds: { memory_warn: "" }, server_group_ids: [ "" ] } }
+    assert_equal [ {}, "ok" ], [ server.reload.health_thresholds, server.health_status ]
+  end
+
   test "update ignores a password param" do
     sign_in users(:one)
 

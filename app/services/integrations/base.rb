@@ -32,7 +32,9 @@ class Integrations::Base
     # Links added to the sidebar: [{ label:, path: (helper name), icon: }].
     def sidebar_links = []
 
-    # Health reasons of a server (HealthStatus::Reason), when the extension raises alerts.
+    # Health reasons of a server (HealthStatus::Reason), when the extension
+    # raises alerts. Their keys start with "integrations." (Server::EXTENSION_REASON_PREFIXES:
+    # how a sync tells them from the reasons of the inventory).
     def health_reasons(_integration, _server) = []
 
     # Help shown on the settings page (partial "integrations/<key>/help"), or nil.
@@ -45,6 +47,17 @@ class Integrations::Base
     # { "source" => "Coolify", "name" => …, "detail" => … } }. They are not
     # "outside the keyring" (no unknown-key alert) and are named in the keys tab.
     def known_keys(_integration) = {}
+
+    # When the API key expires (Time), when the service tells; nil otherwise.
+    # Asked after each successful sync (Integration#sync!); may raise
+    # Integrations::Error (ignored).
+    def credential_expires_at(_integration) = nil
+
+    # Can the data the syncs stored be deleted from the settings (Integration#purge_data!)?
+    def purgeable? = true
+
+    # Deletes what the syncs stored (probes, resources, DNS records…), not the settings.
+    def purge(_integration) = nil
 
     # Several connections (IntegrationConnection): the fields of ONE
     # connection (URL, token…). Empty = a single connection, in `fields`.

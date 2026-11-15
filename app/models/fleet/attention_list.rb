@@ -20,7 +20,7 @@ class AttentionList
   FIXES = [ :fixes, "vulnerabilities", nil, { view: "packages", fixable: 1 } ].freeze
   REASON_ACTIONS = {
     "disk" => [ :disks, nil, "disks" ], "inodes" => [ :disks, nil, "disks" ], "memory" => [ :health, nil, "server-health-details" ], "load" => [ :health, nil, "server-health-details" ],
-    "oom_kills" => [ :health, nil, "server-health-details" ],
+    "swap" => [ :health, nil, "server-health-details" ], "oom_kills" => [ :health, nil, "server-health-details" ],
     "vulnerability" => FIXES, "vulnerabilities" => FIXES,
     "service_failed" => [ :services, "services" ], "services_failed" => [ :services, "services" ],
     "units_failed" => [ :services, "services" ], "units_failed_more" => [ :services, "services" ],

@@ -4,6 +4,7 @@ en:
     disk: Disk %{mount} at %{percent}
     inodes: Inodes %{mount} at %{percent}
     memory: Memory at %{percent}
+    swap: Swap at %{percent}
     load:
       one: Load %{load} for %{count} processor
       other: Load %{load} for %{count} processors
@@ -131,7 +132,25 @@ en:
       elio_needs_root_password_html: "%{message} Elio needs root (password-less sudo) or the docker group."
       container: No container.
       services_inventory_yet: No services inventory yet.
+      all: All
+      states:
+        active: Active
+        failed: Failed
+        inactive: Inactive
+      search: Search the services
+      search_placeholder: Name or description
+      stopped_title:
+        one: Starts at boot but stopped (%{count})
+        other: Start at boot but stopped (%{count})
+      stopped_hint: Enabled at boot yet not running now (one-shot tasks aside), stopped by hand or exited.
+      no_match: No service matches these filters.
+      clear_filters: Clear the filters
     systemd_unit:
+      running: active
+      inactive: inactive
+      stopped: stopped
+      started_html: started %{time}
+      stopped_since_html: stopped %{time}
       failed: failed
       boot: at boot
       failed_since_html: failed %{time}
