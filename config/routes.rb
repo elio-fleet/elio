@@ -48,6 +48,7 @@ Rails.application.routes.draw do
   resources :tolerated_keys, only: %i[create destroy], path: "ssh-keys/tolerated"
   resources :public_keys, path: "ssh-keys" do
     resources :accesses, only: :create, controller: "public_key_accesses"
+    delete "accesses", to: "public_key_accesses#destroy_all"
     resource :access, only: :destroy, controller: "public_key_accesses"
   end
 

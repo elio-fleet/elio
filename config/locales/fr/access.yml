@@ -21,6 +21,10 @@ fr:
       add: Ajouter
       adding: Ajout en cours…
       able_add_key_there: pour pouvoir y ajouter cette clé.
+    bulk_results:
+      retry_failed:
+        one: Relancer l'échec
+        other: Relancer les %{count} échecs
     delete_button:
       delete: Supprimer
       delete_2: Supprimer %{public_key_name}
@@ -75,6 +79,10 @@ fr:
     show:
       owner: "Clé de %{email}"
       delete: Supprimer
+      remove_everywhere: Retirer de tous les serveurs
+      remove_everywhere_confirm:
+        one: La clé de « %{public_key_name} » sera supprimée du seul compte où elle est installée (départ d'un collègue, clé perdue…).
+        other: La clé de « %{public_key_name} » sera supprimée des %{count} comptes où elle est installée (départ d'un collègue, clé perdue…).
       none: Aucun
       added_keyring_html: "· ajoutée au trousseau %{created_at}"
       edit: Modifier
@@ -286,6 +294,8 @@ fr:
       added_for: ajoutée pendant %{label_for}
       added: ajoutée
       present: déjà présente
+      removed: retirée
+      absent: déjà absente
   ssh:
     diagnosis:
       steps:
@@ -340,6 +350,10 @@ fr:
       command_timeout: 'La commande n''a pas répondu en %{timeout} s sur %{host} : %{truncate}'
   public_key_accesses_controller:
     choose_server: Choisissez au moins un serveur.
+    no_access: Aucun accès connu à retirer.
+    removed_everywhere:
+      one: 'Retraits terminés : %{succeeded}/%{count} compte.'
+      other: 'Retraits terminés : %{succeeded}/%{count} comptes.'
     removed: L'accès de « %{public_key_name} » à « %{server_name} » a été retiré.
     remove_failed: 'Impossible de retirer l''accès : %{error_title} — %{error_details}'
     done:

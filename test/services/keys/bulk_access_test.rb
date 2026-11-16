@@ -38,6 +38,27 @@ class Keys::BulkAccessTest < ActiveSupport::TestCase
     assert_empty @reads
   end
 
+  test "revokes the key from every known account, in the servers' order, and forgets it where it is gone" do
+    alice = public_keys(:alice)
+    [ [ servers(:web), "deploy" ], [ servers(:web), "www-app" ], [ servers(:backup), "root" ] ].each do |server, user|
+      AccountSnapshot.record!(server, AuthorizedKeysAccount.new(server, user), AuthorizedKey.parse(alice.content))
+    end
+    calls = []
+    remover = lambda do |server, _blob, account:, **|
+      calls << [ server.name, account.unix_user ]
+      status = account.unix_user == "www-app" ? :absent : :removed
+      Keys::AuthorizedKeyRemoval::Result.new(status: status, error_title: nil, error_details: nil)
+    end
+
+    results = stub_method(Keys::AuthorizedKeyRemoval, :call, remover) { Keys::BulkAccess.revoke(alice) }
+
+    assert_equal [ [ "Backup", "root", "retirée" ], [ "Web", "deploy", "retirée" ], [ "Web", "www-app", "déjà absente" ] ],
+                 results.map { |result| [ result.server.name, result.unix_user, result.message ] }
+    assert_equal [ [ "Backup", "root" ], [ "Web", "deploy" ], [ "Web", "www-app" ] ], calls.sort
+    assert_empty AccountSnapshot.with_fingerprint(alice.fingerprint)
+    assert_empty Keys::BulkAccess.revoke(alice)
+  end
+
   test "works on several servers at once and keeps the servers' order" do
     running = Concurrent::AtomicFixnum.new
     peak = Concurrent::AtomicFixnum.new
