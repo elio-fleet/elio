@@ -61,6 +61,7 @@ class MonitorsControllerTest < ActionDispatch::IntegrationTest
     get monitors_path(filter: "unattached")
     assert_select "tr.monitor-row", 1
     assert_select "tr.monitor-row", text: /Site vitrine/
+    assert_select "tr.monitor-row .monitor-unmatched", "www.example.com n'est le nom d'hôte d'aucun serveur, et la résolution DNS est désactivée."
 
     get monitors_path(filter: "down")
     assert_select "tr.monitor-row[data-state=down]", 1
@@ -84,13 +85,16 @@ class MonitorsControllerTest < ActionDispatch::IntegrationTest
 
     delete monitor_link_path(monitor)
     assert_nil monitor.reload.server
+    assert_equal "host_no_dns", monitor.unmatched_reason["key"], "explained again once back to automatic"
     assert_empty @integration.links.reload
 
     web_probe = UptimeKumaMonitor.find_by!(monitor_id: "1")
     post monitor_link_path(web_probe), params: { server_id: "" }
-    assert_nil web_probe.reload.server
+    assert_equal [ nil, "manual_none" ], web_probe.reload.then { [ _1.server, _1.unmatched_reason["key"] ] }
+    get monitors_path(filter: "unattached")
+    assert_select "tr##{dom_id(web_probe)} .monitor-unmatched", "Rattachée à aucun serveur, à la main."
     delete monitor_link_path(web_probe)
-    assert_equal [ servers(:web), "ip" ], web_probe.reload.then { [ _1.server, _1.matched_by ] }
+    assert_equal [ servers(:web), "ip", {} ], web_probe.reload.then { [ _1.server, _1.matched_by, _1.unmatched_reason ] }
   end
 
   test "attaching is for operators" do
@@ -116,6 +120,7 @@ class MonitorsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='integration[values][url]'][value='https://uptime.example.test']"
     assert_select "input[type=checkbox][name='integration[values][no_monitor_ignored_groups][]']", ServerGroup.count
     assert_select "select[name='integration[values][uptime_window]'] option[selected][value='30d']"
+    assert_select "input[name='integration[values][match_tag]'][value='server']"
   end
 
   test "the fleet list has no probe column: the probes are on the server page and the Probes page" do

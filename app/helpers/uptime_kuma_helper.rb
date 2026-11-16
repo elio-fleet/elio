@@ -29,6 +29,13 @@ module UptimeKumaHelper
 
   def monitor_match_label(monitor) = monitor.matched_by.presence && t("uptime_kuma_monitor.matches.#{monitor.matched_by}", default: "")
 
+  # Why the probe is attached to no server (Matcher#explain), nil when unknown
+  # (probes stored before Elio explained it).
+  def monitor_unmatched_reason(monitor)
+    key = "uptime_kuma_monitor.unmatched.#{monitor.unmatched_reason["key"]}"
+    t(key, **monitor.unmatched_reason["params"].to_h.symbolize_keys) if monitor.unmatched_reason["key"].present? && I18n.exists?(key)
+  end
+
   # Probes attached by hand (to a server or to none), read once per page.
   def manual_monitor_ids
     @manual_monitor_ids ||= IntegrationLink.joins(:integration).where(integrations: { kind: "uptime_kuma" }).pluck(:external_id).to_set

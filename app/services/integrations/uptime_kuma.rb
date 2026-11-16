@@ -18,6 +18,9 @@ class Integrations::UptimeKuma < Integrations::Base
         Integrations::Field.new(key: :allow_self_signed, label: I18n.t("integrations.uptime_kuma.self_signed"), type: :boolean, default: false,
                   hint: I18n.t("integrations.uptime_kuma.self_signed_hint")),
 
+        Integrations::Field.new(key: :match_by_tag, label: I18n.t("integrations.uptime_kuma.match_by_tag"), type: :boolean, default: true, section: I18n.t("integrations.uptime_kuma.section_matching"),
+                  hint: I18n.t("integrations.uptime_kuma.match_by_tag_hint")),
+        Integrations::Field.new(key: :match_tag, label: I18n.t("integrations.uptime_kuma.match_tag"), default: "server", section: I18n.t("integrations.uptime_kuma.section_matching")),
         Integrations::Field.new(key: :match_by_ip, label: I18n.t("integrations.uptime_kuma.match_by_ip"), type: :boolean, default: true, section: I18n.t("integrations.uptime_kuma.section_matching"),
                   hint: I18n.t("integrations.uptime_kuma.match_by_ip_hint")),
         Integrations::Field.new(key: :match_by_host, label: I18n.t("integrations.uptime_kuma.match_by_host"), type: :boolean, default: true, section: I18n.t("integrations.uptime_kuma.section_matching"),
@@ -91,6 +94,13 @@ class Integrations::UptimeKuma < Integrations::Base
         end
       end
       reasons
+    end
+
+    # The matcher of the probes with the rules chosen in the settings.
+    def matcher(integration, servers, manual_links: {})
+      Integrations::UptimeKuma::Matcher.new(servers, manual_links:, tag: (integration.value(:match_tag) if integration.value(:match_by_tag)),
+                                            by_ip: integration.value(:match_by_ip), by_host: integration.value(:match_by_host),
+                                            resolve_dns: integration.value(:resolve_dns), by_name: integration.value(:match_by_name))
     end
 
     def fetch(integration)

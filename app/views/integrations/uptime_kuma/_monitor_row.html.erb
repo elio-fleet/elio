@@ -15,6 +15,7 @@
         <span class="block text-[11px] text-ink-3" title="<%= t(".attached", how: monitor_match_label(monitor)) %>"><%= monitor_match_label(monitor) %></span>
       <% else %>
         <span class="text-xs text-ink-3"><%= t(".not_attached") %></span>
+        <% if (why = monitor_unmatched_reason(monitor)) %><span class="monitor-unmatched block max-w-56 whitespace-normal text-[11px] text-ink-3"><%= why %></span><% end %>
       <% end %>
     </td>
   <% end %>

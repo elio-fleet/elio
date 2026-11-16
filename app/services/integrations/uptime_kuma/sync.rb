@@ -12,9 +12,7 @@ class Integrations::UptimeKuma::Sync
     # State before this synchronization (the records themselves are updated below).
     previous = records.transform_values { |record| { status: record.status, cert_days_remaining: record.cert_days_remaining } }
     servers = Server.includes(:inventory_snapshots, :server_groups).order(:name).to_a
-    matcher = Integrations::UptimeKuma::Matcher.new(servers, manual_links: @integration.manual_links,
-                                                    by_ip: @integration.value(:match_by_ip), by_host: @integration.value(:match_by_host),
-                                                    resolve_dns: @integration.value(:resolve_dns), by_name: @integration.value(:match_by_name))
+    matcher = Integrations::UptimeKuma.matcher(@integration, servers, manual_links: @integration.manual_links)
     now = Time.current
 
     UptimeKumaMonitor.transaction do
@@ -26,7 +24,7 @@ class Integrations::UptimeKuma::Sync
         record.update!(name: monitor.name, monitor_type: monitor.monitor_type, url: monitor.url, hostname: monitor.hostname, port: monitor.port,
                        tags: monitor.tags, status: monitor.status, response_time_ms: monitor.response_time_ms, uptime: monitor.uptime,
                        average_response_ms: monitor.average_response_ms, cert_days_remaining: monitor.cert_days_remaining, cert_valid: monitor.cert_valid,
-                       server: match&.server, matched_by: match&.matched_by, matched_address: match&.address,
+                       server: match&.server, matched_by: match&.matched_by, matched_address: match&.address, unmatched_reason: match ? {} : matcher.explain(monitor),
                        status_changed_at: status_changed ? now : record.status_changed_at)
       end
     end

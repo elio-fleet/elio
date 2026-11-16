@@ -47,7 +47,25 @@ class Integrations::UptimeKumaTest < ActiveSupport::TestCase
     utils = UptimeKumaMonitor.find_by!(monitor_id: "64")
     assert_equal [ servers(:web), "ip", "10.8.0.100" ], [ utils.server, utils.matched_by, utils.matched_address ]
     assert_equal({ "1d" => 1.0, "30d" => 1.0, "365d" => 1.0 }, utils.uptime)
-    assert_nil UptimeKumaMonitor.find_by!(monitor_id: "58").server
+    assert_equal({}, utils.unmatched_reason)
+    proxy = UptimeKumaMonitor.find_by!(monitor_id: "58")
+    assert_nil proxy.server
+    assert_equal({ "key" => "host_no_dns", "params" => { "host" => "rproxy.example.tech" } }, proxy.unmatched_reason)
+  end
+
+  test "sync attaches by the tag chosen in the settings, a probe of Uptime Kuma 2.x" do
+    uptime_kuma_metrics(metrics_page({ id: "1", name: "Probe A", tags: { "server" => "Database" } }, { id: "2", name: "Probe B", tags: { "role" => "Database" } }))
+    @integration.sync!
+    assert_equal [ servers(:db), "tag" ], UptimeKumaMonitor.find_by!(monitor_id: "1").then { [ _1.server, _1.matched_by ] }
+    assert_nil UptimeKumaMonitor.find_by!(monitor_id: "2").server
+
+    @integration.update!(settings: @integration.settings.merge("match_tag" => "role"))
+    @integration.sync!
+    assert_equal [ nil, servers(:db) ], UptimeKumaMonitor.order(:monitor_id).map(&:server)
+
+    @integration.update!(settings: @integration.settings.merge("match_by_tag" => false))
+    @integration.sync!
+    assert_empty UptimeKumaMonitor.attached
   end
 
   test "deleting the data removes the probes" do

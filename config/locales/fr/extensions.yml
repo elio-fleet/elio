@@ -71,6 +71,9 @@ fr:
       self_signed_hint: seulement pour une instance interne dont vous connaissez le certificat.
       match_by_ip: Par adresse IP
       section_matching: Rattachement des sondes aux serveurs
+      match_by_tag: Par une étiquette de la sonde
+      match_by_tag_hint: 'une étiquette de la sonde nomme son serveur ou une de ses adresses (ex. « server: vm-db1 ») ; elle l''emporte sur les autres règles. Uptime Kuma 2 seulement : la version 1 ne publie pas les étiquettes.'
+      match_tag: Nom de l'étiquette
       match_by_ip_hint: la cible de la sonde est une adresse d'un serveur (publique, réseau local, VPN…).
       match_by_host: Par nom d'hôte
       match_by_host_hint: l'hôte de la sonde ou de son URL est le hostname ou l'hôte SSH d'un serveur.
@@ -500,6 +503,7 @@ fr:
     default_label: "Connexion n° %{id}"
   uptime_kuma_monitor:
     matches:
+      tag: par son étiquette
       ip: par son adresse IP
       url: par l'hôte de son URL
       dns: par résolution DNS
@@ -507,6 +511,17 @@ fr:
       manual: à la main
       technitium: par un nom DNS Technitium
       dns_record: par un nom DNS
+    unmatched:
+      manual_none: Rattachée à aucun serveur, à la main.
+      unknown_tag: Son étiquette « %{tag} » ne nomme aucun serveur du parc.
+      no_target: Ni nom d'hôte ni URL, et aucun nom de serveur dans son nom.
+      no_target_name_off: Ni nom d'hôte ni URL, et le rattachement par nom est désactivé.
+      unknown_ip: "%{address} n'est l'adresse d'aucun serveur (l'inventaire système lit leurs adresses locales et VPN)."
+      ip_off: "%{address} : le rattachement par adresse IP est désactivé."
+      host_off: "%{host} : le rattachement par nom d'hôte est désactivé."
+      host_no_dns: "%{host} n'est le nom d'hôte d'aucun serveur, et la résolution DNS est désactivée."
+      resolved_elsewhere: "%{host} pointe vers %{addresses}, l'adresse d'aucun serveur."
+      not_resolved: "%{host} ne se résout pas en DNS."
   ovh_resource:
     matches:
       address: par son adresse IP

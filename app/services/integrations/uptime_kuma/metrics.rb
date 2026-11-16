@@ -1,5 +1,6 @@
 # Reads the Prometheus /metrics page of Uptime Kuma (1.x and 2.x) into one
-# Monitor per probe: identity (name, type, target), tags, status, response
+# Monitor per probe: identity (name, type, target), tags ("name" or
+# "name:value"), status, response
 # times, uptime ratios per window and certificate. Lines of other metrics
 # (process_*, nodejs_*…) are ignored.
 module Integrations::UptimeKuma::Metrics
@@ -70,10 +71,18 @@ module Integrations::UptimeKuma::Metrics
     {
       id: id, name: labels["monitor_name"], monitor_type: labels["monitor_type"],
       url: url_with_host(labels["monitor_url"]), hostname: present(labels["monitor_hostname"]), port: present(labels["monitor_port"])&.to_i,
-      tags: labels.keys - IDENTITY, status: nil, response_time_ms: nil, uptime: {}, average_response_ms: {}, cert_days_remaining: nil, cert_valid: nil
+      tags: tags(labels), status: nil, response_time_ms: nil, uptime: {}, average_response_ms: {}, cert_days_remaining: nil, cert_valid: nil
     }
   end
   private_class_method :new_monitor
+
+  # Uptime Kuma 2.x adds one label per tag of the monitor, its value being
+  # the tag's (empty when it has none): "Prod", "server:vmdb1" as in its
+  # interface. (Tag names hold no colon: Kuma keeps only [a-zA-Z0-9_].)
+  def self.tags(labels)
+    labels.except(*IDENTITY).map { |name, value| (value = present(value)) ? "#{name}:#{value}" : name }
+  end
+  private_class_method :tags
 
   # Uptime Kuma writes "null" for an empty value.
   def self.present(value) = value == "null" ? nil : value.presence

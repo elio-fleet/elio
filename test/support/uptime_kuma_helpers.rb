@@ -17,10 +17,11 @@ module UptimeKumaHelpers
     })
   end
 
-  # A /metrics page with the given probes: { id:, name:, hostname:, url:, status:, cert_days: }.
+  # A /metrics page with the given probes: { id:, name:, hostname:, url:, status:, cert_days:, tags: { "server" => "vmdb1" } }.
   def metrics_page(*monitors)
     monitors.flat_map do |monitor|
       labels = %(monitor_id="#{monitor[:id]}",monitor_name="#{monitor[:name]}",monitor_type="#{monitor.fetch(:type, "ping")}",monitor_url="#{monitor.fetch(:url, "https://")}",monitor_hostname="#{monitor.fetch(:hostname, "null")}",monitor_port="null")
+      labels = [ *monitor.fetch(:tags, {}).map { |name, value| %(#{name}="#{value}") }, labels ].join(",")
       [ "monitor_status{#{labels}} #{monitor.fetch(:status, 1)}",
         ("monitor_cert_days_remaining{#{labels}} #{monitor[:cert_days]}" if monitor[:cert_days]),
         ("monitor_uptime_ratio{#{labels},window=\"30d\"} #{monitor[:uptime]}" if monitor[:uptime]) ].compact

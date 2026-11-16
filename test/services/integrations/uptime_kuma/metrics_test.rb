@@ -31,6 +31,11 @@ class Integrations::UptimeKuma::MetricsTest < ActiveSupport::TestCase
     assert_empty target.tags
   end
 
+  test "tags of Uptime Kuma 2.x: one label each, with its value when it has one" do
+    text = %(monitor_status{server="vmdb1",Prod="",zone="null",monitor_id="9",monitor_name="DB",monitor_type="ping",monitor_url="https://",monitor_hostname="db",monitor_port="null"} 1)
+    assert_equal %w[server:vmdb1 Prod zone], Integrations::UptimeKuma::Metrics.parse(text).monitors.sole.tags
+  end
+
   test "certificates, statuses, escaped labels, NaN" do
     text = <<~METRICS
       # HELP monitor_status Monitor Status (1 = UP, 0= DOWN, 2= PENDING, 3= MAINTENANCE)

@@ -71,6 +71,9 @@ en:
       self_signed_hint: only for an internal instance whose certificate you know.
       match_by_ip: By IP address
       section_matching: Attaching the monitors to the servers
+      match_by_tag: By a tag of the monitor
+      match_by_tag_hint: 'a tag of the monitor names its server or one of its addresses (e.g. “server: vm-db1”); it wins over the other rules. Uptime Kuma 2 only: version 1 does not publish the tags.'
+      match_tag: Name of the tag
       match_by_ip_hint: the target of the monitor is an address of a server (public, local network, VPN…).
       match_by_host: By host name
       match_by_host_hint: the host of the monitor or of its URL is the host name or the SSH host of a server.
@@ -500,6 +503,7 @@ en:
     default_label: "Connection #%{id}"
   uptime_kuma_monitor:
     matches:
+      tag: by its tag
       ip: by its IP address
       url: by the host of its URL
       dns: by DNS resolution
@@ -507,6 +511,17 @@ en:
       manual: by hand
       technitium: by a Technitium DNS name
       dns_record: by a DNS name
+    unmatched:
+      manual_none: Attached to no server by hand.
+      unknown_tag: Its tag “%{tag}” names no server of the fleet.
+      no_target: No host name nor URL, and no server name in its name.
+      no_target_name_off: No host name nor URL, and attaching by name is off.
+      unknown_ip: "%{address} is no address of a server (the system inventory reads their local and VPN addresses)."
+      ip_off: "%{address}: attaching by IP address is off."
+      host_off: "%{host}: attaching by host name is off."
+      host_no_dns: "%{host} is not the host name of a server, and DNS resolution is off."
+      resolved_elsewhere: "%{host} resolves to %{addresses}, no address of a server."
+      not_resolved: "%{host} does not resolve in DNS."
   ovh_resource:
     matches:
       address: by its IP address
