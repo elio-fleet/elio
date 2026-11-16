@@ -171,7 +171,7 @@ Elio can read what your other tools know and show it next to each server. Enable
 ### Uptime Kuma
 
 - **Setup**: the address of your instance and an API key (*Uptime Kuma → Settings → API Keys*). *Test the connection* checks them before saving.
-- Elio reads the `/metrics` page every 15 minutes (Uptime Kuma 1.x and 2.x) and **attaches each monitor to its server**: by the IP it watches (WireGuard addresses included), by host name (with DNS resolution as an option), or by the server's name in the monitor's name (`[SRV] web-prod-1`). An attachment can be corrected by hand and is kept.
+- Elio reads the `/metrics` page every 15 minutes (Uptime Kuma 1.x and 2.x) and **attaches each monitor to its server**: by a tag naming it (`server: web-prod-1`, Uptime Kuma 2.x), by the IP it watches (WireGuard addresses included), by host name (with DNS resolution as an option), or by the server's name in the monitor's name (`[SRV] web-prod-1`). A monitor attached to nothing says why (unknown IP, name not resolved…). An attachment can be corrected by hand and is kept.
 - A **Probes** tab on each server (source, state, response time, uptime over 24 hours and 30 days, certificate) and a **Probes** page: monitors attached to no server, servers without any monitor.
 - Optional alerts: server without a monitor (with groups to ignore), monitor down or back, certificate about to expire, uptime under a threshold, monitor in maintenance for too long.
 

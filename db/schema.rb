@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_16_091591) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -569,6 +569,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.datetime "status_changed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.jsonb "unmatched_reason", default: {}, null: false
     t.index ["monitor_id"], name: "index_uptime_kuma_monitors_on_monitor_id", unique: true
     t.index ["server_id"], name: "index_uptime_kuma_monitors_on_server_id"
   end
