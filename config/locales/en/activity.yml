@@ -434,6 +434,7 @@ en:
   background_task:
     system: System
     interrupted: Interrupted
+    cancelled: Cancelled
     kinds:
       inventory: Inventory
       keys_scan: Key scan
@@ -485,6 +486,12 @@ en:
         one: "…and %{count} more"
         other: "…and %{count} more"
       see_all: See them in Elio
+      servers:
+        one: "1 server affected: %{servers}"
+        other: "%{count} servers affected: %{servers}"
+      more_servers:
+        one: " and %{count} other"
+        other: " and %{count} others"
   notification_mailer:
     test_subject: "[Elio] Test of the channel “%{channel_name}”"
     activity:
@@ -546,11 +553,10 @@ en:
         instance_language: Language of this Elio (%{language})
         language_hint: The language of the messages, the tests and the daily digest of this channel.
         group_minutes: Group the notifications
-        group_none: No, send each one right away
-        group_for:
-          one: Over %{count} minute
-          other: Over %{count} minutes
-        group_hint: The activities of one type that occur within this time leave as a single message. Critical ones are always sent right away.
+        minutes: minutes
+        group_hint: The activities of one type that occur within this time leave as a single message (0 to send each one right away, %{max} at most). Critical ones are always sent right away.
+        group_by_server: Group by server too
+        group_by_server_hint: "— one message per type and per server, instead of one per type for the whole fleet."
       edit:
         edit_html: Edit “%{name_was}”
       new:
@@ -571,3 +577,6 @@ en:
     group:
       one: grouped over %{count} min
       other: grouped over %{count} min
+    group_by_server:
+      one: grouped by server over %{count} min
+      other: grouped by server over %{count} min

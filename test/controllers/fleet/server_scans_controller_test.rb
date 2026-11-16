@@ -21,4 +21,13 @@ class ServerScansControllerTest < ActionDispatch::IntegrationTest
     assert_redirected_to task_path(task)
     assert_equal "Scan des clés lancé.", flash[:notice]
   end
+
+  test "scans the keys of the ticked servers only" do
+    sign_in users(:operator)
+
+    post server_scans_path, params: { server_ids: [ servers(:web).id ] }
+
+    assert_enqueued_jobs 1, only: ScanServerJob
+    assert_equal [ "Scan des clés (1 serveur)", [ servers(:web) ] ], [ BackgroundTask.sole.label, BackgroundTask.sole.items.map(&:server) ]
+  end
 end

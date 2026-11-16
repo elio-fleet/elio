@@ -57,6 +57,11 @@ fr:
       one: "%{count} vulnérabilité grave corrigeable dans les images Docker"
       other: "%{count} vulnérabilités graves corrigeables dans les images Docker"
   servers:
+    partial_collection:
+      title: Collecte partielle
+      affects: 'Concerne :'
+      commands: les commandes marquées root
+      fix_html: "Ces informations ne se lisent qu'en root : se connecter en root, ou permettre à ce compte d'utiliser sudo sans mot de passe (<code>NOPASSWD</code>, commande dans les réglages, section clé SSH). Pour Docker seul, ajouter le compte au groupe docker suffit. Elio ne propose pas de ligne sudoers limitée à ses propres commandes : il en lance trop en root (voir %{commands}) pour qu'une telle ligne reste complète."
     system_card:
       machine: Machine
       system: Système
@@ -69,6 +74,18 @@ fr:
       last_attempt_html: 'Dernier essai %{checked_at} : %{message}'
       inventory_yet_elio_reads: 'Aucun inventaire pour le moment : Elio lit le système, la santé et les services du serveur par SSH, en lecture seule.'
       run_inventory: Lancer l'inventaire
+      kernel_latest: "%{version} installé"
+      kernel_latest_hint: Un noyau plus récent est installé ; le serveur l'utilisera après son prochain redémarrage.
+      processor: Processeur
+      physical_cores:
+        one: "%{count} cœur physique"
+        other: "%{count} cœurs physiques"
+      sockets:
+        one: "%{count} socket"
+        other: "%{count} sockets"
+      hardware: Matériel
+      host_hardware: Matériel de l'hôte
+      hypervisor: Hyperviseur
     events_card:
       title: Derniers événements
       all: Tous les événements
@@ -415,10 +432,10 @@ fr:
       internal_error: Erreur interne pendant la collecte (%{class})
     collector:
       output_too_large: Sortie trop volumineuse pour « %{key} »
+      no_docker_access: "Pas d'accès à Docker : le compte n'est ni root (sudo sans mot de passe) ni dans le groupe docker, conteneurs et images ne sont pas lus."
     collectors:
       docker:
         not_installed: Docker n'est pas installé
-        needs_root: " Elio a besoin de root (sudo sans mot de passe) ou du groupe docker."
         not_covered: Système de l'image non couvert
         unknown_system: Système de l'image inconnu
         not_in_feed: "%{target_last} pas encore dans la base %{label} (prochaine mise à jour des vulnérabilités)"
@@ -427,7 +444,7 @@ fr:
           other: "Vulnérabilités de %{count} images illisibles : %{error}"
         unreadable_report: Rapport illisible
         timeout: Analyse trop longue (délai dépassé)
-        unreadable: 'Docker illisible : %{error}.%{hint}'
+        unreadable: 'Docker illisible : %{error}.'
         no_answer: pas de réponse
       health:
         failed: 'Lecture de la santé impossible : %{exit_status}'

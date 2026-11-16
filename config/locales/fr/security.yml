@@ -315,9 +315,33 @@ fr:
       vulnerabilities: Vulnérabilités
       versions_fleet_html: "%{count} versions sur le parc"
       container: aucun conteneur
+      created: Créée
+      age: ancienneté (les plus anciennes d'abord)
+      on_servers: sur %{servers}
     tabs:
       images: Images
+      containers: Conteneurs
       cves: Vulnérabilités des images
+    containers:
+      intro: Tous les conteneurs du parc, d'après le dernier inventaire Docker de chaque serveur.
+      trouble: À surveiller
+      trouble_detail: boucle, mauvaise santé, arrêt prolongé
+      host_access: Root sur l'hôte
+      host_access_detail: privilégié ou socket Docker
+      public: Ports publics
+      public_detail: publiés sur toutes les interfaces
+      search: Conteneur, image ou projet
+      state: État
+      since: Depuis
+      none: Aucun conteneur connu.
+      none_matches: Aucun conteneur ne correspond.
+    unused_images:
+      title: Images inutilisées
+      total: "%{images}, %{size} récupérables"
+      images: Images inutilisées
+      size: Leur taille
+      reclaimable: Récupérable
+      hint_html: 'Images qu''aucun conteneur n''utilise, même arrêté. Leurs couches peuvent être partagées : <code>docker system df</code> donne la place vraiment libérée (lue toutes les 6 heures). <code>docker image prune -a</code> sur le serveur les supprime ; Elio ne le lance jamais.'
     cves:
       loading: Chargement…
       intro: 'Les vulnérabilités des images Docker du parc : elles se corrigent en mettant à jour l''image, pas le serveur.'

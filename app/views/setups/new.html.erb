@@ -1,13 +1,43 @@
 <% content_for :title, t("title", page: t(".title")) %>
 
-<h2 class="text-base font-semibold"><%= t(".heading") %></h2>
+<div class="flex items-start justify-between gap-3">
+  <h2 class="text-base font-semibold"><%= t(".heading") %></h2>
+  <nav class="setup-languages flex shrink-0 gap-2 text-xs" aria-label="<%= t(".language") %>">
+    <% Elio::Locales.names.each do |locale, name| %>
+      <% if locale == I18n.locale %>
+        <span class="font-medium text-ink" aria-current="true" lang="<%= locale %>"><%= name %></span>
+      <% else %>
+        <%= link_to name, new_setup_path(locale: locale), lang: locale, hreflang: locale, class: "text-accent hover:underline" %>
+      <% end %>
+    <% end %>
+  </nav>
+</div>
 <p class="mt-1 mb-6 text-sm text-ink-3"><%= t(".intro") %></p>
+
+<% if installation_failures.any? %>
+  <div class="setup-failures mb-5 rounded-md border border-crit/40 bg-crit-soft px-4 py-3 text-sm text-crit-ink">
+    <p class="font-medium"><%= t(".failures") %></p>
+    <ul class="mt-2 space-y-2">
+      <% installation_failures.each do |check| %>
+        <li><span class="font-medium"><%= check.subject %></span> — <%= check.message %><% if check.fix %><br><span class="text-xs"><%= check.fix %></span><% end %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>
+
+<% if (warning = address_warning) %>
+  <% kind, addresses = warning %>
+  <p class="setup-address-warning mb-5 rounded-md border border-warn/40 bg-warn-soft px-4 py-3 text-sm text-warn-ink">
+    <%= t(".address_#{kind}_html", **addresses.transform_values { tag.code(_1, class: "font-mono") }) %>
+  </p>
+<% end %>
 
 <%= form_with model: @user, url: setup_path, scope: :user, class: "space-y-5" do |f| %>
   <%= render "shared/form_errors", record: @user %>
+  <%= hidden_field_tag :locale, chosen_locale if chosen_locale %>
   <%= render "shared/auth_field", f: f, attribute: :email, label: t("auth.fields.email"), type: :email_field, autocomplete: "email", autofocus: true %>
   <%= render "shared/auth_field", f: f, attribute: :password, label: t("auth.fields.password"), type: :password_field, autocomplete: "new-password",
-             hint: t("auth.fields.min_length", count: Devise.password_length.min) %>
+             hint: t("auth.fields.min_length", count: Devise.password_length.min), strength: true %>
   <%= render "shared/auth_field", f: f, attribute: :password_confirmation, label: t("auth.fields.password_confirmation"), type: :password_field, autocomplete: "new-password" %>
   <% if ENV["ELIO_SETUP_TOKEN"].present? %>
     <div>

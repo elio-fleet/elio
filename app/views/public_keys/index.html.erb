@@ -10,6 +10,24 @@
     <% end %>
   <% end %>
 
+  <%# The last keys scan (by hand or planned): servers read, failures, keys outside the keyring. %>
+  <% outside = @insights.outside_keys.size %>
+  <% progress = @last_scan&.progress %>
+  <% scan_item = if @last_scan.nil?
+       { key: "last_scan", label: t(".last_scan"), tone: :neutral, text: (@last_read_at ? relative_time_in_words(@last_read_at) : t(".scan_never")) }
+     elsif @last_scan.unfinished?
+       { key: "last_scan", label: t(".last_scan"), tone: :neutral, text: t(".scan_running", done: progress[:done], count: progress[:total]) }
+     else
+       { key: "last_scan", label: t(".last_scan"), tone: (progress[:failed].positive? ? :warn : :good),
+         text: [ t(".scan_read", done: progress[:total] - progress[:failed], count: progress[:total]), (t(".scan_failed", count: progress[:failed]) if progress[:failed].positive?) ].compact.join(" · ") }
+     end %>
+  <%= status_line [ scan_item, ({ key: "outside", label: t(".outside_keyring"), tone: (outside.positive? ? :warn : :good), text: t("count.keys", count: outside) } if @insights.scanned?) ].compact,
+                  id: "keys-scan-summary", class: "mb-4" do %>
+    <% if @last_scan %>
+      <%= relative_time_tag(@last_scan.finished_at || @last_scan.created_at) %> · <%= link_to t(".see_task"), task_path(@last_scan), class: "text-accent hover:underline" %>
+    <% end %>
+  <% end %>
+
   <nav class="key-kind-filter filter-bar mb-3 flex flex-wrap gap-2" aria-label="<%= t(".key_type") %>">
     <% [ [ t(".all"), nil ], [ t(".people"), "person" ], [ t(".servers"), "server" ] ].each do |label, value| %>
       <%= filter_chip label, public_keys_path(kind: value), active: @kind == value %>

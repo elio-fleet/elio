@@ -1,4 +1,4 @@
-<%# Result of "Test the connection" in the server form (ServersController#test_connection). Locals: server (unsaved, the form's values), result (Ssh::Check::Result or nil before a test). %>
+<%# Result of "Test the connection" in the server form (ServersController#test_connection), with the root access Elio will have. Locals: server (unsaved, the form's values), result (Ssh::Check::Result or nil before a test). %>
 <div id="server-connection-test" aria-live="polite">
   <% if (result = local_assigns[:result]) %>
     <% tone = result.success? ? :good : :crit %>
@@ -9,6 +9,12 @@
       </p>
       <p class="mt-1 break-all font-mono text-xs"><%= result.details %></p>
     </div>
+    <% if result.success? && result.privilege.present? %>
+      <p class="connection-test-privilege mt-2 text-xs <%= result.privilege == "none" ? "text-warn-ink" : "text-ink-3" %>" data-privilege="<%= result.privilege %>">
+        <%= t("servers.connection_test.root_access", access: privilege_label(result.privilege)) %>
+        <%= t("servers.connection_test.partial") if result.privilege == "none" %>
+      </p>
+    <% end %>
     <% if result.reason == :key_refused %>
       <%= render "ssh_keys/setup_hint", server: server, reason: result.reason %>
     <% end %>

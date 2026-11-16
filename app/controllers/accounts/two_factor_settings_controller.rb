@@ -20,6 +20,9 @@ class TwoFactorSettingsController < ApplicationController
       session.delete(:pending_otp_secret)
       Activity.record!(:two_factor_enabled, email: current_user.email)
       flash.now[:notice] = t("flash.two_factor.enabled")
+      # Asked before anything else (a first admin): on to the overview and
+      # its getting started list once the codes are kept.
+      @continue_path = root_path if current_user.two_factor_mandatory?
       render :backup_codes
     else
       redirect_to new_two_factor_path, alert: t("flash.two_factor.wrong_setup_code")

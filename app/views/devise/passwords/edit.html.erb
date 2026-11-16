@@ -6,7 +6,7 @@
   <%= render "devise/shared/error_messages", resource: resource %>
   <%= f.hidden_field :reset_password_token %>
   <%= render "shared/auth_field", f: f, attribute: :password, label: t("auth.fields.new_password"), type: :password_field, autofocus: true, autocomplete: "new-password",
-                                  hint: (t("auth.fields.min_length", count: @minimum_password_length) if @minimum_password_length) %>
+                                  hint: (t("auth.fields.min_length", count: @minimum_password_length) if @minimum_password_length), strength: true %>
   <%= render "shared/auth_field", f: f, attribute: :password_confirmation, label: t("auth.fields.confirmation"), type: :password_field, autocomplete: "new-password" %>
   <%= f.submit t("auth.reset.submit"), class: "btn btn-primary w-full" %>
 <% end %>

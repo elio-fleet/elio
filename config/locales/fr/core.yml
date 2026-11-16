@@ -40,12 +40,27 @@ fr:
       vulnerability_feeds: import
       docker_settings: alerts
       group: serveurs du groupe
+      background: en arrière-plan
     import_servers: Importer des serveurs
     add_server: Ajouter un serveur
     add_key: Ajouter une clé au trousseau
     notifications: Notifications
     vulnerability_feeds: Bases de vulnérabilités
     jobs: Suivi technique des jobs
+    actions: Actions
+    inventory_fleet: Inventorier tous les serveurs
+    inventory_fleet_confirm:
+      one: "Inventorier maintenant le %{count} serveur du parc ? L'inventaire tourne en arrière-plan."
+      other: "Inventorier maintenant les %{count} serveurs du parc ? L'inventaire tourne en arrière-plan."
+  command_searches_controller:
+    groups:
+      cves: CVE
+      packages: Paquets
+      notes: Notes
+    servers:
+      one: "%{count} serveur"
+      other: "%{count} serveurs"
+    cve_not_on_fleet: absente du parc
   shared:
     health_threshold_fields:
       disk_warn: 'Disque : attention (%)'
@@ -62,7 +77,7 @@ fr:
       help_group: "Vide : le seuil en gris, celui des réglages généraux. Un serveur dans plusieurs groupes prend le plus strict ; ses propres seuils passent avant."
     command_palette:
       label: Recherche rapide
-      placeholder: key
+      placeholder: Serveur, paquet, CVE, action…
       no_results: Aucun résultat.
       navigate: naviguer
       open: ouvrir
@@ -249,6 +264,7 @@ fr:
     images: images
     packages: paquets
     keys: clés
+    containers: conteneurs
   words:
     source: Source
     none: aucun

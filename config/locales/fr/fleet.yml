@@ -46,6 +46,11 @@ fr:
       journal: Journal
       server_sections: Sections du serveur
     index:
+      inventory_selection: Inventorier
+      scan_keys_selection: Scanner les clés
+      clear_selection: Décocher
+      selection_actions: Actions sur les serveurs cochés
+      select_all: Cocher tous les serveurs de la page
       all_groups: Tous les groupes
       check_every_server_answers: Vérifier que chaque serveur répond
       read_again_system_health: Relire le système, la santé et les services de tous les serveurs
@@ -105,6 +110,7 @@ fr:
         one: Accès temporaires (%{count} en cours) et leur historique
         other: Accès temporaires (%{count} en cours) et leur historique
     row:
+      select_server: Cocher « %{server_name} »
       load_over_24_h: Charge sur 24 h (en % des processeurs)
       refresh_status: Actualiser le statut
       refresh_status_2: Actualiser le statut de %{server_name}
@@ -157,6 +163,8 @@ fr:
       title: Modifier %{name}
     connection_test:
       succeeded: Elio peut se connecter à ce serveur.
+      root_access: 'Accès root : %{access}.'
+      partial: Ports, firewall, Docker, crontabs des utilisateurs et clés des autres comptes ne seront lus qu'en partie. Connectez-vous en root, ou donnez à ce compte sudo sans mot de passe (ou le groupe docker, pour Docker seul).
     delete_button:
       warning: "« %{server_name} » sera retiré d'Elio, avec son historique de clés lues. Les clés installées sur la machine, dont celle d'Elio, n'en seront pas retirées."
       delete_server: Supprimer le serveur
@@ -361,9 +369,16 @@ fr:
       one: "%{count} serveur importé. Son premier inventaire se lance en tâche de fond si Elio peut déjà s'y connecter ; sinon installez-y la clé d'Elio."
       other: "%{count} serveurs importés. Leur premier inventaire se lance en tâche de fond sur ceux où Elio peut déjà se connecter ; installez la clé d'Elio sur les autres."
   server_inventories_controller:
+    label_selection: Inventaire de %{t}
     label_one: Inventaire de « %{first_name} »
     label_fleet: Inventaire du parc (%{t})
     started: "%{label} lancé."
+  fleet_runs:
+    none_selected: Aucun serveur coché.
+    already_running: Déjà en cours sur ces serveurs.
+    skipped:
+      one: "%{count} serveur déjà en cours de lecture a été laissé de côté."
+      other: "%{count} serveurs déjà en cours de lecture ont été laissés de côté."
   server_scans_controller:
     label: Scan des clés (%{t})
     started: Scan des clés lancé.

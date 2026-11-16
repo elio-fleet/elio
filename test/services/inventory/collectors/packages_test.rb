@@ -37,8 +37,15 @@ class Inventory::Collectors::PackagesTest < ActiveSupport::TestCase
     outcome, = collect(:debian12, sudo: false, docker: FakeSsh::Response.new("", "permission denied while trying to connect to the Docker daemon socket", 1))
 
     assert_equal "partial", outcome.status
-    assert_match "Images Docker illisibles : permission denied", outcome.message
+    assert_equal I18n.t("inventory.collector.no_docker_access"), outcome.message, "one cause shared with Services and Docker, not Docker's error"
     assert_equal 7, outcome.data["total"]
+  end
+
+  test "Docker images unreadable for another reason keep Docker's error" do
+    outcome, = collect(:debian12, docker: FakeSsh::Response.new("", "Cannot connect to the Docker daemon at unix:///var/run/docker.sock. Is the docker daemon running?", 1))
+
+    assert_equal "partial", outcome.status
+    assert_match "Images Docker illisibles : Cannot connect to the Docker daemon", outcome.message
   end
 
   test "Ubuntu: snaps and security updates from -security suites" do

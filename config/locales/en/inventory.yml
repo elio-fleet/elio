@@ -57,6 +57,11 @@ en:
       one: "%{count} serious fixable vulnerability in the Docker images"
       other: "%{count} serious fixable vulnerabilities in the Docker images"
   servers:
+    partial_collection:
+      title: Partial collection
+      affects: 'Affects:'
+      commands: the commands marked root
+      fix_html: "These details can be read only as root: log in as root, or let this account use sudo without a password (<code>NOPASSWD</code>, command on the settings page, SSH key section). For Docker alone, adding the account to the docker group is enough. Elio does not offer a sudoers line restricted to its own commands: it runs too many different ones as root (see %{commands}) for such a line to stay complete."
     system_card:
       machine: Machine
       system: System
@@ -69,6 +74,18 @@ en:
       last_attempt_html: 'Last attempt %{checked_at}: %{message}'
       inventory_yet_elio_reads: 'No inventory yet: Elio reads the system, health and services of the server over SSH, read-only.'
       run_inventory: Run the inventory
+      kernel_latest: "%{version} installed"
+      kernel_latest_hint: A newer kernel is installed; the server runs it after its next reboot.
+      processor: Processor
+      physical_cores:
+        one: "%{count} physical core"
+        other: "%{count} physical cores"
+      sockets:
+        one: "%{count} socket"
+        other: "%{count} sockets"
+      hardware: Hardware
+      host_hardware: Host hardware
+      hypervisor: Hypervisor
     events_card:
       title: Latest events
       all: All events
@@ -415,10 +432,10 @@ en:
       internal_error: Internal error during the collection (%{class})
     collector:
       output_too_large: Output too large for “%{key}”
+      no_docker_access: 'No access to Docker: the account is neither root (password-less sudo) nor in the docker group, so containers and images are not read.'
     collectors:
       docker:
         not_installed: Docker is not installed
-        needs_root: " Elio needs root (password-less sudo) or the docker group."
         not_covered: Image system not covered
         unknown_system: Unknown image system
         not_in_feed: "%{target_last} not yet in the %{label} feed (next vulnerability update)"
@@ -427,7 +444,7 @@ en:
           other: "Vulnerabilities of %{count} images unreadable: %{error}"
         unreadable_report: Unreadable report
         timeout: Analysis too long (timeout)
-        unreadable: 'Docker unreadable: %{error}.%{hint}'
+        unreadable: 'Docker unreadable: %{error}.'
         no_answer: no answer
       health:
         failed: 'Cannot read the health: %{exit_status}'

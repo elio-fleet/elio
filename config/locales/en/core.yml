@@ -40,12 +40,27 @@ en:
       vulnerability_feeds: settings
       docker_settings: settings
       group: servers of the group
+      background: in the background
     import_servers: Import servers
     add_server: Add a server
     add_key: Add a key to the keyring
     notifications: Notifications
     vulnerability_feeds: Vulnerability feeds
     jobs: Technical job monitoring
+    actions: Actions
+    inventory_fleet: Inventory every server
+    inventory_fleet_confirm:
+      one: "Inventory the %{count} server of the fleet now? It runs in the background."
+      other: "Inventory the %{count} servers of the fleet now? It runs in the background."
+  command_searches_controller:
+    groups:
+      cves: CVEs
+      packages: Packages
+      notes: Notes
+    servers:
+      one: "%{count} server"
+      other: "%{count} servers"
+    cve_not_on_fleet: not on the fleet
   shared:
     health_threshold_fields:
       disk_warn: 'Disk: warning (%)'
@@ -62,7 +77,7 @@ en:
       help_group: "Blank: the threshold in grey, from the general settings. A server in several groups takes the strictest; its own thresholds come first."
     command_palette:
       label: Quick search
-      placeholder: Server
+      placeholder: Server, package, CVE, action…
       no_results: No results.
       navigate: navigate
       open: open
@@ -249,6 +264,7 @@ en:
     images: images
     packages: packages
     keys: keys
+    containers: containers
   words:
     source: Source
     none: none

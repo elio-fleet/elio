@@ -238,4 +238,49 @@ class BackgroundTaskTest < ActiveSupport::TestCase
     assert_equal [ check ], BackgroundTask.of_kind("key_rotation_check").to_a
     assert_equal [ inventory, check ].sort_by(&:id), BackgroundTask.of_kind("nope").order(:id).to_a
   end
+
+  test "busy_server_ids: the servers waiting or running in a run of that kind" do
+    task = enqueue
+    BackgroundTask.enqueue!(kind: "keys_scan", label: "Scan", servers: [ servers(:backup) ])
+    task.items.find_by!(server: servers(:db)).finish!(:succeeded)
+
+    assert_equal [ servers(:web).id ], BackgroundTask.busy_server_ids("inventory").pluck(:server_id)
+  end
+
+  test "estimated_duration: after the biggest of the last runs, never shorter than it" do
+    assert_nil BackgroundTask.estimated_duration("inventory", 4), "no past run"
+
+    now = Time.current
+    finish = ->(task, seconds) { task.items.each { |item| item.finish!(:succeeded) }; task.update!(started_at: now - seconds, finished_at: now) }
+    finish.(enqueue, 10)
+    finish.(enqueue([ servers(:web) ]), 3)
+
+    assert_in_delta 10, BackgroundTask.estimated_duration("inventory", 1), 0.01, "servers run in parallel"
+    assert_in_delta 20, BackgroundTask.estimated_duration("inventory", 4), 0.01
+    assert_nil BackgroundTask.estimated_duration("keys_scan", 4)
+  end
+
+  test "cancel! calls off the waiting servers; the running one finishes and its job still reports" do
+    task = enqueue([ servers(:web), servers(:db), servers(:backup) ])
+    running = task.items.find_by!(server: servers(:web))
+    running.start!
+    assert task.reload.cancellable?
+
+    task.cancel!
+
+    statuses = task.items.reload.to_h { |item| [ item.server_name, [ item.status, item.message ] ] }
+    assert_equal({ "Backup" => [ "failed", "Annulé" ], "Database" => [ "failed", "Annulé" ], "Web" => [ "running", nil ] }, statuses)
+    assert_equal "running", task.reload.status
+    assert_not task.cancellable?
+
+    running.reload.finish!(:succeeded)
+    assert_equal "partial", task.reload.status
+  end
+
+  test "only a run on servers with servers waiting can be cancelled" do
+    assert_not BackgroundTask.enqueue!(kind: "automation", label: "Auto", servers: [ servers(:web) ]).cancellable?
+    task = enqueue([ servers(:web) ])
+    task.items.sole.finish!(:succeeded)
+    assert_not task.reload.cancellable?
+  end
 end

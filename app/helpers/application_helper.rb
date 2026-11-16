@@ -61,9 +61,10 @@ module ApplicationHelper
   # Tabs of a server page (but the overview) and their labels, for ⌘K.
   def server_tab_labels = (ServersController::TABS - [ "overview" ]).index_with { |tab| t("servers.tabs.#{tab}") }
 
-  # Entries of the ⌘K quick search: pages, groups, servers (`server: true`:
-  # the browser derives their tabs from server_tab_labels once something is
-  # typed, so a big fleet does not weigh on every page) and keyring keys.
+  # Entries of the ⌘K quick search: pages, actions, groups, servers (`server:
+  # true`: the browser derives their tabs from server_tab_labels, and their
+  # inventory action for an operator, once something is typed, so a big fleet
+  # does not weigh on every page) and keyring keys.
   def command_palette_items
     hint = ->(key) { t("command_palette.hints.#{key}") }
     pages = [
@@ -87,6 +88,14 @@ module ApplicationHelper
       { label: t("command_palette.jobs"), hint: "Mission Control", url: "/jobs" }
     ] if can?(:administer)
     pages = pages.map { |page| page.merge(group: t("command_palette.pages")) }
+    # Sent as a POST by the browser (`method`), after the `confirm` question;
+    # each server's own one is built there.
+    actions = if can?(:operate)
+      [ { group: t("command_palette.actions"), label: t("command_palette.inventory_fleet"), hint: hint.(:background), url: server_inventories_path, method: "post",
+          confirm: t("command_palette.inventory_fleet_confirm", count: Server.count) } ]
+    else
+      []
+    end
 
     groups = ServerGroup.order(:name).map { |group| { group: t("command_palette.groups"), label: group.name, hint: hint.(:group), url: servers_path(group: group.id) } }
     dns_names = DnsRecord.attached.distinct.pluck(:server_id, :name).group_by(&:first).transform_values { |pairs| pairs.map(&:last) }
@@ -95,7 +104,7 @@ module ApplicationHelper
         url: server_path(server), keywords: ([ server.hostname ] + server.addresses + dns_names.fetch(server.id, [])).compact.uniq.join(" ").presence, server: true }.compact
     end
     public_keys = PublicKey.order(:name).map { |public_key| { group: t("command_palette.keyring"), label: public_key.name, hint: public_key.kind_label, url: public_key_path(public_key) } }
-    pages + groups + servers + public_keys
+    pages + actions + groups + servers + public_keys
   end
 
   # PublicKey name proposed for an authorized key: its comment without the host

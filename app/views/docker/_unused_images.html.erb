@@ -1,0 +1,23 @@
+<%# The images no container uses, by server, with the space they take and what `docker system df` says can be reclaimed
+    (DockerController#unused_images). Locals: unused (DockerController::UnusedImages). %>
+<% reclaimable = unused.sum { |server| server.reclaimable || server.size } %>
+<%= panel t("docker.unused_images.title"), id: "unused-images", class: "mt-4",
+          meta: t("docker.unused_images.total", images: t("count.docker_images", count: unused.sum(&:count)), size: human_bytes(reclaimable)) do %>
+  <div class="overflow-x-auto">
+    <table class="table-dense">
+      <thead><tr><th class="pl-4"><%= t("docker.index.servers") %></th><th class="col-num"><%= t("docker.unused_images.images") %></th>
+        <th class="col-num"><%= t("docker.unused_images.size") %></th><th class="col-num pr-4"><%= t("docker.unused_images.reclaimable") %></th></tr></thead>
+      <tbody>
+        <% unused.each do |server_unused| %>
+          <tr class="unused-images-server" data-server="<%= server_unused.server.name %>">
+            <td class="pl-4 text-xs"><%= link_to server_unused.server.name, server_path(server_unused.server, tab: "docker", section: "images"), class: "font-medium hover:text-accent hover:underline" %></td>
+            <td class="col-num text-xs"><%= server_unused.count %></td>
+            <td class="col-num text-xs"><%= human_bytes(server_unused.size) %></td>
+            <td class="col-num pr-4 text-xs"><%= server_unused.reclaimable ? human_bytes(server_unused.reclaimable) : "—" %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  </div>
+  <p class="border-t border-line px-4 py-2.5 text-xs text-ink-3"><%= t("docker.unused_images.hint_html") %></p>
+<% end %>

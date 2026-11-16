@@ -117,7 +117,7 @@ class AutomationTest < ActiveSupport::TestCase
 
   test "hours: a scheduled run starts only within them, over midnight too" do
     automation = Automation.all_kinds.find { |candidate| candidate.kind == "inventory_packages" }
-    automation.update!(window_start_hour: 22, window_end_hour: 6, last_run_at: 2.days.ago)
+    automation.update!(window_start_hour: 22, window_end_hour: 6, last_run_at: Time.zone.parse("2026-11-01 00:00"))
     assert_equal "De 22:00 à 06:00", automation.window_label
 
     travel_to Time.zone.parse("2026-11-14 12:00") do

@@ -138,6 +138,8 @@ en:
       rerun_failed_confirm:
         one: Start this run again on the failed server?
         other: Start this run again on the %{count} failed servers?
+      cancel: Cancel the waiting servers
+      cancel_confirm: Call off the servers not started yet? Those being read finish.
       slow: slow
       slow_title: More than twice the usual duration of this run
       sort_by_duration: Slowest first
@@ -198,7 +200,18 @@ en:
     started: "“%{label}” started."
     not_rerunnable: This run cannot be started again.
     servers_busy: Every server of this run is already being processed by another run.
+  task_cancellations_controller:
+    cancelled: The waiting servers are cancelled; those being read finish.
+    not_cancellable: This run has no server waiting.
   tasks_helper:
+    fleet_run_confirm:
+      inventory:
+        one: Inventory the server of the fleet?
+        other: Inventory the %{count} servers of the fleet?
+      keys_scan:
+        one: Scan the keys of the server of the fleet?
+        other: Scan the keys of the %{count} servers of the fleet?
+      estimate: Estimated duration, after the past runs, about %{duration}.
     statuses:
       queued: Queued
       running: Running

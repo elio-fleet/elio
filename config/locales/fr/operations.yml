@@ -138,6 +138,8 @@ fr:
       rerun_failed_confirm:
         one: Relancer cette exécution sur le serveur en échec ?
         other: Relancer cette exécution sur les %{count} serveurs en échec ?
+      cancel: Annuler les serveurs en attente
+      cancel_confirm: Annuler les serveurs pas encore commencés ? Ceux en cours de lecture vont jusqu'au bout.
       slow: lent
       slow_title: Plus de deux fois la durée habituelle de cette exécution
       sort_by_duration: Les plus lents d'abord
@@ -198,7 +200,18 @@ fr:
     started: "« %{label} » lancée."
     not_rerunnable: Cette exécution ne peut pas être relancée.
     servers_busy: Tous les serveurs de cette exécution sont déjà traités par une autre exécution.
+  task_cancellations_controller:
+    cancelled: Les serveurs en attente sont annulés ; ceux en cours de lecture vont jusqu'au bout.
+    not_cancellable: Cette exécution n'a plus de serveur en attente.
   tasks_helper:
+    fleet_run_confirm:
+      inventory:
+        one: Inventorier le serveur du parc ?
+        other: Inventorier les %{count} serveurs du parc ?
+      keys_scan:
+        one: Scanner les clés du serveur du parc ?
+        other: Scanner les clés des %{count} serveurs du parc ?
+      estimate: Durée estimée d'après les exécutions passées, environ %{duration}.
     statuses:
       queued: À venir
       running: En cours
