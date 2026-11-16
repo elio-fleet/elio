@@ -94,7 +94,7 @@ class ImageRegistry::Client
     end
 
     fields = params.to_s.scan(/(\w+)="([^"]*)"/).to_h
-    realm = URI(fields.fetch("realm") { raise ImageRegistry::Error, "Authentification du registre illisible" })
+    realm = URI(fields.fetch("realm") { raise ImageRegistry::Error, I18n.t("image_registry.client.unreadable_auth") })
     raise ImageRegistry::Error, I18n.t("image_registry.client.auth_https_only") unless realm.is_a?(URI::HTTPS)
 
     realm.query = URI.encode_www_form({ service: fields["service"], scope: fields["scope"] || "repository:#{reference.repository}:pull" }.compact)

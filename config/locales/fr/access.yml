@@ -43,7 +43,6 @@ fr:
       expires_on: Date d'expiration
       expires_on_hint: La date à laquelle renouveler la clé (fin de mission d'un prestataire, règle annuelle). Elio le rappelle 14 jours avant, par les canaux de notification qui reçoivent « Clé du trousseau à renouveler ».
     edit:
-      back_key: "← Retour à la clé"
       heading_html: Modifier « %{name_was} »
     index:
       subtitle: Les clés publiques connues d'Elio et les serveurs où elles donnent accès
@@ -395,7 +394,6 @@ fr:
       memory_warning: 'Mémoire : attention (%)'
       memory_critical: 'Mémoire : critique (%)'
       load_warning_processors: 'Charge : attention (× processeurs)'
-      save_thresholds: Enregistrer les seuils
       firewall_settings: Règles de firewall proposées
       firewall_settings_hint: "Ce qu'Elio propose dans l'onglet Firewall des serveurs. Il n'applique jamais rien."
       ufw_block_ipv6: Bloquer tout l'IPv6 entrant
@@ -423,7 +421,6 @@ fr:
         monitors: 'Ex. : Utilise toujours un intervalle de 60 s et une sonde par mot-clé pour les sites web.'
         firewall: 'Ex. : Pour le port SSH, mets les règles toujours en dernier.'
       prompt_instructions_footer: "Texte libre, %{count} caractères au plus. N'y mettez jamais de mot de passe ni de jeton : le prompt est fait pour être collé dans une IA."
-      save_prompt_instructions: Enregistrer les consignes
       ssh_key_application: Clé SSH de l'application
       generated: Générée le
       public_key: Clé publique

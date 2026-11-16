@@ -449,6 +449,7 @@ fr:
   notification_digest:
     title: Résumé Elio du %{date}
     nothing: Rien à signaler.
+    highlight: '- %{label} : %{summary}'
     fleet: 'Parc : %{online}/%{total} en ligne, %{to_watch} à surveiller, %{critical} critique(s), %{updates}.'
     security_updates:
       one: "%{count} mise à jour de sécurité en attente"

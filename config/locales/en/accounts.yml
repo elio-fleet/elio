@@ -113,7 +113,6 @@ en:
       file_heading: Elio backup codes for %{email} (%{host}), generated on %{date}. Each code works once.
     new:
       title: Turn on two-factor authentication
-      back: "← My account"
       scan: 1. Scan this QR code with your authenticator app
       qr_alt: Two-factor authentication QR code
       manual: 'Cannot scan? Enter this key:'

@@ -126,7 +126,7 @@ module UiHelper
         *points.each_with_index.map do |(time, value), i|
           left = x.(time) - zones[i]
           tag.rect(x: left, y: 0, width: [ zones[i] + zones[i + 1], 0.5 ].max, height: 100, fill: "transparent", class: "chart-point") do
-            tag.title("#{l(time, format: period == "24h" ? "%H:%M" : "%-d %b %H:%M")} — #{number_to_percentage(value, precision: 0)}")
+            tag.title("#{l(time, format: period == "24h" ? :hour_minute : :short)} — #{number_to_percentage(value, precision: 0)}")
           end
         end
       ].compact)

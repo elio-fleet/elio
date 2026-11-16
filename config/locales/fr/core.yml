@@ -201,9 +201,6 @@ fr:
     lines_in_error:
       one: "%{count} ligne en erreur"
       other: "%{count} lignes en erreur"
-    unreachable:
-      one: "%{count} injoignable"
-      other: "%{count} injoignables"
     packages_installed:
       one: "%{count} paquet installé"
       other: "%{count} paquets installés"
@@ -273,7 +270,6 @@ fr:
     none: aucun
     'yes': oui
     'no': non
-    monitors: Sondes
     addresses: Adresses
     monitor: Sonde
     target: Cible
@@ -283,7 +279,6 @@ fr:
     registry: Registre
     format: Format
     active: Actif
-    automations: Automatisations
     test: Tester
     status: Statut
     progress: Progression
@@ -296,9 +291,6 @@ fr:
     color: Couleur
     when: Quand
     user: Utilisateur
-    inventory: Inventaire
-    project: Projet
-    ttl: TTL
     keyring: Trousseau
     algorithm: Algorithme
     actions: Actions
@@ -310,7 +302,6 @@ fr:
     line: Ligne
     address: Adresse
     process: Processus
-    fleet: Parc
     known: Connue
     cancel: Annuler
     clock: Horloge
@@ -334,13 +325,10 @@ fr:
     save: Enregistrer
     cvss_score: note CVSS
     exploitation: exploitation
-    a_records: enregistrements A / AAAA
-    back_keyring: "← Clés SSH"
     unknown: inconnu
     container_name: conteneur %{name}
     available: disponible
     fixes_html: corrige %{count}
-    running: en cours
     including_fixable:
       one: dont %{count} corrigeable
       other: dont %{count} corrigeables
