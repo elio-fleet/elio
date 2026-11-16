@@ -82,6 +82,9 @@ en:
       scheduled_task_late:
         label: Scheduled task late
         description: A systemd timer has not run for more than twice its period.
+      scheduled_task_removed:
+        label: Scheduled task removed
+        description: An enabled systemd timer, a cron line or a cron.daily-like script is no longer on the server (a backup that stopped being scheduled, for instance).
       vulnerability_found:
         label: Fixable vulnerability
         description: A serious, fixable vulnerability (CVE) affects a server or one of its Docker images (severity chosen in the settings).
@@ -309,6 +312,7 @@ en:
       container_started: The container %{container} runs again on “%{server}”
       scheduled_task_failed: The scheduled task %{task} failed on “%{server}”
       scheduled_task_late: The scheduled task %{task} did not run in time on “%{server}”
+      scheduled_task_removed: The scheduled task %{task} is no longer on “%{server}”
       in_image: the image %{image} of “%{server}”
       vulnerability_found:
         one: "%{count} fixable vulnerability on %{where}: %{cves}"

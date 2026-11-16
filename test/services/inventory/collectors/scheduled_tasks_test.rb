@@ -84,6 +84,41 @@ class Inventory::Collectors::ScheduledTasksTest < ActiveSupport::TestCase
     assert_empty Collector.changes(data, data)
   end
 
+  test "logs the tasks that disappear: enabled timers, cron lines (by command) and cron.* scripts" do
+    previous = Collector.parse(output(:debian13), now: NOW)
+    data = previous.deep_dup
+    backup = data["cron"].find { |task| task["command"].include?("backup.sh") }
+    data["cron"].delete(backup)
+    data["timers"].reject! { |timer| timer["name"].in?(%w[backup.timer systemd-tmpfiles-clean.timer fstrim.timer]) }
+    data["periodic"].reject! { |task| task["name"] == "logrotate" }
+    data["cron"].first["schedule"] = "0 4 * * *"
+
+    removed = Collector.changes(previous, data).select { |change| change[:kind] == :scheduled_task_removed }.map { |change| change[:data][:task] }
+
+    # The static and disabled timers are pulled in by other units: not a removal. A new schedule neither.
+    assert_equal [ "#{backup["command"]} (#{backup["source"]})", "/etc/cron.daily/logrotate", "backup.timer" ].sort, removed
+  end
+
+  test "what a reading could not see is not a removal: users' crontabs without root, no timer listed" do
+    previous = Collector.parse(output(:debian13), now: NOW)
+    users = previous["cron"].reject { |task| task["source"].start_with?("/") }
+    assert users.any?
+
+    without_root = previous.merge("cron" => previous["cron"] - users, "user_crontabs" => "unreadable")
+    assert_empty Collector.changes(previous, without_root).select { |change| change[:kind] == :scheduled_task_removed }
+    assert_empty Collector.changes(without_root, previous).select { |change| change[:kind] == :scheduled_task_removed }
+
+    assert_empty Collector.changes(previous, previous.merge("timers" => [])).select { |change| change[:kind] == :scheduled_task_removed }
+  end
+
+  test "a user's crontab line is compared by its user, not by its translated label" do
+    previous = Collector.parse(output(:debian13), now: NOW)
+    data = I18n.with_locale(:en) { Collector.parse(output(:debian13), now: NOW) }
+
+    assert_not_equal previous["cron"].map { |task| task["source"] }, data["cron"].map { |task| task["source"] }
+    assert_empty Collector.changes(previous, data).select { |change| change[:kind] == :scheduled_task_removed }
+  end
+
   test "failed and late timers are health reasons" do
     server = servers(:web)
     server.inventory_snapshots.create!(category: "scheduled_tasks", status: "ok", collected_at: NOW, checked_at: NOW,

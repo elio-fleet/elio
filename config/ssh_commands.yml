@@ -137,7 +137,7 @@ inventory:
       echo "@@elio docker"; if command -v docker >/dev/null 2>&1; then echo present; fi
 
   unit_journal:
-    description: "Last lines of the journal of one failed systemd unit, read only when the user opens them on the Services tab (journalctl, read-only). The unit name is checked against the systemd naming rules before being sent. Root (or the adm / systemd-journal group) is needed to read the system journal."
+    description: "Last lines of the journal of one systemd unit (a failed unit on the Services tab, or the service a timer starts on the Scheduled tasks tab: the output of its runs), read only when the user opens them (journalctl, read-only). The unit name is checked against the systemd naming rules before being sent. Root (or the adm / systemd-journal group) is needed to read the system journal."
     run_as: root
     timeout: 20
     default: "journalctl --unit=@{unit} --lines=@{lines} --no-pager --quiet --output=short-iso"

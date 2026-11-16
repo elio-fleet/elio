@@ -82,6 +82,9 @@ fr:
       scheduled_task_late:
         label: Tâche planifiée en retard
         description: Un timer systemd n'a pas tourné depuis plus de deux fois sa période.
+      scheduled_task_removed:
+        label: Tâche planifiée disparue
+        description: Un timer systemd activé, une ligne cron ou un script cron.daily (et semblables) n'est plus sur le serveur (une sauvegarde qui n'est plus planifiée, par exemple).
       vulnerability_found:
         label: Vulnérabilité corrigeable
         description: Une vulnérabilité (CVE) grave et corrigeable touche un serveur ou une de ses images Docker (gravité choisie dans les paramètres).
@@ -309,6 +312,7 @@ fr:
       container_started: Le conteneur %{container} tourne à nouveau sur « %{server} »
       scheduled_task_failed: La tâche planifiée %{task} a échoué sur « %{server} »
       scheduled_task_late: La tâche planifiée %{task} n'a pas tourné à temps sur « %{server} »
+      scheduled_task_removed: La tâche planifiée %{task} n'est plus sur « %{server} »
       in_image: l'image %{image} de « %{server} »
       vulnerability_found:
         one: "%{count} vulnérabilité corrigeable sur %{where} : %{cves}"
