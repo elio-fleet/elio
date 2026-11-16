@@ -32,7 +32,7 @@ class ServerGroupsController < ApplicationController
     server_ids = @group.server_ids
     if @group.update(group_params)
       # Its expected ports and thresholds apply to its servers, old and new.
-      if @group.saved_changes.keys.intersect?(%w[expected_ports health_thresholds]) || server_ids.sort != @group.server_ids.sort
+      if @group.saved_changes.keys.intersect?(%w[expected_ports expected_ports_proto health_thresholds]) || server_ids.sort != @group.server_ids.sort
         refresh_health(server_ids | @group.server_ids)
       end
       redirect_to servers_path(group: @group.id), notice: t("server_groups_controller.updated", group_name: @group.name)
@@ -56,7 +56,7 @@ class ServerGroupsController < ApplicationController
   end
 
   def group_params
-    params.expect(server_group: [ :name, :color, :expected_ports, server_ids: [], ssh_source_ids: [], health_thresholds: Inventory::HealthThresholds::KEYS ])
+    params.expect(server_group: [ :name, :color, :expected_ports, :expected_ports_proto, server_ids: [], ssh_source_ids: [], health_thresholds: Inventory::HealthThresholds::KEYS ])
   end
 
   def refresh_health(server_ids)

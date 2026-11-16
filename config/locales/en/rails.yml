@@ -21,6 +21,7 @@ en:
         name: Name
         color: Color
         expected_ports: The expected ports
+        expected_ports_proto: The protocol of the expected ports
         health_thresholds: The health thresholds
       public_key:
         name: Name

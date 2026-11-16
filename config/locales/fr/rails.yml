@@ -21,6 +21,7 @@ fr:
         name: Nom
         color: Couleur
         expected_ports: Les ports attendus
+        expected_ports_proto: Le protocole des ports attendus
         health_thresholds: Les seuils de santé
       public_key:
         name: Nom
