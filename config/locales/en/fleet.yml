@@ -22,6 +22,12 @@ en:
       all: All
       notes: Notes
       events: Events
+      access: Accesses and keys
+      deployments: Deployments
+      export_csv: Export (CSV)
+      export_json: Export (JSON)
+      no_result: No result
+      no_result_text: Nothing in this server's journal matches this filter or this search.
       full_journal: "In the fleet journal →"
       add_note: Add a note
       timeline: Journal of the server

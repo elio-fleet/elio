@@ -420,6 +420,8 @@ fr:
       dns_record_conflict: "%{record} diffère entre %{sources}"
       dns_manual_updated: "Source DNS « %{source} » : %{count} enregistrements (+%{added} / −%{removed})"
     target_account: "« %{server_name} » (compte %{account})"
+    server_journal:
+      note: Note
   automation:
     whole_fleet: Tout le parc
     scope_except: "%{included} sauf %{groups}"
