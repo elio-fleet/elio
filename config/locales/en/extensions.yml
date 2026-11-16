@@ -246,6 +246,7 @@ en:
       alert_backups: Alert when a database backup fails or is late
       alert_backups_hint: the backups scheduled in Coolify, database by database
       backup_max_age_hours: "Late: no successful backup for (hours)"
+      backup_max_age_hours_hint: "more for a database backed up less often (weekly, monthly…): the time between two of its backups plus %{count} hours"
       alert_no_backup: Alert when a database has no scheduled backup
       alert_deploy_failed: Alert when the last deployment of an application failed
       alert_deploy_failed_hint: until the next successful deployment

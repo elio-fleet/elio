@@ -246,6 +246,7 @@ fr:
       alert_backups: Alerter quand une sauvegarde de base échoue ou est en retard
       alert_backups_hint: les sauvegardes planifiées dans Coolify, base par base
       backup_max_age_hours: "En retard : aucune sauvegarde réussie depuis (heures)"
+      backup_max_age_hours_hint: "plus pour une base sauvegardée moins souvent (chaque semaine, chaque mois…) : le temps entre deux de ses sauvegardes plus %{count} heures"
       alert_no_backup: Alerter quand une base n'a aucune sauvegarde planifiée
       alert_deploy_failed: Alerter quand le dernier déploiement d'une application a échoué
       alert_deploy_failed_hint: jusqu'au prochain déploiement réussi

@@ -13,8 +13,8 @@ class Integrations::CoolifyBackupsTest < ActiveSupport::TestCase
   end
 
   # The pg-facturation schedule with these executions ([status, hours ago]).
-  def backups(*executions, enabled: true, created: 30.days.ago)
-    [ { "uuid" => "bkp1", "enabled" => enabled, "frequency" => "0 3 * * *", "save_s3" => true, "created_at" => created.iso8601, "message" => "secret dump output",
+  def backups(*executions, enabled: true, created: 30.days.ago, frequency: "0 3 * * *")
+    [ { "uuid" => "bkp1", "enabled" => enabled, "frequency" => frequency, "save_s3" => true, "created_at" => created.iso8601, "message" => "secret dump output",
         "executions" => executions.each_with_index.map { |(status, hours), index| { "uuid" => "exe#{index}", "status" => status, "size" => 10, "message" => "password=x", "finished_at" => hours.hours.ago.iso8601 } } } ]
   end
 
@@ -63,6 +63,22 @@ class Integrations::CoolifyBackupsTest < ActiveSupport::TestCase
     assert_empty reasons
   end
 
+  test "a database backed up less often is late after the time between two of its backups, never before the setting" do
+    assert_equal({ "hourly" => 1.0, "daily" => 24.0, "weekly" => 168.0, "monthly" => 744.0, "0 3 * * 1-5" => 72.0, "0 */6 * * *" => 6.0 },
+                 [ "hourly", "daily", "weekly", "monthly", "0 3 * * 1-5", "0 */6 * * *" ].index_with { |frequency| CoolifyResource.schedule_gap_hours(frequency) })
+    assert_nil CoolifyResource.schedule_gap_hours("not a schedule")
+    assert_nil CoolifyResource.schedule_gap_hours(nil)
+
+    assert_equal :ok, sync(backups([ "success", 100 ], frequency: "weekly")).backup_state(26)
+    assert_empty reasons
+    database = sync(backups([ "success", 200 ], frequency: "0 3 * * 0"))
+    assert_equal [ :late, 170.0 ], [ database.backup_state(26), database.backup_max_age(26) ]
+    assert_includes reasons, "Coolify : aucune sauvegarde de pg-facturation réussie depuis 170 heures"
+    assert_equal :ok, sync(backups([ "success", 60 ], frequency: "0 3 * * 1-5")).backup_state(26), "a weekend without backup"
+    assert_equal :late, sync(backups([ "success", 30 ], frequency: "0 */6 * * *")).backup_state(26), "more often: the setting still applies"
+    assert_equal :late, sync(backups([ "success", 30 ], frequency: "not a schedule")).backup_state(26)
+  end
+
   test "the sync refreshes the health of the server, the attention list links to the Coolify tab" do
     sync(backups([ "failed", 3 ]))
     reason = servers(:web).reload.health_reasons.find { |candidate| candidate["key"] == "integrations.coolify.health.backup_failed" }
@@ -80,5 +96,23 @@ class Integrations::CoolifyBackupsTest < ActiveSupport::TestCase
     sync(answer)
     assert_equal [ "Coolify : sauvegarde de pg-facturation en échec (équipe Outils internes)" ], Activity.of_kind(:coolify_backup_failed).map(&:summary)
     assert_equal servers(:web), Activity.of_kind(:coolify_backup_failed).first.server
+    assert_equal "https://coolify.example.com/project/projbilling00000000000001/environment/e1/database/dbpg000000000000000000004/backups",
+                 Activity.of_kind(:coolify_backup_failed).first.data["coolify_url"]
+  end
+
+  test "every resource has its page in Coolify, from its project and environment; none without their uuids" do
+    fake_coolify
+    @connection.sync!
+    assert_equal "/project/projbilling00000000000001/environment/e1/database/dbpg000000000000000000004", CoolifyResource.find_by!(name: "pg-facturation").data["coolify_path"]
+    assert_equal "/project/projtools0000000000000002/environment/e2/service/svcn8n0000000000000000003", CoolifyResource.find_by!(name: "n8n").data["coolify_path"]
+    assert_equal "https://coolify.example.com/project/projtools0000000000000002/environment/e2/service/svcn8n0000000000000000003",
+                 CoolifyResource.find_by!(name: "n8n").coolify_url
+
+    project = JSON.parse(file_fixture("integrations/coolify/team_tools.json").read)["/projects/projtools0000000000000002"]
+    project["environments"].each { |environment| environment.delete("uuid") }
+    fake_coolify("team_tools" => { "/projects/projtools0000000000000002" => project })
+    @connection.sync!
+    assert_nil CoolifyResource.find_by!(name: "n8n").data["coolify_path"]
+    assert_nil CoolifyResource.find_by!(name: "n8n").coolify_url
   end
 end

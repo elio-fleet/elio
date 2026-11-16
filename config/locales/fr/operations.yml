@@ -101,6 +101,7 @@ fr:
       server: Serveur
       account: Compte
       key: Clé
+      open_in_coolify: Ouvrir dans Coolify
   tasks:
     progress:
       progress: Progression

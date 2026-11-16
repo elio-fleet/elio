@@ -19,7 +19,8 @@ class Integrations::Coolify < Integrations::Base
       [
         Integrations::Field.new(key: :alert_backups, label: I18n.t("integrations.coolify.alert_backups"), type: :boolean, default: true, section: section,
                                 hint: I18n.t("integrations.coolify.alert_backups_hint")),
-        Integrations::Field.new(key: :backup_max_age_hours, label: I18n.t("integrations.coolify.backup_max_age_hours"), type: :number, default: 26, section: section),
+        Integrations::Field.new(key: :backup_max_age_hours, label: I18n.t("integrations.coolify.backup_max_age_hours"), type: :number, default: 26, section: section,
+                                hint: I18n.t("integrations.coolify.backup_max_age_hours_hint", count: CoolifyResource::BACKUP_GRACE_HOURS)),
         Integrations::Field.new(key: :alert_no_backup, label: I18n.t("integrations.coolify.alert_no_backup"), type: :boolean, default: true, section: section),
         Integrations::Field.new(key: :alert_deploy_failed, label: I18n.t("integrations.coolify.alert_deploy_failed"), type: :boolean, default: true, section: section,
                                 hint: I18n.t("integrations.coolify.alert_deploy_failed_hint")),
@@ -117,7 +118,7 @@ class Integrations::Coolify < Integrations::Base
         resource_reasons(integration, resources) + dns_reasons(integration, server) + key_reasons(integration, server, resources) + deploys + resources.select { |resource| resource.kind == "database" }.filter_map do |database|
         case database.backup_state(max_age)
         when :failed then reason("crit", :backup_failed, database: database.name) if integration.value(:alert_backups)
-        when :late then reason("warn", :backup_late, database: database.name, count: max_age.round) if integration.value(:alert_backups)
+        when :late then reason("warn", :backup_late, database: database.name, count: database.backup_max_age(max_age).round) if integration.value(:alert_backups)
         when :none then reason("warn", :no_backup, database: database.name) if integration.value(:alert_no_backup)
         end
       end

@@ -72,6 +72,47 @@ class CoolifyResource < ApplicationRecord
 
     oldest_schedule = backups.filter_map { |backup| backup["created_at"] && Time.zone.parse(backup["created_at"]) }.min
     since = last_success_at || oldest_schedule
-    since && since < max_age_hours.to_f.hours.ago ? :late : :ok
+    since && since < backup_max_age(max_age_hours).hours.ago ? :late : :ok
+  end
+
+  # Coolify's names for its usual schedules (any other frequency is a cron line).
+  FREQUENCIES = { "every_minute" => "* * * * *", "hourly" => "0 * * * *", "daily" => "0 0 * * *", "weekly" => "0 0 * * 0",
+                  "monthly" => "0 0 1 * *", "yearly" => "0 0 1 1 *" }.freeze
+  # Time a backup may take after its scheduled time.
+  BACKUP_GRACE_HOURS = 2
+
+  # Hours without a successful backup before it is late: the extension's
+  # setting, or longer for a database backed up less often (a weekly backup
+  # is not late a day after it ran): the longest gap between two runs of its
+  # schedules, plus the time a backup takes.
+  def backup_max_age(max_age_hours)
+    gaps = backups.filter_map { |backup| self.class.schedule_gap_hours(backup["frequency"]) }
+    [ max_age_hours.to_f, *gaps.map { |gap| gap + BACKUP_GRACE_HOURS } ].max
+  end
+
+  SCHEDULE_GAPS = Concurrent::Map.new
+
+  # The longest time (hours) between two of the first runs of a schedule
+  # (in UTC: no daylight saving shift), nil when it is not a cron line Elio
+  # understands. Remembered by frequency: few distinct ones, and the health
+  # of every server reads them.
+  def self.schedule_gap_hours(frequency)
+    line = frequency.to_s.strip
+    SCHEDULE_GAPS.compute_if_absent(line) do
+      cron = Fugit::Cron.parse("#{FREQUENCIES.fetch(line, line)} UTC")
+      if cron
+        times = [ cron.next_time(Time.utc(2026, 1, 1)).to_t ]
+        40.times { times << cron.next_time(times.last).to_t }
+        times.each_cons(2).map { |first, second| second - first }.max / 3600.0
+      end
+    end
+  end
+
+  # The resource's page in its Coolify instance (`suffix`: a sub-page, such as
+  # "/backups"), or nil when its path is unknown.
+  def coolify_url(suffix = "")
+    path = "#{data["coolify_path"] or return}#{suffix}"
+    base = connection.value(:url).to_s.chomp("/")
+    "#{base}#{path}" if Integration.http_url?(base) && path.match?(%r{\A/[\w/-]+\z})
   end
 end

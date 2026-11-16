@@ -8,6 +8,7 @@
   <%= link_to t(".same_kind"), activities_path(kind: @activity.kind, server_id: @activity.server_id), class: "same-kind btn btn-secondary" %>
 <% end %>
 
+<% coolify_link = @activity.data["coolify_url"] %>
 <%= panel t(".details"), id: "activity-details" do %>
   <%= fact_list [
         [ t(".kind"), safe_join([ tag.span(@activity.label, class: "font-medium"), tag.span(@activity.definition.description, class: "block text-xs text-ink-3") ]) ],
@@ -16,6 +17,7 @@
         [ t(".author"), @activity.author_name ],
         [ t(".server"), (@activity.server ? link_to(@activity.server.name, server_path(@activity.server), class: "font-mono text-accent hover:underline") : (tag.span(@activity.server_name, class: "font-mono") if @activity.server_name)) ],
         [ t(".account"), (tag.span(@activity.unix_user, class: "font-mono") if @activity.unix_user.present?) ],
-        [ t(".key"), (@activity.public_key ? link_to(@activity.public_key.name, public_key_path(@activity.public_key), class: "text-accent hover:underline") : @activity.data["public_key_name"]) ]
+        [ t(".key"), (@activity.public_key ? link_to(@activity.public_key.name, public_key_path(@activity.public_key), class: "text-accent hover:underline") : @activity.data["public_key_name"]) ],
+        [ "Coolify", (link_to(t(".open_in_coolify"), coolify_link, class: "coolify-link text-accent hover:underline", target: "_blank", rel: "noopener") if Integration.http_url?(coolify_link)) ]
       ] %>
 <% end %>
