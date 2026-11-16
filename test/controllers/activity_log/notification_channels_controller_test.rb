@@ -191,20 +191,29 @@ class NotificationChannelsControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
-  test "the grouping of the notifications is chosen per channel, 10 minutes for a new one" do
+  test "the grouping of the notifications is chosen per channel, 10 minutes for a new one, any number of minutes up to a day" do
     sign_in users(:one)
     get new_settings_notification_channel_path
-    assert_select "select[name='notification_channel[group_minutes]'] option[selected][value='10']"
+    assert_select "input[type=number][name='notification_channel[group_minutes]'][value='10'][min='0'][max='1440']"
+    assert_select "input[type=checkbox][name='notification_channel[group_by_server]']:not([checked])"
 
-    post settings_notification_channels_path, params: valid_params(group_minutes: "30")
+    post settings_notification_channels_path, params: valid_params(group_minutes: "7")
     channel = NotificationChannel.find_by!(name: "#ops")
-    assert_equal 30, channel.group_minutes
+    assert_equal 7, channel.group_minutes
+    assert_not channel.group_by_server?
 
     get settings_notifications_path
-    assert_select ".channel-group", "regroupées sur 30 min"
+    assert_select ".channel-group", "regroupées sur 7 min"
 
-    patch settings_notification_channel_path(channel), params: { notification_channel: { group_minutes: "7" } }
-    assert_response :unprocessable_content
+    patch settings_notification_channel_path(channel), params: { notification_channel: { group_minutes: "90", group_by_server: "1" } }
+    assert channel.reload.group_by_server?
+    get settings_notifications_path
+    assert_select ".channel-group", "regroupées par serveur sur 90 min"
+
+    [ "1441", "-1", "2.5" ].each do |minutes|
+      patch settings_notification_channel_path(channel), params: { notification_channel: { group_minutes: minutes } }
+      assert_response :unprocessable_content
+    end
     patch settings_notification_channel_path(channel), params: { notification_channel: { group_minutes: "0" } }
     assert_equal 0, channel.reload.group_minutes
     get settings_notifications_path

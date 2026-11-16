@@ -79,9 +79,15 @@
 
   <div class="group-minutes">
     <%= f.label :group_minutes, t(".group_minutes"), class: "label" %>
-    <%= f.select :group_minutes, NotificationChannel::GROUP_MINUTES.map { |minutes| [ minutes.zero? ? t(".group_none") : t(".group_for", count: minutes), minutes ] },
-          {}, class: "input mt-1 w-auto" %>
-    <p class="mt-1 text-xs text-ink-3"><%= t(".group_hint") %></p>
+    <div class="mt-1 flex items-center gap-2">
+      <%= f.number_field :group_minutes, min: 0, max: NotificationChannel::MAX_GROUP_MINUTES, step: 1, required: true, class: "input w-24" %>
+      <span class="text-sm text-ink-2"><%= t(".minutes") %></span>
+    </div>
+    <p class="mt-1 text-xs text-ink-3"><%= t(".group_hint", max: NotificationChannel::MAX_GROUP_MINUTES) %></p>
+    <label class="mt-2 flex cursor-pointer items-start gap-2 text-sm text-ink-2">
+      <%= f.check_box :group_by_server, class: "mt-0.5 h-4 w-4 rounded border-line text-accent" %>
+      <span><%= t(".group_by_server") %> <span class="text-ink-3"><%= t(".group_by_server_hint") %></span></span>
+    </label>
   </div>
 
   <div class="space-y-3">

@@ -5,6 +5,7 @@ require "application_system_test_case"
 # a click on a header sorts it.
 class FleetListTest < ApplicationSystemTestCase
   include Devise::Test::IntegrationHelpers
+  include StubHelpers
 
   setup do
     sign_in users(:one)
@@ -51,10 +52,32 @@ class FleetListTest < ApplicationSystemTestCase
 
     click_on "Disque"
     assert_selector "#servers th[aria-sort=descending]", text: /Disque/i
-    assert_equal expected, all("#servers tbody tr td:nth-child(2) > a").map(&:text)
+    assert_equal expected, all("#servers tbody tr td.server-name > a").map(&:text)
 
     click_on "Disque"
     assert_selector "#servers th[aria-sort=ascending]", text: /Disque/i
-    assert_equal expected.reverse, all("#servers tbody tr td:nth-child(2) > a").map(&:text)
+    assert_equal expected.reverse, all("#servers tbody tr td.server-name > a").map(&:text)
+  end
+
+  test "ticked servers show a bar of actions; an inventory of them is one run" do
+    stub_method_until_teardown(Inventory::CollectJob, :perform_later, nil)
+    visit servers_path
+    assert_no_selector "#fleet-selection", visible: true
+
+    find("#servers input[aria-label='Cocher « Web »']").check
+    find("#servers input[aria-label='Cocher « Database »']").check
+    assert_selector "#fleet-selection .selection-count", text: "2 serveurs cochés"
+    assert_equal true, evaluate_script("document.querySelector('#servers .select-all').indeterminate")
+
+    click_on "Décocher"
+    assert_no_selector "#fleet-selection", visible: true
+    find("#servers .select-all").check
+    assert_selector "#fleet-selection .selection-count", text: "#{Server.count} serveurs cochés"
+    find("#servers input[aria-label='Cocher « Backup »']").uncheck
+
+    within("#fleet-selection") { click_on "Inventorier" }
+
+    assert_selector "h1", text: "Inventaire de 2 serveurs"
+    assert_equal %w[Database Web], BackgroundTask.sole.items.map(&:server_name)
   end
 end

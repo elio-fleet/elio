@@ -10,6 +10,8 @@ SUPPORT_URL="https://www.debian.org/support"
 BUG_REPORT_URL="https://bugs.debian.org/"
 @@elio uname
 Linux 6.1.0-25-amd64 x86_64
+@@elio kernel_latest
+6.1.0-25-amd64
 @@elio hostname
 db-prod.acme.internal
 @@elio virt
@@ -18,7 +20,15 @@ kvm
 3542400.27 28104567.12
 @@elio cpus
 8
+@@elio cpuinfo
+model=QEMU Virtual CPU version 2.5+
+cores=8
+sockets=1
 @@elio meminfo
 MemTotal:       32858112 kB
 @@elio timezone
 Europe/Paris
+@@elio dmi
+sys_vendor=QEMU
+product_name=Standard PC (i440FX + PIIX, 1996)
+@@elio hypervisor

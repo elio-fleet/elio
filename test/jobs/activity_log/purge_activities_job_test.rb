@@ -21,6 +21,10 @@ class PurgeActivitiesJobTest < ActiveJob::TestCase
     ENV["ELIO_ACTIVITY_RETENTION_DAYS"] = "30"
     PurgeActivitiesJob.perform_now
     assert_not Activity.exists?(old.id)
+
+    # Once read as 0 (keep everything) without a word.
+    ENV["ELIO_ACTIVITY_RETENTION_DAYS"] = "1y"
+    assert_raises(Elio::Env::Invalid) { PurgeActivitiesJob.perform_now }
   ensure
     ENV.delete("ELIO_ACTIVITY_RETENTION_DAYS")
   end

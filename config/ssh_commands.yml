@@ -40,17 +40,21 @@ connection:
 
 inventory:
   os:
-    description: "System: distribution, kernel, host name, virtualization, uptime, processors, memory, time zone."
+    description: "System: distribution, kernel (and the newest one installed in /boot, to see a kernel waiting for a reboot), host name, virtualization, uptime, processors (model, physical cores and sockets from /proc/cpuinfo), memory, time zone, machine maker and model (DMI fields any account can read; the host's in a container), Proxmox VE host (/etc/pve and the pve-manager version)."
     shell: true
     default: |
       echo "@@elio os-release"; cat /etc/os-release 2>/dev/null || cat /usr/lib/os-release 2>/dev/null
       echo "@@elio uname"; uname -srm
+      echo "@@elio kernel_latest"; { uname -r; ls /boot 2>/dev/null | sed -n 's/^vmlinuz-//p'; } | sort -V | tail -n 1
       echo "@@elio hostname"; hostname -f 2>/dev/null || hostname
       echo "@@elio virt"; systemd-detect-virt 2>/dev/null || true
       echo "@@elio uptime"; cat /proc/uptime
       echo "@@elio cpus"; nproc 2>/dev/null || getconf _NPROCESSORS_ONLN
+      echo "@@elio cpuinfo"; awk -F': *' '/^model name/ && model == "" { model = $2 } /^physical id/ { socket = $2; sockets[socket] = 1 } /^core id/ { cores[socket " " $2] = 1 } END { for (key in cores) core_count++; for (key in sockets) socket_count++; print "model=" model; print "cores=" core_count; print "sockets=" socket_count }' /proc/cpuinfo 2>/dev/null
       echo "@@elio meminfo"; grep -E '^MemTotal:' /proc/meminfo
       echo "@@elio timezone"; timedatectl show -p Timezone --value 2>/dev/null || cat /etc/timezone 2>/dev/null || true
+      echo "@@elio dmi"; for field in sys_vendor product_name; do printf '%s=' "$field"; cat "/sys/class/dmi/id/$field" 2>/dev/null || echo; done
+      echo "@@elio hypervisor"; if [ -d /etc/pve ]; then echo "proxmox $(dpkg-query -W -f='${Version}' pve-manager 2>/dev/null)"; fi
 
   network:
     description: "Network: interfaces and their addresses (iproute2, JSON)."

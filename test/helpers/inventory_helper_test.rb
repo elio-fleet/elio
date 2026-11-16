@@ -50,9 +50,14 @@ class InventoryHelperTest < ActionView::TestCase
   end
 
   test "inventory_status_badge" do
-    snapshot = Inventory::Snapshot.new(status: "partial", message: "sans root")
+    snapshot = Inventory::Snapshot.new(server: servers(:web), status: "partial", message: "sans root")
     render html: inventory_status_badge(snapshot)
-    assert_select ".inventory-status[title='sans root']", text: "Partiel"
+    assert_select "a.partial-collection-link[title='sans root'][data-turbo-frame=_top][href=?]", server_path(servers(:web), anchor: "partial-collection") do
+      assert_select ".inventory-status", text: "Partiel"
+    end
+
+    render html: inventory_status_badge(Inventory::Snapshot.new(status: "error", message: "timeout"))
+    assert_select "span.inventory-status[title='timeout']", text: "Échec de l'inventaire"
 
     assert_nil inventory_status_badge(Inventory::Snapshot.new(status: "ok"))
     assert_nil inventory_status_badge(nil)

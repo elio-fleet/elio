@@ -1,14 +1,14 @@
-# Reads the keys of every server in the background, followed as a task on
-# the "Tâches" page.
+# Reads the keys of every server, or of the servers ticked in the list, in
+# the background, followed as a task on the "Tâches" page (see FleetRuns).
 class ServerScansController < ApplicationController
+  include FleetRuns
+
   require_permission :operate
 
   def create
-    servers = Server.order(:name).to_a
-    task = BackgroundTask.enqueue!(kind: "keys_scan", label: LocalizedText.part("server_scans_controller.label", t: LocalizedText.part("count.servers", count: servers.size)), servers: servers) do |item|
+    label = ->(servers) { LocalizedText.part("server_scans_controller.label", t: LocalizedText.part("count.servers", count: servers.size)) }
+    start_run("keys_scan", run_servers, label: label, notice: ->(_task) { t("server_scans_controller.started") }) do |item|
       ScanServerJob.perform_later(item.server, task_item: item)
     end
-
-    redirect_to task_path(task), notice: t("server_scans_controller.started")
   end
 end

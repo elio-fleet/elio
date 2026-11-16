@@ -19,7 +19,7 @@ class ServersListTest < ActionDispatch::IntegrationTest
                                               data: { "load_percent" => load, "memory" => { "used_percent" => memory }, "disk_max_percent" => disk, "updates" => updates })
   end
 
-  def names = css_select("#servers tbody tr td:nth-child(2) > a").map(&:text)
+  def names = css_select("#servers tbody tr td.server-name > a").map(&:text)
 
   test "by name by default, then by a column: the biggest first, the servers without inventory last" do
     get servers_path

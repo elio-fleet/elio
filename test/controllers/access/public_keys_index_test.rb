@@ -82,6 +82,37 @@ class PublicKeysIndexTest < ActionDispatch::IntegrationTest
     assert_select "a.add-to-keyring", 0
   end
 
+  test "the last keys scan summed up: never, by hand with a failure, planned and running" do
+    sign_in users(:viewer)
+    get public_keys_path
+    assert_select "#keys-scan-summary [data-status=last_scan]", text: /Dernier scan\s*jamais/
+    assert_select "#keys-scan-summary [data-status=outside]", 0, "nothing read yet"
+
+    AccountSnapshot.create!(server: servers(:web), unix_user: "deploy", content: Ssh::KeyGenerator.generate(comment: "bob@laptop").public_key, read_at: 2.hours.ago)
+    get public_keys_path
+    assert_select "#keys-scan-summary [data-status=last_scan]", text: /il y a 2 heures/
+    assert_select "#keys-scan-summary [data-status=outside]", text: /Hors trousseau\s*1 clé/
+
+    task = BackgroundTask.enqueue!(kind: "keys_scan", label: "Scan", servers: [ servers(:web), servers(:db) ], user: users(:one))
+    task.items.first.finish!(:succeeded)
+    task.items.last.finish!(:failed, "refusé")
+    get public_keys_path
+    assert_select "#keys-scan-summary [data-status=last_scan]", text: %r{1/2 serveurs lus · 1 en échec}
+    assert_select "#keys-scan-summary a[href=?]", task_path(task), text: "Voir la tâche"
+
+    automation = Automation.find_or_create_by!(kind: "keys_scan") { |record| record.interval_minutes = 360 }
+    planned = BackgroundTask.enqueue!(kind: "automation", label: "Scan planifié", servers: [ servers(:web) ], user: nil, automation: automation)
+    get public_keys_path
+    assert_select "#keys-scan-summary [data-status=last_scan]", text: %r{en cours \(0/1\)}
+    assert_select "#keys-scan-summary a[href=?]", task_path(planned)
+
+    planned.items.sole.finish!(:succeeded)
+    BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: [ servers(:web) ], user: nil)
+    get public_keys_path
+    assert_select "#keys-scan-summary [data-status=last_scan]", text: %r{1/1 serveur lu}
+    assert_equal task_path(planned), css_select("#keys-scan-summary a").sole["href"], "an inventory is not a keys scan"
+  end
+
   test "outside the keyring, empty or never scanned" do
     sign_in users(:viewer)
     get public_keys_path(kind: "outside")

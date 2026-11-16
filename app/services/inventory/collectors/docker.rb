@@ -41,8 +41,8 @@ class Inventory::Collectors::Docker < Inventory::Collector
     access = sections["access"].strip
     return unsupported(I18n.t("inventory.collectors.docker.not_installed")) if access == "absent"
     unless access.match?(/\A\d+\.\d+/)
-      hint = access.match?(/denied/i) ? I18n.t("inventory.collectors.docker.needs_root") : ""
-      return partial({ "docker" => "unreadable", "containers" => [], "images" => [] }, I18n.t("inventory.collectors.docker.unreadable", error: access.presence&.truncate(120) || I18n.t("inventory.collectors.docker.no_answer"), hint: hint))
+      message = docker_failure(access, I18n.t("inventory.collectors.docker.unreadable", error: access.presence&.truncate(120) || I18n.t("inventory.collectors.docker.no_answer")))
+      return partial({ "docker" => "unreadable", "containers" => [], "images" => [] }, message)
     end
 
     data = self.class.parse(sections, previous: previous).merge("docker" => "ok", "version" => access)

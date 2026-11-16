@@ -9,7 +9,7 @@
   <%= render "shared/form_errors", record: @user %>
   <%= render "shared/auth_field", f: f, attribute: :email, label: t("auth.fields.email"), type: :email_field, readonly: true %>
   <%= render "shared/auth_field", f: f, attribute: :password, label: t("auth.fields.password"), type: :password_field, autocomplete: "new-password", autofocus: true,
-             hint: t("auth.fields.min_length", count: Devise.password_length.min) %>
+             hint: t("auth.fields.min_length", count: Devise.password_length.min), strength: true %>
   <%= render "shared/auth_field", f: f, attribute: :password_confirmation, label: t("auth.fields.password_confirmation"), type: :password_field, autocomplete: "new-password" %>
   <%= f.submit t(".submit"), class: "btn btn-primary w-full" %>
 <% end %>

@@ -99,9 +99,9 @@ class DockerTest < ActionDispatch::IntegrationTest
       assert_select "#stat-updates .stat-value", "1"
       assert_select "#troubled-containers li.troubled-container", 3
       assert_select "#troubled-containers li.troubled-container", text: /redémarre en boucle\s+Web\s+worker.*12 redémarrages/m
-      assert_select "tr.docker-repository-version:first-child[data-repository=nginx]", text: /nginx\s+1.27\s+Web\s+nouvelle version\s+Faible\s+2\s+dont 1 corrigeable/
+      assert_select "tr.docker-repository-version:first-child[data-repository=nginx]", text: /nginx\s+1.27\s+Web\s+il y a 52 jours\s+183 Mo\s+nouvelle version\s+Faible\s+2\s+dont 1 corrigeable/
       assert_select "tr.docker-repository-version[data-repository=nginx] .docker-version-cves .severity[data-severity=low]"
-      assert_select "tr.docker-repository-version[data-repository=redis]", text: /aucun conteneur/
+      assert_select "tr.docker-repository-version[data-repository=redis]", text: /aucun conteneur\s+sur Web/
       assert_select "#stat-image-cves .stat-value", "2"
       assert_select "#stat-image-cves", /1 image Docker · 1 corrigeable/
 
@@ -113,6 +113,73 @@ class DockerTest < ActionDispatch::IntegrationTest
       assert_select "tr.docker-repository-version", 1
       get docker_path(q: "postgres")
       assert_select "tr.docker-repository-version[data-repository=postgres]", 1
+    end
+  end
+
+  test "the fleet images sort by CVEs, age or size; the unused images and the space to reclaim by server" do
+    sign_in users(:viewer)
+    travel_to(NOW) do
+      get docker_path(sort: "size")
+      assert_equal %w[postgres ghcr.io/acme/shop-worker nginx redis alpine], css_select("tr.docker-repository-version").map { |row| row["data-repository"] }
+      assert_select "th[aria-sort=descending] a", text: /Taille/
+      assert_select "th a.sort-header[href=?]", docker_path, { text: /Taille/ }, "clicking the active column again goes back to the default order"
+      assert_select "input[type=hidden][name=sort][value=size]", 1, "the search keeps the order"
+
+      get docker_path(sort: "age")
+      assert_equal %w[redis postgres alpine nginx ghcr.io/acme/shop-worker], css_select("tr.docker-repository-version").map { |row| row["data-repository"] }
+      get docker_path(sort: "cves")
+      assert_equal "nginx", css_select("tr.docker-repository-version").first["data-repository"]
+      get docker_path(sort: "nope")
+      assert_select "th[aria-sort]", 0
+
+      assert_select "#unused-images", text: /Images inutilisées\s*2 images Docker, 217 Mo récupérables/
+      assert_select "#unused-images tr.unused-images-server[data-server=Web]", text: /Web\s+2\s+217 Mo\s+217 Mo/
+      assert_select "#unused-images tr.unused-images-server a[href=?]", server_path(servers(:web), tab: "docker", section: "images")
+
+      data = servers(:web).inventory("docker").data
+      servers(:web).inventory("docker").update!(data: data.merge("images" => data["images"].map { |image| image.merge("used" => true) }))
+      get docker_path
+      assert_select "#unused-images", 0
+    end
+  end
+
+  test "the fleet containers: every container, problems first, filtered by kind, search and group" do
+    sign_in users(:viewer)
+    travel_to(NOW) do
+      get docker_path(tab: "containers")
+
+      assert_response :success
+      assert_select "nav.docker-tabs a[aria-current=page]", text: /Conteneurs\s*4/
+      assert_equal %w[db worker web backup-once], css_select("tr.fleet-container").map { |row| row["data-name"] }
+      assert_select "tr.fleet-container[data-name=worker]", text: /redémarre en boucle\s+Web\s+worker/
+      assert_select "tr.fleet-container[data-name=worker] .container-risk", 2
+      assert_select "tr.fleet-container[data-name=web] .container-ports", text: "0.0.0.0:8080→80/tcp public"
+      assert_select "tr.fleet-container[data-name=web] .compose-project", "shop · web"
+      assert_select "tr.fleet-container[data-name=backup-once]", text: /arrêté il y a 31 jours/
+      assert_select "#stat-containers .stat-value", "2/4"
+      assert_select "#stat-trouble .stat-value", "3"
+      assert_select "#stat-host-access .stat-value", "1"
+      assert_select "#stat-public .stat-value", "1"
+
+      get docker_path(tab: "containers", show: "trouble")
+      assert_equal %w[db worker backup-once], css_select("tr.fleet-container").map { |row| row["data-name"] }
+      assert_select "input[type=hidden][name=show][value=trouble]"
+      get docker_path(tab: "containers", show: "host_access")
+      assert_equal %w[worker], css_select("tr.fleet-container").map { |row| row["data-name"] }
+      get docker_path(tab: "containers", show: "public")
+      assert_equal %w[web], css_select("tr.fleet-container").map { |row| row["data-name"] }
+
+      get docker_path(tab: "containers", q: "ALPINE")
+      assert_equal %w[backup-once], css_select("tr.fleet-container").map { |row| row["data-name"] }
+      get docker_path(tab: "containers", q: "shop")
+      assert_select "tr.fleet-container", 3
+      get docker_path(tab: "containers", q: "nothing")
+      assert_select "p", "Aucun conteneur ne correspond."
+
+      group = ServerGroup.create!(name: "Vide")
+      get docker_path(tab: "containers", group: group.id)
+      assert_select "tr.fleet-container", 0
+      assert_select "p", "Aucun conteneur connu."
     end
   end
 
