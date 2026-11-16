@@ -1,3 +1,4 @@
+<%# How to create the read-only Technitium token, then the zones the last sync could not read (and why). Locals: integration. %>
 <div class="integration-help mt-4 rounded-lg border border-line bg-surface px-4 py-3 text-sm text-ink-2">
   <p class="font-medium text-ink"><%= t("integrations.technitium.help.title") %></p>
   <ol class="mt-1 list-decimal space-y-0.5 pl-5">
@@ -8,3 +9,15 @@
   </ol>
   <p class="mt-2 text-xs text-ink-3"><%= t("integrations.technitium.help.reads_html") %></p>
 </div>
+
+<% unreadable = integration.enabled? ? Integrations::Technitium.unreadable_zones(integration) : [] %>
+<% if unreadable.any? %>
+  <%= panel t("integrations.technitium.unreadable.title"), id: "technitium-unreadable-zones", class: "mt-4", meta: tag.span(unreadable.size, class: "tabular-nums") do %>
+    <%= attention_list do %>
+      <% unreadable.each do |zone| %>
+        <%= attention_item :warn, safe_join([ tag.span(zone["zone"], class: "font-mono text-xs text-ink"), Integrations::Technitium.unreadable_reason(zone) ], " "),
+                           id: "technitium-zone-#{zone["zone"].parameterize}" %>
+      <% end %>
+    <% end %>
+  <% end %>
+<% end %>

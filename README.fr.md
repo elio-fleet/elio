@@ -197,6 +197,7 @@ Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS,
 
 - **Réglage** : l'adresse de la console web (port 5380 ou 53443) et le jeton d'API d'un utilisateur qui peut seulement **voir** les zones. Technitium a aussi des **droits par zone** : donnez *View* au groupe de cet utilisateur sur chaque zone à lire, sinon le jeton n'en voit aucune. *Tester la connexion* donne la version et les zones lisibles, et prévient si le jeton permet de les modifier.
 - Toutes les heures, Elio lit les enregistrements **A, AAAA et CNAME** des zones (toutes, ou celles que vous listez) et rattache chacun à son serveur : par l'IP d'un enregistrement A / AAAA, et pour un CNAME par l'enregistrement ou l'hôte vers lequel il pointe. Un nom peut être rattaché à la main, et le rattachement est gardé.
+- Une zone qui n'a pas pu être lue (listée mais invisible pour le jeton, ou ses enregistrements refusés) est listée avec la raison dans les réglages de l'extension ; une zone refusée garde ses enregistrements précédents.
 - Ses enregistrements vont dans le [DNS du parc](#dns-du-parc).
 - Le jeton passe dans un en-tête `Authorization: Bearer` (jamais dans l'URL). Testé avec Technitium DNS Server 15.6.
 

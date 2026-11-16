@@ -394,6 +394,9 @@ en:
         other: 'Connected to Technitium DNS Server %{version}: %{count} zones readable'
       writable: ". Warning: this token can also change or delete zones; Elio only needs to view them."
       http_warning: ". The address is in HTTP: the token travels unencrypted."
+      not_visible:
+        one: ". Chosen in the settings but not visible to this token: %{zones} (a typo, or no View permission on it)."
+        other: ". Chosen in the settings but not visible to this token: %{zones} (a typo, or no View permission on them)."
       invalid_token: 'Invalid or expired token: create a new one in Technitium.'
       api_error: 'Technitium refused the request: %{message}'
       not_json: 'Unexpected answer: is it the address of a Technitium DNS Server?'
@@ -408,6 +411,14 @@ en:
         unattached:
           one: "%{count} attached to no server"
           other: "%{count} attached to no server"
+        unreadable:
+          one: ". %{count} zone not read: %{zones}"
+          other: ". %{count} zones not read: %{zones}"
+      unreadable:
+        title: Zones not read at the last sync
+        reasons:
+          not_visible: Chosen in the settings, but the token does not see it (a typo, a deleted zone, or no View permission on it).
+          refused: 'Its records could not be read (%{message}); its previous records are kept.'
       help:
         title: Create a read-only API token in Technitium
         step1_html: "<strong>Administration → Groups</strong>: add a group (e.g. <code>Elio read-only</code>), and in <strong>Administration → Permissions</strong> give it <strong>View</strong> only on <strong>Zones</strong>."

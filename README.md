@@ -197,6 +197,7 @@ The extensions that read DNS (OVHcloud with its DNS product, Technitium DNS, Gan
 
 - **Setup**: the address of the web console (port 5380 or 53443) and the API token of a user that can only **view** the zones. Technitium also has **permissions per zone**: give that user's group *View* on each zone to read, or the token sees none. *Test the connection* gives the version and the zones readable, and warns if the token could change them.
 - Every hour, Elio reads the **A, AAAA and CNAME** records of the zones (all, or those you list) and attaches each one to its server: by the IP of an A / AAAA record, and for a CNAME by the record or the host it points to. A name can be attached by hand, and the attachment is kept.
+- A zone that cannot be read (listed but not visible to the token, or its records refused) is listed with the reason in the extension settings; a refused zone keeps its previous records.
 - Its records go to the [DNS of the fleet](#dns-of-the-fleet).
 - The token travels in an `Authorization: Bearer` header (never in the URL). Tested with Technitium DNS Server 15.6.
 

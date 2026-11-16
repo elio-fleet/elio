@@ -394,6 +394,9 @@ fr:
         other: 'Connecté à Technitium DNS Server %{version} : %{count} zones lisibles'
       writable: ". Attention : ce jeton peut aussi modifier ou supprimer des zones ; Elio n'a besoin que de les voir."
       http_warning: ". L'adresse est en HTTP : le jeton circule en clair."
+      not_visible:
+        one: ". Choisie dans les réglages mais invisible pour ce jeton : %{zones} (faute de frappe, ou pas de droit View dessus)."
+        other: ". Choisies dans les réglages mais invisibles pour ce jeton : %{zones} (faute de frappe, ou pas de droit View dessus)."
       invalid_token: 'Jeton invalide ou expiré : créez-en un nouveau dans Technitium.'
       api_error: 'Technitium a refusé la requête : %{message}'
       not_json: 'Réponse inattendue : est-ce bien l''adresse d''un Technitium DNS Server ?'
@@ -408,6 +411,14 @@ fr:
         unattached:
           one: "%{count} rattaché à aucun serveur"
           other: "%{count} rattachés à aucun serveur"
+        unreadable:
+          one: ". %{count} zone non lue : %{zones}"
+          other: ". %{count} zones non lues : %{zones}"
+      unreadable:
+        title: Zones non lues à la dernière synchro
+        reasons:
+          not_visible: Choisie dans les réglages, mais le jeton ne la voit pas (faute de frappe, zone supprimée, ou pas de droit View dessus).
+          refused: 'Ses enregistrements n''ont pas pu être lus (%{message}) ; ses enregistrements précédents sont gardés.'
       help:
         title: Créer un jeton d'API en lecture seule dans Technitium
         step1_html: "<strong>Administration → Groups</strong> : ajoutez un groupe (par exemple <code>Elio read-only</code>), puis dans <strong>Administration → Permissions</strong> donnez-lui seulement <strong>View</strong> sur <strong>Zones</strong>."

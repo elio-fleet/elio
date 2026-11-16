@@ -23,14 +23,17 @@ class Integrations::Technitium < Integrations::Base
       Integrations::Technitium::Client.new(url: integration.value(:url), token: integration.value(:api_token), verify_ssl: !integration.value(:allow_self_signed))
     end
 
-    # The version, the zones the token can see, and a warning when it could
-    # change them (it should only view).
+    # The version, the zones the token can see, the zones chosen in the
+    # settings it cannot see, and a warning when it could change them (it
+    # should only view).
     def test_connection(integration)
       client = client(integration)
       info = client.session.dig("info") || {}
       zones = client.zones
       permissions = info.dig("permissions", "Zones") || {}
       message = I18n.t("integrations.technitium.connected", version: info["version"] || "?", count: zones.size)
+      hidden = wanted_zones(integration) - zones.map { |zone| zone["name"].to_s.downcase }
+      message += I18n.t("integrations.technitium.not_visible", count: hidden.size, zones: hidden.join(", ")) if hidden.any?
       message += I18n.t("integrations.technitium.writable") if permissions["canModify"] || permissions["canDelete"]
       message += I18n.t("integrations.technitium.http_warning") if integration.value(:url).to_s.start_with?("http://")
       message
@@ -44,5 +47,13 @@ class Integrations::Technitium < Integrations::Base
     def dns_source?(_integration) = true
 
     def help_partial = "integrations/technitium/help"
+
+    # The zones chosen in the settings (none: every zone the token sees).
+    def wanted_zones(integration) = Array(integration.value(:zones)).map { |zone| zone.to_s.downcase.chomp(".") }.uniq
+
+    # The zones the last sync could not read ({ "zone", "reason", "message" }, see Sync).
+    def unreadable_zones(integration) = Array(integration.state["unreadable_zones"])
+
+    def unreadable_reason(zone) = I18n.t("integrations.technitium.unreadable.reasons.#{zone["reason"]}", message: zone["message"].to_s)
   end
 end

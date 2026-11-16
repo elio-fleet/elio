@@ -53,6 +53,37 @@ class Integrations::TechnitiumTest < ActiveSupport::TestCase
     assert_equal [ "example.test" ], DnsRecord.distinct.pluck(:zone)
   end
 
+  test "a zone chosen in the settings that the token does not see is named, the others are read" do
+    @integration.update!(settings: @integration.settings.merge("zones" => [ "Internal.test.", "typo.test" ]))
+    assert_equal "1 zone, 2 enregistrements, 1 rattaché à aucun serveur. 1 zone non lue : typo.test", sync
+    assert_equal [ "internal.test" ], DnsRecord.distinct.pluck(:zone)
+    assert_equal [ { "zone" => "typo.test", "reason" => "not_visible" } ], Integrations::Technitium.unreadable_zones(@integration.reload)
+    assert_match "invisible pour ce jeton : typo.test", Integrations::Technitium.test_connection(@integration)
+
+    @integration.update!(settings: @integration.settings.merge("zones" => []))
+    sync
+    assert_empty Integrations::Technitium.unreadable_zones(@integration.reload)
+    assert_no_match "invisible", Integrations::Technitium.test_connection(@integration)
+  end
+
+  test "a zone whose records are refused keeps its previous records and is named; every zone refused fails the sync" do
+    sync
+    before = DnsRecord.where(zone: "internal.test").order(:id).pluck(:id, :updated_at)
+    refused = { status: "error", errorMessage: "Access was denied." }.to_json
+    fake_technitium("/api/zones/records/get" => ->(params) { params["zone"] == "internal.test" ? refused : file_fixture("integrations/technitium/records_#{params["zone"]}.json").read })
+
+    assert_equal "2 zones, 7 enregistrements, 3 rattachés à aucun serveur. 1 zone non lue : internal.test", sync
+    assert_equal before, DnsRecord.where(zone: "internal.test").order(:id).pluck(:id, :updated_at)
+    zone = Integrations::Technitium.unreadable_zones(@integration.reload).sole
+    assert_equal [ "internal.test", "refused" ], zone.values_at("zone", "reason")
+    assert_equal "Ses enregistrements n'ont pas pu être lus (Technitium a refusé la requête : Access was denied.) ; ses enregistrements précédents sont gardés.",
+                 Integrations::Technitium.unreadable_reason(zone)
+
+    fake_technitium("/api/zones/records/get" => refused)
+    assert_match "Access was denied.", assert_raises(Integrations::Error) { sync }.message
+    assert_equal 7, DnsRecord.count
+  end
+
   test "a manual link wins, by name, and stays across syncs" do
     DnsLink.create!(name: "vpn.internal.test", server: servers(:backup))
     DnsLink.create!(name: "web.example.test", server: nil)
