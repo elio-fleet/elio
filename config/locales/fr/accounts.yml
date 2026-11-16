@@ -66,6 +66,7 @@ fr:
       title: Mot de passe oublié
       intro: 'Indiquez votre email : si un compte existe, vous recevrez un lien pour choisir un nouveau mot de passe (valable 2 heures).'
       submit: Recevoir le lien
+      unavailable: "Mot de passe oublié ? Aucun serveur d'email n'est configuré sur cette instance : demandez à un administrateur."
     reset:
       title: Nouveau mot de passe
       heading: Choisir un nouveau mot de passe
@@ -130,6 +131,12 @@ fr:
         other: Il vous reste %{count} codes de secours.
       none_left: 'Il ne vous reste aucun code de secours : générez-en de nouveaux dans votre compte.'
       not_you: "Si ce n'était pas vous, quelqu'un connaît votre mot de passe et avait l'un de vos codes : changez votre mot de passe, générez de nouveaux codes de secours et prévenez un administrateur."
+      account: 'Votre compte : %{url}'
+    password_changed:
+      subject: Votre mot de passe Elio a été changé
+      hello: Bonjour,
+      text: Le mot de passe de votre compte Elio %{email} a été changé le %{date}. Les autres sessions de ce compte sont déconnectées.
+      not_you: "Si ce n'était pas vous, prévenez tout de suite un administrateur : quelqu'un a peut-être accès à votre compte ou à votre boîte mail."
       account: 'Votre compte : %{url}'
   invitation_mailer:
     invite:
