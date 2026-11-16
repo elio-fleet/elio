@@ -43,7 +43,6 @@ en:
       expires_on: Expiry date
       expires_on_hint: The date by which the key must be rotated (a contractor's mission, a yearly policy). Elio reminds of it 14 days before, through the notification channels that receive "Keyring key to rotate".
     edit:
-      back_key: "← Back to the key"
       heading_html: Edit “%{name_was}”
     index:
       subtitle: The public keys Elio knows and the servers where they give access
@@ -411,7 +410,6 @@ en:
       memory_warning: 'Memory: warning (%)'
       memory_critical: 'Memory: critical (%)'
       load_warning_processors: 'Load: warning (× processors)'
-      save_thresholds: Save the thresholds
       firewall_settings: Suggested firewall rules
       firewall_settings_hint: "What Elio proposes in the Firewall tab of the servers. It never applies anything."
       ufw_block_ipv6: Block all the incoming IPv6
@@ -439,7 +437,6 @@ en:
         monitors: 'e.g. Always use a 60 s interval and a keyword monitor for the web sites.'
         firewall: 'e.g. For the SSH port, always put the rules last.'
       prompt_instructions_footer: "Free text, %{count} characters at most. Never put a password or a token here: the prompt is meant to be pasted into an AI."
-      save_prompt_instructions: Save the instructions
       ssh_key_application: SSH key of the application
       generated: Generated on
       public_key: Public key

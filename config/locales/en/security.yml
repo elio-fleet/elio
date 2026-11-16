@@ -294,7 +294,6 @@ en:
         one: "%{images} · %{count} fixable"
         other: "%{images} · %{count} fixable"
       fixable_cves_html: "%{submit} With fixable CVEs"
-      docker_servers: Docker servers
       running_containers: Running containers
       trouble: In trouble
       loop_unhealthy: loop or unhealthy
@@ -432,11 +431,9 @@ en:
         band: Band %{index} from
         band_name: Band %{index}
         colour_band: Colour of band %{index}
-        save_colours: Save the colours
         feed_file: Feed file
         import: Import
         minimum_severity: Minimum severity
-        save: Save
         vulnerability_feeds: Vulnerability feeds
         downloaded_every_day_releases: 'Downloaded every day, only for the releases of the servers and of their Docker images (and only when the file has changed), then matched with the inventoried packages: no extra command on the servers. Reported if a feed is not updated for 3 days.'
         update_now: Update now
@@ -488,6 +485,7 @@ en:
         title: New score provider
   score_provider:
     custom_description: 'Custom provider: %{fetch} on %{setting}'
+    url_template_invalid: The address must start with https:// and contain {cve}
     unknown_format: Unknown format
     json_path_required: Give the JSON path of the score (e.g. cvss3.cvss3_base_score)
     selector_required: Give a CSS selector or a regex
@@ -529,6 +527,7 @@ en:
       unexpected: Unexpected answer from the registry (HTTP %{code})
       credentials_required: The registry asks for credentials (Settings → Docker)
       unreadable_token: Unreadable registry token
+      unreadable_auth: Unreadable registry authentication
       unreachable: 'Registry unreachable: %{truncate}'
     update_check:
       summary: "%{images}, %{checked} checked"

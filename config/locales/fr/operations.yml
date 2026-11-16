@@ -151,7 +151,6 @@ fr:
       started_prefix: 'commencé '
       server_concerned: Aucun serveur concerné.
       list_servers_will_appear: La liste des serveurs apparaîtra au démarrage.
-      breadcrumb: Fil d'Ariane
       started: Lancée par
       started_2: Lancée
       duration: Durée
@@ -173,11 +172,7 @@ fr:
         'off': Désactivée
         next_minute: à la prochaine minute
         frequency: Fréquence
-        groups: 'Groupes : %{scope_label}'
-        whole_fleet: Sur tout le parc
-        save: Enregistrer
         last_run: 'Dernière exécution :'
-        result: 'Résultat :'
         next: 'Prochaine :'
         run_now: Lancer maintenant
         hours: Heures

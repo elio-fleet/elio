@@ -151,7 +151,6 @@ en:
       started_prefix: 'started '
       server_concerned: No server concerned.
       list_servers_will_appear: The list of servers will appear when it starts.
-      breadcrumb: Breadcrumb
       started: Started by
       started_2: Started
       duration: Duration
@@ -173,11 +172,7 @@ en:
         'off': 'Off'
         next_minute: at the next minute
         frequency: Frequency
-        groups: 'Groups: %{scope_label}'
-        whole_fleet: On the whole fleet
-        save: Save
         last_run: 'Last run:'
-        result: 'Result:'
         next: 'Next:'
         run_now: Run now
         hours: Hours
