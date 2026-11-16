@@ -55,16 +55,13 @@ fr:
       check_every_server_answers: Vérifier que chaque serveur répond
       read_again_system_health: Relire le système, la santé et les services de tous les serveurs
       read_keys_every_server: Lire les clés de tous les serveurs
-      import: Importer
       security_updates: Mises à jour de sécurité
       all: Tous
       manage_groups: Gérer les groupes
-      organize_servers_groups: Organiser les serveurs en groupes
       name_hostname_ip: Nom, hostname, IP…
       search_server: Rechercher un serveur
       all_systems: Tous les systèmes
       system: Système
-      all_states: Tous les états
       unreachable: Injoignables
       without_inventory: Sans inventaire
       docker_watch: Docker à surveiller
@@ -73,11 +70,9 @@ fr:
       filter: Filtrer
       list: Liste
       grid: Grille
-      view_label: Vue %{label_downcase}
       server_matches_these_filters: Aucun serveur ne correspond à ces filtres.
       server_group: Aucun serveur dans ce groupe.
       server_yet: Aucun serveur pour le moment.
-      remove_filters: Retirer les filtres
       add_servers_group: Ajouter des serveurs au groupe
       add_your_first_server: Ajouter votre premier serveur
       refresh_statuses: Actualiser les statuts
@@ -106,17 +101,14 @@ fr:
       add_note: Ajouter une note
       see_keys: Clés SSH du serveur
       search_whole_fleet: Chercher sur tout le parc
-      activities: activités
       refresh_inventory: Actualiser l'inventaire
       edit: Modifier
-      server_sections: Sections du serveur
       authorized_ssh_keys: Clés SSH autorisées
       public_keys_can_log: Clés publiques qui peuvent se connecter à ce serveur, sur chaque compte qu'Elio peut lire. Les clés s'ajoutent au compte de connexion d'Elio, ou à un autre compte si Elio a root.
       temporary_accesses:
         zero: Accès temporaires et leur historique
         one: Accès temporaires (%{count} en cours) et leur historique
         other: Accès temporaires (%{count} en cours) et leur historique
-      activity_server_yet: Aucune activité sur ce serveur pour le moment.
     row:
       select_server: Cocher « %{server_name} »
       load_over_24_h: Charge sur 24 h (en % des processeurs)
@@ -126,7 +118,6 @@ fr:
       edit_2: Modifier %{server_name}
       host_name_machine: Hostname de la machine
       security_html: "%{security} sécu"
-      down_html: "%{down} hors ligne"
     card:
       checked_prefix: "· vérifié "
       cpu: CPU
@@ -164,15 +155,11 @@ fr:
     new:
       copy_subtitle: 'Copie de « %{name} » : même port, même utilisateur et mêmes groupes. Renseignez le nom et l''hôte.'
       subtitle: Elio s'y connecte en SSH, en lecture seule, avec sa clé.
-      servers: "← Serveurs"
     edit:
       duplicate: Dupliquer
       modify: Modifier
-      servers: "← Serveurs"
       delete_server: Supprimer le serveur
       edit_html: Modifier « %{name_was} »
-      delete_server_2: Supprimer ce serveur
-      server_removed_elio_keys: 'Le serveur est retiré d''Elio. Les clés installées sur la machine, dont celle d''Elio, restent en place : retirez-les d''abord depuis la page du serveur si nécessaire. L''historique d''activité est conservé.'
       title: Modifier %{name}
     connection_test:
       succeeded: Elio peut se connecter à ce serveur.
@@ -226,10 +213,6 @@ fr:
   dashboard:
     index:
       see_all: Tout voir
-      critical_thresholds_exceeded: seuils critiques dépassés
-      including_unreachable:
-        one: dont %{count} injoignable
-        other: dont %{count} injoignables
       welcome: Bienvenue dans Elio
       welcome_subtitle: Aucun serveur pour l'instant. Suivez les étapes pour commencer.
       no_server: Aucun serveur
@@ -322,28 +305,22 @@ fr:
       check_uncheck_all: Tout cocher / décocher
       server_yet_you_can: 'Aucun serveur pour le moment : vous pourrez en ajouter au groupe plus tard.'
     edit:
-      groups: "← Groupes"
       heading_html: Modifier le groupe « %{group_name} »
     index:
       no_group: Aucun groupe
       group_actions: Actions du groupe « %{group_name} »
-      servers: "← Serveurs"
       new_group: Nouveau groupe
       edit: Modifier
       edit_group: Modifier le groupe %{group_name}
-      delete: Supprimer
-      delete_group: Supprimer le groupe %{group_name}
       group_will_deleted_servers: Le groupe « %{group_name} » sera supprimé. Ses serveurs ne seront pas touchés.
       delete_group_2: Supprimer le groupe
       create_group: Créer un groupe
       server: Aucun serveur
       group_groups_filter_servers: Aucun groupe. Les groupes servent à filtrer les serveurs et à en sélectionner plusieurs d'un coup (ex. « Production », « Clients »).
     new:
-      groups: "← Groupes"
       heading: Nouveau groupe de serveurs
   server_imports:
     new:
-      servers: "← Serveurs"
       import: Importer %{t}
       content: Contenu
       file: "… ou fichier"
@@ -478,9 +455,7 @@ fr:
   server_notes:
     deleted_user: un utilisateur supprimé
     tab:
-      title: Notes
       intro: 'Ce que l''équipe doit savoir sur ce serveur : son rôle, une procédure, un incident. Le Markdown est accepté.'
-      none: Aucune note pour l'instant.
     form:
       placeholder: 'Écrire une note… (Markdown : **gras**, `code`, listes, liens, tableaux)'
       label: Note

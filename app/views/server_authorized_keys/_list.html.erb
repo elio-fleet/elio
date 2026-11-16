@@ -37,6 +37,19 @@
       <% @result.accounts.each do |entry| %>
         <%= render "server_authorized_keys/account", entry: entry, show_header: @result.privileged %>
       <% end %>
+      <% if @result.dormant.any? %>
+        <section class="dormant-accounts text-sm">
+          <h3 class="mb-1 flex items-center gap-2 font-medium">
+            <%= icon :user, class: "h-4 w-4 text-ink-3" %><%= t(".dormant", count: @result.dormant.size) %>
+          </h3>
+          <p class="text-xs text-ink-3"><%= t(".dormant_hint") %></p>
+          <p class="mt-2 flex flex-wrap gap-1.5">
+            <% @result.dormant.each do |user| %>
+              <span class="dormant-account rounded bg-subtle px-1.5 py-0.5 font-mono text-xs text-ink-2"><%= user %></span>
+            <% end %>
+          </p>
+        </section>
+      <% end %>
       <% unless @result.privileged || @server.username == "root" %>
         <p class="accounts-root-needed text-xs text-ink-3"><%= t("server_authorized_keys.index.root_needed", login: @server.username) %></p>
       <% end %>

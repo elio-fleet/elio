@@ -294,7 +294,6 @@ fr:
         one: "%{images} · %{count} corrigeable"
         other: "%{images} · %{count} corrigeables"
       fixable_cves_html: "%{submit} Avec CVE corrigeables"
-      docker_servers: Serveurs Docker
       running_containers: Conteneurs en cours
       trouble: En difficulté
       loop_unhealthy: boucle ou mauvaise santé
@@ -432,11 +431,9 @@ fr:
         band: Palier %{index} à partir de
         band_name: Palier %{index}
         colour_band: Couleur du palier %{index}
-        save_colours: Enregistrer les couleurs
         feed_file: Fichier de la base
         import: Importer
         minimum_severity: Gravité minimale
-        save: Enregistrer
         vulnerability_feeds: Bases de vulnérabilités
         downloaded_every_day_releases: 'Téléchargées chaque jour, seulement pour les versions des serveurs et de leurs images Docker (et seulement si le fichier a changé), puis rapprochées des paquets inventoriés : aucune commande de plus sur les serveurs. Signalé si une base n''est pas mise à jour depuis 3 jours.'
         update_now: Mettre à jour maintenant
@@ -488,6 +485,7 @@ fr:
         title: Nouveau fournisseur de notes
   score_provider:
     custom_description: 'Fournisseur personnalisé : %{fetch} sur %{setting}'
+    url_template_invalid: L'adresse doit commencer par https:// et contenir {cve}
     unknown_format: Format inconnu
     json_path_required: Indiquez le chemin JSON de la note (ex. cvss3.cvss3_base_score)
     selector_required: Indiquez un sélecteur CSS ou une regex
@@ -529,6 +527,7 @@ fr:
       unexpected: Réponse inattendue du registre (HTTP %{code})
       credentials_required: Le registre demande des identifiants (Paramètres → Docker)
       unreadable_token: Jeton du registre illisible
+      unreadable_auth: Authentification du registre illisible
       unreachable: 'Registre injoignable : %{truncate}'
     update_check:
       summary: "%{images}, %{checked} vérifiée(s)"

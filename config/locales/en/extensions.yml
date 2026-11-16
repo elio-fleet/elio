@@ -90,7 +90,6 @@ en:
       alert_maintenance: Monitor in maintenance for a long time
       maintenance_days: Maintenance threshold (days)
       http_warning: ". ⚠ The address is in http: the API key travels in clear on the network, prefer https"
-      monitors: Monitors
       not_metrics: The answer does not look like the /metrics page of Uptime Kuma
       found:
         one: "%{count} monitor found"
@@ -113,7 +112,6 @@ en:
         all_monitors: All the monitors
         uptime_kuma_not_synchronized: " (Uptime Kuma not synchronized yet)"
         attach_existing_monitor: Attach an existing monitor
-        uptime_kuma_monitors: Uptime Kuma monitors
         synchronized_html: synchronized %{last_synced_at}
         state: State
         response: Response
@@ -177,29 +175,13 @@ en:
         attach: Attach
         back_automatic_attachment: Back to automatic attachment
       server_tab:
-        not_synchronized_yet: " (not synchronized yet)"
-        see_resources_not_attached: See the resources not attached
         region: Region
         datacenter: Datacenter
         text: 'on'
         'off': 'off'
-        ovhcloud_resource_attached_server: No OVHcloud resource is attached to this server
-        attached_html: attached %{ovh_match_label}
-        state: State
-        ovh_service: OVH service
-        ovh_ips_reverse: OVH IPs and reverse
         reverse: Reverse of
         ovh_network_firewall_not: OVH network firewall not configured.
-        firewalls:
-          one: "Network firewall: %{count} IP, %{enabled} on."
-          other: "Network firewall: %{count} IPs, %{enabled} on."
-        see_firewall_tab: Firewall tab →
         anti_ddos: Anti-DDoS of
-        dns_records_server: DNS records to this server
-        dns_record_zones_read: No DNS record of the zones read points to this server.
-        dns_names:
-          one: "%{count} DNS name → DNS tab"
-          other: "%{count} DNS names → DNS tab"
         mitigation_permanent: permanent
         mitigation_automatic: automatic
       client:
@@ -299,7 +281,6 @@ en:
         count:
           one: "%{count} database"
           other: "%{count} databases"
-        schedule: "%{frequency}%{s3}"
         to_s3: " · to S3"
         last_success_html: last successful %{at}
         never: none succeeded
@@ -572,16 +553,12 @@ en:
       not_attached: Not attached
       services_outside_fleet: services outside the fleet
       expiring_soon: Expiring soon
-      dns_outside_fleet: DNS outside the fleet
       ip_addresses: IP addresses
-      dns: DNS
       name_ip_target: Name, IP, target…
       search: Search
-      outside_fleet_only: Outside the fleet only
       not_attached_only: Not attached only
       text: 'on'
       'off': 'off'
-      outside_fleet: outside the fleet
       not_attached_2: not attached
       resource_matches: No resource matches.
       not_synchronized_ovhcloud_yet: Not synchronized with OVHcloud yet.
