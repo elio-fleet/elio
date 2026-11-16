@@ -134,6 +134,20 @@ class DnsRecordsControllerTest < ActionDispatch::IntegrationTest
     assert_select "input[name='integration[values][url]']"
     assert_select "input[type=password][name='integration[values][api_token]']"
     assert_select ".integration-help", /droits par zone/
+    assert_select "#technitium-unreadable-zones", count: 0
+  end
+
+  test "the settings page lists the zones the last sync could not read, and why" do
+    @integration.update!(settings: @integration.settings.merge("zones" => [ "example.test", "internal.test", "typo.test" ]))
+    fake_technitium("/api/zones/records/get" => ->(params) { params["zone"] == "internal.test" ? { status: "error", errorMessage: "Access was denied." }.to_json : file_fixture("integrations/technitium/records_#{params["zone"]}.json").read })
+    @integration.sync!
+
+    sign_in users(:one)
+    get edit_settings_integration_path("technitium")
+    assert_select "#technitium-unreadable-zones h2", /Zones non lues/
+    assert_select "#technitium-zone-typo-test", /typo\.test.*le jeton ne la voit pas/
+    assert_select "#technitium-zone-internal-test", /internal\.test.*Access was denied\..*gardés/
+    assert_select "#technitium-zone-example-test", count: 0
   end
 
   test "with two sources: the records of a name that differ are flagged and filtered, and ⌘K offers the DNS search" do
