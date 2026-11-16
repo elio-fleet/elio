@@ -31,8 +31,8 @@ class Installation::ConfigurationTest < ActiveSupport::TestCase
     groups = Installation::Configuration.new(env: ENV_VALUES).groups.index_by(&:key)
 
     secrets = groups.values.flat_map(&:variables).select(&:secret)
-    assert_equal %w[ELIO_DATABASE_PASSWORD ELIO_SETUP_TOKEN SMTP_USERNAME SMTP_PASSWORD], secrets.map(&:name)
-    assert_equal [ false, true, true, true ], secrets.map(&:set?)
+    assert_equal %w[ELIO_DATABASE_PASSWORD ELIO_SETUP_TOKEN ELIO_HEALTH_TOKEN SMTP_USERNAME SMTP_PASSWORD], secrets.map(&:name)
+    assert_equal [ false, true, false, true, true ], secrets.map(&:set?)
 
     debian, ubuntu = groups[:feeds].variables
     assert_equal "https://mirror.lan/debian/json", debian.value

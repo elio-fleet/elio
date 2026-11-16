@@ -20,7 +20,7 @@ class Installation::Configuration
   def groups
     checks = Installation::Doctor.new(env: @env, network: false).environment_checks
     [
-      Group.new(:secrets, checks[:secrets], [ secret("ELIO_DATABASE_PASSWORD"), secret("ELIO_SETUP_TOKEN") ]),
+      Group.new(:secrets, checks[:secrets], [ secret("ELIO_DATABASE_PASSWORD"), secret("ELIO_SETUP_TOKEN"), secret("ELIO_HEALTH_TOKEN") ]),
       Group.new(:address, checks[:address], [ plain("ELIO_HOST"), plain("ELIO_FORCE_SSL", "true") ]),
       Group.new(:mail, checks[:mail], [ plain("SMTP_ADDRESS"), integer("SMTP_PORT"), secret("SMTP_USERNAME"), secret("SMTP_PASSWORD"),
                                         plain("SMTP_AUTHENTICATION", "plain"), plain("ELIO_MAIL_FROM", "elio@localhost") ]),
