@@ -43,6 +43,7 @@ class Activity < ApplicationRecord
     Kind.new(:container_started, :servers, :info),
     Kind.new(:scheduled_task_failed, :servers, :warning),
     Kind.new(:scheduled_task_late, :servers, :warning),
+    Kind.new(:scheduled_task_removed, :servers, :warning),
     Kind.new(:vulnerability_found, :security, :warning),
     Kind.new(:vulnerability_feed_failed, :configuration, :warning),
     Kind.new(:container_unhealthy, :servers, :warning),

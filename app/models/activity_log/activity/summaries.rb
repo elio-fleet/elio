@@ -67,6 +67,7 @@ module Activity::Summaries
     container_started: proc { Activity::Summaries.t(:container_started, container: data["container"], server: server_name) },
     scheduled_task_failed: proc { Activity::Summaries.t(:scheduled_task_failed, task: data["task"], server: server_name) },
     scheduled_task_late: proc { Activity::Summaries.t(:scheduled_task_late, task: data["task"], server: server_name) },
+    scheduled_task_removed: proc { Activity::Summaries.t(:scheduled_task_removed, task: data["task"], server: server_name) },
     vulnerability_found: proc do
       where = data["image"] ? Activity::Summaries.t(:in_image, image: data["image"], server: server_name) : target
       Activity::Summaries.t(:vulnerability_found, count: data["count"].to_i, where: where, cves: Array(data["cves"]).join(", ")) + Activity::Summaries.list(data["packages"])

@@ -50,4 +50,19 @@ class ServerUnitJournalsControllerTest < ActionDispatch::IntegrationTest
       assert_response :not_found
     end
   end
+
+  test "reads the journal of the service a timer starts: the output of its last runs" do
+    servers(:web).inventory_snapshots.create!(category: "scheduled_tasks", status: "ok", collected_at: Time.current, checked_at: Time.current,
+                                              data: { "cron" => [], "periodic" => [], "timers" => [ { "name" => "backup.timer", "unit" => "backup.service" } ] })
+    asked = nil
+    stub_method(Inventory::UnitJournal, :call, ->(_server, unit) { (asked = unit) && Inventory::UnitJournal::Result.new(lines: [ "backup.sh[901]: 3 databases saved" ], error: nil) }) do
+      get server_unit_journal_path(servers(:web), unit: "backup.service")
+      assert_response :success
+      assert_select "turbo-frame pre", text: /3 databases saved/
+      get server_unit_journal_path(servers(:web), unit: "backup.timer")
+      assert_response :not_found
+    end
+
+    assert_equal "backup.service", asked
+  end
 end

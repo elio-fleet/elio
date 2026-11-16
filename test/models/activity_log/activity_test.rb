@@ -103,6 +103,7 @@ test "summaries" do
       [ :container_stopped, { container: "pgbouncer" } ] => "Le conteneur pgbouncer s'est arrêté sur « Web »",
       [ :port_opened, { port: "3306/tcp", process: "mariadbd" } ] => "Port 3306/tcp ouvert publiquement sur « Web » (mariadbd)",
       [ :port_closed, { port: "8080/tcp" } ] => "Port 8080/tcp fermé sur « Web »",
+      [ :scheduled_task_removed, { task: "backup.timer" } ] => "La tâche planifiée backup.timer n'est plus sur « Web »",
       [ :server_created, {} ] => "Serveur « Web » ajouté",
       [ :server_updated, {} ] => "Serveur « Web » modifié"
     }.each do |(kind, options), summary|
