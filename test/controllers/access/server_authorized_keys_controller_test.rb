@@ -93,7 +93,8 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
       get server_authorized_keys_path(servers(:web))
     end
 
-    assert_select "dialog.key-details .key-options", %(from="10.0.0.1",no-pty)
+    assert_select "dialog.key-details .key-options", text: /Adresses d.origine autorisées\s+10.0.0.1\s+Sans terminal/
+    assert_select "li.authorized-key .key-option-from", "depuis 10.0.0.1"
   end
 
   test "flags a weak key found on the server, with its reason in the details" do
@@ -405,7 +406,7 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
         assert_select "h2", "alice@laptop"
         assert_select "p", "~deploy/.ssh/authorized_keys"
         assert_select ".key-fingerprint", key.fingerprint
-        assert_select ".key-options", "no-pty"
+        assert_select ".key-options .key-option-detail[data-option=no-pty]", "Sans terminal"
         assert_select "dd a[href=?][data-turbo-frame=_top]", public_key_path(public_keys(:alice)), text: "Alice"
         assert_select "dd", text: "n° 1 du fichier"
         assert_select "[data-controller=clipboard] textarea", line
@@ -490,5 +491,42 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
     sign_in users(:one)
     delete server_authorized_key_path(servers(:web)), params: { key: "AAAA", account: "bad name" }
     assert_response :unprocessable_content
+  end
+
+  test "shows each key's restrictions, the extra key files and the accounts without keys" do
+    sign_in users(:one)
+    server = servers(:web)
+    reader = Keys::AuthorizedKeysReader
+    blob = Ssh::KeyGenerator.generate(comment: "backup").public_key.split.first(2).join(" ")
+    restricted = %(from="10.0.0.0/8",command="/usr/local/bin/backup",restrict,expiry-time="20200101Z" #{blob} backup)
+    extra = reader::ExtraFile.new(path: "/home/dave/.ssh/authorized_keys2", keys: AuthorizedKey.parse(public_keys(:alice).content))
+    read = reader::All.new(privileged: true, dormant: %w[git postgres], accounts: [
+      reader::AccountKeys.new(account: AuthorizedKeysAccount.login(server), keys: AuthorizedKey.parse(restricted)),
+      reader::AccountKeys.new(account: AuthorizedKeysAccount.new(server, "dave"), keys: [], missing_file: true, extra_files: [ extra ])
+    ])
+
+    stub_method(Keys::AuthorizedKeysReader, :call_all, ->(*, **) { read }) do
+      get server_authorized_keys_path(server)
+    end
+
+    assert_response :success
+    assert_select "li.authorized-key" do
+      assert_select ".key-option-from[title=?]", "10.0.0.0/8", text: "depuis 10.0.0.0/8"
+      assert_select ".key-option-command[title=?]", "/usr/local/bin/backup", text: "commande imposée"
+      assert_select ".key-option-restrict", "restreinte"
+      assert_select ".key-option-expiry", "Expirée, refusée par le serveur"
+      assert_select "dialog.key-details .key-option-detail[data-option=from]", text: /Adresses d'origine autorisées\s+10.0.0.0\/8/
+      assert_select "dialog.key-details .key-option-detail[data-option=expiry-time]", text: /Refusée après\s+.*2020.* UTC/
+      assert_select "dialog.key-details .key-option-detail[data-option=restrict]", text: /Restreinte/
+    end
+    assert_select "section.authorized-keys-account[data-account=dave]" do
+      assert_select ".account-no-file", "Pas de fichier authorized_keys."
+      assert_select ".extra-key-file[data-path=?]", "/home/dave/.ssh/authorized_keys2", text: /1 clé dans \/home\/dave\/.ssh\/authorized_keys2/
+      assert_select ".extra-key", text: /Alice/
+      assert_select "button.key-details-button", 0, "an extra file is never changed from Elio"
+    end
+    assert_select ".dormant-accounts", text: /2 comptes avec un shell de connexion et sans clé/ do
+      assert_select ".dormant-account", 2
+    end
   end
 end

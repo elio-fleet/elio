@@ -137,7 +137,37 @@ fr:
       temporary_access_hint: Accès temporaire, le voir et le prolonger
       unreadable: Son fichier authorized_keys n'a pas pu être lu, même en root.
       no_key: Aucune clé dans ce fichier.
+      no_file: Pas de fichier authorized_keys.
       key_will_be_removed_from: La clé « %{nom} » sera supprimée du compte %{account} de « %{server_name} ». Elle ne pourra plus se connecter à ce compte.
+      extra_file_html:
+        one: "%{count} clé dans <code class=\"font-mono text-xs\">%{path}</code>, que le serveur SSH lit aussi."
+        other: "%{count} clés dans <code class=\"font-mono text-xs\">%{path}</code>, que le serveur SSH lit aussi."
+      extra_file_hint: Elio les affiche mais ne modifie pas ce fichier ; vérifiez-les sur le serveur.
+    list:
+      dormant:
+        one: "%{count} compte avec un shell de connexion et sans clé"
+        other: "%{count} comptes avec un shell de connexion et sans clé"
+      dormant_hint: Aucun fichier authorized_keys. Vérifiez qu'ils servent encore ; ils peuvent toujours se connecter par mot de passe si le serveur l'autorise.
+    options:
+      from: depuis %{from}
+      command: commande imposée
+      restrict: restreinte
+      expired: Expirée, refusée par le serveur
+      server_local_time: "%{time} (heure locale du serveur)"
+      labels:
+        from: Adresses d'origine autorisées
+        command: Commande imposée
+        expiry_time: Refusée après
+        restrict: Restreinte (sans redirection ni terminal)
+        no_pty: Sans terminal
+        no_port_forwarding: Sans redirection de ports
+        no_agent_forwarding: Sans transfert d'agent
+        no_x11_forwarding: Sans redirection X11
+        permitopen: Redirection permise vers
+        permitlisten: Écoute permise sur
+        principals: Principaux du certificat
+        environment: Variable d'environnement
+        cert_authority: Autorité de certification
   servers:
     add_key_dialog:
       accounts: Comptes Unix

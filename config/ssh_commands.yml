@@ -337,19 +337,43 @@ keys:
       echo removed
 
   read_accounts:
-    description: "Reads ~/.ssh/authorized_keys of every account that has a login shell and a home (root included), one section per account with a file. Needs root to list the accounts; each file is read as its account (runuser). Refuses a link or a file the account does not own."
+    description: "Reads ~/.ssh/authorized_keys of every account that has a login shell and a home (root included), one section per account with a file, and names the accounts without one (@@elio no_file). Also reads the other files sshd takes keys from (AuthorizedKeysFile in sshd -T, e.g. ~/.ssh/authorized_keys2; @@elio extra). Needs root to list the accounts; each file is read as its account (runuser). Refuses a link or a ~/.ssh/authorized_keys the account does not own."
     run_as: root
     shell: true
     default: |
+      set -f
+      sshd=$(command -v sshd || echo /usr/sbin/sshd)
+      # The files sshd reads keys from; OpenSSH's default when sshd -T cannot tell.
+      files=$("$sshd" -T 2>/dev/null | awk '$1 == "authorizedkeysfile" { $1 = ""; print; exit }')
+      [ -n "$files" ] || files=".ssh/authorized_keys .ssh/authorized_keys2"
       getent passwd | while IFS=: read -r user _ _ _ _ home shell; do
         case "$shell" in */nologin|*/false|*/sync|"") continue ;; esac
-        [ -n "$home" ] && [ -f "$home/.ssh/authorized_keys" ] || continue
-        printf '@@elio account %s\n' "$user"
-        # Read as the account itself (runuser), never as root; a link or a file the user does not own is refused.
-        if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ] || [ "$(ls -ld "$home/.ssh/authorized_keys" 2>/dev/null | awk '{ print $3 }')" != "$user" ]; then
-          printf '@@elio unreadable\n'; continue
+        [ -n "$home" ] || continue
+        if [ ! -f "$home/.ssh/authorized_keys" ]; then
+          printf '@@elio no_file %s\n' "$user"
+        else
+          printf '@@elio account %s\n' "$user"
+          # Read as the account itself (runuser), never as root; a link or a file the user does not own is refused.
+          if [ -L "$home/.ssh" ] || [ -L "$home/.ssh/authorized_keys" ] || [ "$(ls -ld "$home/.ssh/authorized_keys" 2>/dev/null | awk '{ print $3 }')" != "$user" ]; then
+            printf '@@elio unreadable\n'
+          elif content=$(runuser -u "$user" -- cat "$home/.ssh/authorized_keys" 2>/dev/null); then
+            # A line of the file can never pass for a section of this output.
+            printf '%s\n' "$content" | sed 's/^@@elio/ &/'
+          else
+            printf '@@elio unreadable\n'
+          fi
         fi
-        runuser -u "$user" -- cat "$home/.ssh/authorized_keys" 2>/dev/null || printf '@@elio unreadable\n'
+        for pattern in $files; do
+          [ "$pattern" = none ] && continue
+          # %h, %u and %% expanded as sshd does; a relative path starts at the home.
+          path=$(printf '%s\n' "$pattern" | awk -v h="$home" -v u="$user" '{ s = $0; out = ""; while ((i = index(s, "%")) > 0) { c = substr(s, i + 1, 1); out = out substr(s, 1, i - 1) (c == "h" ? h : c == "u" ? u : c == "%" ? "%" : "%" c); s = substr(s, i + 2) } out = out s; if (substr(out, 1, 1) != "/") out = h "/" out; print out }')
+          [ "$path" != "$home/.ssh/authorized_keys" ] && [ -f "$path" ] || continue
+          # Also read as the account: what it cannot read is skipped.
+          if content=$(runuser -u "$user" -- cat "$path" 2>/dev/null); then
+            printf '@@elio extra %s %s\n' "$user" "$path"
+            printf '%s\n' "$content" | sed 's/^@@elio/ &/'
+          fi
+        done
       done
 
   append_to_account:
