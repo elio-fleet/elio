@@ -55,6 +55,8 @@ class Integrations::CoolifyDeploymentsTest < ActiveSupport::TestCase
     assert_equal [ "Coolify : api-facturation déployée (abc1234 « feat: x »)", "Coolify : déploiement de api-facturation en échec (abc1234 « fix: y »)" ],
                  Activity.where(kind: %w[coolify_deployed coolify_deploy_failed]).order(:id).map(&:summary)
     assert Activity.where(kind: "coolify_deployed").all? { |activity| activity.server == servers(:web) }
+    assert_equal "https://coolify.example.com/project/p1/environment/e1/application/appapi000000000000000001/deployment/dep-newer",
+                 Activity.find_by!(kind: "coolify_deploy_failed").data["coolify_url"]
 
     @connection.sync!
     assert_equal 2, Activity.where(kind: %w[coolify_deployed coolify_deploy_failed]).count, "logged once"

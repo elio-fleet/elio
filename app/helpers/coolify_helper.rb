@@ -41,12 +41,8 @@ module CoolifyHelper
     (Array(data["images"]).first || data["image"]).presence
   end
 
-  # The application's page in its Coolify instance, or nil.
-  def coolify_url(resource)
-    path = resource.data["coolify_path"] or return
-    base = resource.connection.value(:url).to_s.chomp("/")
-    "#{base}#{path}" if Integration.http_url?(base) && path.match?(%r{\A/[\w/-]+\z})
-  end
+  # The resource's page in its Coolify instance, or nil.
+  def coolify_url(resource) = resource.coolify_url
 
   # "il y a 5 h" + a "failed" badge, for the last deployment of an application.
   def coolify_last_deploy(resource)

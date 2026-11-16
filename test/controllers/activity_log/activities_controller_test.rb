@@ -231,6 +231,18 @@ class ActivitiesControllerTest < ActionDispatch::IntegrationTest
     assert_response :not_found
   end
 
+  test "a Coolify event links to the page to look at in Coolify, never to anything else than a web address" do
+    url = "https://coolify.example.com/project/p1/environment/e1/database/db1/backups"
+    activity = Activity.record!(:coolify_backup_failed, server: servers(:web), user: nil, database: "pg", team: "Tools", coolify_url: url)
+    odd = Activity.record!(:coolify_backup_failed, server: servers(:web), user: nil, database: "pg", team: "Tools", coolify_url: "javascript:alert(1)")
+    sign_in users(:viewer)
+
+    get activity_path(activity)
+    assert_select "#activity-details a.coolify-link[href=?][target=_blank]", url, text: "Ouvrir dans Coolify"
+    get activity_path(odd)
+    assert_select "#activity-details a.coolify-link", 0
+  end
+
   test "an event repeated in a row shows once, with its count and the times of the others" do
     3.times { |index| travel_to((10 - index).minutes.ago) { Activity.record!(:container_restarting, server: servers(:web), container: "api") } }
     travel_to(5.minutes.ago) { Activity.record!(:container_restarting, server: servers(:db), container: "api") }

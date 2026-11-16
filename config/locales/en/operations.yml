@@ -101,6 +101,7 @@ en:
       server: Server
       account: Account
       key: Key
+      open_in_coolify: Open in Coolify
   tasks:
     progress:
       progress: Progress

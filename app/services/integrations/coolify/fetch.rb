@@ -56,8 +56,10 @@ class Integrations::Coolify::Fetch
     kind = resource_kind(resource["type"])
     return unless kind && resource["uuid"].present?
 
+    environment = environments[resource["environment_id"]] || {}
     data = { "type" => resource["type"], "description" => resource["description"].presence, "restart_count" => resource["restart_count"],
-             "last_online_at" => resource["last_online_at"] }.merge(environments[resource["environment_id"]] || {}).merge(send("#{kind}_data", resource)).compact
+             "last_online_at" => resource["last_online_at"] }.merge(environment.except("path")).merge(send("#{kind}_data", resource)).compact
+    data["coolify_path"] ||= "#{environment["path"]}/#{kind}/#{resource["uuid"]}" if environment["path"] && resource["uuid"].to_s.match?(Integrations::Coolify::Client::UUID)
     server_uuid = resource.dig("destination", "server", "uuid") || resource.dig("server", "uuid")
     Record.new(kind: kind, uuid: resource["uuid"], name: resource["name"].presence || resource["uuid"], status: resource["status"].presence,
                coolify_server_uuid: server_uuid, data: data)
@@ -147,11 +149,14 @@ class Integrations::Coolify::Fetch
     end
   end
 
-  # environment id => { "project" => name, "environment" => name }
+  # environment id => { "project" => name, "environment" => name, "path" => its
+  # page in Coolify ("/project/<uuid>/environment/<uuid>") when both uuids are known }
   def environments_by_id
     @client.projects.each_with_object({}) do |project, map|
       Array(@client.project(project["uuid"])["environments"]).each do |environment|
-        map[environment["id"]] = { "project" => project["name"], "environment" => environment["name"] }
+        uuids = [ project["uuid"], environment["uuid"] ]
+        path = "/project/#{uuids[0]}/environment/#{uuids[1]}" if uuids.all? { |uuid| uuid.to_s.match?(Integrations::Coolify::Client::UUID) }
+        map[environment["id"]] = { "project" => project["name"], "environment" => environment["name"], "path" => path }.compact
       end
     end
   end

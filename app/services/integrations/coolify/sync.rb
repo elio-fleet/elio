@@ -50,7 +50,8 @@ class Integrations::Coolify::Sync
         next unless deployment["status"].in?(%w[finished failed]) && ended.exclude?(deployment["uuid"])
 
         Activity.record!(deployment["status"] == "failed" ? :coolify_deploy_failed : :coolify_deployed, server: application.server, user: nil,
-                         application: application.name, commit: deployment["commit"].to_s.first(7).presence, message: deployment["message"])
+                         application: application.name, commit: deployment["commit"].to_s.first(7).presence, message: deployment["message"],
+                         coolify_url: application.coolify_url("/deployment/#{deployment["uuid"]}"))
       end
     end
   end
@@ -62,7 +63,8 @@ class Integrations::Coolify::Sync
       old = previous[[ "database", database.uuid ]] or next
       known = old.executions.map { |execution| execution["uuid"] }
       database.executions.select { |execution| execution["status"] == "failed" && known.exclude?(execution["uuid"]) }.first(1).each do
-        Activity.record!(:coolify_backup_failed, server: database.server, user: nil, database: database.name, team: @connection.label)
+        Activity.record!(:coolify_backup_failed, server: database.server, user: nil, database: database.name, team: @connection.label,
+                         coolify_url: database.coolify_url("/backups"))
       end
     end
   end

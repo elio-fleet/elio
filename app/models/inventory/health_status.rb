@@ -97,7 +97,8 @@ class Inventory::HealthStatus
   # 8: Docker reasons name their containers, expected containers not running
   #    (containers_missing), nothing about containers just after a boot.
   # 9: thresholds of the server and its groups, inodes and swap thresholds of their own (health.swap).
-  VERSION = 9
+  # 10: a Coolify backup is late after the time between two runs of its schedule when longer than the setting.
+  VERSION = 10
 
   def self.refresh_outdated!
     setting = AppSetting.current
