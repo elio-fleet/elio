@@ -131,6 +131,14 @@ fr:
       none_left: 'Il ne vous reste aucun code de secours : générez-en de nouveaux dans votre compte.'
       not_you: "Si ce n'était pas vous, quelqu'un connaît votre mot de passe et avait l'un de vos codes : changez votre mot de passe, générez de nouveaux codes de secours et prévenez un administrateur."
       account: 'Votre compte : %{url}'
+    new_device_sign_in:
+      subject: Nouvelle connexion à Elio depuis un autre navigateur
+      hello: Bonjour,
+      text: 'Une connexion à votre compte Elio %{email} a eu lieu depuis un nouveau navigateur le %{date} (adresse IP : %{ip}).'
+      browser: 'Navigateur : %{browser}'
+      why: "Vous recevez cet email la première fois que vous vous connectez depuis un navigateur, ou après l'effacement de ses cookies. Si c'était vous, il n'y a rien à faire."
+      not_you: "Si ce n'était pas vous, quelqu'un connaît votre mot de passe : changez-le, activez la double authentification et prévenez un administrateur."
+      account: 'Votre compte : %{url}'
   invitation_mailer:
     invite:
       subject: Invitation à rejoindre Elio

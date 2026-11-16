@@ -2,6 +2,7 @@
 # a code from the authenticator app or a backup code, within TIMEOUT.
 class TwoFactorChallengesController < ApplicationController
   include Devise::Controllers::Rememberable
+  include KnownDevices
 
   TIMEOUT = 5.minutes
 
@@ -29,6 +30,7 @@ class TwoFactorChallengesController < ApplicationController
     sign_in(:user, @user)
     remember_me(@user) if remember
     backup_code_used if method == :backup_code
+    note_sign_in_device(@user, alert: method != :backup_code) # a backup code already sends its own email
 
     redirect_to after_sign_in_path_for(@user), notice: t("flash.two_factor.signed_in")
   end

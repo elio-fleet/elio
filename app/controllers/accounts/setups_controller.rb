@@ -1,5 +1,7 @@
 # First launch: creates the first admin account, then disappears.
 class SetupsController < ApplicationController
+  include KnownDevices
+
   layout "auth"
 
   SETUP_LOCK = 0x456c696f # "Elio": PostgreSQL advisory lock key
@@ -22,6 +24,7 @@ class SetupsController < ApplicationController
 
     if create_first_admin
       sign_in(@user)
+      note_sign_in_device(@user)
       # 2FA mandatory for admins (the default): straight to its setup page,
       # which says why, then to the overview and its getting started list.
       return redirect_to(new_two_factor_path) if @user.two_factor_required?

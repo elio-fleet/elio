@@ -1,5 +1,7 @@
 # Accepting an invitation (public page reached through the invitation link).
 class InvitationsController < ApplicationController
+  include KnownDevices
+
   layout "auth"
 
   skip_before_action :authenticate_user!, :authorize_view!
@@ -18,6 +20,7 @@ class InvitationsController < ApplicationController
     Activity.record!(:invitation_accepted, user: @user, email: @user.email, role: @user.role)
 
     sign_in(@user)
+    note_sign_in_device(@user)
     redirect_to root_path, notice: t("flash.invitations.welcome")
   rescue ActiveRecord::RecordInvalid => e
     @user = e.record.is_a?(User) ? e.record : User.new(email: @invitation.email)

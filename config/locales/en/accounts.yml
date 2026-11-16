@@ -131,6 +131,14 @@ en:
       none_left: 'You have no backup code left: generate new ones in your account.'
       not_you: 'If it was not you, someone knows your password and had one of your codes: change your password, generate new backup codes and tell an administrator.'
       account: 'Your account: %{url}'
+    new_device_sign_in:
+      subject: New sign in to Elio from another browser
+      hello: Hello,
+      text: 'Your Elio account %{email} was signed in to from a new browser on %{date} (IP address: %{ip}).'
+      browser: 'Browser: %{browser}'
+      why: You get this email the first time you sign in from a browser, or after its cookies were cleared. If it was you, there is nothing to do.
+      not_you: 'If it was not you, someone knows your password: change it, enable two-factor authentication and tell an administrator.'
+      account: 'Your account: %{url}'
   invitation_mailer:
     invite:
       subject: Invitation to join Elio

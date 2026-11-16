@@ -123,7 +123,7 @@ docker compose up -d
 | `ELIO_HOST` | Elio's domain: links in emails and notifications, and the only host name it answers to. |
 | `ELIO_SETUP_TOKEN` | If set, asked when creating the first account (useful when Elio is reachable before you set it up). |
 | `ELIO_FORCE_SSL` | `false` only to try Elio over plain HTTP. HTTPS is forced otherwise. |
-| `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails: invitations, password reset, notifications. Without `SMTP_ADDRESS`, invitation links are to be copied. Without `SMTP_USERNAME`, no authentication (a local relay, Postfix). |
+| `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails: invitations, password reset, security alerts, notifications. Without `SMTP_ADDRESS`, invitation links are to be copied. Without `SMTP_USERNAME`, no authentication (a local relay, Postfix). |
 | `ELIO_PARALLEL_LIMIT` | Servers collected at the same time (4). |
 | `ELIO_ACTIVITY_RETENTION_DAYS` | How long the activity log is kept (365, `0` = forever). |
 | `ELIO_DEBIAN_TRACKER_URL`, `ELIO_UBUNTU_OSV_URL`, `ELIO_NVD_FEED_URL`, `ELIO_EPSS_URL`, `ELIO_KEV_URL` | Mirrors of the vulnerability feeds, for a closed network (they can also be imported by hand). |
@@ -232,7 +232,7 @@ The extensions that read DNS (OVHcloud with its DNS product, Technitium DNS, Gan
 ## Security
 
 - Elio's SSH key, API keys, webhooks and 2FA secrets are **encrypted in the database** and never sent back to the browser.
-- Two-factor authentication (TOTP and backup codes), mandatory by default for administrators and operators; roles; invitations only (no public sign-up); rate-limited sign-in and lockout.
+- Two-factor authentication (TOTP and backup codes), mandatory by default for administrators and operators; roles; invitations only (no public sign-up); rate-limited sign-in and lockout; sessions closed after 30 minutes of inactivity (unless "remember me"); an email to the owner on a sign in from a new browser.
 - **Headers**: a strict Content Security Policy (scripts with a per-request nonce, no framing), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and a `Permissions-Policy` that denies the camera, microphone, location, payment and device APIs Elio never uses. When HTTPS is forced (the default in production), `Strict-Transport-Security: max-age=63072000; includeSubDomains` too; never over plain HTTP (`ELIO_FORCE_SSL=false`). CSP violations are reported to Elio itself (`POST /csp-reports`, rate-limited, written to the log), never to an external service.
 - **Plain HTTP**: an administrator reaching Elio over plain HTTP in production sees a notice (passwords and cookies cross the network unencrypted); it can be hidden for an installation kept on a trusted local network on purpose. Behind a reverse proxy, send `X-Forwarded-Proto: https`.
 - **Rotating the encryption key** of the database (`ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`), for example after it leaked:
