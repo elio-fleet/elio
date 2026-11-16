@@ -93,6 +93,93 @@ class PublicKeyAccessesControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, AccountSnapshot.count
   end
 
+  test "offers to retry only the failed servers, with the same duration and account" do
+    sign_in users(:one)
+    stub_method_until_teardown(Keys::ServerScan, :call, ->(*, **) { Keys::ServerScan::Result.new(error_title: nil) })
+    statuses = { "Web" => :added, "Database" => :error }
+
+    stub_method(Keys::AccessGrant, :call, granter(->(server) { statuses.fetch(server.name) })) do
+      post public_key_accesses_path(@public_key), params: { server_ids: [ servers(:web).id, servers(:db).id ], duration: "60", unix_user: "www-app" }, as: :turbo_stream
+    end
+
+    assert_turbo_stream action: :update, target: "bulk-results" do
+      assert_select "form.bulk-retry[action=?]", public_key_accesses_path(@public_key) do
+        assert_select "input[name='server_ids[]']", 1
+        assert_select "input[name='server_ids[]'][value=?]", servers(:db).id.to_s
+        assert_select "input[name=duration][value='60']"
+        assert_select "input[name=unix_user][value='www-app']"
+        assert_select "button", text: "Relancer l'échec"
+      end
+    end
+  end
+
+  test "no retry button when every server succeeded" do
+    sign_in users(:one)
+
+    stub_method(Keys::AccessGrant, :call, granter) do
+      post public_key_accesses_path(@public_key), params: { server_ids: [ servers(:web).id ] }, as: :turbo_stream
+    end
+
+    assert_turbo_stream action: :update, target: "bulk-results" do
+      assert_select "form.bulk-retry", 0
+    end
+  end
+
+  test "removes the key from every known account, each outcome reported, with a retry of the failures" do
+    sign_in users(:one)
+    AccountSnapshot.record!(servers(:web), AuthorizedKeysAccount.login(servers(:web)), AuthorizedKey.parse(@public_key.content))
+    AccountSnapshot.record!(servers(:web), AuthorizedKeysAccount.new(servers(:web), "www-app"), AuthorizedKey.parse(@public_key.content))
+    AccountSnapshot.record!(servers(:db), AuthorizedKeysAccount.login(servers(:db)), AuthorizedKey.parse(@public_key.content))
+    calls = []
+    remover = lambda do |server, blob, account:, **|
+      calls << [ server.name, blob, account.unix_user ]
+      status = server == servers(:db) ? :error : :removed
+      Keys::AuthorizedKeyRemoval::Result.new(status: status, error_title: (status == :error ? "Connexion impossible" : nil), error_details: (status == :error ? "refused" : nil))
+    end
+
+    stub_method(Keys::AuthorizedKeyRemoval, :call, remover) do
+      delete public_key_accesses_path(@public_key), as: :turbo_stream
+    end
+
+    blob = @public_key.authorized_key.key
+    assert_equal [ [ "Database", blob, "admin" ], [ "Web", blob, "deploy" ], [ "Web", blob, "www-app" ] ], calls.sort
+    assert_equal [ "admin" ], AccountSnapshot.with_fingerprint(@public_key.fingerprint).map(&:unix_user)
+    assert_equal 2, Activity.of_kind(:key_removed).count
+    assert_turbo_stream action: :replace, target: "key-accesses" do
+      assert_select "li.key-access", 1
+    end
+    assert_turbo_stream action: :update, target: "revoke-results" do
+      assert_select "li.bulk-result.is-success", text: "Web · deploy : retirée"
+      assert_select "li.bulk-result.is-error", text: "Database · admin : Connexion impossible — refused"
+      assert_select "form.bulk-retry[action=?]", public_key_accesses_path(@public_key) do
+        assert_select "input[name=_method][value=delete]"
+      end
+    end
+    assert_turbo_stream action: :update, target: "flash" do
+      assert_select ".toast-alert", text: "Retraits terminés : 2/3 comptes."
+    end
+  end
+
+  test "removing everywhere without any known access says so" do
+    sign_in users(:one)
+
+    delete public_key_accesses_path(@public_key), as: :turbo_stream
+
+    assert_turbo_stream action: :update, target: "flash" do
+      assert_select ".toast-alert", text: "Aucun accès connu à retirer."
+    end
+  end
+
+  test "removing everywhere needs the operate permission" do
+    sign_in users(:viewer)
+
+    stub_method(Keys::BulkAccess, :revoke, ->(*) { flunk "must not revoke" }) do
+      delete public_key_accesses_path(@public_key)
+    end
+
+    assert_response :forbidden
+  end
+
   test "asks to choose a server" do
     sign_in users(:one)
 
@@ -160,6 +247,7 @@ class PublicKeyAccessesControllerTest < ActionDispatch::IntegrationTest
       assert_select "span", text: "Permanent"
       assert_select "form[action=?][data-turbo-confirm][data-confirm-variant=danger]", public_key_access_path(@public_key)
     end
+    assert_select "form[action=?][data-turbo-confirm*='du seul compte'] input[name=_method][value=delete]", public_key_accesses_path(@public_key)
     assert_select "#bulk-authorize form[action=?]", public_key_accesses_path(@public_key) do
       assert_select "input[type=checkbox][name='server_ids[]']", 3
       assert_select "input[name=account]", 0
@@ -174,8 +262,8 @@ class PublicKeyAccessesControllerTest < ActionDispatch::IntegrationTest
     get public_key_path(@public_key)
 
     assert_select "#bulk-authorize .bulk-groups" do
-      assert_select "button[data-action='check-all#toggleGroup'][data-check-all-group-param=?]", production.id.to_s, text: "Production"
-      assert_select "button", text: "Staging", count: 0
+      assert_select "button[data-action='check-all#toggleGroup'][data-check-all-group-param=?]", production.id.to_s, text: "Production 2"
+      assert_select "button", text: /Staging/, count: 0
     end
     assert_select "input#server_ids_#{servers(:web).id}[data-groups=?]", production.id.to_s
     assert_select "input#server_ids_#{servers(:backup).id}[data-groups='']"

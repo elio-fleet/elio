@@ -28,6 +28,9 @@ en:
         content: Public SSH key
         description: Description
         fingerprint: This key
+      tolerated_key:
+        reason: The reason
+        fingerprint: This key
       notification_channel:
         name: Name
         webhook_url: The webhook URL

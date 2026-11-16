@@ -68,6 +68,17 @@ class TemporaryAccessTest < ActiveSupport::TestCase
     assert_equal [ due ], TemporaryAccess.due_for_reminder.to_a
   end
 
+  test "ending soon, whether reminded or not; of a user: the accesses of their keys" do
+    reminded = create_temporary_access(expires_at: 5.minutes.from_now).tap { |access| access.update_columns(created_at: 2.hours.ago, expiry_reminded_at: 1.minute.ago) }
+    create_temporary_access(public_key: public_keys(:alice), expires_at: 5.minutes.from_now) # granted for 10 minutes or so
+    later = create_temporary_access(public_key: public_keys(:alice), unix_user: "root", expires_at: 1.hour.from_now).tap { |access| access.update_column(:created_at, 2.hours.ago) }
+    assert_equal [ reminded ], TemporaryAccess.ending_soon.to_a
+
+    public_keys(:alice).update!(user: users(:operator))
+    assert_equal [ later ], TemporaryAccess.of_user(users(:operator)).where(unix_user: "root").to_a
+    assert_empty TemporaryAccess.of_user(users(:viewer))
+  end
+
   test "remind! records one key_expiring activity" do
     access = create_temporary_access(expires_at: Time.zone.parse("2026-11-15 15:40"))
 

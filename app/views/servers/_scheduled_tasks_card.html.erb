@@ -36,7 +36,14 @@
               <tr class="systemd-timer" data-name="<%= timer["name"] %>">
                 <td class="pl-4"><%= timer_state_badge(timer) %></td>
                 <td><span class="font-mono text-xs"><%= timer["name"].delete_suffix(".timer") %></span>
-                  <% if timer["description"] %><span class="block text-[11px] text-ink-3"><%= timer["description"] %></span><% end %></td>
+                  <% if timer["description"] %><span class="block text-[11px] text-ink-3"><%= timer["description"] %></span><% end %>
+                  <%# The output of its runs = the journal of the service it starts (operators: journal lines carry addresses, users, keys). %>
+                  <% if can?(:operate) && timer["last_at"] && Inventory::UnitJournal.valid_name?(timer["unit"]) %>
+                    <details class="timer-journal">
+                      <summary class="cursor-pointer text-[11px] font-medium text-accent hover:underline" title="<%= t(".output_hint", unit: timer["unit"]) %>"><%= t(".output") %></summary>
+                      <div class="w-[min(40rem,75vw)]"><%= render "server_unit_journals/frame", server: server, unit: timer["unit"], journal: nil %></div>
+                    </details>
+                  <% end %></td>
                 <td class="text-xs" title="<%= Array(timer["schedules"]).join("\n") %>"><%= timer_schedule_text(timer) %></td>
                 <td class="text-xs"><%= timer_time(timer["last_at"]) %></td>
                 <td class="pr-4 text-xs"><%= timer_time(timer["next_at"]) %></td>

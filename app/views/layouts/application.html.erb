@@ -37,6 +37,7 @@
     <main class="<%= "lg:pl-60" if user_signed_in? %>">
       <div class="mx-auto max-w-7xl px-4 py-6 sm:px-8">
         <%= render "layouts/plain_http_notice" if user_signed_in? && plain_http_notice? %>
+        <%= render "layouts/my_key_reminder" if user_signed_in? %>
         <%= yield %>
       </div>
     </main>

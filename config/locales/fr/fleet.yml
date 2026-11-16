@@ -22,6 +22,12 @@ fr:
       all: Tout
       notes: Notes
       events: Événements
+      access: Accès et clés
+      deployments: Déploiements
+      export_csv: Exporter (CSV)
+      export_json: Exporter (JSON)
+      no_result: Aucun résultat
+      no_result_text: Rien dans le journal de ce serveur ne correspond à ce filtre ou à cette recherche.
       full_journal: "Dans le journal du parc →"
       add_note: Ajouter une note
       timeline: Journal du serveur

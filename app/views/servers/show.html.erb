@@ -106,6 +106,6 @@
     <% tab = @integration_tabs.find { |candidate| candidate[:key] == @tab } %>
     <%= render tab[:partial] || "integrations/#{tab[:integration].kind}/server_tab", server: @server, integration: tab[:integration] %>
   <% when "journal" %>
-    <%= render "servers/journal_card", server: @server, entries: @journal, filter: @journal_filter, page: @journal_page, more: @journal_more %>
+    <%= render "servers/journal_card", server: @server, journal: @server_journal, entries: @journal, page: @journal_page, more: @journal_more %>
   <% end %>
 </div>

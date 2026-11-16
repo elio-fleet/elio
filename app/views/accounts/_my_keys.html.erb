@@ -35,5 +35,17 @@
       <% end %>
     <% end %>
     <p class="mt-3 text-xs text-ink-3"><%= t(".missing_html", link: link_to(t(".add_to_keyring"), new_public_key_path, class: "font-medium text-accent hover:underline")) %></p>
+
+    <% if current_user.public_keys.any? %>
+      <%= form_with model: current_user, url: default_key_account_account_path, method: :patch, scope: :user, class: "default-key-account mt-4 flex flex-wrap items-end gap-3 border-t border-line pt-4" do |f| %>
+        <div>
+          <%= f.label :default_key_account, t(".default_account"), class: "label" %>
+          <%= f.text_field :default_key_account, value: current_user.default_key_account, placeholder: t(".default_account_placeholder"), pattern: AuthorizedKeysAccount::NAME_PATTERN,
+                autocomplete: "off", spellcheck: false, class: "input mt-1 w-auto min-w-52 font-mono" %>
+        </div>
+        <%= f.submit t(".save_default_account"), class: "btn btn-secondary" %>
+        <p class="w-full text-xs text-ink-3"><%= t(".default_account_hint") %></p>
+      <% end %>
+    <% end %>
   <% end %>
 </section>
