@@ -55,13 +55,16 @@ en:
       check_every_server_answers: Check that every server answers
       read_again_system_health: Read again the system, health and services of every server
       read_keys_every_server: Read the keys of every server
+      import: Import
       security_updates: Security updates
       all: All
       manage_groups: Manage the groups
+      organize_servers_groups: Organize the servers in groups
       name_hostname_ip: Name, hostname, IP…
       search_server: Search for a server
       all_systems: All systems
       system: System
+      all_states: All states
       unreachable: Unreachable
       without_inventory: Without inventory
       docker_watch: Docker to watch
@@ -70,9 +73,11 @@ en:
       filter: Filter
       list: List
       grid: Grid
+      view_label: "%{label_downcase} view"
       server_matches_these_filters: No server matches these filters.
       server_group: No server in this group.
       server_yet: No server yet.
+      remove_filters: Remove the filters
       add_servers_group: Add servers to the group
       add_your_first_server: Add your first server
       refresh_statuses: Refresh the statuses
@@ -101,14 +106,17 @@ en:
       add_note: Add a note
       see_keys: SSH keys of the server
       search_whole_fleet: Search the whole fleet
+      activities: activities
       refresh_inventory: Refresh the inventory
       edit: Edit
+      server_sections: Server sections
       authorized_ssh_keys: Authorized SSH keys
       public_keys_can_log: Public keys that can log in to this server, on every account Elio can read. Keys are added to Elio's login account, or to another account when Elio has root.
       temporary_accesses:
         zero: Temporary accesses and their history
         one: Temporary accesses (%{count} in progress) and their history
         other: Temporary accesses (%{count} in progress) and their history
+      activity_server_yet: No activity on this server yet.
     row:
       select_server: Tick “%{server_name}”
       load_over_24_h: Load over 24 h (in % of the processors)
@@ -118,6 +126,7 @@ en:
       edit_2: Edit %{server_name}
       host_name_machine: Host name of the machine
       security_html: "%{security} security"
+      down_html: "%{down} down"
     card:
       checked_prefix: "· checked "
       cpu: CPU
@@ -155,11 +164,15 @@ en:
     new:
       copy_subtitle: 'Copy of “%{name}”: same port, user and groups. Fill in the name and the host.'
       subtitle: Elio connects to it over SSH, read-only, with its key.
+      servers: "← Servers"
     edit:
       duplicate: Duplicate
       modify: Edit
+      servers: "← Servers"
       delete_server: Delete the server
       edit_html: Edit “%{name_was}”
+      delete_server_2: Delete this server
+      server_removed_elio_keys: 'The server is removed from Elio. The keys installed on the machine, Elio''s included, stay in place: remove them first from the server page if needed. The activity history is kept.'
       title: Edit %{name}
     connection_test:
       succeeded: Elio can log in to this server.
@@ -213,6 +226,10 @@ en:
   dashboard:
     index:
       see_all: See all
+      critical_thresholds_exceeded: critical thresholds exceeded
+      including_unreachable:
+        one: including %{count} unreachable
+        other: including %{count} unreachable
       welcome: Welcome to Elio
       welcome_subtitle: No server yet. Follow the steps to get started.
       no_server: No server
@@ -305,22 +322,28 @@ en:
       check_uncheck_all: Check / uncheck all
       server_yet_you_can: 'No server yet: you can add some to the group later.'
     edit:
+      groups: "← Groups"
       heading_html: Edit the group “%{group_name}”
     index:
       no_group: No group
       group_actions: Actions of the group “%{group_name}”
+      servers: "← Servers"
       new_group: New group
       edit: Edit
       edit_group: Edit the group %{group_name}
+      delete: Delete
+      delete_group: Delete the group %{group_name}
       group_will_deleted_servers: The group “%{group_name}” will be deleted. Its servers will not be touched.
       delete_group_2: Delete the group
       create_group: Create a group
       server: No server
       group_groups_filter_servers: No group. Groups filter the servers and select several at once (e.g. “Production”, “Customers”).
     new:
+      groups: "← Groups"
       heading: New server group
   server_imports:
     new:
+      servers: "← Servers"
       import: Import %{t}
       content: Content
       file: "… or file"
@@ -455,7 +478,9 @@ en:
   server_notes:
     deleted_user: a deleted user
     tab:
+      title: Notes
       intro: 'What the team should know about this server: its role, a procedure, an incident. Markdown is supported.'
+      none: No note yet.
     form:
       placeholder: 'Write a note… (Markdown: **bold**, `code`, lists, links, tables)'
       label: Note

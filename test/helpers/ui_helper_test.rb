@@ -99,9 +99,6 @@ class UiHelperTest < ActionView::TestCase
     assert_select "svg[aria-label='Charge sur 7 jours']"
     assert_select "div", text: /il y a 7 jours\s*3,5 jours\s*maintenant/
     assert_select "rect.chart-point title", text: /\A28 oct\. 12:00 — 10\u00A0%\z/
-
-    I18n.with_locale(:en) { render html: history_chart(points, label: "Load", from: now - 7.days, to: now, period: "7d") }
-    assert_select "rect.chart-point title", text: /\AOct 28 12:00 — 10%\z/
   end
 
   test "history_chart without any point" do

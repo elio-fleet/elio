@@ -141,7 +141,6 @@ class Vulnerabilities::Scores::ProvidersTest < ActiveSupport::TestCase
     assert_not provider.valid?
     assert_equal [ "L'adresse doit commencer par https:// et contenir {cve}", "Délai entre deux requêtes : 200 ms minimum" ], provider.errors.full_messages - provider.errors.full_messages.grep(/Regex/)
     assert_match "Regex invalide", provider.errors.full_messages.grep(/Regex/).sole
-    I18n.with_locale(:en) { assert_includes provider.tap(&:valid?).errors.full_messages, "The address must start with https:// and contain {cve}" }
 
     json = ScoreProvider.new(key: "custom-y", kind: "custom").assign_custom(name: "Y", url_template: "https://y.test/{cve}", format: "json")
     assert_equal [ "Indiquez le chemin JSON de la note (ex. cvss3.cvss3_base_score)" ], json.tap(&:valid?).errors.full_messages

@@ -113,6 +113,7 @@ fr:
       file_heading: Codes de secours Elio de %{email} (%{host}), générés le %{date}. Chaque code ne sert qu'une fois.
     new:
       title: Activer la double authentification
+      back: "← Mon compte"
       scan: 1. Scannez ce QR code avec votre application d'authentification
       qr_alt: QR code de double authentification
       manual: 'Impossible de scanner ? Saisissez cette clé :'

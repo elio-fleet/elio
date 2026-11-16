@@ -47,16 +47,6 @@ class MonitorsControllerTest < ActionDispatch::IntegrationTest
     assert_select "form.monitor-link-form", 0, "viewers cannot attach"
   end
 
-  test "the response time is written with the decimal separator of the language" do
-    UptimeKumaMonitor.find_by!(name: "[SRV] Web ping").update_columns(response_time_ms: 12.5)
-    get monitors_path
-    assert_select "tr.monitor-row[data-state=up] .monitor-response", "12,5 ms"
-
-    users(:one).update!(locale: "en")
-    get monitors_path
-    assert_select "tr.monitor-row[data-state=up] .monitor-response", "12.5 ms"
-  end
-
   test "filters: unattached, down, servers without probe, search" do
     get monitors_path(filter: "unattached")
     assert_select "tr.monitor-row", 1

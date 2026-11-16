@@ -23,23 +23,20 @@ class NotificationDigest
               I18n.t("notification_digest.activity", events: I18n.t("notification_digest.events", count: activities.size), critical: counts[:critical], warning: counts[:warning]) ]
     # The servers' own packages, then their Docker images (fixed by updating the image).
     if (cves = ServerVulnerability.host.distinct.count(:cve)).positive?
-      lines << I18n.t("notification_digest.vulnerabilities", **vulnerability_counts(ServerVulnerability.host), cves: number(cves),
+      lines << I18n.t("notification_digest.vulnerabilities", **vulnerability_counts(ServerVulnerability.host), cves: cves,
                                                              servers: I18n.t("count.servers", count: ServerVulnerability.host.distinct.count(:server_id)))
     end
     if (cves = ServerVulnerability.images.distinct.count(:cve)).positive?
-      lines << I18n.t("notification_digest.image_vulnerabilities", **vulnerability_counts(ServerVulnerability.images), cves: number(cves),
+      lines << I18n.t("notification_digest.image_vulnerabilities", **vulnerability_counts(ServerVulnerability.images), cves: cves,
                                                                    images: I18n.t("count.docker_images", count: ServerVulnerability.images.distinct.count(:image)))
     end
     highlights = activities.reject { |activity| activity.severity == :info }.first(HIGHLIGHTS)
-    lines += highlights.map { |activity| I18n.t("notification_digest.highlight", label: activity.label, summary: activity.summary) }
+    lines += highlights.map { |activity| "- #{activity.label} : #{activity.summary}" }
     lines << I18n.t("notification_digest.nothing") if activities.empty?
     lines
   end
 
   def vulnerability_counts(scope)
-    { fixable: number(scope.fixable.distinct.count(:cve)), serious: number(scope.fixable.at_least("high").distinct.count(:cve)) }
+    { fixable: scope.fixable.distinct.count(:cve), serious: scope.fixable.at_least("high").distinct.count(:cve) }
   end
-
-  # 1,234 in English, 1 234 in French: a fleet can count thousands of CVEs.
-  def number(value) = ActiveSupport::NumberHelper.number_to_delimited(value, locale: I18n.locale)
 end

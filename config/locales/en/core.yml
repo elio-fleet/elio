@@ -201,6 +201,9 @@ en:
     lines_in_error:
       one: "%{count} line in error"
       other: "%{count} lines in error"
+    unreachable:
+      one: "%{count} unreachable"
+      other: "%{count} unreachable"
     packages_installed:
       one: "%{count} package installed"
       other: "%{count} packages installed"
@@ -270,6 +273,7 @@ en:
     none: none
     'yes': 'yes'
     'no': 'no'
+    monitors: Monitors
     addresses: Addresses
     monitor: Monitor
     target: Target
@@ -279,6 +283,7 @@ en:
     registry: Registry
     format: Format
     active: Active
+    automations: Automations
     test: Test
     status: Status
     progress: Progress
@@ -291,6 +296,9 @@ en:
     color: Colour
     when: When
     user: User
+    inventory: Inventory
+    project: Project
+    ttl: TTL
     keyring: Keyring
     algorithm: Algorithm
     actions: Actions
@@ -302,6 +310,7 @@ en:
     line: Line
     address: Address
     process: Process
+    fleet: Fleet
     known: Known
     cancel: Cancel
     clock: Clock
@@ -325,10 +334,13 @@ en:
     save: Save
     cvss_score: CVSS score
     exploitation: exploitation
+    a_records: A / AAAA records
+    back_keyring: "← SSH keys"
     unknown: unknown
     container_name: container %{name}
     available: available
     fixes_html: fixes %{count}
+    running: running
     including_fixable:
       one: including %{count} fixable
       other: including %{count} fixable

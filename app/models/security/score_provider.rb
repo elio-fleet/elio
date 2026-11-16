@@ -75,7 +75,7 @@ class ScoreProvider < ApplicationRecord
 
   def custom_settings_valid
     url = setting("url_template").to_s
-    errors.add(:base, I18n.t("score_provider.url_template_invalid")) unless url.start_with?("https://") && url.include?("{cve}")
+    errors.add(:base, "L'adresse doit commencer par https:// et contenir {cve}") unless url.start_with?("https://") && url.include?("{cve}")
     errors.add(:base, I18n.t("score_provider.unknown_format")) unless FORMATS.include?(setting("format"))
     errors.add(:base, I18n.t("score_provider.json_path_required")) if setting("format") == "json" && setting("json_path").blank?
     errors.add(:base, I18n.t("score_provider.selector_required")) if setting("format") == "html" && setting("css_selector").blank? && setting("regex").blank?

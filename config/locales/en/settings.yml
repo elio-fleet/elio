@@ -5,6 +5,7 @@ en:
     language:
       title: Language
       label: Default language
+      save: Save
       hint: For users who have not chosen a language and whose browser asks for one Elio does not have, for the results of background tasks, and for the notification channels without a language of their own.
     languages:
       update:
@@ -53,6 +54,7 @@ en:
         security: Security
         admin_two_factor: Two-factor authentication mandatory for administrators
         operator_two_factor: "… and for operators (they change the keys of the servers)"
+        save: Save
         users_intro: Role and access to Elio.
         you: " (you)"
         deactivated: Deactivated
