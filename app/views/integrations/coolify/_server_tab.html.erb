@@ -64,6 +64,10 @@
                                 *%w[webhook restart rollback].select { |key| deployment[key] }.map { |key| t("integrations.coolify.server_tab.deploy_kinds.#{key}") } ].compact, " · ") %>
               </p>
             </div>
+            <% if (logs = coolify_deployment_url(application, deployment)) %>
+              <%= link_to t("integrations.coolify.server_tab.deployment_logs"), logs, class: "coolify-deployment-logs ml-auto shrink-0 text-xs text-accent hover:underline",
+                          target: "_blank", rel: "noopener", title: t("integrations.coolify.server_tab.open_in_coolify") %>
+            <% end %>
           </li>
         <% end %>
       </ul>

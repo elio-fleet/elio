@@ -48,6 +48,13 @@ module CoolifyHelper
     "#{base}#{path}" if Integration.http_url?(base) && path.match?(%r{\A/[\w/-]+\z})
   end
 
+  # The page of a deployment (its logs) in the Coolify instance, or nil.
+  def coolify_deployment_url(resource, deployment)
+    base = coolify_url(resource) or return
+    uuid = deployment["uuid"].to_s
+    "#{base}/deployment/#{uuid}" if uuid.match?(/\A[\w-]+\z/)
+  end
+
   # "il y a 5 h" + a "failed" badge, for the last deployment of an application.
   def coolify_last_deploy(resource)
     deployment = resource.last_deployment or return tag.span("—", class: "text-ink-3")
@@ -57,7 +64,8 @@ module CoolifyHelper
                 (status_badge(:crit, t("integrations.coolify.server_tab.deploy_failed"), class: "ml-1 deploy-failed") if deployment["status"] == "failed") ].compact)
   end
 
-  # The domains, those whose DNS does not point here (DomainCheck) in orange with the reason in a title.
+  # The domains, those whose DNS does not point here (DomainCheck) in orange with the reason in a title,
+  # each followed by the Uptime Kuma probe that watches it (if any).
   def coolify_domain_links(resource, limit: 2, check: nil)
     domains = resource.domains
     return tag.span(t("coolify_helper.no_domain"), class: "text-ink-3") if domains.empty?
@@ -72,8 +80,27 @@ module CoolifyHelper
         link_to(domain, "https://#{domain}", class: "coolify-domain text-accent hover:underline", target: "_blank", rel: "noopener", data: { dns: found&.state })
       end
     end
+    links = links.each_with_index.map do |link, index|
+      monitor = UptimeKumaMonitor.for_host(coolify_monitors, Integrations::Coolify::DomainCheck.host(domains[index]))
+      monitor ? safe_join([ link, coolify_domain_monitor(monitor) ]) : link
+    end
     links << tag.span("+#{domains.size - limit}", class: "text-ink-3", title: domains.drop(limit).join(", ")) if domains.size > limit
     safe_join(links, ", ")
+  end
+
+  # The probe of a domain: a signal icon coloured by its state, to the Probes page.
+  def coolify_domain_monitor(monitor)
+    label = t("coolify_helper.monitored", name: monitor.name, state: t("uptime_kuma_helper.states.#{monitor.state}").downcase)
+    tone = { "up" => "text-good-ink", "down" => "text-crit-ink", "pending" => "text-warn-ink" }.fetch(monitor.state, "text-ink-3")
+    link_to monitors_path(q: monitor.name), class: "coolify-monitor ml-1 inline-flex align-text-bottom #{tone}", title: label, aria: { label: label },
+                                            data: { state: monitor.state, turbo_frame: "_top" } do
+      icon(:signal, class: "h-3.5 w-3.5")
+    end
+  end
+
+  # Every Uptime Kuma probe, read once per page (none while the extension is off).
+  def coolify_monitors
+    @coolify_monitors ||= Integration.enabled?(:uptime_kuma) ? UptimeKumaMonitor.all.to_a : []
   end
 
   # "n8n › postgresql": the part of a resource made of several containers (its Compose service, or for a

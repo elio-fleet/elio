@@ -49,6 +49,47 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     assert_select ".empty-state", text: /Aucune ressource/
   end
 
+  test "filters by project, environment and state, kept by the other filters" do
+    get coolify_path
+    assert_select "select#coolify-project option", text: "Outils"
+    assert_select "select#coolify-environment option", text: "staging"
+
+    get coolify_path(project: "Facturation")
+    names = css_select("tr.coolify-resource td:first-child span.font-medium").map(&:text)
+    assert_includes names, "api-facturation"
+    assert_not_includes names, "atlas"
+    assert_select "a.filter-chip[data-filter=applications][href*='project=Facturation']"
+
+    get coolify_path(environment: "staging")
+    assert css_select("tr.coolify-resource").any?
+    assert css_select("tr.coolify-resource td:nth-child(3)").all? { |cell| cell.text.include?("staging") }
+
+    get coolify_path(state: "stopped")
+    assert_equal [ "n8n" ], css_select("tr.coolify-resource td:first-child span.font-medium").map(&:text)
+    get coolify_path(state: "healthy")
+    assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001]"
+    assert_select "tr.coolify-resource[data-uuid=svcn8n0000000000000000003]", 0
+
+    get coolify_path(project: "Unknown", state: "nope")
+    assert_equal 6, css_select("tr.coolify-resource").size, "an unknown value is ignored"
+    get coolify_path(project: "Atlas", state: "stopped")
+    assert_select ".empty-state", text: /Aucune ressource/
+  end
+
+  test "a domain watched by an Uptime Kuma probe shows the probe and its state" do
+    UptimeKumaMonitor.create!(monitor_id: "9", name: "API", monitor_type: "http", url: "https://api.example.com/up", status: 0)
+    get coolify_path
+    assert_select ".coolify-monitor", 0, "Uptime Kuma off: nothing shown"
+
+    Integration.create!(kind: "uptime_kuma").update_column(:enabled, true)
+    get coolify_path
+    assert_select "tr.coolify-resource[data-uuid=appapi000000000000000001] a.coolify-monitor[data-state=down][title='Sonde Uptime Kuma API : hors ligne'][href=?]",
+                  monitors_path(q: "API")
+    assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] .coolify-monitor", 0
+    get server_path(servers(:web), tab: "coolify")
+    assert_select "#coolify-resources tr.coolify-resource[data-uuid=appapi000000000000000001] a.coolify-monitor[data-state=down]"
+  end
+
   test "servers running Coolify's proxy that no connection attaches are listed, with a way to connect their team" do
     get coolify_path
     assert_select "#coolify-unconnected", 0
@@ -94,6 +135,8 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     assert_select "tr.coolify-resource[data-uuid=appback000000000000000002] .deploy-failed", "échec"
     assert_equal %w[failed finished failed], css_select("#coolify-deployments li.coolify-deployment").map { |item| item["data-status"] }
     assert_select "#coolify-deployments li.coolify-deployment", text: /chore: 0.5.15.*webhook git/m
+    assert_select "#coolify-deployments a.coolify-deployment-logs[href=?]",
+                  "https://coolify.example.com/project/projbilling00000000000001/environment/envprod0000000000000001/application/appapi000000000000000001/deployment/dep0000000000000000000002"
     assert_select "#coolify-backups li.coolify-backup[data-uuid=dbpg000000000000000000004][data-state=late]" do
       assert_select ".backup-state", "en retard"
       assert_equal %w[success failed success], css_select(".backup-execution").map { |square| square["data-status"] }

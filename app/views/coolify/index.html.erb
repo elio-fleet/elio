@@ -29,11 +29,21 @@
 
 <%= filter_bar do %>
   <% [ [ t(".all"), nil ], [ t(".attention"), "attention" ], [ t(".applications"), "applications" ], [ t(".services"), "services" ], [ t(".databases"), "databases" ] ].each do |label, filter| %>
-    <%= filter_chip label, coolify_path(filter: filter, q: @q.presence), active: @filter == filter, data: { filter: filter || "all" } %>
+    <%= filter_chip label, coolify_path(filter: filter, q: @q.presence, **@selects), active: @filter == filter, data: { filter: filter || "all" } %>
   <% end %>
   <%= filter_bar_end do %>
-    <%= form_with url: coolify_path, method: :get, data: search_form_data do |f| %>
+    <%= form_with url: coolify_path, method: :get, data: search_form_data, class: "flex flex-wrap items-center gap-2" do |f| %>
       <%= hidden_field_tag :filter, @filter if @filter %>
+      <% if @projects.size > 1 %>
+        <%= select_tag :project, options_for_select([ [ t(".all_projects"), "" ], *@projects ], @project), id: "coolify-project",
+                       aria: { label: t(".project") }, data: { action: "change->auto-submit#submitPage" }, class: "input w-auto max-w-48 py-1.5" %>
+      <% end %>
+      <% if @environments.size > 1 %>
+        <%= select_tag :environment, options_for_select([ [ t(".all_environments"), "" ], *@environments ], @environment), id: "coolify-environment",
+                       aria: { label: t(".environment") }, data: { action: "change->auto-submit#submitPage" }, class: "input w-auto max-w-48 py-1.5" %>
+      <% end %>
+      <%= select_tag :state, options_for_select([ [ t(".all_states"), "" ], *CoolifyController::STATE_SQL.keys.map { |key| [ t("coolify_helper.states.#{key}"), key ] } ], @state),
+                     id: "coolify-state", aria: { label: t(".state") }, data: { action: "change->auto-submit#submitPage" }, class: "input w-auto py-1.5" %>
       <%= f.search_field :q, value: @q, placeholder: t(".search_placeholder"), aria: { label: t(".search") }, data: { action: "input->auto-submit#submitLater" }, class: "input w-56 py-1.5" %>
     <% end %>
   <% end %>
@@ -58,7 +68,7 @@
       </table>
     </div>
     <%= render "shared/pagination", pager: @pager, noun: t("nouns.resources") %>
-  <% elsif @filter || @q.present? %>
+  <% elsif @filter || @q.present? || @selects.any? %>
     <div class="card"><%= empty_state t(".no_result"), t(".no_result_text"), icon: :magnifying_glass %></div>
   <% else %>
     <div class="card"><%= empty_state t(".empty"), (@integration.last_synced_at ? t(".empty_text") : t(".not_synchronized")), icon: :cube %></div>
