@@ -79,6 +79,10 @@ fr:
       token: Jeton de premier lancement
       token_hint_html: La valeur de la variable %{variable} du serveur.
       submit: Créer le compte
+      language: Langue de l'installation
+      failures: 'Elio n''est pas complètement installé : corrigez ceci, puis redémarrez-le.'
+      address_missing_html: 'La variable %{variable} n''est pas définie : les liens des emails et des notifications ne ramèneront pas à Elio. Donnez-lui l''adresse de cette page, %{address}.'
+      address_mismatch_html: '%{variable} vaut %{configured} mais cette page est ouverte à l''adresse %{address} : les liens des emails et des notifications mèneront à %{configured}. Changez la variable si c''est cette adresse la bonne.'
   two_factor_challenges:
     new:
       title: Double authentification

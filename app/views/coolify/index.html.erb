@@ -18,6 +18,15 @@
   <% end %>
 <% end %>
 
+<% if @unconnected.any? %>
+  <%= panel t(".unconnected"), meta: t(".unconnected_meta", count: @unconnected.size), icon: :signal, id: "coolify-unconnected", class: "mb-5" do %>
+    <%= attention_list do %>
+      <%= attention_item :warn, t(".unconnected_text", count: @unconnected.size), servers: @unconnected.map { |server| [ server.name, server_path(server, tab: "docker") ] },
+                         action: ([ t(".add_connection"), new_settings_integration_connection_path(@integration.kind) ] if can?(:administer)) %>
+    <% end %>
+  <% end %>
+<% end %>
+
 <%= filter_bar do %>
   <% [ [ t(".all"), nil ], [ t(".attention"), "attention" ], [ t(".applications"), "applications" ], [ t(".services"), "services" ], [ t(".databases"), "databases" ] ].each do |label, filter| %>
     <%= filter_chip label, coolify_path(filter: filter, q: @q.presence), active: @filter == filter, data: { filter: filter || "all" } %>

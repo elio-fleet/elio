@@ -11,10 +11,10 @@ class Notifications::Webhook
   end
 
   # Several activities of one kind (NotificationBatch::Group): event
-  # "activities", with every activity in `events`.
+  # "activities", with every activity in `events` and the servers concerned.
   def self.deliver_batch(channel, group)
     post(channel, "activities", { kind: group.kind, label: group.label, category: group.category, severity: group.severity, count: group.count,
-                                  title: group.title, url: group.url, events: group.activities.map { |activity| activity_data(activity) } }.compact)
+                                  title: group.title, summary: group.summary, servers: group.servers, url: group.url, events: group.activities.map { |activity| activity_data(activity) } }.compact)
   end
 
   def self.activity_data(activity)

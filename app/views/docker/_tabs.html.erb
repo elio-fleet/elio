@@ -1,4 +1,5 @@
-<%# Tabs of the Docker page: the images of the fleet, the vulnerabilities of the images. %>
+<%# Tabs of the Docker page: the images of the fleet, its containers, the vulnerabilities of the images. %>
 <%= tabs [ { key: "images", label: t("docker.tabs.images"), path: docker_path(group: @group&.id) },
+           { key: "containers", label: t("docker.tabs.containers"), count: @container_count, path: docker_path(tab: "containers", group: @group&.id) },
            { key: "cves", label: t("docker.tabs.cves"), count: @image_vulnerability_count.nonzero?, tone: :warn, path: docker_path(tab: "cves", group: @group&.id) } ],
          current: @tab, label: "Docker", class: "docker-tabs" %>

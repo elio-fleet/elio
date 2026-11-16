@@ -1,0 +1,35 @@
+@@elio os-release
+PRETTY_NAME="Debian GNU/Linux 12 (bookworm)"
+NAME="Debian GNU/Linux"
+VERSION_ID="12"
+VERSION="12 (bookworm)"
+VERSION_CODENAME=bookworm
+ID=debian
+HOME_URL="https://www.debian.org/"
+SUPPORT_URL="https://www.debian.org/support"
+BUG_REPORT_URL="https://bugs.debian.org/"
+@@elio uname
+Linux 6.8.12-4-pve x86_64
+@@elio kernel_latest
+6.8.12-9-pve
+@@elio hostname
+pve-1.acme.internal
+@@elio virt
+none
+@@elio uptime
+5184000.12 81000000.50
+@@elio cpus
+48
+@@elio cpuinfo
+model=Intel(R) Xeon(R) Silver 4214 CPU @ 2.20GHz
+cores=24
+sockets=2
+@@elio meminfo
+MemTotal:       263842360 kB
+@@elio timezone
+Europe/Paris
+@@elio dmi
+sys_vendor=Dell Inc.
+product_name=PowerEdge R640
+@@elio hypervisor
+proxmox 8.3.5

@@ -19,6 +19,17 @@ module TasksHelper
     seconds < 60 ? "#{seconds} s" : "#{seconds / 60} min #{format("%02d", seconds % 60)} s"
   end
 
+  # The confirmation of a run on the whole fleet: how many servers, and how
+  # long it should take after the past runs (BackgroundTask.estimated_duration).
+  # kind: "inventory" or "keys_scan".
+  def fleet_run_confirm(kind, count)
+    question = t("tasks_helper.fleet_run_confirm.#{kind}", count: count)
+    estimate = BackgroundTask.estimated_duration(kind, count)
+    return question unless estimate
+
+    "#{question} #{t("tasks_helper.fleet_run_confirm.estimate", duration: task_duration([ estimate, 1 ].max))}"
+  end
+
   # 1234 ms → "1.2 s" (with the separator of the language), 72 000 ms → "1 min 12 s".
   def short_duration(milliseconds)
     return "—" unless milliseconds

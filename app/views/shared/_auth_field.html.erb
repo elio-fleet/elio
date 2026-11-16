@@ -1,7 +1,16 @@
-<div>
+<%# A field of the sign in pages: f, attribute, label, type (:email_field…), and optionally autocomplete, autofocus, readonly, hint, strength (a new password: its strength shown while typing). %>
+<% strength = local_assigns[:strength] %>
+<%= tag.div(data: (strength ? { controller: "password-strength", password_strength_minimum_value: Devise.password_length.min } : {})) do %>
   <%= f.label attribute, label, class: "label" %>
   <%= f.public_send(type, attribute, required: true, autocomplete: local_assigns[:autocomplete], autofocus: local_assigns[:autofocus],
         readonly: local_assigns[:readonly],
+        data: (strength ? { password_strength_target: "input", action: "input->password-strength#update" } : {}),
         class: "input mt-1 read-only:bg-subtle read-only:text-ink-3") %>
   <% if local_assigns[:hint] %><p class="mt-1 text-xs text-ink-3"><%= hint %></p><% end %>
-</div>
+  <% if strength %>
+    <div class="password-strength mt-2 h-1 overflow-hidden rounded-full bg-subtle" data-password-strength-target="meter" hidden>
+      <div class="h-full rounded-full" data-password-strength-target="bar"></div>
+    </div>
+    <p class="password-strength-label mt-1 text-xs text-ink-3" data-password-strength-target="label" aria-live="polite"></p>
+  <% end %>
+<% end %>

@@ -42,6 +42,7 @@
         aria: { label: t(".group") }, data: { action: "change->auto-submit#submit" }, class: "input w-auto py-1.5" %>
   <label class="flex items-center gap-1.5 text-xs"><%= t(".new_version_available_html", submit: (check_box_tag :updates, "1", @updates_only, data: { action: "change->auto-submit#submit" })) %></label>
   <label class="flex items-center gap-1.5 text-xs"><%= t(".fixable_cves_html", submit: (check_box_tag :fixable, "1", @fixable_only, data: { action: "change->auto-submit#submit" })) %></label>
+  <% if @sort %><%= hidden_field_tag :sort, @sort %><% end %>
   <noscript><%= f.submit t(".filter"), class: "btn btn-secondary" %></noscript>
 <% end %>
 
@@ -49,7 +50,12 @@
 <% if @repositories.any? %>
   <div class="card overflow-x-auto">
     <table id="docker-images" class="table-dense">
-      <thead><tr><th class="pl-4">Image</th><th><%= t("words.tag") %></th><th><%= t(".servers") %></th><th><%= t("words.registry") %></th><th class="pr-4"><%= t(".vulnerabilities") %></th></tr></thead>
+      <% sort_path = ->(sort) { docker_path(request.query_parameters.except("page", "sort").merge("sort" => (sort unless @sort == sort))) } %>
+      <thead><tr><th class="pl-4">Image</th><th><%= t("words.tag") %></th><th><%= t(".servers") %></th>
+        <%= sort_header t(".created"), sort_path.("age"), direction: ("asc" if @sort == "age"), sorted_on: t(".age"), class: "col-secondary" %>
+        <%= sort_header t("words.size"), sort_path.("size"), direction: ("desc" if @sort == "size"), class: "col-num col-secondary" %>
+        <th><%= t("words.registry") %></th>
+        <%= sort_header t(".vulnerabilities"), sort_path.("cves"), direction: ("desc" if @sort == "cves"), class: "pr-4" %></tr></thead>
       <tbody>
         <% @repositories.each do |repository| %>
           <% repository.versions.each_with_index do |version, index| %>
@@ -60,8 +66,11 @@
               <td class="text-xs">
                 <% if version.servers.any? %>
                   <%= safe_join(version.servers.first(4).map { |server| link_to(server.name, server_path(server, tab: "docker"), class: "hover:text-accent hover:underline") }, ", ") %><%= " …" if version.servers.size > 4 %>
-                <% else %><span class="text-ink-3"><%= t(".container") %></span><% end %>
+                <% else %><span class="text-ink-3"><%= t(".container") %></span>
+                  <span class="version-hosts block text-[11px] text-ink-3"><%= t(".on_servers", servers: version.hosts.first(4).map(&:name).join(", ")) %><%= " …" if version.hosts.size > 4 %></span><% end %>
               </td>
+              <td class="col-secondary text-xs whitespace-nowrap"><%= version.created_at ? relative_time_tag(version.created_at) : "—" %></td>
+              <td class="col-num col-secondary text-xs"><%= version.size.positive? ? human_bytes(version.size) : "—" %></td>
               <td><%= image_update_badge(version.state, version.update) %></td>
               <td class="docker-version-cves pr-4 text-xs">
                 <% if version.cves.positive? %>
@@ -80,3 +89,5 @@
   <p class="card mt-3 px-4 py-6 text-sm text-ink-3"><%= @q.present? || @updates_only || @fixable_only ? t(".image_matches") : t(".known_docker_image") %></p>
 <% end %>
 <% end %>
+
+<%= render "docker/unused_images", unused: @unused_images if @unused_images.any? %>

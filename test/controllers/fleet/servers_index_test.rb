@@ -14,7 +14,7 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     get servers_path
 
     assert_select "#servers tbody tr", Server.count
-    assert_select "#servers tbody tr:first-child td:nth-child(2) a", "Backup"
+    assert_select "#servers tbody tr:first-child td.server-name a", "Backup"
     assert_select "##{ActionView::RecordIdentifier.dom_id(servers(:web))}" do
       assert_select ".server-address", "deploy@192.168.1.10"
       assert_select ".server-os", text: "—"
@@ -270,6 +270,42 @@ class ServersIndexTest < ActionDispatch::IntegrationTest
     assert_select "form[action=?] button.btn-secondary", server_pings_path, text: /Actualiser les statuts/
     assert_select "#fleet-actions a[href=?]", new_server_path, 0
     assert_select "a.btn-primary[href=?]", new_server_path
+  end
+
+  test "the fleet runs ask for a confirmation with the number of servers and, after a past run, the estimated duration" do
+    sign_in users(:operator)
+    get servers_path
+
+    assert_select "form[action=?][data-turbo-confirm=?]", server_inventories_path, "Inventorier les 3 serveurs du parc ?"
+    assert_select "form[action=?][data-turbo-confirm=?]", server_scans_path, "Scanner les clés des 3 serveurs du parc ?"
+
+    past = BackgroundTask.enqueue!(kind: "inventory", label: "Inventaire", servers: [ servers(:web), servers(:db) ])
+    past.items.each { |item| item.finish!(:succeeded) }
+    past.update!(started_at: 6.seconds.ago, finished_at: Time.current)
+    get servers_path
+
+    assert_select "form[action=?][data-turbo-confirm=?]", server_inventories_path,
+                  "Inventorier les 3 serveurs du parc ? Durée estimée d'après les exécutions passées, environ 9 s."
+  end
+
+  test "operators tick servers of the list to inventory them or scan their keys; viewers have no checkbox" do
+    sign_in users(:operator)
+    get servers_path
+
+    assert_select "[data-controller=selection]" do
+      assert_select "form#fleet-selection[action=?]", server_inventories_path do
+        assert_select "button[formaction=?]", server_inventories_path, text: /Inventorier/
+        assert_select "button[formaction=?]", server_scans_path, text: /Scanner les clés/
+      end
+      assert_select "#servers thead input.select-all[data-action='selection#toggleAll']"
+      assert_select "#servers tbody input.select-server[name='server_ids[]'][form=fleet-selection]", 3
+      assert_select "input.select-server[value=?][aria-label=?]", servers(:web).id.to_s, "Cocher « Web »"
+    end
+
+    sign_in users(:viewer)
+    get servers_path
+    assert_select "[data-controller=selection]", 0
+    assert_select "#fleet-selection, input.select-server", 0
   end
 
   test "a viewer refreshes the statuses, exports the list and sees the groups, nothing else" do

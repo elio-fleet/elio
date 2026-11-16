@@ -68,4 +68,28 @@ class SettingsControllerTest < ActionDispatch::IntegrationTest
     get root_path
     assert_select "nav a[href=?][title=Paramètres] svg", settings_path
   end
+
+  test "shows the configuration read from the environment, never a secret value" do
+    variables = { "ELIO_HOST" => "elio.example.com", "SMTP_ADDRESS" => "smtp.example.com", "SMTP_PASSWORD" => "smtp-secret-value",
+                  "SMTP_USERNAME" => "smtp-user-value", "ELIO_SETUP_TOKEN" => "setup-secret-value",
+                  "ELIO_KEV_URL" => "https://user:mirror-secret-value@mirror.lan/kev.json" }
+    variables.each { |name, value| ENV[name] = value }
+    sign_in users(:one)
+
+    get settings_path
+
+    assert_select "#configuration" do
+      assert_select "[data-group=address] .attention-item[data-tone=good]", text: /elio\.example\.com, HTTPS/
+      assert_select "[data-group=mail] .attention-item[data-tone=good]", text: /smtp\.example\.com:587 configuré \(non essayé\)/
+      assert_select "[data-configuration=address] dd", text: "elio.example.com"
+      assert_select "[data-configuration=mail] dd", text: "définie", count: 2
+      assert_select "[data-configuration=mail] dd", text: "non définie (par défaut : 587)"
+      assert_select "[data-configuration=limits] dd", text: "non définie (par défaut : 4)"
+      assert_select "[data-configuration=feeds] dd", text: "https://mirror.lan/kev.json"
+      assert_select "[data-configuration=feeds] dd", text: "non définie (par défaut : le flux officiel)", count: 4
+    end
+    %w[smtp-secret-value smtp-user-value setup-secret-value mirror-secret-value].each { |secret| assert_not_includes response.body, secret }
+  ensure
+    variables.each_key { |name| ENV.delete(name) }
+  end
 end

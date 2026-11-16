@@ -104,6 +104,15 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     assert_select "button.command-palette-button[data-action='command-palette#open']"
     assert_select "dialog#confirm-dialog button[data-confirm-accept]"
     assert_select "#flash[aria-live=polite]"
+    assert_select "dialog#command-palette[data-server-actions=true][data-search-url=?]", command_search_path
+  end
+
+  test "the quick search offers no server action to a viewer" do
+    sign_in users(:viewer)
+    get root_path
+
+    assert_select "dialog#command-palette[data-search-url]"
+    assert_select "dialog#command-palette[data-server-actions]", 0
   end
 
   test "no quick search on the sign in page" do

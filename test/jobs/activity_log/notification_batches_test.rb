@@ -14,7 +14,7 @@ class NotificationBatchesTest < ActiveJob::TestCase
   # The emails sent here must not be seen by the next test of the worker.
   teardown { ActionMailer::Base.deliveries.clear }
 
-  def notify(kind, **data) = Activity.record!(kind, server: servers(:web), user: nil, **data).tap { |activity| NotifyActivityJob.perform_now(activity) }
+  def notify(kind, server: servers(:web), **data) = Activity.record!(kind, server: server, user: nil, **data).tap { |activity| NotifyActivityJob.perform_now(activity) }
 
   test "non-critical activities wait in one batch per kind, a critical one leaves right away" do
     travel_to Time.zone.parse("2026-11-05 10:00") do
@@ -50,13 +50,41 @@ class NotificationBatchesTest < ActiveJob::TestCase
     end
 
     assert_equal 1, payloads.size
-    assert_equal ":warning: *3 × Clé inconnue détectée*\n• Clé inconnue « key-0 » trouvée sur « Web »\n• Clé inconnue « key-1 » trouvée sur « Web »\n• Clé inconnue « key-2 » trouvée sur « Web »",
+    assert_equal ":warning: *3 × Clé inconnue détectée*\n1 serveur touché : Web\n• Clé inconnue « key-0 » trouvée sur « Web »\n• Clé inconnue « key-1 » trouvée sur « Web »\n• Clé inconnue « key-2 » trouvée sur « Web »",
                  payloads.first[:text]
     assert batch.reload.delivered_at
     assert @channel.reload.last_delivered_at
 
     late = notify(:unknown_key_detected, key_name: "late")
     assert_equal [ late.id ], NotificationBatch.open.sole.activity_ids
+  end
+
+  test "a channel may group by server too: one batch per kind and server" do
+    first_web = notify(:unknown_key_detected, key_name: "a")
+    first_db = notify(:unknown_key_detected, key_name: "b", server: servers(:db))
+    assert_equal [ [ first_web.id, first_db.id ] ], NotificationBatch.pluck(:activity_ids)
+    assert_nil NotificationBatch.sole.server_id
+    NotificationBatch.delete_all
+    clear_enqueued_jobs
+
+    @channel.update!(group_by_server: true)
+    web = [ notify(:unknown_key_detected, key_name: "c"), notify(:unknown_key_detected, key_name: "d") ]
+    db = notify(:unknown_key_detected, key_name: "e", server: servers(:db))
+    serverless = notify(:unknown_key_detected, key_name: "f", server: nil)
+    other_kind = notify(:key_disappeared, key_name: "g")
+
+    batches = NotificationBatch.order(:id).map { |batch| [ batch.kind, batch.server_id, batch.activity_ids ] }
+    assert_equal [ [ "unknown_key_detected", servers(:web).id, web.map(&:id) ], [ "unknown_key_detected", servers(:db).id, [ db.id ] ],
+                   [ "unknown_key_detected", nil, [ serverless.id ] ], [ "key_disappeared", servers(:web).id, [ other_kind.id ] ] ], batches
+    assert_enqueued_jobs 4, only: DeliverNotificationBatchJob
+  end
+
+  test "a grouped message starts with the servers affected, the first ones named" do
+    activities = %w[s1 s2 s3 s4 s5 s6 s7 s1].map { |name| Activity.record!(:unknown_key_detected, user: nil, server_name: name, key_name: "k") }
+    assert_equal "7 serveurs touchés : s1, s2, s3, s4, s5 et 2 autres", NotificationBatch::Group.new("unknown_key_detected", activities).summary
+    assert_equal "1 serveur touché : s1", NotificationBatch::Group.new("unknown_key_detected", activities.first(1)).summary
+    I18n.with_locale(:en) { assert_equal "2 servers affected: s1, s2", NotificationBatch::Group.new("unknown_key_detected", activities.first(2)).summary }
+    assert_nil NotificationBatch::Group.new("automation_run", [ Activity.record!(:automation_run, user: nil) ]).summary
   end
 
   test "a batch of one activity is sent as that activity" do
@@ -82,7 +110,8 @@ class NotificationBatchesTest < ActiveJob::TestCase
 
   test "each notifier writes a grouped message, in the channel's language" do
     @channel.update!(locale: "en")
-    2.times { |index| notify(:unknown_key_detected, key_name: "key-#{index}") }
+    notify(:unknown_key_detected, key_name: "key-0")
+    notify(:unknown_key_detected, key_name: "key-1", server: servers(:db))
     batch = NotificationBatch.sole
 
     discord = NotificationChannel.create!(name: "discord", kind: "discord", webhook_url: "https://discord.com/api/webhooks/1/abc", activity_kinds: %w[unknown_key_detected], group_minutes: 5, locale: "en")
@@ -98,7 +127,11 @@ class NotificationBatchesTest < ActiveJob::TestCase
     assert_match "2 × Unknown key detected", slack["text"]
     assert_equal "2 × Unknown key detected", embed["embeds"].first["title"].delete("\\")
     assert_match "key-1", embed["embeds"].first["description"]
+    assert_match "\n2 servers affected: Web, Database\n", slack["text"]
+    assert embed["embeds"].first["description"].start_with?("2 servers affected: Web, Database\n")
     assert_equal "activities", hook["event"]
+    assert_equal "2 servers affected: Web, Database", hook["data"]["summary"]
+    assert_equal %w[Web Database], hook["data"]["servers"]
     assert_equal 2, hook["data"]["count"]
     assert_equal %w[unknown_key_detected unknown_key_detected], hook["data"]["events"].map { |event| event["kind"] }
   end
@@ -114,6 +147,7 @@ class NotificationBatchesTest < ActiveJob::TestCase
     mail = ActionMailer::Base.deliveries.last
     assert_equal "[Elio] 2 × Clé inconnue détectée", mail.subject
     assert_match "- Clé inconnue « key-1 » trouvée sur « Web »", mail.body.to_s
+    assert_match "1 serveur touché : Web\n", mail.body.to_s
   end
 
   test "an error is recorded and tried again at the channel's next attempt; a paused or unsubscribed channel sends nothing" do
