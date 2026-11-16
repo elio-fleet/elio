@@ -3,6 +3,7 @@ require "test_helper"
 class AccountsControllerTest < ActionDispatch::IntegrationTest
   include Devise::Test::IntegrationHelpers
   include TwoFactorHelpers
+  include ActionMailer::TestHelper
 
   test "requires authentication" do
     get account_path
@@ -29,6 +30,29 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     assert users(:viewer).reload.valid_password?("new-password-1")
     get root_path
     assert_response :success
+  end
+
+  test "changing the password signs out the other sessions and sends an email" do
+    user = users(:viewer)
+    elsewhere = open_session
+    elsewhere.post user_session_path, params: { user: { email: user.email, password: "password1234" } }
+    sign_in user
+
+    assert_enqueued_email_with AccountMailer, :password_changed, args: ->(args) { args.first == user } do
+      patch password_account_path, params: { user: { current_password: "password1234", password: "new-password-1", password_confirmation: "new-password-1" } }
+    end
+
+    get root_path
+    assert_response :success
+    elsewhere.get root_path
+    assert_equal "http://www.example.com/users/sign_in", elsewhere.response.location
+  end
+
+  test "a wrong current password sends no email" do
+    sign_in users(:viewer)
+    assert_no_enqueued_emails do
+      patch password_account_path, params: { user: { current_password: "wrong", password: "new-password-1", password_confirmation: "new-password-1" } }
+    end
   end
 
   test "changing the password requires the current one" do

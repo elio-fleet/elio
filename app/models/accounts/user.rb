@@ -31,6 +31,10 @@ class User < ApplicationRecord
   validate :new_password_must_differ, if: -> { password_change_required? && password.present? && persisted? }
   # Choosing a new password (My account, or a reset by email) ends the request.
   before_save -> { self.password_change_required = false }, if: -> { will_save_change_to_encrypted_password? && persisted? }
+  # A new password also signs out the other sessions and "remember me"
+  # cookies: Devise checks them against `authenticatable_salt`, which changes
+  # with the password hash (the session that changed it is signed in again).
+  after_update_commit :send_password_changed_email, if: -> { saved_change_to_encrypted_password? && Rails.configuration.x.mail_enabled }
 
   scope :active, -> { where(deactivated_at: nil) }
 
@@ -117,7 +121,22 @@ class User < ApplicationRecord
 
   def inactive_message = deactivated? ? :deactivated : super
 
+  protected
+
+  # Devise emails (password reset link) in the background: the request does
+  # not wait for the SMTP server, and takes the same time whether the account
+  # exists or not. In the language of the user, else of the request.
+  def send_devise_notification(notification, *args)
+    I18n.with_locale(locale.presence || I18n.locale) do
+      devise_mailer.send(notification, self, *args).deliver_later
+    end
+  end
+
   private
+
+  def send_password_changed_email
+    AccountMailer.password_changed(self, at: Time.current).deliver_later
+  end
 
   # The last active admin can neither lose the role nor be deactivated.
   def must_keep_an_active_admin

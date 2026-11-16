@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_131977) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -549,6 +549,17 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.index ["server_id"], name: "index_temporary_accesses_on_server_id"
   end
 
+  create_table "tolerated_keys", force: :cascade do |t|
+    t.string "fingerprint", null: false
+    t.string "name"
+    t.text "reason", null: false
+    t.bigint "user_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["fingerprint"], name: "index_tolerated_keys_on_fingerprint", unique: true
+    t.index ["user_id"], name: "index_tolerated_keys_on_user_id"
+  end
+
   create_table "uptime_kuma_monitors", force: :cascade do |t|
     t.string "monitor_id", null: false
     t.string "name", null: false
@@ -676,5 +687,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
   add_foreign_key "server_vulnerabilities", "servers", on_delete: :cascade
   add_foreign_key "temporary_accesses", "public_keys", on_delete: :nullify
   add_foreign_key "temporary_accesses", "servers", on_delete: :cascade
+  add_foreign_key "tolerated_keys", "users", on_delete: :nullify
   add_foreign_key "uptime_kuma_monitors", "servers", on_delete: :nullify
 end

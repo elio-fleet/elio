@@ -21,6 +21,10 @@ en:
       add: Add
       adding: Adding…
       able_add_key_there: to be able to add this key there.
+    bulk_results:
+      retry_failed:
+        one: Retry the failure
+        other: Retry the %{count} failures
     delete_button:
       delete: Delete
       delete_2: Delete %{public_key_name}
@@ -75,6 +79,10 @@ en:
     show:
       owner: "Key of %{email}"
       delete: Delete
+      remove_everywhere: Remove from every server
+      remove_everywhere_confirm:
+        one: The key of “%{public_key_name}” will be deleted from the only account where it is installed (someone leaves, a lost key…).
+        other: The key of “%{public_key_name}” will be deleted from the %{count} accounts where it is installed (someone leaves, a lost key…).
       none: None
       added_keyring_html: "· added to the keyring %{created_at}"
       edit: Edit
@@ -88,6 +96,17 @@ en:
       'on': 'On:'
       none: Every key found on the servers is in the keyring.
       not_scanned: 'No key read yet: scan the keys of the fleet (Fleet → Actions).'
+      first_seen: 'Reported '
+      root_hint: On a root account
+      add_named: Add to the keyring as “%{name}”
+      tolerate: Tolerate…
+      reason: Reason
+      reason_placeholder: Why this key may stay
+      tolerate_submit: Tolerate
+      tolerated_title: Tolerated keys
+      tolerated_by: Tolerated by %{author}
+      nowhere: On no server any more.
+      untolerate: No longer tolerate
   server_authorized_keys:
     frame:
       reading_authorized_keys: Reading the authorized keys…
@@ -121,11 +140,42 @@ en:
         other: "%{count} accounts"
       root_needed: 'Only the keys of %{login} are shown: Elio needs root (or sudo without a password) to read the other accounts.'
     account:
+      tolerated: Tolerated
       login: Elio's login
       temporary_access_hint: Temporary access, see and extend it
       unreadable: Its authorized_keys file could not be read, even as root.
       no_key: No key in this file.
+      no_file: No authorized_keys file.
       key_will_be_removed_from: The key “%{nom}” will be removed from the %{account} account of “%{server_name}”. It will no longer be able to log in to that account.
+      extra_file_html:
+        one: "%{count} key in <code class=\"font-mono text-xs\">%{path}</code>, which the SSH server also reads."
+        other: "%{count} keys in <code class=\"font-mono text-xs\">%{path}</code>, which the SSH server also reads."
+      extra_file_hint: Elio lists them but does not change this file; check them on the server.
+    list:
+      dormant:
+        one: "%{count} account with a login shell and no key"
+        other: "%{count} accounts with a login shell and no key"
+      dormant_hint: No authorized_keys file. Check they are still needed; they may still log in with a password if the server allows it.
+    options:
+      from: from %{from}
+      command: forced command
+      restrict: restricted
+      expired: Expired, refused by the server
+      server_local_time: "%{time} (server local time)"
+      labels:
+        from: Allowed source addresses
+        command: Forced command
+        expiry_time: Refused after
+        restrict: Restricted (no forwarding, no terminal)
+        no_pty: No terminal
+        no_port_forwarding: No port forwarding
+        no_agent_forwarding: No agent forwarding
+        no_x11_forwarding: No X11 forwarding
+        permitopen: Allowed forwarding to
+        permitlisten: Allowed listening on
+        principals: Certificate principals
+        environment: Environment variable
+        cert_authority: Certificate authority
   servers:
     add_key_dialog:
       accounts: Unix accounts
@@ -244,6 +294,8 @@ en:
       added_for: added for %{label_for}
       added: added
       present: already present
+      removed: removed
+      absent: already absent
   ssh:
     diagnosis:
       steps:
@@ -298,6 +350,10 @@ en:
       command_timeout: 'The command did not answer within %{timeout} s on %{host}: %{truncate}'
   public_key_accesses_controller:
     choose_server: Choose at least one server.
+    no_access: No known access to remove.
+    removed_everywhere:
+      one: 'Removals done: %{succeeded}/%{count} account.'
+      other: 'Removals done: %{succeeded}/%{count} accounts.'
     removed: The access of “%{public_key_name}” to “%{server_name}” has been removed.
     remove_failed: 'Cannot remove the access: %{error_title} — %{error_details}'
     done:
@@ -307,6 +363,10 @@ en:
     created: The key “%{public_key_name}” has been added to the keyring.
     updated: The key “%{public_key_name}” has been updated.
     deleted: The key “%{public_key_name}” has been removed from the keyring.
+  tolerated_keys_controller:
+    created: The key “%{name}” is tolerated and no longer reported as unknown.
+    deleted: The key “%{name}” is no longer tolerated.
+    not_saved: "The key could not be tolerated: %{errors}"
   server_authorizations_controller:
     invalid_account: 'Invalid account name: lowercase letters, digits, "_", "-" or ".", 32 characters at most.'
     no_account: Choose at least one account.

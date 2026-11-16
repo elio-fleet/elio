@@ -28,6 +28,8 @@
 
 <% if Rails.configuration.x.mail_enabled %>
   <p class="mt-4 text-center text-sm"><%= link_to t("auth.sign_in.forgot"), new_password_path(resource_name), class: "forgot-password text-accent hover:underline" %></p>
+<% else %>
+  <p class="forgot-password-unavailable mt-4 text-center text-xs text-ink-3"><%= t("auth.forgot.unavailable") %></p>
 <% end %>
 
 <p class="mt-6 text-center text-sm text-ink-3">

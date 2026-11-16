@@ -32,6 +32,8 @@ Rails.application.routes.draw do
     resource :inventory, only: :create, controller: "server_inventories"
     resources :packages, only: :index, controller: "server_packages"
     resource :unit_journal, only: :show, controller: "server_unit_journals"
+    # The export of its Journal tab (.csv / .json).
+    resource :journal, only: :show, controller: "server_journals"
     resource :host_key, only: :create, controller: "server_host_keys"
     resource :expected_port, only: :create, controller: "server_expected_ports"
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
@@ -46,8 +48,10 @@ Rails.application.routes.draw do
   resource :server_pings, only: :create, path: "servers/pings"
   resource :server_scans, only: :create, path: "servers/scans"
 
+  resources :tolerated_keys, only: %i[create destroy], path: "ssh-keys/tolerated"
   resources :public_keys, path: "ssh-keys" do
     resources :accesses, only: :create, controller: "public_key_accesses"
+    delete "accesses", to: "public_key_accesses#destroy_all"
     resource :access, only: :destroy, controller: "public_key_accesses"
   end
 
