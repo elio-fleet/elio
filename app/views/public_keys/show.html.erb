@@ -9,6 +9,11 @@
     <% if can?(:operate) %>
       <%= link_to edit_public_key_path(@public_key), class: "btn btn-secondary" do %><%= icon :pencil_square %> <%= t(".edit") %><% end %>
       <%= actions_menu do %>
+        <% if (access_count = Keys::PublicKeyAccessOverview.new(@public_key).accesses.size).positive? %>
+          <%= menu_item t(".remove_everywhere"), public_key_accesses_path(@public_key), icon: :x_mark, method: :delete, danger: true,
+                        confirm: t(".remove_everywhere_confirm", public_key_name: @public_key.name, count: access_count), data: { confirm_label: t(".remove_everywhere") } %>
+          <%= menu_separator %>
+        <% end %>
         <%= menu_item t(".delete"), public_key_path(@public_key), icon: :trash, method: :delete, danger: true,
                       confirm: t("public_keys.delete_button.key_will_removed_keyring", public_key_name: @public_key.name), data: { confirm_label: t(".delete") } %>
       <% end %>

@@ -21,6 +21,10 @@ en:
       add: Add
       adding: Adding…
       able_add_key_there: to be able to add this key there.
+    bulk_results:
+      retry_failed:
+        one: Retry the failure
+        other: Retry the %{count} failures
     delete_button:
       delete: Delete
       delete_2: Delete %{public_key_name}
@@ -75,6 +79,10 @@ en:
     show:
       owner: "Key of %{email}"
       delete: Delete
+      remove_everywhere: Remove from every server
+      remove_everywhere_confirm:
+        one: The key of “%{public_key_name}” will be deleted from the only account where it is installed (someone leaves, a lost key…).
+        other: The key of “%{public_key_name}” will be deleted from the %{count} accounts where it is installed (someone leaves, a lost key…).
       none: None
       added_keyring_html: "· added to the keyring %{created_at}"
       edit: Edit
@@ -244,6 +252,8 @@ en:
       added_for: added for %{label_for}
       added: added
       present: already present
+      removed: removed
+      absent: already absent
   ssh:
     diagnosis:
       steps:
@@ -298,6 +308,10 @@ en:
       command_timeout: 'The command did not answer within %{timeout} s on %{host}: %{truncate}'
   public_key_accesses_controller:
     choose_server: Choose at least one server.
+    no_access: No known access to remove.
+    removed_everywhere:
+      one: 'Removals done: %{succeeded}/%{count} account.'
+      other: 'Removals done: %{succeeded}/%{count} accounts.'
     removed: The access of “%{public_key_name}” to “%{server_name}” has been removed.
     remove_failed: 'Cannot remove the access: %{error_title} — %{error_details}'
     done:

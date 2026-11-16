@@ -43,7 +43,12 @@ class ServerGroupsTest < ApplicationSystemTestCase
     visit public_key_path(public_keys(:alice))
 
     within("#bulk-authorize") do
+      assert_selector ".picker-count", text: "0 serveur coché"
       click_on "Production"
+      assert_selector ".picker-count", text: "2 serveurs cochés"
+      check "Backup"
+      assert_selector ".picker-count", text: "3 serveurs cochés"
+      uncheck "Backup"
       assert_checked_field "server_ids_#{servers(:web).id}", visible: :all
       assert_checked_field "server_ids_#{servers(:db).id}", visible: :all
       assert_no_checked_field "server_ids_#{servers(:backup).id}", visible: :all
