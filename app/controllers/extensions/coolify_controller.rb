@@ -1,6 +1,7 @@
 # "Coolify" page (Coolify extension): every resource of every connection
 # (team / instance) with its server, what needs attention first; filters by
-# problem and kind, a search by name or domain.
+# problem and kind (the databases filter also shows the services holding
+# one), a search by name or domain.
 class CoolifyController < ApplicationController
   include RequiresIntegration
 
@@ -17,12 +18,14 @@ class CoolifyController < ApplicationController
     @counts = { total: all.count, attention: all.where(PROBLEM_SQL).count, unattached: all.where(server_id: nil).count,
                 servers_outside: CoolifyResource.servers.where(server_id: nil).count }
     @connections = @integration.connections.to_a
+    @unconnected = Integrations::Coolify.unconnected_servers.to_a
 
     resources = all.includes(:server, :connection)
     resources = case @filter
     when "attention" then resources.where(PROBLEM_SQL)
     when "unattached" then resources.where(server_id: nil)
-    when "applications", "services", "databases" then resources.where(kind: @filter.delete_suffix("s"))
+    when "applications", "services" then resources.where(kind: @filter.delete_suffix("s"))
+    when "databases" then resources.where("coolify_resources.kind = 'database' OR (coolify_resources.kind = 'service' AND jsonb_exists(coolify_resources.data, 'databases'))")
     else resources
     end
     if @q.present?

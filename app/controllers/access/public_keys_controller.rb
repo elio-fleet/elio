@@ -20,6 +20,8 @@ class PublicKeysController < ApplicationController
     end
 
     @kind = params[:kind].presence_in(PublicKey::KINDS)
+    @last_scan = BackgroundTask.keys_scans.recent.first
+    @last_read_at = AccountSnapshot.maximum(:read_at) unless @last_scan
     public_keys = PublicKey.order(:name)
     public_keys = public_keys.of_kind(@kind) if @kind
     @pager = paginate(public_keys, per_page: PER_PAGE)

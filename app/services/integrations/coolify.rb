@@ -70,6 +70,16 @@ class Integrations::Coolify < Integrations::Base
 
     def connection_label(connection) = connection.state["team"]
 
+    # Servers of the fleet running Coolify's proxy ("coolify-proxy", on every
+    # server Coolify manages) that no connection attaches: a team (or an
+    # instance) not connected yet, or a server Elio did not recognise. A
+    # token sees its own team only (the API cannot list the others), so the
+    # fleet's Docker containers are what tells.
+    def unconnected_servers
+      proxies = Inventory::Snapshot.where(category: "docker").where("data -> 'containers' @> ?::jsonb", [ { "name" => "coolify-proxy" } ].to_json)
+      Server.where(id: proxies.select(:server_id)).where.not(id: CoolifyResource.servers.attached.select(:server_id)).order(:name)
+    end
+
     # The SSH keys of every connection (the ones Coolify connects with; not its git deploy keys).
     def known_keys(integration)
       integration.connections.each_with_object({}) do |connection, keys|
@@ -131,6 +141,10 @@ class Integrations::Coolify < Integrations::Base
       if integration.value(:alert_public_database)
         resources.select { |resource| resource.kind == "database" && resource.data["public"] }
                  .each { |database| reasons << reason("crit", :public_database, name: database.name, port: database.data["public_port"] || "?") }
+        resources.each do |service|
+          service.service_databases.select { |database| database["public"] }
+                 .each { |database| reasons << reason("crit", :public_database, name: "#{service.name} › #{database["name"]}", port: database["public_port"] || "?") }
+        end
       end
       if integration.value(:alert_no_health_check)
         resources.select { |resource| resource.kind == "application" && resource.running? && resource.data["health_check"] != true }

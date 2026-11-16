@@ -11,8 +11,6 @@
   <% elsif (ssh_key = SshKey.current) %>
     <p>
       <%= t(".install_html", login: tag.code("#{server.username}@#{server.host}", class: "rounded bg-surface px-1 font-mono text-xs ring-1 ring-line")) %>
-      <code class="rounded bg-surface px-1 font-mono text-xs ring-1 ring-line"><%= server.username %>@<%= server.host %></code>
-      <%= "" %>
     </p>
     <div class="mt-3" data-controller="clipboard">
       <div class="flex items-start gap-2">

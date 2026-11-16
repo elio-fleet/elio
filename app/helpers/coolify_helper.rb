@@ -18,14 +18,17 @@ module CoolifyHelper
     end
   end
 
-  # "Application · Dockerfile", "Service", "Database · PostgreSQL"
+  # "Application · Dockerfile", "Service", "Service · PostgreSQL" (its databases), "Database · PostgreSQL"
   def coolify_kind_detail(resource)
     detail = case resource.kind
     when "application" then t("coolify_helper.build_packs.#{resource.data["build_pack"]}", default: resource.data["build_pack"].to_s.capitalize.presence)
-    when "database" then t("coolify_helper.engines.#{resource.data["engine"]}", default: resource.data["engine"].to_s.capitalize.presence)
+    when "database" then coolify_engine(resource.data["engine"])
+    when "service" then resource.service_databases.filter_map { |database| coolify_engine(database["engine"]) }.uniq.join(", ")
     end
     [ resource.kind_label, detail ].compact_blank.join(" · ")
   end
+
+  def coolify_engine(engine) = engine.present? ? t("coolify_helper.engines.#{engine}", default: engine.to_s.capitalize) : nil
 
   # What runs: "main @ 623a4be" for an application built from git ("main" when Coolify only says HEAD), else the image(s).
   def coolify_version(resource)

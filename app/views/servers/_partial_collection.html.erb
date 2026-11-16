@@ -1,0 +1,22 @@
+<%# What the inventory could not read on a server's overview: one line per cause with the categories it affects (Server#partial_collections), then how to get a full collection when Elio has no root access. The "Partial" badges link here. Locals: server. %>
+<% causes = server.partial_collections %>
+<% if causes.any? %>
+  <%= panel t("servers.partial_collection.title"), icon: :exclamation_triangle, id: "partial-collection", class: "partial-collection scroll-mt-4" do %>
+    <ul>
+      <% causes.each do |message, categories| %>
+        <li class="partial-cause border-t border-line px-4 py-3 first:border-t-0">
+          <p class="text-sm text-ink-2"><%= message %></p>
+          <p class="partial-categories mt-1 text-xs text-ink-3">
+            <%= t("servers.partial_collection.affects") %>
+            <%= safe_join(categories.map { |category| link_to(Inventory::Collector.label_for(category), server_path(server, tab: inventory_category_tab(category)), class: "text-accent hover:underline") }, ", ") %>
+          </p>
+        </li>
+      <% end %>
+    </ul>
+    <% if server.privilege == "none" %>
+      <p class="partial-fix border-t border-line px-4 py-3 text-xs text-ink-3">
+        <%= t("servers.partial_collection.fix_html", commands: link_to(t("servers.partial_collection.commands"), server_commands_path(server), class: "text-accent hover:underline")) %>
+      </p>
+    <% end %>
+  <% end %>
+<% end %>

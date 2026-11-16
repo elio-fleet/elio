@@ -65,7 +65,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   end
 
   test "the fleet pages" do
-    data = [ ".sidebar-groups", ".account-link", "#servers td:nth-child(2)", ".server-card-header", ".server-group-filter", "#activities", "#recent-activity ul", "#attention ul" ]
+    data = [ ".sidebar-groups", ".account-link", "#servers td.server-name", ".server-card-header", ".server-group-filter", "#activities", "#recent-activity ul", "#attention ul" ]
     assert_english root_path, except: data
     assert_english servers_path, except: data
     assert_english servers_path(view: "grid"), except: data
@@ -79,7 +79,7 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
   end
 
   test "the inventory pages" do
-    data = [ ".sidebar-groups", ".account-link", ".server-group-filter", "#servers td:nth-child(2)" ]
+    data = [ ".sidebar-groups", ".account-link", ".server-group-filter", "#servers td.server-name" ]
     %w[overview packages services firewall schedules journal].each do |tab|
       assert_english server_path(servers(:web), tab: tab), except: data
     end
@@ -151,10 +151,23 @@ class EnglishInterfaceTest < ActionDispatch::IntegrationTest
     assert_english server_path(servers(:web), tab: "vulnerabilities"), except: data
     assert_english server_path(servers(:web), tab: "docker"), except: data
     assert_english docker_path, except: data
+    assert_english docker_path(tab: "containers"), except: data
     assert_english docker_path(tab: "cves"), except: data
     assert_english settings_vulnerabilities_path, except: data
     assert_english settings_docker_path, except: data
     assert_english new_settings_score_provider_path, except: data
+  end
+
+  test "the Docker page with containers, sorted images and unused images" do
+    data = Inventory::Collectors::Docker.parse(Inventory::Collectors::Docker.sections(file_fixture("inventory/docker/debian13.txt").read), now: 1.day.ago)
+    data["disk"] = Inventory::Collectors::Docker.parse_df(file_fixture("inventory/docker/df.txt").read)
+    servers(:web).inventory_snapshots.create!(category: "docker", status: "ok", collected_at: Time.current, checked_at: Time.current, data: data.merge("docker" => "ok", "version" => "27.3.1"))
+    except = [ ".sidebar-groups", ".account-link", "code", ".font-mono", ".compose-project" ]
+    assert_english docker_path(sort: "size"), except: except
+    assert_select "#unused-images"
+    assert_english docker_path(tab: "containers"), except: except
+    assert_select "tr.fleet-container", 4
+    assert_english docker_path(tab: "containers", show: "trouble", q: "zzz"), except: except
   end
 
   test "vulnerabilities of a server and of its images, with the commands to fix them" do

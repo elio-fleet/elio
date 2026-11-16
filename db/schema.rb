@@ -352,7 +352,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131977) do
     t.datetime "failed_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["notification_channel_id", "kind"], name: "index_notification_batches_open", unique: true, where: "(closed_at IS NULL)"
+    t.bigint "server_id"
+    t.index "notification_channel_id, kind, COALESCE(server_id, (0)::bigint)", name: "index_notification_batches_open", unique: true, where: "(closed_at IS NULL)"
     t.index ["send_at"], name: "index_notification_batches_undelivered", where: "((delivered_at IS NULL) AND (failed_at IS NULL))"
   end
 
@@ -377,6 +378,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131977) do
     t.integer "failure_count", default: 0, null: false
     t.datetime "failing_since"
     t.datetime "retry_at"
+    t.boolean "group_by_server", default: false, null: false
     t.index ["name"], name: "index_notification_channels_on_name", unique: true
   end
 

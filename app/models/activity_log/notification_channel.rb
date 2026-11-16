@@ -4,7 +4,8 @@
 # generic or Slack-compatible webhook may use plain HTTP on the internal
 # network when the administrator allows it on the channel (allow_http). Each channel
 # picks the activity kinds it receives (Activity::KINDS), whether messages
-# mention everyone (Slack, Discord), and whether it gets a daily digest.
+# mention everyone (Slack, Discord), how long it groups the non-critical ones
+# (by kind, and by server if asked), and whether it gets a daily digest.
 # A failing channel backs off (1, 2, 4… minutes, an hour at most): what it
 # cannot send meanwhile waits in its batches, and one attempt at a time is
 # made; after a day without success it is turned off and an activity says so.
@@ -13,8 +14,9 @@ class NotificationChannel < ApplicationRecord
   localized # nil: the instance's language
 
   KINDS = %w[slack discord slack_compatible webhook email].freeze
-  # Minutes the non-critical activities of a kind wait to leave as one message (0: right away).
-  GROUP_MINUTES = [ 0, 5, 10, 15, 30, 60 ].freeze
+  # Minutes the non-critical activities of a kind wait to leave as one message
+  # (0: right away), a day at most. With group_by_server, one message per kind and server.
+  MAX_GROUP_MINUTES = 24 * 60
   NOTIFIERS = { "slack" => "Notifications::Slack", "slack_compatible" => "Notifications::Slack", "discord" => "Notifications::Discord", "webhook" => "Notifications::Webhook", "email" => "Notifications::Email" }.freeze
 
   SLACK_WEBHOOK = %r{\Ahttps://hooks\.slack\.com/services/[A-Za-z0-9/_-]+\z}
@@ -43,7 +45,7 @@ class NotificationChannel < ApplicationRecord
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }
   validates :kind, inclusion: { in: KINDS }
-  validates :group_minutes, inclusion: { in: GROUP_MINUTES }
+  validates :group_minutes, numericality: { only_integer: true, in: 0..MAX_GROUP_MINUTES }
   validate :destination_must_match_kind
   validate :activity_kinds_must_be_known
 

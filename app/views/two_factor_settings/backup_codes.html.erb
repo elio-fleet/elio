@@ -17,7 +17,7 @@
           <%= icon :arrow_down_tray %> <%= t(".download") %>
         </button>
       </div>
-      <%= link_to t(".saved"), account_path, class: "btn btn-primary" %>
+      <%= link_to t(".saved"), @continue_path || account_path, class: "btn btn-primary" %>
     </div>
   </div>
 </div>

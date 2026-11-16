@@ -51,7 +51,9 @@ class TwoFactorTest < ApplicationSystemTestCase
     click_on "Télécharger"
     assert_equal [ "elio-backup-codes-127.0.0.1.txt", true ], evaluate_script("window.downloaded")
     click_on "J'ai enregistré mes codes"
-    assert_selector ".two-factor-state", text: "Activée"
+    # Asked before anything else: on to the overview, not back to My account.
+    assert_current_path root_path
+    assert users(:operator).reload.two_factor_enabled?
   end
 
   test "an admin unlocks a locked account from the users page" do

@@ -6,7 +6,7 @@ class PurgeActivitiesJob < ApplicationJob
   queue_as :default
 
   def self.retention
-    days = ENV.fetch("ELIO_ACTIVITY_RETENTION_DAYS", "365").to_i
+    days = Elio::Env.integer("ELIO_ACTIVITY_RETENTION_DAYS")
     days.positive? ? days.days : nil
   end
 

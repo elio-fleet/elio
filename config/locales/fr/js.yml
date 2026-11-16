@@ -1,5 +1,9 @@
 fr:
   js:
+    selection:
+      count:
+        one: "%{count} serveur coché"
+        other: "%{count} serveurs cochés"
     relative_time:
       just_now: à l'instant
       within_a_minute: dans moins d'une minute
@@ -17,6 +21,13 @@ fr:
     theme:
       light: Thème clair
       dark: Thème sombre
+    password_strength:
+      too_short:
+        one: 'Trop court : au moins %{count} caractère.'
+        other: 'Trop court : au moins %{count} caractères.'
+      weak: 'Faible : plus long, ou mêlant lettres, chiffres et symboles, il serait plus difficile à deviner.'
+      fair: 'Moyen : quelques caractères de plus le rendraient robuste.'
+      strong: Mot de passe robuste.
     confirm:
       accept: Confirmer
     command_palette:
@@ -25,3 +36,7 @@ fr:
       port: Qui expose le port %{port} ?
       package: Chercher le paquet « %{package} » sur le parc
       dns_name: Qui a le nom DNS « %{name} » ?
+      journal: Chercher « %{text} » dans le journal
+      actions: Actions
+      inventory: Inventorier %{server}
+      recent: Récents

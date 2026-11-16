@@ -33,6 +33,8 @@ class BackgroundTask < ApplicationRecord
   # Failed or partly failed, finished since `time` (the overview links to them).
   scope :failed_since, ->(time) { where(status: FILTERS["failed"], finished_at: time..) }
   scope :expired, -> { finished.where(created_at: ...RETENTION.ago) }
+  # Keys scans, started by hand or by the planned "keys_scan" automation (the Keys page sums up the last one).
+  scope :keys_scans, -> { where(kind: "keys_scan").or(where(kind: "automation", automation_id: Automation.where(kind: "keys_scan").select(:id))) }
 
   # Text search: the task's label and result, who started it, and the
   # servers and messages of its items ("Inventaire", "web-1", "timeout").
@@ -41,6 +43,25 @@ class BackgroundTask < ApplicationRecord
     items = BackgroundTaskItem.where("background_task_items.background_task_id = background_tasks.id")
                               .where("background_task_items.server_name ILIKE :q OR background_task_items.message ILIKE :q", q: like)
     left_joins(:user).where("background_tasks.label ILIKE :q OR background_tasks.result ILIKE :q OR users.email ILIKE :q", q: like).or(left_joins(:user).where(items.arel.exists))
+  end
+
+  # The ids of the servers that already wait or run in a task of this kind
+  # (a subquery): a second collection at the same time is not started.
+  def self.busy_server_ids(kind)
+    BackgroundTaskItem.unfinished.joins(:task).where(background_tasks: { kind: kind }).select(:server_id)
+  end
+
+  # How long a run of this kind on `count` servers should take, from the
+  # biggest of the last finished runs (servers run in parallel, so a run on
+  # fewer servers is not shorter; more servers take proportionally longer).
+  # nil without a past run.
+  def self.estimated_duration(kind, count)
+    runs = finished.where(kind: kind).where.not(started_at: nil).order(finished_at: :desc).limit(10).to_a
+    sizes = BackgroundTaskItem.where(background_task_id: runs.map(&:id)).group(:background_task_id).count
+    reference = runs.select { |run| sizes[run.id].to_i.positive? }.max_by { |run| sizes[run.id] }
+    return unless reference
+
+    reference.duration * [ count.to_f / sizes[reference.id], 1 ].max
   end
 
   # Creates the task and one queued item per server, then yields each item so
@@ -150,11 +171,26 @@ class BackgroundTask < ApplicationRecord
     new_kind, job = rerun_server_job
     return unless job
 
-    busy = BackgroundTaskItem.unfinished.joins(:task).where(background_tasks: { kind: new_kind }).select(:server_id)
-    servers = Server.where(id: rerun_items(only_failed: only_failed).map(&:server_id)).where.not(id: busy).order(:name).to_a
+    servers = Server.where(id: rerun_items(only_failed: only_failed).map(&:server_id)).where.not(id: BackgroundTask.busy_server_ids(new_kind)).order(:name).to_a
     return if servers.empty?
 
     BackgroundTask.enqueue!(kind: new_kind, label: rerun_label(only_failed, servers.size), servers: servers, user: user) { |item| job.call(item) }
+  end
+
+  # Whether the servers still waiting can be called off: a run on servers
+  # (one job per server) with servers not started yet.
+  def cancellable?
+    unfinished? && SERVER_JOBS.key?(kind) && items.any? { |item| item.status == "queued" }
+  end
+
+  # Calls off the servers still waiting: their jobs skip them (see
+  # TracksTaskItem). The servers already running finish (an SSH command is
+  # not interrupted halfway).
+  def cancel!
+    with_lock do
+      items.where(status: "queued").update_all(status: "failed", message: I18n.t("background_task.cancelled"), finished_at: Time.current, updated_at: Time.current)
+    end
+    refresh!
   end
 
   private

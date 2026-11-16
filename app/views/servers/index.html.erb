@@ -16,8 +16,10 @@
       <%= link_to new_server_path, class: "btn btn-primary" do %><%= icon :plus %> <%= t("command_palette.add_server") %><% end %>
       <%= actions_menu id: "fleet-actions" do %>
         <% if @summary.total.positive? %>
-          <%= menu_item t(".inventory_whole_fleet"), server_inventories_path, icon: :pulse, method: :post, title: t(".read_again_system_health") %>
-          <%= menu_item t(".scan_keys_whole_fleet"), server_scans_path, icon: :key, method: :post, title: t(".read_keys_every_server") %>
+          <%= menu_item t(".inventory_whole_fleet"), server_inventories_path, icon: :pulse, method: :post, title: t(".read_again_system_health"),
+                        confirm: fleet_run_confirm("inventory", @summary.total) %>
+          <%= menu_item t(".scan_keys_whole_fleet"), server_scans_path, icon: :key, method: :post, title: t(".read_keys_every_server"),
+                        confirm: fleet_run_confirm("keys_scan", @summary.total) %>
           <%= menu_item t(".export_csv"), servers_path(filters.except(:view).merge(format: :csv)), icon: :arrow_down_tray, class: "export-csv", data: { turbo: false } %>
         <% end %>
         <%= menu_item t(".import_servers"), new_server_import_path, icon: :arrow_up_circle %>
@@ -111,11 +113,27 @@
       </div>
       <%= render "shared/pagination", pager: @pager, noun: t("nouns.servers") %>
     <% elsif @servers.any? %>
+      <% selectable = can?(:operate) %>
+      <div <%= tag.attributes(data: { controller: ("selection" if selectable) }) %>>
+      <% if selectable %>
+        <%# The actions on the ticked servers: the checkboxes of the rows belong to this form (form=), each button posts it to its action. %>
+        <%= form_with url: server_inventories_path, id: "fleet-selection", class: "fleet-selection hidden", aria: { label: t(".selection_actions") }, data: { selection_target: "bar" } do %>
+          <div class="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-line bg-subtle px-3 py-2 text-sm">
+            <span class="selection-count font-medium text-ink-2" data-selection-target="count"></span>
+            <%= button_tag type: "submit", formaction: server_inventories_path, class: "btn btn-secondary selection-inventory" do %><%= icon :pulse %> <%= t(".inventory_selection") %><% end %>
+            <%= button_tag type: "submit", formaction: server_scans_path, class: "btn btn-secondary selection-scan" do %><%= icon :key %> <%= t(".scan_keys_selection") %><% end %>
+            <%= button_tag t(".clear_selection"), type: "button", data: { action: "selection#clear" }, class: "btn btn-ghost" %>
+          </div>
+        <% end %>
+      <% end %>
       <div class="card overflow-x-auto">
         <table id="servers" class="table-dense">
           <thead>
             <tr>
-              <th scope="col" class="pl-4"><%= t(".state") %></th>
+              <th scope="col" class="pl-4">
+                <% if selectable %><input type="checkbox" class="select-all mr-1 align-middle" aria-label="<%= t(".select_all") %>" data-selection-target="all" data-action="selection#toggleAll"><% end %>
+                <%= t(".state") %>
+              </th>
               <% sort_path = ->(column) { servers_path(filters.merge(sort: column, dir: @sort.next_direction(column))) } %>
               <% sort_direction = ->(column) { @sort.direction if @sort.sorted_by?(column) } %>
               <%= sort_header t(".server"), sort_path.("name"), direction: sort_direction.("name") %>
@@ -129,9 +147,10 @@
             </tr>
           </thead>
           <tbody>
-            <%= render partial: "servers/row", collection: @servers, as: :server %>
+            <%= render partial: "servers/row", collection: @servers, as: :server, locals: { selectable: selectable } %>
           </tbody>
         </table>
+      </div>
       </div>
       <%= render "shared/pagination", pager: @pager, noun: t("nouns.servers") %>
     <% else %>

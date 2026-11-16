@@ -48,6 +48,17 @@ en:
     index:
       subtitle: The public keys Elio knows and the servers where they give access
       scan_keys: Scan the keys of the fleet
+      last_scan: Last scan
+      scan_never: never
+      scan_running: "running (%{done}/%{count})"
+      scan_read:
+        one: "%{done}/%{count} server read"
+        other: "%{done}/%{count} servers read"
+      scan_failed:
+        one: "%{count} failed"
+        other: "%{count} failed"
+      outside_keyring: Outside the keyring
+      see_task: See the task
       keyring_empty_hint: Add the keys of the people and services to know who has access to what, and to spot unknown keys on the servers.
       all: All
       people: People
@@ -443,6 +454,20 @@ en:
         one: A new Elio key will replace the current one on the %{count} server, without interruption. Unreachable servers can be retried afterwards.
         other: A new Elio key will replace the current one on the %{count} servers, without interruption. Unreachable servers can be retried afterwards.
       key_intro_html: Elio logs in to your servers with this key. Its public key must be added to the %{file} file of the user configured on each server. The private key stays encrypted in the database and is never shown.
+      configuration:
+        title: Configuration
+        intro_html: Read from the environment variables when Elio starts. To change one, edit %{env} and restart Elio; %{doctor} checks the installation further. Secret values are never shown.
+        groups:
+          secrets: Secrets
+          address: Address
+          mail: Emails
+          limits: Limits
+          feeds: Vulnerability feed mirrors
+        set: set
+        not_set: not set
+        not_set_default: 'not set (default: %{value})'
+        defaults:
+          official_feed: the official feed
     key_install:
       title: Install the key on a server
       account: Account Elio uses

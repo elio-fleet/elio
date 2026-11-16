@@ -48,6 +48,17 @@ fr:
     index:
       subtitle: Les clés publiques connues d'Elio et les serveurs où elles donnent accès
       scan_keys: Scanner les clés du parc
+      last_scan: Dernier scan
+      scan_never: jamais
+      scan_running: "en cours (%{done}/%{count})"
+      scan_read:
+        one: "%{done}/%{count} serveur lu"
+        other: "%{done}/%{count} serveurs lus"
+      scan_failed:
+        one: "%{count} en échec"
+        other: "%{count} en échec"
+      outside_keyring: Hors trousseau
+      see_task: Voir la tâche
       keyring_empty_hint: Ajoutez les clés des personnes et des services pour savoir qui a accès à quoi, et repérer les clés inconnues sur les serveurs.
       all: Toutes
       people: Personnes
@@ -443,6 +454,20 @@ fr:
         one: Une nouvelle clé Elio va remplacer l'actuelle sur le serveur, sans coupure. Les serveurs injoignables pourront être relancés ensuite.
         other: Une nouvelle clé Elio va remplacer l'actuelle sur les %{count} serveurs, sans coupure. Les serveurs injoignables pourront être relancés ensuite.
       key_intro_html: Elio se connecte à vos serveurs avec cette clé. Sa clé publique doit être ajoutée au fichier %{file} de l'utilisateur configuré sur chaque serveur. La clé privée reste chiffrée dans la base et n'est jamais affichée.
+      configuration:
+        title: Configuration
+        intro_html: Lue dans les variables d'environnement au démarrage d'Elio. Pour en changer une, modifiez %{env} puis redémarrez Elio ; %{doctor} vérifie l'installation plus en détail. Les valeurs secrètes ne sont jamais affichées.
+        groups:
+          secrets: Secrets
+          address: Adresse
+          mail: Emails
+          limits: Limites
+          feeds: Miroirs des flux de vulnérabilités
+        set: définie
+        not_set: non définie
+        not_set_default: 'non définie (par défaut : %{value})'
+        defaults:
+          official_feed: le flux officiel
     key_install:
       title: Installer la clé sur un serveur
       account: Compte utilisé par Elio

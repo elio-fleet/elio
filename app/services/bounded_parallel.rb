@@ -7,7 +7,7 @@
 # An exception in one item does not stop the others: once every item is done,
 # the first exception is raised again.
 module BoundedParallel
-  DEFAULT_LIMIT = Integer(ENV.fetch("ELIO_PARALLEL_LIMIT", 4))
+  DEFAULT_LIMIT = Elio::Env.integer("ELIO_PARALLEL_LIMIT")
 
   def self.map(items, limit: DEFAULT_LIMIT, &block)
     items = items.to_a
