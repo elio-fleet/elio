@@ -41,11 +41,30 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
     get coolify_path(filter: "attention")
     assert_equal [ "n8n" ], css_select("tr.coolify-resource td:first-child span.font-medium").map(&:text)
     get coolify_path(filter: "databases")
-    assert_equal [ "pg-facturation" ], css_select("tr.coolify-resource td:first-child span.font-medium").map(&:text)
+    assert_equal %w[n8n pg-facturation], css_select("tr.coolify-resource td:first-child span.font-medium").map(&:text), "with the service holding a database"
+    assert_select "tr.coolify-resource[data-uuid=svcn8n0000000000000000003]", text: /Service · PostgreSQL/
     get coolify_path(q: "admin.example")
     assert_equal [ "back-office" ], css_select("tr.coolify-resource td:first-child span.font-medium").map(&:text)
     get coolify_path(q: "nothing-like-it")
     assert_select ".empty-state", text: /Aucune ressource/
+  end
+
+  test "servers running Coolify's proxy that no connection attaches are listed, with a way to connect their team" do
+    get coolify_path
+    assert_select "#coolify-unconnected", 0
+
+    servers(:db).inventory_snapshots.create!(category: "docker", status: "ok", data: { "docker" => "ok", "containers" => [ { "name" => "coolify-proxy" } ] },
+                                             collected_at: Time.current, checked_at: Time.current)
+    get coolify_path
+    assert_select "#coolify-unconnected" do
+      assert_select ".server-chip", servers(:db).name
+      assert_select ".attention-item", text: /aucune connexion ne le rattache/
+      assert_select "a.attention-action", 0, "a viewer cannot add a connection"
+    end
+
+    sign_in users(:one)
+    get coolify_path
+    assert_select "#coolify-unconnected a.attention-action[href=?]", new_settings_integration_connection_path("coolify")
   end
 
   test "a failed connection is said in the subtitle" do
@@ -79,6 +98,7 @@ class CoolifyControllerTest < ActionDispatch::IntegrationTest
       assert_select ".backup-state", "en retard"
       assert_equal %w[success failed success], css_select(".backup-execution").map { |square| square["data-status"] }
     end
+    assert_select "#coolify-backups li.coolify-service-database[data-name=postgresql]", text: /n8n › postgresql.*base du service · PostgreSQL.*sauvegardes non lisibles/m
 
     get server_path(servers(:backup))
     assert_select ".server-tabs a", text: /Coolify/, count: 0

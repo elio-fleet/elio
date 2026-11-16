@@ -17,6 +17,14 @@ lxc
 600.5 1200.1
 @@elio cpus
 2
+@@elio cpuinfo
+model=AMD EPYC 7543P 32-Core Processor
+cores=32
+sockets=1
 @@elio meminfo
 MemTotal:        4028180 kB
 @@elio timezone
+@@elio dmi
+sys_vendor=Dell Inc.
+product_name=PowerEdge R6525
+@@elio hypervisor

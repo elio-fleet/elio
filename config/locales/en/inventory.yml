@@ -74,6 +74,18 @@ en:
       last_attempt_html: 'Last attempt %{checked_at}: %{message}'
       inventory_yet_elio_reads: 'No inventory yet: Elio reads the system, health and services of the server over SSH, read-only.'
       run_inventory: Run the inventory
+      kernel_latest: "%{version} installed"
+      kernel_latest_hint: A newer kernel is installed; the server runs it after its next reboot.
+      processor: Processor
+      physical_cores:
+        one: "%{count} physical core"
+        other: "%{count} physical cores"
+      sockets:
+        one: "%{count} socket"
+        other: "%{count} sockets"
+      hardware: Hardware
+      host_hardware: Host hardware
+      hypervisor: Hypervisor
     events_card:
       title: Latest events
       all: All events

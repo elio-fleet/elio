@@ -14,6 +14,8 @@ UBUNTU_CODENAME=noble
 LOGO=ubuntu-logo
 @@elio uname
 Linux 6.8.0-45-generic aarch64
+@@elio kernel_latest
+6.8.0-47-generic
 @@elio hostname
 web-prod-1
 @@elio virt
@@ -22,7 +24,15 @@ none
 86400.00 340000.00
 @@elio cpus
 4
+@@elio cpuinfo
+model=
+cores=
+sockets=
 @@elio meminfo
 MemTotal:        8131256 kB
 @@elio timezone
 Etc/UTC
+@@elio dmi
+sys_vendor=To Be Filled By O.E.M.
+product_name=Default string
+@@elio hypervisor

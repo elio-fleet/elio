@@ -434,6 +434,7 @@ fr:
   background_task:
     system: Système
     interrupted: Interrompu
+    cancelled: Annulé
     kinds:
       inventory: Inventaire
       keys_scan: Scan des clés

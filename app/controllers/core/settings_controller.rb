@@ -6,6 +6,7 @@ class SettingsController < ApplicationController
   def show
     @ssh_key = SshKey.current
     @rotation = KeyRotation.in_progress
+    @configuration = Installation::Configuration.new.groups
     return unless @ssh_key
 
     @install_guide = KeyInstallGuide.new(@ssh_key, **install_params)

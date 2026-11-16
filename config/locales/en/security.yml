@@ -316,9 +316,33 @@ en:
       vulnerabilities: Vulnerabilities
       versions_fleet_html: "%{count} versions on the fleet"
       container: no container
+      created: Created
+      age: age (oldest first)
+      on_servers: on %{servers}
     tabs:
       images: Images
+      containers: Containers
       cves: Vulnerabilities of the images
+    containers:
+      intro: Every container of the fleet, from the last Docker inventory of each server.
+      trouble: To watch
+      trouble_detail: loop, unhealthy, stopped for long
+      host_access: Root on the host
+      host_access_detail: privileged or Docker socket
+      public: Public ports
+      public_detail: published on every interface
+      search: Container, image or project
+      state: State
+      since: Since
+      none: No known container.
+      none_matches: No container matches.
+    unused_images:
+      title: Unused images
+      total: "%{images}, %{size} to reclaim"
+      images: Unused images
+      size: Their size
+      reclaimable: Reclaimable
+      hint_html: Images that no container uses, not even a stopped one. Their layers can be shared, so <code>docker system df</code> gives the space really freed (read every 6 hours). <code>docker image prune -a</code> on the server removes them; Elio never runs it.
     cves:
       loading: Loading…
       intro: 'The vulnerabilities of the Docker images of the fleet: they are fixed by updating the image, not the server.'

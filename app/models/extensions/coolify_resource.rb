@@ -44,6 +44,9 @@ class CoolifyResource < ApplicationRecord
   # Domains served (application fqdn, service applications), without the scheme.
   def domains = Array(data["domains"])
 
+  # The databases inside a service (Integrations::Coolify::Fetch#service_database): { "name", "engine", "image", "status", "public", "public_port" }.
+  def service_databases = kind == "service" ? Array(data["databases"]) : []
+
   FINAL_DEPLOYMENTS = %w[finished failed cancelled-by-user].freeze
 
   # Deployments of an application (Integrations::Coolify::Fetch#deployments), newest first.
