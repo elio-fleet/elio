@@ -88,6 +88,17 @@ fr:
       'on': 'Sur :'
       none: Toutes les clés trouvées sur les serveurs sont dans le trousseau.
       not_scanned: 'Aucune clé lue pour l''instant : scannez les clés du parc (Parc → Actions).'
+      first_seen: 'Signalée '
+      root_hint: Sur un compte root
+      add_named: Ajouter au trousseau sous le nom « %{name} »
+      tolerate: Tolérer…
+      reason: Raison
+      reason_placeholder: Pourquoi cette clé peut rester
+      tolerate_submit: Tolérer
+      tolerated_title: Clés tolérées
+      tolerated_by: Tolérée par %{author}
+      nowhere: Sur aucun serveur désormais.
+      untolerate: Ne plus tolérer
   server_authorized_keys:
     frame:
       reading_authorized_keys: Lecture des clés autorisées…
@@ -121,6 +132,7 @@ fr:
         other: "%{count} comptes"
       root_needed: 'Seules les clés de %{login} sont affichées : Elio a besoin de root (ou de sudo sans mot de passe) pour lire les autres comptes.'
     account:
+      tolerated: Tolérée
       login: connexion d'Elio
       temporary_access_hint: Accès temporaire, le voir et le prolonger
       unreadable: Son fichier authorized_keys n'a pas pu être lu, même en root.
@@ -307,6 +319,10 @@ fr:
     created: La clé « %{public_key_name} » a été ajoutée au trousseau.
     updated: La clé « %{public_key_name} » a été modifiée.
     deleted: La clé « %{public_key_name} » a été retirée du trousseau.
+  tolerated_keys_controller:
+    created: La clé « %{name} » est tolérée et n'est plus signalée comme inconnue.
+    deleted: La clé « %{name} » n'est plus tolérée.
+    not_saved: "La clé n'a pas pu être tolérée : %{errors}"
   server_authorizations_controller:
     invalid_account: 'Nom de compte invalide : lettres minuscules, chiffres, « _ », « - » ou « . », 32 caractères au plus.'
     no_account: Choisissez au moins un compte.
