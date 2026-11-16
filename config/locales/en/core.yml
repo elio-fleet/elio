@@ -114,6 +114,9 @@ en:
       sign_out: Sign out
     application:
       open_menu: Open the menu
+    my_key_reminder:
+      text: "Your key “%{name}” on %{server} (account %{account}) is removed at %{time}."
+      extend: Extend or remove
     plain_http_notice:
       text: 'Elio is reached over plain HTTP: passwords and session cookies cross the network unencrypted. Fine on a trusted local network; otherwise, put Elio behind an HTTPS reverse proxy (README, "Security" section).'
       hide: Hide

@@ -1,6 +1,7 @@
-# "My account": password and two-factor authentication of the signed-in user.
+# "My account": password, two-factor authentication and preferences of the signed-in user.
 class AccountsController < ApplicationController
   skip_before_action :require_two_factor_setup, :redirect_to_password_change
+  require_permission :operate, only: :default_key_account
 
   def show
   end
@@ -22,5 +23,15 @@ class AccountsController < ApplicationController
     end
   rescue ActiveRecord::RecordInvalid
     redirect_to account_path(anchor: "language"), alert: t(".invalid")
+  end
+
+  # The account "Add my key temporarily" picks first (blank: Elio's login account).
+  def default_key_account
+    current_user.default_key_account = params.expect(user: [ :default_key_account ])[:default_key_account]
+    if current_user.save
+      redirect_to account_path(anchor: "my-keys"), notice: t(".saved"), status: :see_other
+    else
+      redirect_to account_path(anchor: "my-keys"), alert: t(".invalid"), status: :see_other
+    end
   end
 end

@@ -89,4 +89,15 @@ class MyKeyAccessesControllerTest < ActionDispatch::IntegrationTest
     get server_path(servers(:web))
     assert_select "a.my-key-button[href=?]", account_path(anchor: "my-keys")
   end
+
+  test "the dialog preselects my default account where Elio read it, else Elio's account" do
+    users(:operator).update!(default_key_account: "root")
+    sign_in users(:operator)
+    get server_path(servers(:web))
+    assert_select "dialog select[name=account] option[selected][value=?]", "deploy"
+
+    AccountSnapshot.create!(server: servers(:web), unix_user: "root", content: "", read_at: Time.current)
+    get server_path(servers(:web))
+    assert_select "dialog select[name=account] option[selected][value=?]", "root"
+  end
 end

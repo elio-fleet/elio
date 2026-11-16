@@ -15,6 +15,25 @@ class UserTest < ActiveSupport::TestCase
     assert_equal %w[load], user.reload.hidden_fleet_columns, "a damaged value does not break the list"
   end
 
+  test "the default account of my key: a valid unix user, preselected only where Elio read it" do
+    user = users(:operator)
+    assert_nil user.default_key_account
+    assert_equal "deploy", user.key_account_on(servers(:web), %w[deploy root])
+
+    user.update!(default_key_account: " root ")
+    assert_equal "root", user.reload.default_key_account
+    assert_equal "root", user.key_account_on(servers(:web), %w[deploy root])
+    assert_equal "deploy", user.key_account_on(servers(:web), %w[deploy]), "not read on this server: Elio's account"
+
+    user.default_key_account = "bad name;"
+    assert_not user.valid?
+    assert user.errors.added?(:default_key_account, :invalid)
+
+    user.default_key_account = ""
+    assert user.save
+    assert_not user.reload.preferences.key?("default_key_account")
+  end
+
   test "is valid with an email and a password" do
     user = User.new(email: "valid@example.com", password: "password1234")
     assert user.valid?

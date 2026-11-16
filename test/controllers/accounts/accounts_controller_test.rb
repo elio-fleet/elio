@@ -173,4 +173,47 @@ class AccountsControllerTest < ActionDispatch::IntegrationTest
     get servers_path
     assert_response :success
   end
+
+  test "an operator with a key chooses the default account of their key; an invalid name is refused" do
+    public_keys(:alice).update!(user: users(:operator))
+    sign_in users(:operator)
+    get account_path
+    assert_select "form.default-key-account input[name=?][value]", "user[default_key_account]", 0
+
+    patch default_key_account_account_path, params: { user: { default_key_account: "root" } }
+    assert_redirected_to account_path(anchor: "my-keys")
+    assert_equal "Compte par défaut enregistré.", flash[:notice]
+    assert_equal "root", users(:operator).reload.default_key_account
+    get account_path
+    assert_select "form.default-key-account input[name=?][value=?]", "user[default_key_account]", "root"
+
+    patch default_key_account_account_path, params: { user: { default_key_account: "bad name;" } }
+    assert_match "Nom de compte invalide", flash[:alert]
+    assert_equal "root", users(:operator).reload.default_key_account
+  end
+
+  test "without a key of mine, no default account to choose" do
+    sign_in users(:operator)
+    get account_path
+    assert_select "form.default-key-account", 0
+  end
+
+  test "my temporary access about to end is recalled on every page, to me only" do
+    public_keys(:alice).update!(user: users(:operator))
+    access = TemporaryAccess.create!(server: servers(:web), public_key: public_keys(:alice), unix_user: "deploy", key_blob: public_keys(:alice).authorized_key.key,
+                                     fingerprint: public_keys(:alice).fingerprint, expires_at: 8.minutes.from_now, created_at: 1.hour.ago)
+    sign_in users(:operator)
+    get root_path
+    assert_select ".my-key-reminder", text: /Votre clé « Alice » sur #{servers(:web).name} \(compte deploy\) est retirée à #{I18n.l(access.expires_at, format: :hour_minute)}/
+    assert_select ".my-key-reminder a[href=?]", server_path(servers(:web))
+
+    sign_in users(:one)
+    get root_path
+    assert_select ".my-key-reminder", 0
+
+    access.update!(expires_at: 1.hour.from_now)
+    sign_in users(:operator)
+    get root_path
+    assert_select ".my-key-reminder", 0, "not before the last minutes"
+  end
 end

@@ -114,6 +114,9 @@ fr:
       sign_out: Déconnexion
     application:
       open_menu: Ouvrir le menu
+    my_key_reminder:
+      text: "Votre clé « %{name} » sur %{server} (compte %{account}) est retirée à %{time}."
+      extend: Prolonger ou retirer
     plain_http_notice:
       text: "Elio est consulté en HTTP simple : les mots de passe et les cookies de session circulent en clair sur le réseau. Acceptable sur un réseau local de confiance ; sinon, placez Elio derrière un reverse proxy HTTPS (README, section « Sécurité »)."
       hide: Masquer

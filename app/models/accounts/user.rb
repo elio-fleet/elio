@@ -49,6 +49,21 @@ class User < ApplicationRecord
 
   def hide_fleet_columns!(columns) = update!(preferences: preferences.merge("hidden_fleet_columns" => Array(columns).map(&:to_s) & FLEET_COLUMNS))
 
+  # The account "Add my key temporarily" picks first on a server where Elio
+  # read it (blank: the account Elio logs in as).
+  def default_key_account = preferences["default_key_account"].to_s.presence
+
+  def default_key_account=(unix_user)
+    self.preferences = preferences.merge("default_key_account" => unix_user.to_s.strip.presence).compact
+  end
+
+  # The account to preselect among `accounts` (the unix users offered on a server).
+  def key_account_on(server, accounts)
+    accounts.include?(default_key_account) ? default_key_account : server.username
+  end
+
+  validate -> { errors.add(:default_key_account, :invalid) unless default_key_account.nil? || default_key_account.match?(AuthorizedKeysAccount::NAME_FORMAT) }
+
   def role_label = I18n.t("users.roles.#{role}")
 
   def self.role_label(role) = I18n.t("users.roles.#{role}")
