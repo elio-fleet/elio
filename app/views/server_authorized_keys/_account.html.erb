@@ -1,6 +1,6 @@
 <%# The keys of one account of a server (Keys::AuthorizedKeysReader::AccountKeys). %>
 <% account = entry.account %>
-<% orphans = entry.keys.reject { |key| key.matches?(@app_key) || @public_keys_by_fingerprint.key?(key.fingerprint) || @integration_keys.key?(key.fingerprint) } %>
+<% orphans = entry.keys.reject { |key| key.matches?(@app_key) || @public_keys_by_fingerprint.key?(key.fingerprint) || @integration_keys.key?(key.fingerprint) || @tolerated_keys.key?(key.fingerprint) } %>
 <section class="authorized-keys-account" data-account="<%= account.unix_user %>">
   <% if show_header %>
     <h3 class="mb-2 flex flex-wrap items-center gap-2 text-sm font-medium">
@@ -49,6 +49,9 @@
                 <span class="key-name truncate text-sm font-medium <%= key.named? ? "text-ink" : "italic text-ink-3" %>">
                   <%= key.named? ? key.name : t("server_authorized_keys.index.unnamed") %>
                 </span>
+                <% if (tolerated = @tolerated_keys[key.fingerprint]) %>
+                  <span class="key-badge key-tolerated badge bg-subtle text-ink-2" title="<%= tolerated.reason %>"><%= t("server_authorized_keys.account.tolerated") %></span>
+                <% end %>
                 <% if orphan %>
                   <span class="key-badge key-unknown rounded-full bg-warn-soft px-2 py-0.5 text-xs font-medium text-warn-ink ring-1 ring-inset ring-warn/20"><%= t("server_authorized_keys.index.outside_keyring") %></span>
                 <% end %>

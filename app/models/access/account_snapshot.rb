@@ -9,7 +9,8 @@ class AccountSnapshot < ApplicationRecord
 
   # Saves the keys read on an account and logs what changed since the last
   # read: keys outside the keyring that appeared (unknown_key_detected, also on the
-  # first read) and keys that vanished (key_disappeared). Keys removed through
+  # first read; unknown_root_key_detected, critical, on the root account) and
+  # keys that vanished (key_disappeared). Keys removed through
   # Elio are forgotten beforehand, so they are not reported as vanished.
   def self.record!(server, account, keys)
     snapshot = find_or_initialize_by(server: server, unix_user: account.unix_user)
@@ -49,10 +50,10 @@ class AccountSnapshot < ApplicationRecord
 
   def log_changes(previous_keys)
     known = previous_keys.to_a.map(&:fingerprint).to_set
-    orphans = unknown_keys(known_fingerprints: PublicKey.pluck(:fingerprint).to_set + Integration.known_keys.keys, app_key: SshKey.app_keys)
+    orphans = unknown_keys(known_fingerprints: KeyInsights.known_fingerprints, app_key: SshKey.app_keys)
 
     orphans.reject { |key| known.include?(key.fingerprint) }.uniq(&:fingerprint).each do |key|
-      Activity.record!(:unknown_key_detected, server: server, unix_user: unix_user, key_name: key.name, fingerprint: key.fingerprint)
+      Activity.record!(unix_user == "root" ? :unknown_root_key_detected : :unknown_key_detected, server: server, unix_user: unix_user, key_name: key.name, fingerprint: key.fingerprint)
     end
     return unless previous_keys
 

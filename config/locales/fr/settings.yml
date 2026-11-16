@@ -5,7 +5,6 @@ fr:
     language:
       title: Langue
       label: Langue par défaut
-      save: Enregistrer
       hint: Pour les utilisateurs qui n'ont pas choisi de langue et dont le navigateur en demande une qu'Elio n'a pas, pour les résultats des tâches de fond, et pour les canaux de notification sans langue propre.
     languages:
       update:
@@ -54,7 +53,6 @@ fr:
         security: Sécurité
         admin_two_factor: Double authentification obligatoire pour les administrateurs
         operator_two_factor: "… et pour les opérateurs (ils modifient les clés des serveurs)"
-        save: Enregistrer
         users_intro: Rôle et accès à Elio.
         you: " (vous)"
         deactivated: Désactivé

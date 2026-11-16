@@ -112,7 +112,6 @@ fr:
       health: Santé
       read_html: relevé %{collected_at}
       load: Charge
-      do: À traiter
       nothing_report: Rien à signaler
       updates: Mises à jour
       security_html: "%{security} de sécurité"
@@ -136,8 +135,6 @@ fr:
         one: "%{count} conteneur :"
         other: "%{count} conteneurs :"
       see_docker_tab: voir l'onglet Docker
-      without_compose_project: Sans projet Compose
-      stopped: arrêté
       read_html: relevé %{collected_at}
       active_services: services actifs
       failed_html: "%{count} en échec"
@@ -145,9 +142,6 @@ fr:
       containers_running_html: "/%{count} conteneurs en cours"
       show_inactive_services_html: Afficher les %{count} services inactifs
       systemd_system: Pas de systemd sur ce système.
-      docker_not_installed: Docker n'est pas installé.
-      elio_needs_root_password_html: "%{message} Elio a besoin de root (sudo sans mot de passe) ou du groupe docker."
-      container: Aucun conteneur.
       services_inventory_yet: Pas encore d'inventaire des services.
       all: Tous
       states:
@@ -213,8 +207,6 @@ fr:
       ssh_open: SSH ouvert à tous dans les règles proposées.
       ssh_sources_settings: Sources
     ports_card:
-      firewall_tab_hint: Le firewall du serveur, celui d'OVH et les règles à copier sont dans l'onglet Firewall.
-      see_firewall_tab: Onglet Firewall →
       private: privé
       ports: Ports
       read_html: relevé %{collected_at}

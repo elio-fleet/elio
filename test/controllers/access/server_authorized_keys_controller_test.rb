@@ -59,6 +59,20 @@ class ServerAuthorizedKeysControllerTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "a tolerated key is not outside the keyring and shows its reason" do
+    sign_in users(:one)
+    vendor = Ssh::KeyGenerator.generate(comment: "support@vendor")
+    ToleratedKey.create!(fingerprint: vendor.fingerprint, name: "support@vendor", reason: "Vendor support contract")
+
+    stub_method(Keys::AuthorizedKeysReader, :call_all, keys_read(keys_result(vendor.public_key))) do
+      get server_authorized_keys_path(servers(:web))
+    end
+
+    assert_select "li.authorized-key.is-orphan", 0
+    assert_select ".orphan-warning", 0
+    assert_select ".key-tolerated[title=?]", "Vendor support contract", text: "Tolérée"
+  end
+
   test "flags the master key even if renamed on the server" do
     sign_in users(:one)
     renamed = ssh_keys(:main).public_key.split(" ").first(2).join(" ")

@@ -76,6 +76,9 @@ test "summaries" do
       [ :key_access_extended, { public_key: public_keys(:ci), unix_user: "root", duration_seconds: 3600, expires_at: "2026-11-15T15:40:00+01:00" } ] =>
         "Accès temporaire de « CI » sur « Web » (compte root) prolongé de 1 heure, jusqu'à 15 nov. 15:40",
       [ :unknown_key_detected, { unix_user: "root" } ] => "Clé inconnue « sans nom » trouvée sur « Web » (compte root)",
+      [ :unknown_root_key_detected, { unix_user: "root", key_name: "bob" } ] => "Clé inconnue « bob » trouvée sur « Web » (compte root) : accès root",
+      [ :key_tolerated, { key_name: "support", reason: "Prestataire" } ] => "Clé « support » tolérée : Prestataire",
+      [ :key_tolerance_removed, { key_name: "support" } ] => "Clé « support » plus tolérée",
       [ :key_disappeared, { unix_user: "root", key_name: "bob" } ] => "Clé « bob » disparue de « Web » (compte root)",
       [ :ssh_access_lost, {} ] => "« Web » refuse la clé d'Elio",
       [ :servers_imported, { count: 12, format: "CSV", names: %w[A B] } ] => "12 serveurs importés (CSV) : A, B…",
