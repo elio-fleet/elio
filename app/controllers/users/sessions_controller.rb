@@ -3,6 +3,7 @@ module Users
   # that enabled 2FA: the password alone never opens a session for them.
   class SessionsController < Devise::SessionsController
     include Throttled
+    include KnownDevices
 
     throttle only: :create, to: 20, within: 5.minutes, redirect: :new_user_session_path # (above the per-account lock: 10)
 
@@ -22,6 +23,7 @@ module Users
         # force: authenticate!(store: false) left the user in Warden for this
         # request, so without it Devise would think they are signed in already.
         sign_in(resource_name, user, force: true)
+        note_sign_in_device(user)
         respond_with user, location: after_sign_in_path_for(user)
       end
     end

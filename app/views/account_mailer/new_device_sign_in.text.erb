@@ -1,0 +1,12 @@
+<%= t(".hello") %>
+
+<%= t(".text", email: @user.email, date: l(@at, format: :long), ip: @ip) %>
+<% if @browser %>
+<%= t(".browser", browser: @browser) %>
+<% end %>
+
+<%= t(".why") %>
+
+<%= t(".not_you") %>
+
+<%= t(".account", url: @url) %>

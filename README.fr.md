@@ -123,7 +123,7 @@ docker compose up -d
 | `ELIO_HOST` | Le domaine d'Elio : liens des emails et des notifications, et seul nom d'hôte auquel il répond. |
 | `ELIO_SETUP_TOKEN` | S'il est défini, demandé à la création du premier compte (utile si Elio est joignable avant que vous le configuriez). |
 | `ELIO_FORCE_SSL` | `false` seulement pour essayer Elio en HTTP simple. Sinon, HTTPS est forcé. |
-| `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails : invitations, mot de passe oublié, notifications. Sans `SMTP_ADDRESS`, les liens d'invitation sont à copier. Sans `SMTP_USERNAME`, pas d'authentification (relais local, Postfix). |
+| `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails : invitations, mot de passe oublié, alertes de sécurité, notifications. Sans `SMTP_ADDRESS`, les liens d'invitation sont à copier. Sans `SMTP_USERNAME`, pas d'authentification (relais local, Postfix). |
 | `ELIO_PARALLEL_LIMIT` | Serveurs collectés en même temps (4). |
 | `ELIO_ACTIVITY_RETENTION_DAYS` | Durée de conservation du journal d'activité (365, `0` = tout garder). |
 | `ELIO_DEBIAN_TRACKER_URL`, `ELIO_UBUNTU_OSV_URL`, `ELIO_NVD_FEED_URL`, `ELIO_EPSS_URL`, `ELIO_KEV_URL` | Miroirs des bases de vulnérabilités, pour un réseau fermé (elles peuvent aussi être importées à la main). |
@@ -232,7 +232,7 @@ Les extensions qui lisent du DNS (OVHcloud avec son produit DNS, Technitium DNS,
 ## Sécurité
 
 - La clé SSH d'Elio, les clés d'API, les webhooks et les secrets 2FA sont **chiffrés en base** et jamais renvoyés au navigateur.
-- Double authentification (TOTP et codes de secours), obligatoire par défaut pour les administrateurs et les opérateurs ; rôles ; invitations seulement (pas d'inscription publique) ; connexion limitée en débit et verrouillage.
+- Double authentification (TOTP et codes de secours), obligatoire par défaut pour les administrateurs et les opérateurs ; rôles ; invitations seulement (pas d'inscription publique) ; connexion limitée en débit et verrouillage ; session fermée après 30 minutes d'inactivité (sauf « Se souvenir de moi ») ; un email au titulaire lors d'une connexion depuis un nouveau navigateur.
 - **En-têtes** : une Content Security Policy stricte (scripts avec un nonce par requête, aucune intégration en cadre), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, et une `Permissions-Policy` qui refuse la caméra, le micro, la localisation, le paiement et les API de périphériques, dont Elio ne se sert pas. Quand HTTPS est forcé (par défaut en production), aussi `Strict-Transport-Security: max-age=63072000; includeSubDomains` ; jamais en HTTP simple (`ELIO_FORCE_SSL=false`). Les violations de la CSP sont signalées à Elio lui-même (`POST /csp-reports`, limité en débit, écrit dans le journal de l'application), jamais à un service externe.
 - **HTTP simple** : un administrateur qui consulte Elio en HTTP simple en production voit un avertissement (mots de passe et cookies circulent en clair) ; il peut le masquer pour une installation laissée volontairement sur un réseau local de confiance. Derrière un reverse proxy, envoyez `X-Forwarded-Proto: https`.
 - **Changer la clé de chiffrement** de la base (`ACTIVE_RECORD_ENCRYPTION_PRIMARY_KEY`), par exemple après une fuite :
