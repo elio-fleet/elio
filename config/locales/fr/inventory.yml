@@ -252,6 +252,8 @@ fr:
       periodic_scripts: Scripts périodiques
       etc_cron_html: "(/etc/cron.%{period})"
       scheduled_tasks_inventory_yet: Pas encore d'inventaire des tâches planifiées.
+      output: Sortie
+      output_hint: Dernières lignes du journal de %{unit}, le service que lance ce timer
   server_unit_journals:
     frame:
       loading: Lecture du journal…

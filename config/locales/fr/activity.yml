@@ -19,6 +19,15 @@ fr:
       unknown_key_detected:
         label: Clé inconnue détectée
         description: Une clé absente du trousseau a été trouvée sur un serveur.
+      unknown_root_key_detected:
+        label: Clé inconnue sur root
+        description: Une clé absente du trousseau a été trouvée sur le compte root d'un serveur.
+      key_tolerated:
+        label: Clé tolérée
+        description: Une clé hors trousseau a été acceptée, avec une raison, et n'est plus signalée comme inconnue.
+      key_tolerance_removed:
+        label: Clé plus tolérée
+        description: Une clé tolérée est de nouveau signalée comme inconnue.
       key_disappeared:
         label: Clé retirée hors d'Elio
         description: Une clé a disparu d'un serveur sans passer par Elio.
@@ -82,6 +91,9 @@ fr:
       scheduled_task_late:
         label: Tâche planifiée en retard
         description: Un timer systemd n'a pas tourné depuis plus de deux fois sa période.
+      scheduled_task_removed:
+        label: Tâche planifiée disparue
+        description: Un timer systemd activé, une ligne cron ou un script cron.daily (et semblables) n'est plus sur le serveur (une sauvegarde qui n'est plus planifiée, par exemple).
       vulnerability_found:
         label: Vulnérabilité corrigeable
         description: Une vulnérabilité (CVE) grave et corrigeable touche un serveur ou une de ses images Docker (gravité choisie dans les paramètres).
@@ -272,6 +284,9 @@ fr:
       key_expiring: L'accès temporaire de « %{name} » sur %{target} se termine à %{time}
       key_access_extended: Accès temporaire de « %{name} » sur %{target} prolongé de %{duration}, jusqu'à %{time}
       unknown_key_detected: Clé inconnue « %{name} » trouvée sur %{target}
+      unknown_root_key_detected: "Clé inconnue « %{name} » trouvée sur %{target} : accès root"
+      key_tolerated: "Clé « %{name} » tolérée : %{reason}"
+      key_tolerance_removed: Clé « %{name} » plus tolérée
       key_disappeared: Clé « %{name} » disparue de %{target}
       ssh_access_lost: "« %{server} » refuse la clé d'Elio"
       host_key_mismatch: "« %{server} » présente une autre empreinte : %{fingerprint}. Elio ne s'y connecte plus tant qu'un administrateur ne l'a pas acceptée."
@@ -309,6 +324,7 @@ fr:
       container_started: Le conteneur %{container} tourne à nouveau sur « %{server} »
       scheduled_task_failed: La tâche planifiée %{task} a échoué sur « %{server} »
       scheduled_task_late: La tâche planifiée %{task} n'a pas tourné à temps sur « %{server} »
+      scheduled_task_removed: La tâche planifiée %{task} n'est plus sur « %{server} »
       in_image: l'image %{image} de « %{server} »
       vulnerability_found:
         one: "%{count} vulnérabilité corrigeable sur %{where} : %{cves}"

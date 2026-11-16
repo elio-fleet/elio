@@ -96,6 +96,17 @@ fr:
       'on': 'Sur :'
       none: Toutes les clés trouvées sur les serveurs sont dans le trousseau.
       not_scanned: 'Aucune clé lue pour l''instant : scannez les clés du parc (Parc → Actions).'
+      first_seen: 'Signalée '
+      root_hint: Sur un compte root
+      add_named: Ajouter au trousseau sous le nom « %{name} »
+      tolerate: Tolérer…
+      reason: Raison
+      reason_placeholder: Pourquoi cette clé peut rester
+      tolerate_submit: Tolérer
+      tolerated_title: Clés tolérées
+      tolerated_by: Tolérée par %{author}
+      nowhere: Sur aucun serveur désormais.
+      untolerate: Ne plus tolérer
   server_authorized_keys:
     frame:
       reading_authorized_keys: Lecture des clés autorisées…
@@ -129,11 +140,42 @@ fr:
         other: "%{count} comptes"
       root_needed: 'Seules les clés de %{login} sont affichées : Elio a besoin de root (ou de sudo sans mot de passe) pour lire les autres comptes.'
     account:
+      tolerated: Tolérée
       login: connexion d'Elio
       temporary_access_hint: Accès temporaire, le voir et le prolonger
       unreadable: Son fichier authorized_keys n'a pas pu être lu, même en root.
       no_key: Aucune clé dans ce fichier.
+      no_file: Pas de fichier authorized_keys.
       key_will_be_removed_from: La clé « %{nom} » sera supprimée du compte %{account} de « %{server_name} ». Elle ne pourra plus se connecter à ce compte.
+      extra_file_html:
+        one: "%{count} clé dans <code class=\"font-mono text-xs\">%{path}</code>, que le serveur SSH lit aussi."
+        other: "%{count} clés dans <code class=\"font-mono text-xs\">%{path}</code>, que le serveur SSH lit aussi."
+      extra_file_hint: Elio les affiche mais ne modifie pas ce fichier ; vérifiez-les sur le serveur.
+    list:
+      dormant:
+        one: "%{count} compte avec un shell de connexion et sans clé"
+        other: "%{count} comptes avec un shell de connexion et sans clé"
+      dormant_hint: Aucun fichier authorized_keys. Vérifiez qu'ils servent encore ; ils peuvent toujours se connecter par mot de passe si le serveur l'autorise.
+    options:
+      from: depuis %{from}
+      command: commande imposée
+      restrict: restreinte
+      expired: Expirée, refusée par le serveur
+      server_local_time: "%{time} (heure locale du serveur)"
+      labels:
+        from: Adresses d'origine autorisées
+        command: Commande imposée
+        expiry_time: Refusée après
+        restrict: Restreinte (sans redirection ni terminal)
+        no_pty: Sans terminal
+        no_port_forwarding: Sans redirection de ports
+        no_agent_forwarding: Sans transfert d'agent
+        no_x11_forwarding: Sans redirection X11
+        permitopen: Redirection permise vers
+        permitlisten: Écoute permise sur
+        principals: Principaux du certificat
+        environment: Variable d'environnement
+        cert_authority: Autorité de certification
   servers:
     add_key_dialog:
       accounts: Comptes Unix
@@ -321,6 +363,10 @@ fr:
     created: La clé « %{public_key_name} » a été ajoutée au trousseau.
     updated: La clé « %{public_key_name} » a été modifiée.
     deleted: La clé « %{public_key_name} » a été retirée du trousseau.
+  tolerated_keys_controller:
+    created: La clé « %{name} » est tolérée et n'est plus signalée comme inconnue.
+    deleted: La clé « %{name} » n'est plus tolérée.
+    not_saved: "La clé n'a pas pu être tolérée : %{errors}"
   server_authorizations_controller:
     invalid_account: 'Nom de compte invalide : lettres minuscules, chiffres, « _ », « - » ou « . », 32 caractères au plus.'
     no_account: Choisissez au moins un compte.

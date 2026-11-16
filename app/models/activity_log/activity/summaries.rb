@@ -33,6 +33,9 @@ module Activity::Summaries
                                                   duration: TemporaryAccess.label_for(data["duration_seconds"].to_i), time: I18n.l(Time.zone.parse(data["expires_at"]), format: :short))
     end,
     unknown_key_detected: proc { Activity::Summaries.t(:unknown_key_detected, name: key_name, target: target) },
+    unknown_root_key_detected: proc { Activity::Summaries.t(:unknown_root_key_detected, name: key_name, target: target) },
+    key_tolerated: proc { Activity::Summaries.t(:key_tolerated, name: key_name, reason: data["reason"]) },
+    key_tolerance_removed: proc { Activity::Summaries.t(:key_tolerance_removed, name: key_name) },
     key_disappeared: proc { Activity::Summaries.t(:key_disappeared, name: key_name, target: target) },
     ssh_access_lost: proc { Activity::Summaries.t(:ssh_access_lost, server: server_name) },
     # A key of a type Elio had not pinned (new algorithm) reads differently from the same type of key replaced.
@@ -64,6 +67,7 @@ module Activity::Summaries
     container_started: proc { Activity::Summaries.t(:container_started, container: data["container"], server: server_name) },
     scheduled_task_failed: proc { Activity::Summaries.t(:scheduled_task_failed, task: data["task"], server: server_name) },
     scheduled_task_late: proc { Activity::Summaries.t(:scheduled_task_late, task: data["task"], server: server_name) },
+    scheduled_task_removed: proc { Activity::Summaries.t(:scheduled_task_removed, task: data["task"], server: server_name) },
     vulnerability_found: proc do
       where = data["image"] ? Activity::Summaries.t(:in_image, image: data["image"], server: server_name) : target
       Activity::Summaries.t(:vulnerability_found, count: data["count"].to_i, where: where, cves: Array(data["cves"]).join(", ")) + Activity::Summaries.list(data["packages"])

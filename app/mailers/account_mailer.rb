@@ -12,4 +12,15 @@ class AccountMailer < ApplicationMailer
       mail to: user.email, subject: t("account_mailer.backup_code_used.subject")
     end
   end
+
+  # The password changed (My account, a reset by email, a change asked by an
+  # admin): if it was not them, they learn it at once.
+  def password_changed(user, at:)
+    @user = user
+    @at = at
+    @url = account_url
+    I18n.with_locale(user.locale || AppSetting.current.default_locale) do
+      mail to: user.email, subject: t("account_mailer.password_changed.subject")
+    end
+  end
 end
