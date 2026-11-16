@@ -95,4 +95,24 @@ class AccountSnapshotTest < ActiveSupport::TestCase
 
     assert_equal 0, Activity.of_kind(:unknown_key_detected).count
   end
+
+  test "an unknown key on root is a critical activity of its own" do
+    bob = Ssh::KeyGenerator.generate(comment: "bob@desktop").public_key
+
+    AccountSnapshot.record!(servers(:web), AuthorizedKeysAccount.new(servers(:web), "root"), keys(bob))
+
+    assert_equal 0, Activity.of_kind(:unknown_key_detected).count
+    detected = Activity.of_kind(:unknown_root_key_detected).sole
+    assert_equal :critical, detected.severity
+    assert_equal [ "root", "bob@desktop" ], [ detected.unix_user, detected.key_name ]
+  end
+
+  test "a tolerated key is not reported as unknown" do
+    bob = Ssh::KeyGenerator.generate(comment: "bob@desktop").public_key
+    ToleratedKey.create!(fingerprint: AuthorizedKey.parse(bob).sole.fingerprint, reason: "Vendor")
+
+    AccountSnapshot.record!(servers(:web), @account, keys(bob))
+
+    assert_equal 0, Activity.of_kind(:unknown_key_detected).count
+  end
 end

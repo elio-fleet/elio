@@ -33,6 +33,9 @@ module Activity::Summaries
                                                   duration: TemporaryAccess.label_for(data["duration_seconds"].to_i), time: I18n.l(Time.zone.parse(data["expires_at"]), format: :short))
     end,
     unknown_key_detected: proc { Activity::Summaries.t(:unknown_key_detected, name: key_name, target: target) },
+    unknown_root_key_detected: proc { Activity::Summaries.t(:unknown_root_key_detected, name: key_name, target: target) },
+    key_tolerated: proc { Activity::Summaries.t(:key_tolerated, name: key_name, reason: data["reason"]) },
+    key_tolerance_removed: proc { Activity::Summaries.t(:key_tolerance_removed, name: key_name) },
     key_disappeared: proc { Activity::Summaries.t(:key_disappeared, name: key_name, target: target) },
     ssh_access_lost: proc { Activity::Summaries.t(:ssh_access_lost, server: server_name) },
     # A key of a type Elio had not pinned (new algorithm) reads differently from the same type of key replaced.

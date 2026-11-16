@@ -19,6 +19,15 @@ en:
       unknown_key_detected:
         label: Unknown key detected
         description: A key missing from the keyring has been found on a server.
+      unknown_root_key_detected:
+        label: Unknown key on root
+        description: A key missing from the keyring has been found on the root account of a server.
+      key_tolerated:
+        label: Key tolerated
+        description: A key outside the keyring has been accepted, with a reason, and is no longer reported as unknown.
+      key_tolerance_removed:
+        label: Key no longer tolerated
+        description: A tolerated key is reported as unknown again.
       key_disappeared:
         label: Key removed outside Elio
         description: A key has disappeared from a server without going through Elio.
@@ -275,6 +284,9 @@ en:
       key_expiring: Temporary access of “%{name}” on %{target} ends at %{time}
       key_access_extended: Temporary access of “%{name}” on %{target} extended by %{duration}, until %{time}
       unknown_key_detected: Unknown key “%{name}” found on %{target}
+      unknown_root_key_detected: "Unknown key “%{name}” found on %{target}: root access"
+      key_tolerated: "Key “%{name}” tolerated: %{reason}"
+      key_tolerance_removed: Key “%{name}” no longer tolerated
       key_disappeared: Key “%{name}” gone from %{target}
       ssh_access_lost: "“%{server}” refuses Elio's key"
       host_key_mismatch: '“%{server}” presents another fingerprint: %{fingerprint}. Elio no longer connects to it until an administrator accepts it.'

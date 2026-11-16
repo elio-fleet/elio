@@ -20,12 +20,24 @@ class PublicPagesSecurityTest < ActionDispatch::IntegrationTest
   end
 
   test "password reset: 5 requests per IP within 10 minutes" do
-    5.times { post user_password_path, params: { user: { email: "x@example.com" } } }
+    5.times { |index| post user_password_path, params: { user: { email: "x#{index}@example.com" } } }
     assert_redirected_to new_user_session_path
 
-    post user_password_path, params: { user: { email: "x@example.com" } }
+    post user_password_path, params: { user: { email: "y@example.com" } }
     assert_redirected_to new_user_password_path
     assert_match "Trop de tentatives", flash[:alert]
+  end
+
+  test "password reset: 5 requests per email within 10 minutes, whatever the IP" do
+    5.times { |index| post user_password_path, params: { user: { email: "one@example.com" } }, env: { "REMOTE_ADDR" => "203.0.113.#{index + 1}" } }
+    assert_redirected_to new_user_session_path
+
+    post user_password_path, params: { user: { email: " ONE@example.com " } }, env: { "REMOTE_ADDR" => "203.0.113.50" }
+    assert_redirected_to new_user_password_path
+    assert_match "Trop de tentatives", flash[:alert]
+
+    post user_password_path, params: { user: { email: "other@example.com" } }, env: { "REMOTE_ADDR" => "203.0.113.51" }
+    assert_redirected_to new_user_session_path
   end
 
   test "invitation: 10 attempts per IP within 3 minutes" do
