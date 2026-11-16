@@ -61,6 +61,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "server docker" => -> { get server_path(servers(:web), tab: "docker") },
       "server vulnerabilities" => -> { get server_path(servers(:web), tab: "vulnerabilities") },
       "server notes" => -> { get server_path(servers(:web), tab: "journal") },
+      "export a server's journal" => -> { get server_journal_path(servers(:web), format: :csv) },
       "add a note" => -> { post server_notes_path(servers(:web)), params: { server_note: { body: "Hello" } } },
       "preview a note" => -> { post preview_server_notes_path(servers(:web)), params: { server_note: { body: "**x**" } } },
       "ping one server" => -> { post server_ping_path(servers(:web)) },

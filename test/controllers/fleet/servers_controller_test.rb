@@ -287,6 +287,35 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
     assert_select "#server-journal a[href=?]", activities_path(server_id: servers(:web).id), text: /journal du parc/
   end
 
+  test "the server's journal: filtered by accesses or deployments, searched, exported with both" do
+    server = servers(:web)
+    server.notes.create!(body: "Kernel updated by hand", user: users(:one))
+    Activity.record!(:key_added, server: server, public_key: public_keys(:alice), unix_user: "deploy")
+    sign_in users(:viewer)
+
+    get server_path(server, tab: "journal")
+    assert_select "#server-journal a.filter-chip", text: /Accès et clés/
+    assert_select "#server-journal a.filter-chip", text: /Déploiements/, count: 0
+    assert_select "#server-journal a.export-csv[href=?]", server_journal_path(server, format: :csv)
+
+    get server_path(server, tab: "journal", show: "access", q: "alice")
+    assert_select "#server-activity li.activity", 1
+    assert_select "#server-activity .server-note", 0
+    assert_select "#server-journal a.export-json[href=?]", server_journal_path(server, show: "access", q: "alice", format: :json)
+    assert_select "form.journal-search input[type=hidden][name=show][value=access]"
+
+    get server_path(server, tab: "journal", q: "kernel")
+    assert_select "#server-activity .server-note", 1
+    assert_select "#server-activity li.activity", 0
+
+    get server_path(server, tab: "journal", q: "nothing like this")
+    assert_select "#server-activity", text: /Aucun résultat/
+
+    Activity.record!(:coolify_deployed, server: server, application: "shop")
+    get server_path(server, tab: "journal")
+    assert_select "#server-journal a.filter-chip[href=?]", server_path(server, tab: "journal", show: "deployments"), text: /Déploiements/
+  end
+
   test "destroy requires authentication" do
     delete server_path(servers(:web))
     assert_redirected_to new_user_session_path

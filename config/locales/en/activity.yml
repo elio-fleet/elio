@@ -404,6 +404,8 @@ en:
       dns_record_conflict: "%{record} differs between %{sources}"
       dns_manual_updated: "DNS source “%{source}”: %{count} records (+%{added} / −%{removed})"
     target_account: "“%{server_name}” (%{account} account)"
+    server_journal:
+      note: Note
   automation:
     whole_fleet: The whole fleet
     scope_except: "%{included} except %{groups}"
