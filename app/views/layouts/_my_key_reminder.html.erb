@@ -1,0 +1,14 @@
+<%# On every page, to the signed-in user: their temporary accesses ("Add my key temporarily") ending within TemporaryAccess::REMINDER_LEAD,
+    each with a link to its server, where the header button extends or removes it. Nothing otherwise. %>
+<% accesses = TemporaryAccess.ending_soon.of_user(current_user).includes(:server, :public_key).order(:expires_at).to_a %>
+<% if accesses.any? %>
+  <div role="status" class="my-key-reminder mb-6 space-y-1 rounded-lg border border-warn/40 bg-warn-soft px-4 py-3 text-sm text-warn-ink">
+    <% accesses.each do |access| %>
+      <p class="flex flex-wrap items-center gap-x-3 gap-y-1">
+        <%= icon :clock, class: "h-4 w-4 shrink-0" %>
+        <span class="min-w-0 flex-1"><%= t(".text", name: access.public_key&.name, server: access.server.name, account: access.unix_user, time: l(access.expires_at, format: :hour_minute)) %></span>
+        <%= link_to t(".extend"), server_path(access.server), class: "shrink-0 font-medium underline hover:no-underline" %>
+      </p>
+    <% end %>
+  </div>
+<% end %>

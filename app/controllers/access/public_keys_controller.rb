@@ -13,6 +13,8 @@ class PublicKeysController < ApplicationController
       @kind = "outside"
       @pager = paginate(@insights.outside_keys, per_page: PER_PAGE)
       @outside_keys = @pager.records
+      @first_seen = KeyInsights.first_seen(@outside_keys.map(&:fingerprint))
+      @tolerated_keys = @insights.tolerated_keys
       @public_key_count = PublicKey.count
       return render :outside
     end

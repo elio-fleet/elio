@@ -8,10 +8,15 @@ module Throttled
 
   class_methods do
     # `to` requests per IP `within` the period; then back to `redirect` (a
-    # route helper name) with a message, 429.
-    def throttle(only:, to:, within:, redirect:)
-      rate_limit to: to, within: within, only: only, store: STORE, name: "#{controller_path}##{Array(only).join(",")}",
-                 with: -> { redirect_to main_app.public_send(redirect), alert: I18n.t("throttled.too_many"), status: :see_other }
+    # route helper name) with a message, 429. `by` counts by something else
+    # than the IP (a lambda run in the controller, e.g. the email asked for);
+    # `name` keeps two limits of the same action apart.
+    def throttle(only:, to:, within:, redirect:, by: nil, name: nil)
+      options = { to: to, within: within, only: only, store: STORE,
+                  name: [ "#{controller_path}##{Array(only).join(",")}", name ].compact.join(":"),
+                  with: -> { redirect_to main_app.public_send(redirect), alert: I18n.t("throttled.too_many"), status: :see_other } }
+      options[:by] = by if by
+      rate_limit(**options)
     end
   end
 end

@@ -20,10 +20,15 @@ class TemporaryAccess < ApplicationRecord
   scope :active, -> { where(ended_at: nil) }
   scope :expired, -> { active.where(expires_at: ..Time.current) }
   scope :ended, -> { where.not(ended_at: nil) }
-  scope :due_for_reminder, lambda {
-    active.where(expiry_reminded_at: nil, expires_at: Time.current..REMINDER_LEAD.from_now)
+  # Ending within the reminder lead time, and long enough for a reminder (the
+  # key_expiring activity, and the banner of its owner on every page).
+  scope :ending_soon, lambda {
+    active.where(expires_at: Time.current..REMINDER_LEAD.from_now)
           .where("expires_at - created_at > make_interval(secs => ?)", REMINDER_MIN_LENGTH.to_i)
   }
+  scope :due_for_reminder, -> { ending_soon.where(expiry_reminded_at: nil) }
+  # The accesses of the keys of `user` ("my keys").
+  scope :of_user, ->(user) { where(public_key_id: PublicKey.where(user: user).select(:id)) }
 
   def self.duration_for(param)
     DURATIONS.fetch(param.to_s) { raise ArgumentError, "Unknown duration: #{param.inspect}" }

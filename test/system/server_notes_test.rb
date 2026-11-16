@@ -35,4 +35,25 @@ class ServerNotesTest < ApplicationSystemTestCase
     assert_selector "#flash .toast", text: "Note supprimée."
     assert_no_selector "article.server-note"
   end
+
+  test "the server's journal is searched while typing; its export follows the filter and the search" do
+    server = servers(:web)
+    server.notes.create!(body: "Disk **replaced**", user: users(:one))
+    Activity.record!(:key_added, server: server, public_key: public_keys(:alice), unix_user: "deploy")
+    visit server_path(server, tab: "journal", show: "access")
+    assert_selector "#server-activity li.activity", count: 1
+
+    find("#server-journal .journal-search input[name=q]").fill_in(with: "nothing like this")
+    assert_selector "#server-activity", text: "Aucun résultat"
+    find("#server-journal .journal-search input[name=q]").fill_in(with: "alice")
+    assert_selector "#server-activity li.activity", count: 1
+
+    # Catch the export instead of letting the browser save a file.
+    execute_script("document.addEventListener('click', (event) => { if (event.target.closest('.export-json')) { window.exported = event.target.closest('a').href; event.preventDefault() } })")
+    find("#server-journal .actions-menu summary").click
+    find("a.export-json").click
+    exported = URI(evaluate_script("window.exported"))
+    assert_equal server_journal_path(server, format: :json), exported.path
+    assert_equal({ "show" => "access", "q" => "alice" }, Rack::Utils.parse_query(exported.query).compact_blank.except("tab"))
+  end
 end

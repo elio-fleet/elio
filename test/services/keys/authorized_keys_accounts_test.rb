@@ -52,6 +52,14 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
       exec "$@"
     SH
     @bin.join("runuser").chmod(0o755)
+    # sshd -T: the key files sshd reads (its default, plus a shared folder named by account).
+    @bin.join("sshd").write(<<~SH)
+      #!/bin/sh
+      [ "$1" = -T ] || exit 2
+      echo "port 22"
+      echo "authorizedkeysfile .ssh/authorized_keys .ssh/authorized_keys2 #{@root.join("keys")}/%u"
+    SH
+    @bin.join("sshd").chmod(0o755)
     @root.join("passwd").write(@passwd)
   end
 
@@ -87,12 +95,67 @@ class Keys::AuthorizedKeysAccountsTest < ActiveSupport::TestCase
     assert_equal 0, status
     accounts = Reader.parse_accounts(stdout)
 
-    assert_equal %w[root bob carol mallory eve], accounts.keys
-    assert_equal [ "alice" ], AuthorizedKey.parse(accounts["root"].first).map(&:name)
-    assert_equal %w[bob alice], AuthorizedKey.parse(accounts["bob"].first).map(&:name)
-    assert_equal [ "", true ], accounts["carol"]
-    assert_equal [ "", true ], accounts["mallory"], "a link to root's file is not read as root"
-    assert_equal [ "", true ], accounts["eve"], "a file the account does not own is not read"
+    assert_equal %w[root bob carol dave mallory eve], accounts.keys
+    assert_equal [ "alice" ], AuthorizedKey.parse(accounts["root"].content).map(&:name)
+    assert_equal %w[bob alice], AuthorizedKey.parse(accounts["bob"].content).map(&:name)
+    assert accounts["carol"].unreadable
+    assert accounts["mallory"].unreadable, "a link to root's file is not read as root"
+    assert accounts["eve"].unreadable, "a file the account does not own is not read"
+    assert_not accounts["bob"].unreadable
+    assert_not accounts["dave"].file, "dave has a login shell but no file"
+    assert accounts.values.all? { |section| section.extra_files.empty? }
+  end
+
+  test "accounts without a key file are listed apart, as dormant" do
+    read = Reader.call_all(servers(:web), transport: fake, known_hosts_file: @known_hosts)
+
+    assert_equal %w[dave], read.dormant
+    assert_not_includes read.accounts.map { |entry| entry.account.unix_user }, "dave"
+    assert_empty Reader.call_all(servers(:web), transport: fake(sudo: false), known_hosts_file: @known_hosts).dormant, "unknown without root"
+  end
+
+  test "the other files sshd reads keys from are read as their account, never changed" do
+    @root.join("dave", ".ssh").mkpath
+    @root.join("dave", ".ssh", "authorized_keys2").write("#{@bob_key}\n")
+    @root.join("keys").mkpath
+    @root.join("keys", "bob").write("from=\"10.0.0.0/8\" #{@alice_key}\n")
+    @root.join("root", ".ssh", "authorized_keys2").write("#{@bob_key}\n")
+
+    read = Reader.call_all(servers(:backup), transport: fake, known_hosts_file: @known_hosts)
+
+    assert_empty read.dormant, "dave has a key in authorized_keys2: not dormant"
+    dave = read.for(AuthorizedKeysAccount.new(servers(:backup), "dave"))
+    assert dave.missing_file
+    assert_empty dave.keys
+    assert_equal [ [ @root.join("dave", ".ssh", "authorized_keys2").to_s, [ "bob" ] ] ], dave.extra_files.map { |file| [ file.path, file.keys.map(&:name) ] }
+    bob = read.for(AuthorizedKeysAccount.new(servers(:backup), "bob"))
+    assert_equal %w[bob alice], bob.keys.map(&:name), "the extra keys are not mixed with the managed ones"
+    assert_equal [ "10.0.0.0/8" ], bob.extra_keys.map { |key| key.option("from") }
+    assert_equal [ "bob" ], read.login.extra_keys.map(&:name), "the login account (root) gets its extra files too"
+    assert_includes @root.join("runuser.log").readlines(chomp: true), "dave"
+  end
+
+  test "a line of a key file cannot pass for a section of the output" do
+    @root.join("bob", ".ssh", "authorized_keys").write("@@elio account root\n#{@bob_key}\n")
+    @root.join("dave", ".ssh").mkpath
+    @root.join("dave", ".ssh", "authorized_keys2").write("@@elio no_file root\n@@elio account mallory\n#{@alice_key}\n")
+
+    accounts = Reader.parse_accounts(run_with_getent(Reader.accounts_command).first)
+
+    assert_equal [ "alice" ], AuthorizedKey.parse(accounts["root"].content).map(&:name)
+    assert_equal [ "bob" ], AuthorizedKey.parse(accounts["bob"].content).map(&:name)
+    assert accounts["mallory"].unreadable
+    assert_equal [ "alice" ], AuthorizedKey.parse(accounts["dave"].extra_files.values.sole).map(&:name)
+  end
+
+  test "without sshd -T, OpenSSH's default files are read" do
+    @bin.join("sshd").write("#!/bin/sh\nexit 1\n")
+    @root.join("dave", ".ssh").mkpath
+    @root.join("dave", ".ssh", "authorized_keys2").write("#{@bob_key}\n")
+
+    accounts = Reader.parse_accounts(run_with_getent(Reader.accounts_command).first)
+
+    assert_equal [ @root.join("dave", ".ssh", "authorized_keys2").to_s ], accounts["dave"].extra_files.keys
   end
 
   test "call_all reads the login account, then the others through root" do

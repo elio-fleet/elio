@@ -25,7 +25,16 @@
       <dd class="text-ink"><%= key.comment || tag.span(t(".none"), class: "italic text-ink-3") %></dd>
       <% if key.options %>
         <dt class="text-ink-3"><%= t("words.options") %></dt>
-        <dd class="key-options break-all font-mono text-warn-ink"><%= key.options %></dd>
+        <dd class="key-options">
+          <ul class="space-y-1">
+            <% key.option_list.each do |name, value| %>
+              <li class="key-option-detail" data-option="<%= name %>">
+                <span class="text-ink"><%= key_option_label(name) %></span>
+                <% if value %><span class="break-all font-mono text-xs text-warn-ink"><%= key_option_value(key, name, value) %></span><% end %>
+              </li>
+            <% end %>
+          </ul>
+        </dd>
       <% end %>
       <% if public_key %>
         <dt class="text-ink-3"><%= t("words.keyring") %></dt>

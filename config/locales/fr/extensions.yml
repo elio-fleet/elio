@@ -316,6 +316,7 @@ fr:
         deploy_failed: échec
         deployments: Déploiements récents
         open_in_coolify: ouvrir dans Coolify
+        deployment_logs: Logs
         deploy_kinds:
           webhook: webhook git
           restart: redémarrage
@@ -456,6 +457,12 @@ fr:
         one: "Coolify gère ce serveur (conteneur coolify-proxy), mais aucune connexion ne le rattache : son équipe ou son instance n'est pas connectée, ou son adresse dans Coolify n'est pas celle connue d'Elio."
         other: "Coolify gère ces serveurs (conteneur coolify-proxy), mais aucune connexion ne les rattache : leur équipe ou leur instance n'est pas connectée, ou leur adresse dans Coolify n'est pas celle connue d'Elio."
       add_connection: Ajouter une connexion
+      project: Projet
+      all_projects: Tous les projets
+      environment: Environnement
+      all_environments: Tous les environnements
+      state: État
+      all_states: Tous les états
   coolify_helper:
     states:
       healthy: En cours · sain
@@ -481,6 +488,7 @@ fr:
       clickhouse: ClickHouse
     dns_elsewhere: "Le DNS pointe vers %{targets}, pas vers ce serveur"
     dns_missing: Aucun enregistrement DNS pour ce domaine
+    monitored: "Sonde Uptime Kuma %{name} : %{state}"
     no_domain: aucun
   coolify_resource:
     kinds:

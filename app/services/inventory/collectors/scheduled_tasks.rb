@@ -117,9 +117,47 @@ class Inventory::Collectors::ScheduledTasks < Inventory::Collector
     last_at < now - [ period * LATE_FACTOR, OVERDUE_MARGIN ].max
   end
 
+  # The services the timers of a snapshot start (their journal holds the
+  # output of their runs).
+  def self.timer_units(snapshot)
+    return [] unless snapshot&.collected?
+
+    Array(snapshot.data["timers"]).filter_map { |timer| timer["unit"] }
+  end
+
   def self.changes(previous, data)
     flagged = ->(timers, flag) { Array(timers).select { |timer| timer[flag] }.map { |timer| timer["name"] }.to_set }
     (flagged.(data["timers"], "failed") - flagged.(previous["timers"], "failed")).sort.map { |name| { kind: :scheduled_task_failed, data: { task: name } } } +
-      (flagged.(data["timers"], "late") - flagged.(previous["timers"], "late")).sort.map { |name| { kind: :scheduled_task_late, data: { task: name } } }
+      (flagged.(data["timers"], "late") - flagged.(previous["timers"], "late")).sort.map { |name| { kind: :scheduled_task_late, data: { task: name } } } +
+      removed_tasks(previous, data).map { |task| { kind: :scheduled_task_removed, data: { task: task } } }
+  end
+
+  # The tasks of the previous reading this one no longer lists, by a readable
+  # name. What one of both readings could not read is left out: the users'
+  # crontabs without root, the timers when none is listed (systemctl failing
+  # for a while).
+  def self.removed_tasks(previous, data)
+    options = { users: !(previous["user_crontabs"] == "unreadable" || data["user_crontabs"] == "unreadable"), timers: Array(data["timers"]).any? }
+    before = removable_tasks(previous, **options)
+    (before.keys - removable_tasks(data, **options).keys).map { |key| before[key] }.sort
+  end
+
+  # The tasks whose disappearance is worth an alert (a backup no one runs any
+  # more), { key => name }: the enabled timers (not the transient ones
+  # systemd-run creates, nor the static ones other units pull in), the cron
+  # lines by their command (a new schedule is not a removal) and the cron.*
+  # scripts. A user's crontab is keyed by the user: its "source" is a
+  # translated label.
+  def self.removable_tasks(data, users:, timers:)
+    tasks = {}
+    Array(data["timers"]).each { |timer| tasks[[ "timer", timer["name"] ]] = timer["name"] if timers && timer["enabled"] == "enabled" }
+    Array(data["cron"]).each do |task|
+      system = task["source"].to_s.start_with?("/")
+      next unless system || users
+
+      tasks[[ "cron", system ? task["source"] : "user:#{task["user"]}", task["command"] ]] = "#{task["command"].to_s.truncate(120)} (#{task["source"]})"
+    end
+    Array(data["periodic"]).each { |task| tasks[[ "periodic", task["period"], task["name"] ]] = "/etc/cron.#{task["period"]}/#{task["name"]}" }
+    tasks
   end
 end

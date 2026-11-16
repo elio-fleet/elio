@@ -55,4 +55,28 @@ class PublicKeysTest < ApplicationSystemTestCase
 
     assert_selector "#error_explanation", text: "doit être une seule clé publique"
   end
+
+  test "outside the keyring: one key added in one click, another tolerated with a reason then no longer" do
+    bob = Ssh::KeyGenerator.generate(comment: "bob@desktop").public_key
+    vendor = Ssh::KeyGenerator.generate(comment: "support@vendor").public_key
+    AccountSnapshot.create!(server: servers(:web), unix_user: "deploy", content: [ bob, vendor ].join("\n"), read_at: Time.current)
+    visit public_keys_path(kind: "outside")
+
+    within("li.outside-key", text: "bob@desktop") { click_on "Ajouter au trousseau" }
+    assert_text "La clé « bob » a été ajoutée au trousseau."
+    assert_selector "li.outside-key", count: 1
+
+    within("li.outside-key", text: "support@vendor") do
+      find("summary", text: "Tolérer…").click
+      fill_in "tolerated_key[reason]", with: "Contrat de support"
+      click_on "Tolérer"
+    end
+    assert_text "La clé « support@vendor » est tolérée"
+    assert_no_selector "li.outside-key"
+    assert_selector "#tolerated-keys .key-reason", text: "Contrat de support"
+
+    within("#tolerated-keys") { click_on "Ne plus tolérer" }
+    assert_text "La clé « support@vendor » n'est plus tolérée."
+    assert_selector "li.outside-key", text: "support@vendor"
+  end
 end

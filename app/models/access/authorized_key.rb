@@ -91,4 +91,31 @@ class AuthorizedKey
       type == other_type && key == other_key
     end
   end
+
+  # The options in front of the key, in order (sshd(8), "AUTHORIZED_KEYS FILE
+  # FORMAT"): [["from", "10.0.0.0/8"], ["no-pty", nil], …], names in lower
+  # case, values without their quotes. A comma inside quotes does not split.
+  def option_list
+    @option_list ||= options.to_s.scan(/(?:[^,"]|"(?:\\.|[^"\\])*"?)+/).map do |option|
+      name, value = option.split("=", 2)
+      [ name.strip.downcase, value&.strip&.delete_prefix('"')&.delete_suffix('"')&.gsub('\\"', '"') ]
+    end
+  end
+
+  # The value of an option (the first one when repeated), nil when absent.
+  def option(name) = option_list.find { |option_name, _| option_name == name }&.last
+
+  # When sshd stops accepting the key (expiry-time="YYYYMMDD[HHMM[SS]][Z]"),
+  # nil without a valid one. Without Z sshd reads the server's local time,
+  # which Elio does not know: read as UTC, see #expiry_local_time?.
+  def expires_at
+    match = option("expiry-time").to_s.match(/\A(\d{8})(\d{4})?(\d{2})?Z?\z/)
+    return unless match
+
+    Time.find_zone("UTC").strptime("#{match[1]}#{match[2] || "0000"}#{match[3] || "00"}", "%Y%m%d%H%M%S")
+  rescue ArgumentError
+    nil
+  end
+
+  def expiry_local_time? = expires_at.present? && !option("expiry-time").end_with?("Z")
 end

@@ -19,16 +19,24 @@ class Keys::AuthorizedKeysReader
     Result.new(keys: [], error_title: title, error_details: details, reason: e.reason)
   end
 
-  # The keys of an account (`unreadable`: a file root could not read).
-  AccountKeys = Data.define(:account, :keys, :unreadable) do
-    def initialize(account:, keys:, unreadable: false) = super
+  # The keys of an account (`unreadable`: a file root could not read;
+  # `missing_file`: no ~/.ssh/authorized_keys). `extra_files`: the other files
+  # sshd reads keys from (AuthorizedKeysFile, e.g. ~/.ssh/authorized_keys2),
+  # shown but never changed by Elio.
+  AccountKeys = Data.define(:account, :keys, :unreadable, :missing_file, :extra_files) do
+    def initialize(account:, keys:, unreadable: false, missing_file: false, extra_files: []) = super
+    def extra_keys = extra_files.flat_map(&:keys)
   end
+
+  # A file named by sshd's AuthorizedKeysFile, other than ~/.ssh/authorized_keys.
+  ExtraFile = Data.define(:path, :keys)
 
   # Every account of the server: `accounts` = the login one (always first),
   # then, when Elio has root, the other accounts with a login shell and an
   # authorized_keys file (root first). `privileged` false: only the login one.
-  All = Data.define(:accounts, :privileged, :error_title, :error_details, :reason) do
-    def initialize(accounts:, privileged:, error_title: nil, error_details: nil, reason: nil) = super
+  # `dormant`: the accounts with a login shell but no key file at all (root only).
+  All = Data.define(:accounts, :privileged, :dormant, :error_title, :error_details, :reason) do
+    def initialize(accounts:, privileged:, dormant: [], error_title: nil, error_details: nil, reason: nil) = super
     def success? = error_title.nil?
     def keys = accounts.flat_map(&:keys)
     def login = accounts.first
@@ -38,40 +46,69 @@ class Keys::AuthorizedKeysReader
   # `ssh`: an open connection to read on (after a change, see Keys::ServerKeysChange).
   def self.call_all(server, ssh: nil, **connection_options)
     login = AuthorizedKeysAccount.login(server)
-    accounts, privileged = ssh ? read_all(ssh, login) : Ssh::Connection.open(server, **connection_options) { |connection| read_all(connection, login) }
+    accounts, privileged, dormant = ssh ? read_all(ssh, login) : Ssh::Connection.open(server, **connection_options) { |connection| read_all(connection, login) }
 
-    All.new(accounts: accounts, privileged: privileged)
+    All.new(accounts: accounts, privileged: privileged, dormant: dormant)
   rescue Ssh::Connection::Error => e
     title, details = login.error_for(e)
     All.new(accounts: [], privileged: false, error_title: title, error_details: details, reason: e.reason)
   end
 
-  # [accounts, privileged] read on the connection `ssh`.
+  # [accounts, privileged, dormant] read on the connection `ssh`.
   def self.read_all(ssh, login)
     server = login.server
-    own = AccountKeys.new(account: login, keys: AuthorizedKey.parse(ssh.run_command!("keys.read").stdout))
-    return [ [ own ], false ] unless ssh.privileged?
+    own_keys = AuthorizedKey.parse(ssh.run_command!("keys.read").stdout)
+    return [ [ AccountKeys.new(account: login, keys: own_keys) ], false, [] ] unless ssh.privileged?
 
-    others = parse_accounts(ssh.run_command("keys.read_accounts").stdout).except(server.username).map do |user, (content, unreadable)|
-      AccountKeys.new(account: AuthorizedKeysAccount.new(server, user), keys: AuthorizedKey.parse(content), unreadable: unreadable)
+    sections = parse_accounts(ssh.run_command("keys.read_accounts").stdout)
+    own = AccountKeys.new(account: login, keys: own_keys, extra_files: extra_files(sections[server.username]))
+    others = sections.except(server.username).map do |user, section|
+      AccountKeys.new(account: AuthorizedKeysAccount.new(server, user), keys: AuthorizedKey.parse(section.content), unreadable: section.unreadable,
+                      missing_file: !section.file, extra_files: extra_files(section))
     end
-    [ [ own, *others.sort_by { |entry| [ entry.account.unix_user == "root" ? 0 : 1, entry.account.unix_user ] } ], true ]
+    dormant, others = others.partition { |entry| entry.missing_file && entry.extra_keys.empty? }
+    by_name = ->(entry) { [ entry.account.unix_user == "root" ? 0 : 1, entry.account.unix_user ] }
+    [ [ own, *others.sort_by(&by_name) ], true, dormant.sort_by(&by_name).map { |entry| entry.account.unix_user } ]
   end
   private_class_method :read_all
 
-  # "@@elio account root\n<lines>\n@@elio account bob\n@@elio unreadable\n" →
-  # { "root" => ["<lines>", false], "bob" => ["", true] }
+  # The extra files of a section that hold at least one key.
+  def self.extra_files(section)
+    return [] unless section
+
+    section.extra_files.map { |path, content| ExtraFile.new(path: path, keys: AuthorizedKey.parse(content)) }.select { |file| file.keys.any? }
+  end
+  private_class_method :extra_files
+
+  # One account in the output of keys.read_accounts: its authorized_keys
+  # (`file` false when it has none) and its other key files (path => content).
+  Section = Struct.new(:content, :unreadable, :file, :extra_files)
+
+  # "@@elio account root\n<lines>\n@@elio account bob\n@@elio unreadable\n@@elio no_file dave\n
+  #  @@elio extra dave /home/dave/.ssh/authorized_keys2\n<lines>\n" →
+  # { "root" => Section("<lines>", false, true, {}), "bob" => Section("", true, true, {}),
+  #   "dave" => Section("", false, false, { "/home/dave/.ssh/authorized_keys2" => "<lines>" }) }
   def self.parse_accounts(text)
-    current = nil
-    text.to_s.lines.each_with_object({}) do |line, accounts|
+    accounts = {}
+    section = ->(user) { accounts[user] ||= Section.new(+"", false, false, {}) }
+    current = buffer = nil
+    text.to_s.lines.each do |line|
       if (user = line[/\A@@elio account (\S+)\s*\z/, 1])
-        current = accounts[user] = [ +"", false ]
+        current = section.call(user).tap { |entry| entry.file = true }
+        buffer = current.content
+      elsif (user = line[/\A@@elio no_file (\S+)\s*\z/, 1])
+        section.call(user)
+        current = buffer = nil
+      elsif (match = line.match(/\A@@elio extra (\S+) (.+?)\s*\z/))
+        current = nil
+        buffer = section.call(match[1]).extra_files[match[2]] = +""
       elsif current && line.start_with?("@@elio unreadable")
-        current[1] = true
-      elsif current
-        current[0] << line
+        current.unreadable = true
+      elsif buffer
+        buffer << line
       end
     end
+    accounts
   end
 
   # The commands sent (config/ssh_commands.yml: keys.read, keys.read_accounts), also run locally by the tests.

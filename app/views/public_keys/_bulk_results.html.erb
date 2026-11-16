@@ -1,4 +1,5 @@
-<%# Outcome of Keys::BulkAccess, one line per server (and per public_key with show_public_key). %>
+<%# Outcome of Keys::BulkAccess, one line per server account (and per public_key with show_public_key).
+    again (with public_key): { method:, params: } of a button that runs the action again on the failures only. %>
 <ul class="bulk-results mt-4 divide-y divide-line rounded-md border border-line text-sm">
   <% results.each do |result| %>
     <li class="bulk-result flex items-start gap-3 px-4 py-2 <%= result.error? ? "is-error" : "is-success" %>">
@@ -10,3 +11,10 @@
     </li>
   <% end %>
 </ul>
+<% if (again = local_assigns[:again]) && (failed = results.count(&:error?)).positive? %>
+  <%= button_to public_key_accesses_path(public_key), method: again[:method], params: again[:params],
+        form: { class: "bulk-retry mt-3", data: { controller: "quiet-submit" } }, class: "btn btn-secondary group" do %>
+    <%= icon :arrow_path, class: "h-4 w-4 group-disabled:animate-spin" %>
+    <%= t("public_keys.bulk_results.retry_failed", count: failed) %>
+  <% end %>
+<% end %>
