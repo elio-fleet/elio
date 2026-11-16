@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resource :account, only: %i[show] do
     patch :password
     patch :locale
+    patch :default_key_account
   end
   resources :account_keys, only: %i[create destroy], path: "account/keys"
   resource :two_factor, only: %i[new create destroy], path: "account/two_factor", controller: "two_factor_settings" do
@@ -31,6 +32,8 @@ Rails.application.routes.draw do
     resource :inventory, only: :create, controller: "server_inventories"
     resources :packages, only: :index, controller: "server_packages"
     resource :unit_journal, only: :show, controller: "server_unit_journals"
+    # The export of its Journal tab (.csv / .json).
+    resource :journal, only: :show, controller: "server_journals"
     resource :host_key, only: :create, controller: "server_host_keys"
     resource :expected_port, only: :create, controller: "server_expected_ports"
     resources :authorized_keys, only: :index, controller: "server_authorized_keys"
@@ -45,8 +48,10 @@ Rails.application.routes.draw do
   resource :server_pings, only: :create, path: "servers/pings"
   resource :server_scans, only: :create, path: "servers/scans"
 
+  resources :tolerated_keys, only: %i[create destroy], path: "ssh-keys/tolerated"
   resources :public_keys, path: "ssh-keys" do
     resources :accesses, only: :create, controller: "public_key_accesses"
+    delete "accesses", to: "public_key_accesses#destroy_all"
     resource :access, only: :destroy, controller: "public_key_accesses"
   end
 
@@ -150,9 +155,9 @@ Rails.application.routes.draw do
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
+  # Health check: 200 as soon as the app runs (Docker, proxies); the detailed
+  # health in JSON with the token of ELIO_HEALTH_TOKEN (see HealthController).
+  get "up" => "health#show", as: :rails_health_check
 
   # Content Security Policy violation reports of the browsers (no sign in).
   post "csp-reports" => "csp_reports#create", as: :csp_reports

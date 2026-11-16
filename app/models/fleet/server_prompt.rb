@@ -167,7 +167,7 @@ class ServerPrompt
       resource.domains.map do |domain|
         host = Integrations::Coolify::DomainCheck.host(domain)
         url = urls.find { |candidate| candidate.sub(%r{\Ahttps?://}i, "").casecmp?(domain) } || "https://#{domain}"
-        monitor = monitors.find { |candidate| [ candidate.hostname, url_host(candidate.url) ].any? { |value| value.to_s.casecmp?(host.to_s) } }
+        monitor = UptimeKumaMonitor.for_host(monitors, host)
         health = if resource.kind == "application"
           resource.data["health_check"] ? t("coolify.health_check_on", path: resource.data["health_check_path"] || "/") : t("coolify.health_check_off")
         end
@@ -179,12 +179,6 @@ class ServerPrompt
   end
 
   def coolify_resources = @coolify_resources ||= (Integration.enabled?(:coolify) ? @server.coolify_resources.to_a : [])
-
-  def url_host(url)
-    URI.parse(url.to_s).host
-  rescue URI::InvalidURIError
-    nil
-  end
 
   def monitor_line(monitor)
     [ monitor.name, "(#{[ monitor.monitor_type, monitor.target ].compact.join(", ")})", "— #{monitor.state}" ].join(" ")

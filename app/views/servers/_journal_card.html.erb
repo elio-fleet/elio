@@ -1,15 +1,30 @@
-<%# Journal tab of a server: the note form, then its notes and its activities on one timeline, newest first.
-    Locals: server, entries (ServerNote / Activity), filter (nil, "notes", "events"), page, more. %>
-<% path = ->(**params) { server_path(server, tab: "journal", **params.compact) } %>
+<%# Journal tab of a server: the note form, then its notes and its activities on one timeline, newest first,
+    filtered (chips) and searched (text and period) in the URL, exported with the same filter and search.
+    Locals: server, journal (ServerJournal), entries (ServerNote / Activity), page, more. %>
+<% filter = journal.filter %>
+<% search = journal.search %>
+<% path = ->(**params) { server_path(server, tab: "journal", **search.to_params, **params.compact) } %>
 <div id="server-journal" class="space-y-4">
   <%= filter_bar do %>
     <%= filter_chip t(".all"), path.call, active: filter.nil? %>
     <%= filter_chip t(".notes"), path.call(show: "notes"), active: filter == "notes", count: server.notes.count %>
     <%= filter_chip t(".events"), path.call(show: "events"), active: filter == "events" %>
+    <%= filter_chip t(".access"), path.call(show: "access"), active: filter == "access" %>
+    <% if filter == "deployments" || journal.deployments? %>
+      <%= filter_chip t(".deployments"), path.call(show: "deployments"), active: filter == "deployments" %>
+    <% end %>
     <%= filter_bar_end do %>
       <%= link_to t(".full_journal"), activities_path(server_id: server.id), class: "text-xs font-medium text-accent hover:underline" %>
+      <%= actions_menu do %>
+        <%# The export follows the filter and the search (the address bar's, see current-query): every entry behind them. %>
+        <% follow = { turbo: false, controller: "current-query", action: "click->current-query#follow" } %>
+        <%= menu_item t("servers.journal_card.export_csv"), server_journal_path(server, format: :csv, **journal.to_params), icon: :arrow_down_tray, class: "export-csv", data: follow %>
+        <%= menu_item t("servers.journal_card.export_json"), server_journal_path(server, format: :json, **journal.to_params), icon: :arrow_down_tray, class: "export-json", data: follow %>
+      <% end %>
     <% end %>
   <% end %>
+  <%= render "activities/journal_search", search: search, url: server_path(server), hidden: { tab: "journal", show: filter },
+             clear_url: server_path(server, tab: "journal", show: filter) %>
 
   <%= panel t(".add_note"), id: "server-notes" do %>
     <div class="px-4 py-4">
@@ -18,6 +33,7 @@
     </div>
   <% end %>
 
+  <%= search_results_frame do %>
   <%= panel t(".timeline"), id: "server-activity" do %>
     <% if entries.any? %>
       <ul class="journal-entries server-notes divide-y divide-line">
@@ -31,12 +47,15 @@
       </ul>
       <% if page > 1 || more %>
         <div class="flex items-center justify-between border-t border-line px-4 py-2 text-xs">
-          <% if page > 1 %><%= link_to t(".newer"), path.call(show: filter, page: (page - 1 if page > 2)), class: "text-accent hover:underline" %><% else %><span></span><% end %>
-          <% if more %><%= link_to t(".older"), path.call(show: filter, page: page + 1), class: "text-accent hover:underline" %><% end %>
+          <% if page > 1 %><%= link_to t("servers.journal_card.newer"), path.call(show: filter, page: (page - 1 if page > 2)), class: "text-accent hover:underline" %><% else %><span></span><% end %>
+          <% if more %><%= link_to t("servers.journal_card.older"), path.call(show: filter, page: page + 1), class: "text-accent hover:underline" %><% end %>
         </div>
       <% end %>
+    <% elsif journal.filtered? %>
+      <%= empty_state t("servers.journal_card.no_result"), t("servers.journal_card.no_result_text"), icon: :document_text %>
     <% else %>
-      <%= empty_state t(".empty"), t(".empty_text"), icon: :document_text %>
+      <%= empty_state t("servers.journal_card.empty"), t("servers.journal_card.empty_text"), icon: :document_text %>
     <% end %>
+  <% end %>
   <% end %>
 </div>

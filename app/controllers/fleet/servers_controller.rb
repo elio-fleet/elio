@@ -47,7 +47,6 @@ class ServersController < ApplicationController
   TABS = %w[overview vulnerabilities packages services docker firewall schedules keys journal].freeze
   # Former tabs, now inside another one (bookmarks, links of old notifications).
   MOVED_TABS = { "ports" => [ "firewall", nil ], "notes" => [ "journal", nil ], "history" => [ "journal", nil ], "ovh" => [ nil, "server-hosting" ] }.freeze
-  JOURNAL_FILTERS = %w[notes events].freeze
   VULNERABILITIES_PER_PAGE = 100
   VULNERABILITY_PACKAGES_PER_PAGE = 50
   VULNERABILITY_VIEWS = %w[packages cves].freeze
@@ -91,18 +90,12 @@ class ServersController < ApplicationController
     @server = @source ? Server.new(port: @source.port, username: @source.username, server_group_ids: @source.server_group_ids) : Server.new
   end
 
-  # The journal of a server: its notes and its activities on one timeline,
-  # newest first, HISTORY_PER_PAGE at a time ("show": notes or events only).
+  # The journal of a server (ServerJournal): its notes and its activities on
+  # one timeline, newest first, HISTORY_PER_PAGE at a time, filtered and searched.
   def show_journal
-    @journal_filter = params[:show].presence_in(JOURNAL_FILTERS)
+    @server_journal = ServerJournal.new(@server, params)
     @journal_page = [ params[:page].to_i, 1 ].max
-    limit = @journal_page * HISTORY_PER_PAGE
-    notes = @journal_filter == "events" ? [] : @server.notes.recent.includes(:user).limit(limit + 1).to_a
-    # The note itself is in the journal: not its "note added" activity as well.
-    events = @journal_filter == "notes" ? [] : Activity.recent.where(server: @server).where.not(kind: "server_note_added").includes(:user, :server, :public_key).limit(limit + 1).to_a
-    entries = (notes + events).sort_by(&:created_at).reverse
-    @journal_more = entries.size > limit
-    @journal = entries.drop(limit - HISTORY_PER_PAGE).first(HISTORY_PER_PAGE)
+    @journal, @journal_more = @server_journal.page(@journal_page, per_page: HISTORY_PER_PAGE)
   end
   private :show_journal
 

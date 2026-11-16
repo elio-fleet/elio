@@ -316,6 +316,7 @@ en:
         deploy_failed: failed
         deployments: Recent deployments
         open_in_coolify: open in Coolify
+        deployment_logs: Logs
         deploy_kinds:
           webhook: git webhook
           restart: restart
@@ -467,6 +468,12 @@ en:
         one: "Coolify manages this server (coolify-proxy container), but no connection attaches it: its team or instance is not connected, or its address in Coolify is not the one Elio knows."
         other: "Coolify manages these servers (coolify-proxy container), but no connection attaches them: their team or instance is not connected, or their address in Coolify is not the one Elio knows."
       add_connection: Add a connection
+      project: Project
+      all_projects: All projects
+      environment: Environment
+      all_environments: All environments
+      state: State
+      all_states: All states
   coolify_helper:
     states:
       healthy: Running · healthy
@@ -492,6 +499,7 @@ en:
       clickhouse: ClickHouse
     dns_elsewhere: "The DNS points to %{targets}, not to this server"
     dns_missing: No DNS record for this domain
+    monitored: "Uptime Kuma probe %{name}: %{state}"
     no_domain: none
   coolify_resource:
     kinds:

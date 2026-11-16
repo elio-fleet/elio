@@ -30,6 +30,21 @@ class ScheduledTasksTest < ActionDispatch::IntegrationTest
     end
   end
 
+  test "operators can open the output of the timers that ran (the journal of their service, lazily)" do
+    collect(servers(:web))
+    sign_in users(:operator)
+    get server_path(servers(:web), tab: "schedules")
+
+    assert_select "tr.systemd-timer[data-name='backup.timer'] details.timer-journal" do
+      assert_select "summary[title*='backup.service']", "Sortie"
+      assert_select "turbo-frame[loading=lazy][src=?]", server_unit_journal_path(servers(:web), unit: "backup.service")
+    end
+
+    sign_in users(:viewer)
+    get server_path(servers(:web), tab: "schedules")
+    assert_select "details.timer-journal", 0
+  end
+
   test "the tab explains a partial collection and an inventory not done yet" do
     sign_in users(:viewer)
     get server_path(servers(:web), tab: "schedules")

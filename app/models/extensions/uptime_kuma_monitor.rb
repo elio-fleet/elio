@@ -16,6 +16,19 @@ class UptimeKumaMonitor < ApplicationRecord
   # What the probe checks: its host name / IP (and port), or its URL.
   def target = hostname ? [ hostname, port ].compact.join(":") : url
 
+  # The probe among `monitors` that checks `host` (its host name, or the host of its URL), or nil.
+  def self.for_host(monitors, host)
+    return if host.blank?
+
+    monitors.find { |monitor| [ monitor.hostname, monitor.url_host ].any? { |value| value.to_s.casecmp?(host) } }
+  end
+
+  def url_host
+    URI.parse(url.to_s).host
+  rescue URI::InvalidURIError
+    nil
+  end
+
   def uptime_ratio(window) = uptime[window.to_s]
 
   # Whether the instance publishes the uptime of its monitors in /metrics

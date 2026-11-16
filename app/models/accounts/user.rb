@@ -31,6 +31,10 @@ class User < ApplicationRecord
   validate :new_password_must_differ, if: -> { password_change_required? && password.present? && persisted? }
   # Choosing a new password (My account, or a reset by email) ends the request.
   before_save -> { self.password_change_required = false }, if: -> { will_save_change_to_encrypted_password? && persisted? }
+  # A new password also signs out the other sessions and "remember me"
+  # cookies: Devise checks them against `authenticatable_salt`, which changes
+  # with the password hash (the session that changed it is signed in again).
+  after_update_commit :send_password_changed_email, if: -> { saved_change_to_encrypted_password? && Rails.configuration.x.mail_enabled }
 
   scope :active, -> { where(deactivated_at: nil) }
 
@@ -44,6 +48,21 @@ class User < ApplicationRecord
   def fleet_column?(column) = hidden_fleet_columns.exclude?(column.to_s)
 
   def hide_fleet_columns!(columns) = update!(preferences: preferences.merge("hidden_fleet_columns" => Array(columns).map(&:to_s) & FLEET_COLUMNS))
+
+  # The account "Add my key temporarily" picks first on a server where Elio
+  # read it (blank: the account Elio logs in as).
+  def default_key_account = preferences["default_key_account"].to_s.presence
+
+  def default_key_account=(unix_user)
+    self.preferences = preferences.merge("default_key_account" => unix_user.to_s.strip.presence).compact
+  end
+
+  # The account to preselect among `accounts` (the unix users offered on a server).
+  def key_account_on(server, accounts)
+    accounts.include?(default_key_account) ? default_key_account : server.username
+  end
+
+  validate -> { errors.add(:default_key_account, :invalid) unless default_key_account.nil? || default_key_account.match?(AuthorizedKeysAccount::NAME_FORMAT) }
 
   def role_label = I18n.t("users.roles.#{role}")
 
@@ -102,7 +121,22 @@ class User < ApplicationRecord
 
   def inactive_message = deactivated? ? :deactivated : super
 
+  protected
+
+  # Devise emails (password reset link) in the background: the request does
+  # not wait for the SMTP server, and takes the same time whether the account
+  # exists or not. In the language of the user, else of the request.
+  def send_devise_notification(notification, *args)
+    I18n.with_locale(locale.presence || I18n.locale) do
+      devise_mailer.send(notification, self, *args).deliver_later
+    end
+  end
+
   private
+
+  def send_password_changed_email
+    AccountMailer.password_changed(self, at: Time.current).deliver_later
+  end
 
   # The last active admin can neither lose the role nor be deactivated.
   def must_keep_an_active_admin

@@ -12,6 +12,9 @@ class ServerNote < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc, id: :desc) }
 
+  # Text search of the server's journal (JournalSearch): the Markdown and the author.
+  def self.search(text) = left_joins(:user).where("server_notes.body ILIKE :q OR users.email ILIKE :q", q: JournalSearch.like(text))
+
   def html = Markdown.html(body)
 
   # Plain text, one line (activities, notifications).

@@ -197,6 +197,32 @@ class UiTest < ApplicationSystemTestCase
     assert_equal [ [ "Database", "admin" ], [ "Web", "deploy" ] ], granted
   end
 
+  test "removing a public_key from every server, then retrying the failure" do
+    alice = public_keys(:alice)
+    [ servers(:web), servers(:db) ].each { |server| AccountSnapshot.record!(server, AuthorizedKeysAccount.login(server), AuthorizedKey.parse(alice.content)) }
+    database_down = true
+    remover = lambda do |server, *, **|
+      failed = server == servers(:db) && database_down
+      Keys::AuthorizedKeyRemoval::Result.new(status: failed ? :error : :removed, error_title: (failed ? "Connexion impossible" : nil), error_details: (failed ? "refused" : nil))
+    end
+
+    stub_method(Keys::AuthorizedKeyRemoval, :call, remover) do
+      visit public_key_path(alice)
+      find(".actions-menu summary").click
+      accept_app_confirm { click_on "Retirer de tous les serveurs" }
+
+      within("#key-accesses") do
+        assert_selector "li.bulk-result.is-success", text: "Web"
+        assert_selector "li.bulk-result.is-error", text: "Database"
+        assert_selector "li.key-access", count: 1
+        database_down = false
+        click_on "Relancer l'échec"
+        assert_selector "li.bulk-result.is-success", text: "Database"
+        assert_no_selector "li.key-access"
+      end
+    end
+  end
+
   test "converting a key without public_key into a public_key from the server page" do
     bob = Ssh::KeyGenerator.generate(comment: "bob@desktop").public_key
     reader = ->(*, **) { Keys::AuthorizedKeysReader::Result.new(keys: AuthorizedKey.parse([ ssh_keys(:main).public_key, bob ].join("\n")), error_title: nil, error_details: nil) }

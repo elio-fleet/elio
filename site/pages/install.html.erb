@@ -45,6 +45,7 @@
              [ "ELIO_DATABASE_PASSWORD, PGHOST", t(en: "PostgreSQL password of the elio user, and host. Four databases: elio_production, _cache, _queue, _cable.", fr: "Mot de passe PostgreSQL de l'utilisateur elio, et hôte. Quatre bases : elio_production, _cache, _queue, _cable.") ],
              [ "ELIO_HOST", t(en: "Elio's domain: links in emails, and the only host name it answers to.", fr: "Le domaine d'Elio : liens des emails, et seul nom d'hôte auquel il répond.") ],
              [ "ELIO_SETUP_TOKEN", t(en: "Asked when creating the first account, if set.", fr: "Demandé à la création du premier compte, s'il est défini.") ],
+             [ "ELIO_HEALTH_TOKEN", t(en: "If set, /up called with Authorization: Bearer <token> answers the detailed health in JSON (database, job worker, automations; 503 when one fails), for a monitoring tool.", fr: "S'il est défini, /up appelé avec Authorization: Bearer <jeton> répond la santé détaillée en JSON (base, processus de tâches, automatisations ; 503 si l'un échoue), pour un outil de supervision.") ],
              [ "ELIO_FORCE_SSL", t(en: "false only to try Elio over plain HTTP.", fr: "false seulement pour essayer Elio en HTTP simple.") ],
              [ "SMTP_ADDRESS, SMTP_PORT, SMTP_USERNAME, SMTP_PASSWORD, ELIO_MAIL_FROM", t(en: "Emails: invitations, password reset, notifications.", fr: "Emails : invitations, mot de passe oublié, notifications.") ],
              [ "ELIO_PARALLEL_LIMIT", t(en: "Servers collected at the same time (4).", fr: "Serveurs collectés en même temps (4).") ],

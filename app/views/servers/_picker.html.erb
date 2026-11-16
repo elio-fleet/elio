@@ -1,9 +1,11 @@
-<%# Checkboxes `server_ids[]` for every server, with "check all" and "whole group" buttons (Stimulus check-all). %>
+<%# Checkboxes `server_ids[]` for every server, with "check all" and "whole group" buttons (Stimulus check-all)
+    and how many servers are checked. %>
 <% servers = Server.order(:name).includes(:server_groups) %>
 <% groups = ServerGroup.joins(:memberships).distinct.order(:name) %>
-<fieldset data-controller="check-all">
-  <div class="flex items-center justify-between">
-    <legend class="text-sm font-medium text-ink-2"><%= t(".servers") %></legend>
+<% group_sizes = servers.flat_map(&:server_group_ids).tally %>
+<fieldset data-controller="check-all" data-action="change->check-all#refresh">
+  <div class="flex items-center justify-between gap-3">
+    <legend class="text-sm font-medium text-ink-2"><%= t(".servers") %> <span class="picker-count ml-1 text-xs font-normal text-ink-3" data-check-all-target="count" aria-live="polite"></span></legend>
     <button type="button" data-action="check-all#toggle" class="cursor-pointer text-xs font-medium text-accent hover:text-accent"><%= t(".check_uncheck_all") %></button>
   </div>
   <% if groups.any? %>
@@ -11,7 +13,7 @@
       <span class="text-xs text-ink-3"><%= t(".whole_group") %></span>
       <% groups.each do |group| %>
         <button type="button" data-action="check-all#toggleGroup" data-check-all-group-param="<%= group.id %>"
-                class="cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset hover:opacity-80 <%= group.badge_classes %>"><%= group.name %></button>
+                class="cursor-pointer rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset hover:opacity-80 <%= group.badge_classes %>"><%= group.name %> <span class="tabular-nums opacity-70"><%= group_sizes[group.id] %></span></button>
       <% end %>
     </div>
   <% end %>

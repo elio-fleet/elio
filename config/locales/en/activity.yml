@@ -19,6 +19,15 @@ en:
       unknown_key_detected:
         label: Unknown key detected
         description: A key missing from the keyring has been found on a server.
+      unknown_root_key_detected:
+        label: Unknown key on root
+        description: A key missing from the keyring has been found on the root account of a server.
+      key_tolerated:
+        label: Key tolerated
+        description: A key outside the keyring has been accepted, with a reason, and is no longer reported as unknown.
+      key_tolerance_removed:
+        label: Key no longer tolerated
+        description: A tolerated key is reported as unknown again.
       key_disappeared:
         label: Key removed outside Elio
         description: A key has disappeared from a server without going through Elio.
@@ -82,6 +91,9 @@ en:
       scheduled_task_late:
         label: Scheduled task late
         description: A systemd timer has not run for more than twice its period.
+      scheduled_task_removed:
+        label: Scheduled task removed
+        description: An enabled systemd timer, a cron line or a cron.daily-like script is no longer on the server (a backup that stopped being scheduled, for instance).
       vulnerability_found:
         label: Fixable vulnerability
         description: A serious, fixable vulnerability (CVE) affects a server or one of its Docker images (severity chosen in the settings).
@@ -272,6 +284,9 @@ en:
       key_expiring: Temporary access of “%{name}” on %{target} ends at %{time}
       key_access_extended: Temporary access of “%{name}” on %{target} extended by %{duration}, until %{time}
       unknown_key_detected: Unknown key “%{name}” found on %{target}
+      unknown_root_key_detected: "Unknown key “%{name}” found on %{target}: root access"
+      key_tolerated: "Key “%{name}” tolerated: %{reason}"
+      key_tolerance_removed: Key “%{name}” no longer tolerated
       key_disappeared: Key “%{name}” gone from %{target}
       ssh_access_lost: "“%{server}” refuses Elio's key"
       host_key_mismatch: '“%{server}” presents another fingerprint: %{fingerprint}. Elio no longer connects to it until an administrator accepts it.'
@@ -309,6 +324,7 @@ en:
       container_started: The container %{container} runs again on “%{server}”
       scheduled_task_failed: The scheduled task %{task} failed on “%{server}”
       scheduled_task_late: The scheduled task %{task} did not run in time on “%{server}”
+      scheduled_task_removed: The scheduled task %{task} is no longer on “%{server}”
       in_image: the image %{image} of “%{server}”
       vulnerability_found:
         one: "%{count} fixable vulnerability on %{where}: %{cves}"
@@ -404,6 +420,8 @@ en:
       dns_record_conflict: "%{record} differs between %{sources}"
       dns_manual_updated: "DNS source “%{source}”: %{count} records (+%{added} / −%{removed})"
     target_account: "“%{server_name}” (%{account} account)"
+    server_journal:
+      note: Note
   automation:
     whole_fleet: The whole fleet
     scope_except: "%{included} except %{groups}"

@@ -1,5 +1,6 @@
 <%# "Add my key temporarily" in the server page header (operators, MyKeyAccessesController): one of the user's keys on an account of the
-    server for a while. With an active access of theirs: until when, extend or remove. Without a key of theirs: a link to "My SSH keys". %>
+    server for a while (their default account of My account first, when read on the server). With an active access of theirs: until when,
+    extend or remove. Without a key of theirs: a link to "My SSH keys". %>
 <% my_keys = current_user.public_keys.to_a %>
 <% active = my_keys.any? ? server.temporary_accesses.active.where(public_key: my_keys).order(:expires_at).first : nil %>
 <% dialog_id = dom_id(server, :my_key) %>
@@ -48,7 +49,7 @@
           <% end %>
           <div>
             <%= label_tag :account, t(".account"), for: "#{dialog_id}_account", class: "label" %>
-            <%= select_tag :account, options_for_select(accounts, server.username), id: "#{dialog_id}_account", class: "input mt-1 w-full" %>
+            <%= select_tag :account, options_for_select(accounts, current_user.key_account_on(server, accounts.map(&:last))), id: "#{dialog_id}_account", class: "input mt-1 w-full" %>
           </div>
         <% end %>
         <div>
