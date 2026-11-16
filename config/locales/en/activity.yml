@@ -157,6 +157,9 @@ en:
       password_change_required:
         label: New password asked
         description: An administrator asked a user to choose a new password.
+      user_email_changed:
+        label: Email changed
+        description: A user has changed the email of their account (the address of password resets).
       two_factor_enabled:
         label: 2FA turned on
         description: A user has turned on two-factor authentication.
@@ -348,6 +351,7 @@ en:
       user_locked:
         one: "%{email} locked after %{count} failed attempt"
         other: "%{email} locked after %{count} failed attempts"
+      user_email_changed: "%{from} now signs in as %{to}"
       two_factor_enabled: 2FA turned on for %{email}
       two_factor_disabled: 2FA turned off for %{email}
       two_factor_reset: 2FA of %{email} reset by %{by}

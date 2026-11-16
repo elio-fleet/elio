@@ -6,6 +6,9 @@ Rails.application.routes.draw do
     patch :locale
   end
   resources :account_keys, only: %i[create destroy], path: "account/keys"
+  resource :account_email, only: %i[update destroy], path: "account/email" do
+    get :confirm
+  end
   resource :two_factor, only: %i[new create destroy], path: "account/two_factor", controller: "two_factor_settings" do
     post :backup_codes
   end

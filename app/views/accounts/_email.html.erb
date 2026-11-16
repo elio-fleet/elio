@@ -1,0 +1,26 @@
+<%# The email of the signed-in user (AccountEmailsController): the new address, waiting for its confirmation link when emails are configured. %>
+<section id="email" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".title") %></h2>
+  <p class="mt-1 text-sm text-ink-3"><%= Rails.configuration.x.mail_enabled ? t(".hint_confirm") : t(".hint_immediate") %></p>
+
+  <% if current_user.email_change_pending? %>
+    <div class="email-change-pending mt-4 flex flex-wrap items-center gap-x-3 gap-y-2 rounded-md bg-warn-soft px-3 py-2 text-sm text-warn-ink">
+      <span class="min-w-0 flex-1"><%= t(".pending", email: current_user.unconfirmed_email) %></span>
+      <%= button_to t(".cancel"), account_email_path, method: :delete, class: "text-xs font-medium underline hover:no-underline" %>
+    </div>
+  <% end %>
+
+  <%= form_with url: account_email_path, method: :patch, scope: :user, class: "mt-4 space-y-4" do |f| %>
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div class="min-w-0">
+        <%= f.label :email, t(".new_email"), class: "label" %>
+        <%= f.email_field :email, required: true, autocomplete: "email", placeholder: current_user.email, class: "input mt-1" %>
+      </div>
+      <div class="min-w-0">
+        <%= f.label :current_password, t(".current_password"), for: "user_email_current_password", class: "label" %>
+        <%= f.password_field :current_password, id: "user_email_current_password", required: true, autocomplete: "current-password", class: "input mt-1" %>
+      </div>
+    </div>
+    <%= f.submit t(".submit"), class: "btn btn-secondary" %>
+  <% end %>
+</section>

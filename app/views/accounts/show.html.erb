@@ -43,7 +43,11 @@
 
   <%= render "accounts/my_keys" %>
 
+  <%= render "accounts/my_accesses" if current_user.public_keys.any? %>
+
   <%= render "accounts/language" %>
+
+  <%= render "accounts/email" %>
 
   <section id="password" class="card p-5">
     <h2 class="text-sm font-semibold"><%= t(".password") %></h2>

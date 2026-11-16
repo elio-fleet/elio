@@ -1,0 +1,22 @@
+<%# The temporary accesses of the signed-in user's keys still in progress on the servers ("Add my key temporarily"), soonest end first. Only for a user with keys. %>
+<% accesses = TemporaryAccess.active.where(public_key_id: current_user.public_keys.select(:id)).includes(:server, :public_key).order(:expires_at).to_a %>
+<section id="my-accesses" class="card p-5">
+  <h2 class="text-sm font-semibold"><%= t(".title") %></h2>
+  <p class="mt-1 text-sm text-ink-3"><%= t(".intro") %></p>
+
+  <% if accesses.any? %>
+    <ul class="mt-4 divide-y divide-line rounded-md border border-line">
+      <% accesses.each do |access| %>
+        <li id="<%= dom_id(access, :mine) %>" class="my-access flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm">
+          <%= icon :clock, class: "h-4 w-4 text-ink-3" %>
+          <%= link_to access.server.name, server_temporary_accesses_path(access.server), class: "font-medium text-ink hover:text-accent" %>
+          <span class="font-mono text-xs text-ink-2"><%= access.unix_user %></span>
+          <span class="text-xs text-ink-3"><%= access.public_key.name %></span>
+          <%= relative_time_tag access.expires_at, prefix: t("public_keys.accesses.expires"), expired: t("public_keys.accesses.expired"), class: "ml-auto text-xs text-ink-3" %>
+        </li>
+      <% end %>
+    </ul>
+  <% else %>
+    <p class="my-accesses-empty mt-4 text-sm text-ink-3"><%= t(".none") %></p>
+  <% end %>
+</section>

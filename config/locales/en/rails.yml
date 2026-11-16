@@ -44,6 +44,8 @@ en:
         email: Email
         password: Password
         password_confirmation: Password confirmation
+        current_password: The current password
+        unconfirmed_email: The new email
     errors:
       messages:
         health_threshold_range: must be between 1 and 100 % (the load between 0.1 and 50)
@@ -86,6 +88,8 @@ en:
           attributes:
             password:
               same_as_before: must differ from the previous one
+            unconfirmed_email:
+              unchanged: is already the email of your account
             base:
               last_admin: There must always be at least one active administrator.
         invitation:

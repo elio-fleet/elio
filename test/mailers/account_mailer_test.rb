@@ -24,4 +24,32 @@ class AccountMailerTest < ActionMailer::TestCase
     assert_equal "A backup code was used to sign in to Elio", mail.subject
     assert_match "You have no backup code left", mail.body.to_s
   end
+
+  test "the confirmation of a new email goes to the new address, with a link valid one day" do
+    user = users(:operator)
+    user.request_email_change("new@example.com", current_password: "password1234", confirm: true)
+
+    mail = AccountMailer.email_change_confirmation(user)
+
+    assert_equal [ "new@example.com" ], mail.to
+    assert_equal "Confirmez votre nouvel email pour Elio", mail.subject
+    body = mail.body.to_s
+    assert_match "Le compte Elio operator@example.com a demandé à utiliser désormais cette adresse (new@example.com)", body
+    assert_match "Le lien est valable 24 heures", body
+    token = body[%r{/account/email/confirm\?token=(\S+)}, 1]
+    assert_equal user, User.find_by_token_for(:email_change, CGI.unescape(token))
+  end
+
+  test "the current address is told about the change, in the language of the user" do
+    user = users(:operator)
+    user.update!(locale: "en")
+    user.request_email_change("new@example.com", current_password: "password1234", confirm: true)
+
+    mail = AccountMailer.email_change_requested(user)
+
+    assert_equal [ "operator@example.com" ], mail.to
+    assert_equal "Your Elio email is about to change", mail.subject
+    assert_match "your Elio account operator@example.com to new@example.com was asked", mail.body.to_s
+    assert_match "http://example.com/account", mail.body.to_s
+  end
 end

@@ -44,6 +44,8 @@ fr:
         email: Email
         password: Mot de passe
         password_confirmation: Confirmation du mot de passe
+        current_password: Le mot de passe actuel
+        unconfirmed_email: Le nouvel email
     errors:
       messages:
         health_threshold_range: doivent être entre 1 et 100 % (la charge entre 0,1 et 50)
@@ -86,6 +88,8 @@ fr:
           attributes:
             password:
               same_as_before: doit être différent du précédent
+            unconfirmed_email:
+              unchanged: est déjà l'email de votre compte
             base:
               last_admin: Il doit toujours rester au moins un administrateur actif.
         invitation:

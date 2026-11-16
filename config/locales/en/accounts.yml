@@ -10,6 +10,19 @@ en:
       release_confirm: "“%{name}” will no longer be your key. It stays in the keyring and on the servers."
       missing_html: Your key is not in the keyring? %{link}, then come back here.
       add_to_keyring: Add it
+    my_accesses:
+      title: My temporary accesses
+      intro: Your keys added for a while on servers ("Add my key temporarily") and not ended yet. Extend or remove one from the temporary accesses of its server.
+      none: None in progress.
+    email:
+      title: Email
+      hint_confirm: The address you sign in with, where password resets are sent. A link is sent to the new address; the email changes once it is followed (signed in as you).
+      hint_immediate: 'The address you sign in with. Emails are not configured on this Elio: the email changes at once.'
+      pending: 'Waiting for the confirmation of %{email}: follow the link sent to that address.'
+      cancel: Cancel
+      new_email: New email
+      current_password: Current password
+      submit: Change the email
     language:
       title: Language
       hint: The language of the interface for you. Automatic follows your browser, else the language of this Elio.
@@ -120,6 +133,15 @@ en:
       code: Confirmation code
       submit: Turn on
       mandatory: 'Two-factor authentication is mandatory for your role (%{role}): turn it on to continue.'
+  account_emails:
+    update:
+      sent: A confirmation link has been sent to %{email}. Your email changes once it is followed.
+      changed: Email changed.
+    confirm:
+      confirmed: Your email is now %{email}.
+      invalid: 'This link is invalid or has expired: ask for the change again, signed in with the account it was asked from.'
+    destroy:
+      cancelled: Email change cancelled.
   account_mailer:
     backup_code_used:
       subject: A backup code was used to sign in to Elio
@@ -130,6 +152,20 @@ en:
         other: You have %{count} backup codes left.
       none_left: 'You have no backup code left: generate new ones in your account.'
       not_you: 'If it was not you, someone knows your password and had one of your codes: change your password, generate new backup codes and tell an administrator.'
+      account: 'Your account: %{url}'
+    email_change_confirmation:
+      subject: Confirm your new email for Elio
+      hello: Hello,
+      text: 'The Elio account %{email} asked to use this address from now on (%{new_email}). To confirm, open this link while signed in to that account:'
+      validity:
+        one: The link is valid for %{count} hour; until then, the account keeps its current email.
+        other: The link is valid for %{count} hours; until then, the account keeps its current email.
+      not_you: If you did not ask for it, ignore this email.
+    email_change_requested:
+      subject: Your Elio email is about to change
+      hello: Hello,
+      text: 'A change of the email of your Elio account %{email} to %{new_email} was asked. It happens only once the link sent to the new address is followed.'
+      not_you: 'If it was not you, someone is signed in to your account: cancel the change in your account, change your password and tell an administrator.'
       account: 'Your account: %{url}'
   invitation_mailer:
     invite:

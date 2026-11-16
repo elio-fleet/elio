@@ -10,6 +10,19 @@ fr:
       release_confirm: "« %{name} » ne sera plus votre clé. Elle reste dans le trousseau et sur les serveurs."
       missing_html: Votre clé n'est pas dans le trousseau ? %{link}, puis revenez ici.
       add_to_keyring: Ajoutez-la
+    my_accesses:
+      title: Mes accès temporaires
+      intro: Vos clés ajoutées pour un temps sur des serveurs (« Ajouter ma clé temporairement ») et pas encore terminées. Prolongez ou retirez-en une depuis les accès temporaires de son serveur.
+      none: Aucun en cours.
+    email:
+      title: Email
+      hint_confirm: "L'adresse avec laquelle vous vous connectez, où arrivent les réinitialisations de mot de passe. Un lien est envoyé à la nouvelle adresse ; l'email change une fois ce lien suivi (connecté avec votre compte)."
+      hint_immediate: "L'adresse avec laquelle vous vous connectez. Les emails ne sont pas configurés sur cet Elio : l'email change tout de suite."
+      pending: 'En attente de la confirmation de %{email} : suivez le lien envoyé à cette adresse.'
+      cancel: Annuler
+      new_email: Nouvel email
+      current_password: Mot de passe actuel
+      submit: Changer l'email
     language:
       title: Langue
       hint: La langue de l'interface pour vous. Automatique suit votre navigateur, sinon la langue de cet Elio.
@@ -120,6 +133,15 @@ fr:
       code: Code de confirmation
       submit: Activer
       mandatory: 'La double authentification est obligatoire pour votre rôle (%{role}) : activez-la pour continuer.'
+  account_emails:
+    update:
+      sent: Un lien de confirmation a été envoyé à %{email}. Votre email change une fois ce lien suivi.
+      changed: Email modifié.
+    confirm:
+      confirmed: Votre email est désormais %{email}.
+      invalid: "Ce lien n'est pas valide ou a expiré : demandez de nouveau le changement, connecté avec le compte qui l'a demandé."
+    destroy:
+      cancelled: Changement d'email annulé.
   account_mailer:
     backup_code_used:
       subject: Un code de secours a servi à vous connecter à Elio
@@ -130,6 +152,20 @@ fr:
         other: Il vous reste %{count} codes de secours.
       none_left: 'Il ne vous reste aucun code de secours : générez-en de nouveaux dans votre compte.'
       not_you: "Si ce n'était pas vous, quelqu'un connaît votre mot de passe et avait l'un de vos codes : changez votre mot de passe, générez de nouveaux codes de secours et prévenez un administrateur."
+      account: 'Votre compte : %{url}'
+    email_change_confirmation:
+      subject: Confirmez votre nouvel email pour Elio
+      hello: Bonjour,
+      text: 'Le compte Elio %{email} a demandé à utiliser désormais cette adresse (%{new_email}). Pour confirmer, ouvrez ce lien en étant connecté à ce compte :'
+      validity:
+        one: "Le lien est valable %{count} heure ; d'ici là, le compte garde son email actuel."
+        other: "Le lien est valable %{count} heures ; d'ici là, le compte garde son email actuel."
+      not_you: "Si vous ne l'avez pas demandé, ignorez cet email."
+    email_change_requested:
+      subject: L'email de votre compte Elio va changer
+      hello: Bonjour,
+      text: "Un changement de l'email de votre compte Elio %{email} vers %{new_email} a été demandé. Il n'a lieu qu'une fois suivi le lien envoyé à la nouvelle adresse."
+      not_you: "Si ce n'était pas vous, quelqu'un est connecté à votre compte : annulez le changement dans votre compte, changez votre mot de passe et prévenez un administrateur."
       account: 'Votre compte : %{url}'
   invitation_mailer:
     invite:

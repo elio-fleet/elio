@@ -157,6 +157,9 @@ fr:
       password_change_required:
         label: Nouveau mot de passe demandé
         description: Un administrateur a demandé à un utilisateur de choisir un nouveau mot de passe.
+      user_email_changed:
+        label: Email modifié
+        description: Un utilisateur a changé l'email de son compte (l'adresse des réinitialisations de mot de passe).
       two_factor_enabled:
         label: 2FA activée
         description: Un utilisateur a activé la double authentification.
@@ -348,6 +351,7 @@ fr:
       user_locked:
         one: "%{email} verrouillé après %{count} essai raté"
         other: "%{email} verrouillé après %{count} essais ratés"
+      user_email_changed: "%{from} se connecte désormais avec %{to}"
       two_factor_enabled: 2FA activée pour %{email}
       two_factor_disabled: 2FA désactivée pour %{email}
       two_factor_reset: 2FA de %{email} réinitialisée par %{by}

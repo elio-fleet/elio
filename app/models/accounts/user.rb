@@ -10,6 +10,7 @@ class User < ApplicationRecord
          :timeoutable, :lockable
 
   include TwoFactorAuthenticatable
+  include EmailChangeable
 
   # The keyring keys this user said are theirs ("my keys").
   has_many :public_keys, -> { order(:name) }, dependent: :nullify, inverse_of: :user

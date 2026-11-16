@@ -101,6 +101,7 @@ module Activity::Summaries
     user_unlocked: proc { Activity::Summaries.t(:user_unlocked, email: data["email"]) },
     password_change_required: proc { Activity::Summaries.t(:password_change_required, email: data["email"], asked_by: data["asked_by"]) },
     user_locked: proc { Activity::Summaries.t(:user_locked, email: data["email"], count: data["attempts"].to_i) },
+    user_email_changed: proc { Activity::Summaries.t(:user_email_changed, from: data["from"], to: data["email"]) },
     two_factor_enabled: proc { Activity::Summaries.t(:two_factor_enabled, email: data["email"]) },
     two_factor_disabled: proc { data["reset_by"] ? Activity::Summaries.t(:two_factor_reset, email: data["email"], by: data["reset_by"]) : Activity::Summaries.t(:two_factor_disabled, email: data["email"]) },
     two_factor_backup_code_used: proc { Activity::Summaries.t(:two_factor_backup_code_used, email: data["email"], count: data["left"].to_i) },

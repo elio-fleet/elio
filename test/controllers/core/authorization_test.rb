@@ -37,6 +37,9 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
     view: {
       "dashboard" => -> { get root_path },
       "own language" => -> { patch locale_account_path, params: { user: { locale: "en" } } },
+      "change own email" => -> { patch account_email_path, params: { user: { email: "new@example.com", current_password: "password1234" } } },
+      "confirm own email" => -> { get confirm_account_email_path(token: "x") },
+      "cancel own email change" => -> { delete account_email_path },
       "servers index" => -> { get servers_path },
       "export the fleet list" => -> { get servers_path(format: :csv) },
       "choose the fleet columns" => -> { patch server_columns_path, params: { columns: %w[disk] } },
