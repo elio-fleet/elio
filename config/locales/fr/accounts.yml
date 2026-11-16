@@ -10,12 +10,19 @@ fr:
       release_confirm: "« %{name} » ne sera plus votre clé. Elle reste dans le trousseau et sur les serveurs."
       missing_html: Votre clé n'est pas dans le trousseau ? %{link}, puis revenez ici.
       add_to_keyring: Ajoutez-la
+      default_account: Compte par défaut
+      default_account_placeholder: Le compte d'Elio
+      default_account_hint: Choisi d'abord par « Ajouter ma clé temporairement » sur un serveur où Elio a lu ce compte (root, deploy…). Vide, ou non lu sur le serveur, le compte d'Elio.
+      save_default_account: Enregistrer
     language:
       title: Langue
       hint: La langue de l'interface pour vous. Automatique suit votre navigateur, sinon la langue de cet Elio.
       label: Langue de l'interface
       automatic: Automatique (navigateur)
       save: Enregistrer
+    default_key_account:
+      saved: Compte par défaut enregistré.
+      invalid: Nom de compte invalide (lettres, chiffres, « _ », « . » ou « - »).
     locale:
       saved: Langue enregistrée.
       invalid: Cette langue n'est pas disponible.

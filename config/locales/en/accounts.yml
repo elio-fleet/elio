@@ -10,12 +10,19 @@ en:
       release_confirm: "“%{name}” will no longer be your key. It stays in the keyring and on the servers."
       missing_html: Your key is not in the keyring? %{link}, then come back here.
       add_to_keyring: Add it
+      default_account: Default account
+      default_account_placeholder: Elio's account
+      default_account_hint: Picked first by "Add my key temporarily" on a server where Elio read this account (root, deploy…). Empty, or not read on the server, Elio's account.
+      save_default_account: Save
     language:
       title: Language
       hint: The language of the interface for you. Automatic follows your browser, else the language of this Elio.
       label: Interface language
       automatic: Automatic (browser)
       save: Save
+    default_key_account:
+      saved: Default account saved.
+      invalid: Invalid account name (letters, digits, "_", "." or "-").
     locale:
       saved: Language saved.
       invalid: This language is not available.

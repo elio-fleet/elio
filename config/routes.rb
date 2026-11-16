@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resource :account, only: %i[show] do
     patch :password
     patch :locale
+    patch :default_key_account
   end
   resources :account_keys, only: %i[create destroy], path: "account/keys"
   resource :two_factor, only: %i[new create destroy], path: "account/two_factor", controller: "two_factor_settings" do

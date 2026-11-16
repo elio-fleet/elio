@@ -125,6 +125,7 @@ class AuthorizationTest < ActionDispatch::IntegrationTest
       "revoke a public_key access" => -> { delete public_key_access_path(public_keys(:alice)), params: { server_id: servers(:web).id } },
       "claim a keyring key as mine" => -> { post account_keys_path, params: { public_key_id: public_keys(:alice).id } },
       "release one of my keys" => -> { delete account_key_path(public_keys(:alice)) },
+      "default account of my key" => -> { patch default_key_account_account_path, params: { user: { default_key_account: "root" } } },
       "add my key to a server" => -> { post server_my_key_accesses_path(servers(:web)) },
       "remove my key from a server" => -> { delete server_my_key_access_path(servers(:web), 0) },
       "extend a temporary access" => -> { patch server_temporary_access_path(servers(:web), 0), params: { duration: "60" } }
