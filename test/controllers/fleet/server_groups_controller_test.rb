@@ -152,7 +152,8 @@ class ServerGroupsControllerTest < ActionDispatch::IntegrationTest
     group = server_groups(:production)
 
     get edit_server_group_path(group)
-    assert_select "input[name='server_group[expected_ports]'][placeholder=?]", "22, 80, 443/tcp, 51820/udp"
+    assert_select "input[name='server_group[expected_ports]'][placeholder=?]", "22, 80, 443/tcp, 8000-8100"
+    assert_select "select[name='server_group[expected_ports_proto]'] option[selected]", text: "Sans protocole, TCP et UDP"
 
     patch server_group_path(group), params: { server_group: { name: group.name, color: group.color, expected_ports: "22, 443/tcp" } }
     assert_equal "22, 443/tcp", group.reload.expected_ports
@@ -160,5 +161,24 @@ class ServerGroupsControllerTest < ActionDispatch::IntegrationTest
     patch server_group_path(group), params: { server_group: { name: group.name, color: group.color, expected_ports: "22, https" } }
     assert_response :unprocessable_entity
     assert_select "li", text: /Les ports attendus contiennent des valeurs invalides : https/
+  end
+
+  test "changing only the default protocol of the expected ports recomputes the health of the group's servers" do
+    sign_in users(:one)
+    group = server_groups(:production)
+    group.update!(expected_ports: "22, 80, 443, 6432, 9100")
+    server = servers(:db)
+    server.update_columns(port: 22, ssh_ok: true)
+    data = Inventory::Collectors::Ports.parse(Inventory::Collector.sections(file_fixture("inventory/ports/debian12.txt").read))
+    server.inventory_snapshots.create!(category: "ports", status: "ok", data: data, collected_at: Time.current, checked_at: Time.current)
+    server.refresh_health!
+    assert_empty server.health_reason_texts
+
+    patch server_group_path(group), params: { server_group: { name: group.name, expected_ports_proto: "udp" } }
+
+    assert_equal "udp", group.reload.expected_ports_proto
+    assert_match(/ports inattendus/, server.reload.health_reason_texts.join)
+    get edit_server_group_path(group)
+    assert_select "select[name='server_group[expected_ports_proto]'] option[selected]", text: "Sans protocole, UDP seulement"
   end
 end

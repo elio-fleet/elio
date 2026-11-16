@@ -20,9 +20,11 @@ class ServerGroup < ApplicationRecord
 
   normalizes :name, with: ->(value) { value.squish }
   normalizes :expected_ports, with: ->(value) { value.squish.presence }
+  normalizes :expected_ports_proto, with: ->(value) { value.presence }
 
   validates :name, presence: true, uniqueness: { case_sensitive: false }, length: { maximum: 50 }
   validates :color, inclusion: { in: COLORS.keys }
+  validates :expected_ports_proto, inclusion: { in: Inventory::PortList::PROTOCOLS }, allow_nil: true
   validate :expected_ports_must_be_valid
 
   # The SSH sources chosen for the group (none = the whole list, SshSource).
@@ -40,8 +42,12 @@ class ServerGroup < ApplicationRecord
 
   def self.color_label(color) = I18n.t("server_group.colors.#{color}")
 
-  # Ports the servers of the group are expected to expose publicly (none = no check).
-  def expected_port_list = expected_ports.present? ? Inventory::PortList.new(expected_ports) : nil
+  # Ports the servers of the group are expected to expose publicly (none = no
+  # check); a port written without a protocol takes expected_ports_proto.
+  def expected_port_list = expected_ports.present? ? Inventory::PortList.new(expected_ports, default_proto: expected_ports_proto) : nil
+
+  # [label, value] for the select of the protocol given to ports written without one.
+  def self.expected_ports_proto_options = [ nil, *Inventory::PortList::PROTOCOLS ].map { |proto| [ I18n.t("server_group.expected_ports_protos.#{proto || 'any'}"), proto.to_s ] }
 
   private
 

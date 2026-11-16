@@ -298,7 +298,8 @@ fr:
       expected_ports: Ports attendus
       health_thresholds: Seuils de santé
       optional: "(facultatif)"
-      ports_servers_group_may: 'Ports que les serveurs du groupe peuvent exposer publiquement. Tout autre port public est signalé comme inattendu. Vide : pas de vérification.'
+      ports_servers_group_may: 'Ports ou plages (8000-8100) que les serveurs du groupe peuvent exposer publiquement. Tout autre port public est signalé comme inattendu. Vide : pas de vérification.'
+      expected_ports_proto: Protocole des ports écrits sans protocole
       ssh_sources: Sources autorisées pour le SSH
       ssh_sources_hint: 'Les règles de firewall proposées pour ses serveurs n''ouvrent le SSH qu''à ces sources. Aucune cochée : pas de restriction venant de ce groupe.'
       servers: Serveurs
@@ -452,6 +453,10 @@ fr:
       indigo: Indigo
       violet: Violet
       pink: Rose
+    expected_ports_protos:
+      any: Sans protocole, TCP et UDP
+      tcp: Sans protocole, TCP seulement
+      udp: Sans protocole, UDP seulement
   server_notes:
     deleted_user: un utilisateur supprimé
     tab:

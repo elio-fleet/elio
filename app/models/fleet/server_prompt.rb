@@ -50,7 +50,7 @@ class ServerPrompt
   def os = @server.inventory("os")&.data || {}
 
   def server_section
-    groups = @server.server_groups.map { |group| [ group.name, (t("expected_ports", ports: group.expected_ports) if group.expected_ports.present?) ].compact.join(" ") }
+    groups = @server.server_groups.map { |group| [ group.name, (t("expected_ports", ports: group.expected_port_list.to_s) if group.expected_ports.present?) ].compact.join(" ") }
     section(:server, [
       t("fields.name", value: @server.name),
       (t("fields.hostname", value: os["hostname"]) if os["hostname"].present?),

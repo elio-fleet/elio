@@ -79,6 +79,15 @@ class Inventory::PortAnalysisTest < ActiveSupport::TestCase
     assert_equal %w[22/tcp 6432/tcp], analysis.unexpected_ports.map(&:key)
   end
 
+  test "a group's default protocol applies to its ports written without one, not to the server's own" do
+    server_groups(:production).update!(expected_ports: "22, 80, 443, 6000-7000", expected_ports_proto: "udp")
+    @server.update!(expected_ports: "9100")
+    collect_ports
+
+    assert_equal %w[22/tcp 6432/tcp], analysis.unexpected_ports.map(&:key)
+    assert_equal "22/udp, 80/udp, 443/udp, 6000-7000/udp · 9100", analysis.expected_ports_text
+  end
+
   test "no expected ports, no check" do
     collect_ports
     assert_empty analysis.unexpected_ports

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
+ActiveRecord::Schema[8.1].define(version: 2026_11_15_132018) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -447,6 +447,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_11_15_131841) do
     t.string "expected_ports"
     t.jsonb "ssh_source_ids", default: [], null: false
     t.jsonb "health_thresholds", default: {}, null: false
+    t.string "expected_ports_proto"
     t.index "lower((name)::text)", name: "index_server_groups_on_lower_name", unique: true
   end
 

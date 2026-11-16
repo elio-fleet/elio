@@ -31,8 +31,8 @@ class Inventory::PortAnalysis
     @expected_ports ||= [ *server.server_groups.filter_map(&:expected_port_list), server.expected_port_list ].compact
   end
 
-  # "22, 443 · 8081/tcp": the texts of these lists, for the summary.
-  def expected_ports_text = [ *server.server_groups.filter_map(&:expected_ports), server.expected_ports ].compact_blank.join(" · ")
+  # "22/tcp, 443/tcp · 8081/tcp": these lists as they are checked, for the summary.
+  def expected_ports_text = expected_ports.map(&:to_s).compact_blank.join(" · ")
 
   def ports
     @ports ||= begin

@@ -25,7 +25,10 @@
 
   <div>
     <%= f.label :expected_ports, class: label_class do %><%= t(".expected_ports") %> <span class="font-normal text-ink-3"><%= t(".optional") %></span><% end %>
-    <%= f.text_field :expected_ports, placeholder: "22, 80, 443/tcp, 51820/udp", autocomplete: "off", class: "#{input_class} font-mono" %>
+    <div class="mt-1 flex flex-wrap gap-2">
+      <%= f.text_field :expected_ports, placeholder: "22, 80, 443/tcp, 8000-8100", autocomplete: "off", class: "input min-w-0 flex-1 basis-56 font-mono" %>
+      <%= f.select :expected_ports_proto, ServerGroup.expected_ports_proto_options, {}, aria: { label: t(".expected_ports_proto") }, class: "input w-auto" %>
+    </div>
     <p class="mt-1 text-xs text-ink-3"><%= t(".ports_servers_group_may") %></p>
   </div>
 
