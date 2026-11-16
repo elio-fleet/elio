@@ -43,6 +43,8 @@ env:
     - ELIO_DATABASE_PASSWORD
     # Asked to create the first admin account (see README): set it before the first deploy.
     - ELIO_SETUP_TOKEN
+    # Optional: the token of the detailed health on /up (see README).
+    # - ELIO_HEALTH_TOKEN
     # Uncomment with the SMTP_* settings to send emails (password reset, invitations, notifications).
     # - SMTP_PASSWORD
   clear:

@@ -155,9 +155,9 @@ Rails.application.routes.draw do
   end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
-  # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
-  # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", as: :rails_health_check
+  # Health check: 200 as soon as the app runs (Docker, proxies); the detailed
+  # health in JSON with the token of ELIO_HEALTH_TOKEN (see HealthController).
+  get "up" => "health#show", as: :rails_health_check
 
   # Content Security Policy violation reports of the browsers (no sign in).
   post "csp-reports" => "csp_reports#create", as: :csp_reports

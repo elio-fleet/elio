@@ -92,6 +92,7 @@ Elio is a Rails application with PostgreSQL. Put it behind a reverse proxy with 
 - **Kamal**: [`config/deploy.yml`](config/deploy.yml) is ready (HTTPS with Let's Encrypt); put the secrets in `.kamal/secrets` and run `bin/kamal setup`.
 - **Updates**: pull the new image (`docker compose pull && docker compose up -d`); migrations run on start.
 - **Health**: the image has a Docker health check on `/up` (`docker compose ps` shows *healthy*). When something does not work, `docker compose exec elio bin/elio-doctor` checks the secrets, the databases, the encrypted data, the address, the SMTP server (without sending anything) and the vulnerability feeds, and says what to fix (`--offline`: neither the SMTP server nor the feeds).
+- **Monitoring Elio itself**: `/up` answers 200 as soon as Elio runs, and says nothing else. For more, set `ELIO_HEALTH_TOKEN` (a long random value, e.g. `openssl rand -hex 32`): `/up` with the header `Authorization: Bearer <token>` then answers in JSON whether the database answers, a job worker runs and the automations ran in the last 5 minutes, with Elio's version; **503** when one of them fails, 401 with a wrong token. In Uptime Kuma: an *HTTP(s)* monitor on `https://<your domain>/up`, with `{"Authorization": "Bearer <token>"}` in *Headers* (without a token, the monitor only sees whether Elio answers).
 
 ### Backups
 
@@ -122,6 +123,7 @@ docker compose up -d
 | `ELIO_DATABASE_PASSWORD`, `PGHOST` | PostgreSQL password of the `elio` user, and host. Elio uses four databases: `elio_production`, `_cache`, `_queue`, `_cable`. |
 | `ELIO_HOST` | Elio's domain: links in emails and notifications, and the only host name it answers to. |
 | `ELIO_SETUP_TOKEN` | If set, asked when creating the first account (useful when Elio is reachable before you set it up). |
+| `ELIO_HEALTH_TOKEN` | If set, `/up` with this token shows the detailed health (database, job worker, automations) for a monitoring tool: see [Installing for real](#installing-for-real). |
 | `ELIO_FORCE_SSL` | `false` only to try Elio over plain HTTP. HTTPS is forced otherwise. |
 | `SMTP_ADDRESS`, `SMTP_PORT`, `SMTP_USERNAME`, `SMTP_PASSWORD`, `SMTP_AUTHENTICATION`, `ELIO_MAIL_FROM` | Emails: invitations, password reset, notifications. Without `SMTP_ADDRESS`, invitation links are to be copied and the sign-in page has no "forgot password" link. Without `SMTP_USERNAME`, no authentication (a local relay, Postfix). |
 | `ELIO_PARALLEL_LIMIT` | Servers collected at the same time (4). |
